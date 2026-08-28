@@ -19,6 +19,11 @@ def write_image(path: Path) -> None:
     Image.new("RGB", (4, 4), "white").save(path)
 
 
+def write_pdf(path: Path, pages: int = 1) -> None:
+    objects = "\n".join(f"{index} 0 obj << /Type /Page >> endobj" for index in range(1, pages + 1))
+    path.write_bytes(("%PDF-1.4\n" + objects + "\n%%EOF").encode("ascii"))
+
+
 class RootMenuHubTests(unittest.TestCase):
     def test_resolves_project_root_dynamically(self):
         self.assertEqual(root_menu.resolve_root_dir(), Path(__file__).resolve().parents[1])
@@ -84,7 +89,13 @@ class RootMenuHubTests(unittest.TestCase):
             chapter.mkdir(parents=True)
             write_image(chapter / "page-001.jpg")
 
-            converter = MagicMock(return_value=str(chapter / "Ch. 1.pdf"))
+            pdf = chapter / "Ch. 1.pdf"
+
+            def convert(chapter_dir):
+                write_pdf(pdf)
+                return str(pdf)
+
+            converter = MagicMock(side_effect=convert)
             with patch.object(root_menu, "_import_convert_to_pdf", return_value=converter):
                 summary = root_menu.run_pdf_batch([chapter])
 
@@ -96,7 +107,7 @@ class RootMenuHubTests(unittest.TestCase):
             chapter = Path(tmp) / "Manga" / "Ch. 1"
             chapter.mkdir(parents=True)
             write_image(chapter / "page-001.jpg")
-            (chapter / "Ch. 1.pdf").write_bytes(b"%PDF")
+            write_pdf(chapter / "Ch. 1.pdf")
 
             converter = MagicMock()
             with patch.object(root_menu, "_import_convert_to_pdf", return_value=converter):
@@ -111,11 +122,15 @@ class RootMenuHubTests(unittest.TestCase):
             second = Path(tmp) / "Manga" / "Ch. 2"
             first.mkdir(parents=True)
             second.mkdir(parents=True)
+            write_image(first / "page-001.jpg")
+            write_image(second / "page-001.jpg")
 
             def convert(chapter_dir):
                 if chapter_dir.endswith("Ch. 1"):
                     raise RuntimeError("boom")
-                return str(Path(chapter_dir) / f"{Path(chapter_dir).name}.pdf")
+                pdf = Path(chapter_dir) / f"{Path(chapter_dir).name}.pdf"
+                write_pdf(pdf)
+                return str(pdf)
 
             with patch.object(root_menu, "_import_convert_to_pdf", return_value=convert):
                 summary = root_menu.run_pdf_batch([first, second])

@@ -10,12 +10,12 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
+from pdf_batch_validation import IMAGE_EXTENSIONS, validate_chapter_images, validate_pdf_output
+
 
 ROOT_DIR = Path(__file__).resolve().parent
 MANGAGO_DIR = ROOT_DIR / "mangago_downloader"
 MANGAGO_OUTPUT_DIR = MANGAGO_DIR / "output"
-IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"}
-
 HEX = {
     "text": "#2c3e50",
     "separator": "#ffd166",
@@ -183,12 +183,16 @@ def _pdf_path(chapter_dir: Path) -> Path:
     return chapter_dir / f"{chapter_dir.name}.pdf"
 
 
-def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -> dict[str, list[Path | tuple[Path, str]]]:
+def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -> dict[str, list[Path | tuple[Path, str]] | int]:
     convert_to_pdf = _import_convert_to_pdf()
-    summary: dict[str, list[Path | tuple[Path, str]]] = {
+    summary: dict[str, list[Path | tuple[Path, str]] | int] = {
+        "selected": len(chapters),
         "generated": [],
         "skipped": [],
         "failed": [],
+        "validation_failed": [],
+        "generation_failed": [],
+        "problems": [],
     }
 
     for chapter_dir in chapters:
@@ -198,20 +202,47 @@ def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -
             print(c("warning", f"PDF existente: {chapter_dir.name}"))
             continue
 
+        validation = validate_chapter_images(chapter_dir)
+        if not validation.ok:
+            message = "; ".join(validation.errors)
+            failure = (chapter_dir, message)
+            summary["validation_failed"].append(failure)
+            summary["failed"].append(failure)
+            summary["problems"].append(failure)
+            print(c("error", f"Falha de validação: {chapter_dir.name} - {message}"))
+            continue
+
         print(c("prompt", f"Gerando PDF: {chapter_dir.name}"))
         try:
             created = convert_to_pdf(str(chapter_dir))
         except Exception as exc:  # Defensive: keep batch processing remaining chapters.
-            summary["failed"].append((chapter_dir, str(exc)))
-            print(c("error", f"Falha: {chapter_dir.name} - {exc}"))
+            failure = (chapter_dir, str(exc))
+            summary["generation_failed"].append(failure)
+            summary["failed"].append(failure)
+            summary["problems"].append(failure)
+            print(c("error", f"Falha de geração: {chapter_dir.name} - {exc}"))
             continue
 
-        if created:
-            summary["generated"].append(chapter_dir)
-            print(c("success", f"Sucesso: {Path(created).name}"))
-        else:
-            summary["failed"].append((chapter_dir, "convert_to_pdf retornou vazio"))
-            print(c("error", f"Falha: {chapter_dir.name}"))
+        if not created:
+            failure = (chapter_dir, "convert_to_pdf retornou vazio")
+            summary["generation_failed"].append(failure)
+            summary["failed"].append(failure)
+            summary["problems"].append(failure)
+            print(c("error", f"Falha de geração: {chapter_dir.name}"))
+            continue
+
+        pdf_validation = validate_pdf_output(Path(created), validation.image_count)
+        if not pdf_validation.ok:
+            message = "; ".join(pdf_validation.errors)
+            failure = (chapter_dir, message)
+            summary["generation_failed"].append(failure)
+            summary["failed"].append(failure)
+            summary["problems"].append(failure)
+            print(c("error", f"Falha de validação do PDF: {chapter_dir.name} - {message}"))
+            continue
+
+        summary["generated"].append(chapter_dir)
+        print(c("success", f"Sucesso: {Path(created).name}"))
 
     return summary
 
@@ -285,9 +316,15 @@ def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
 
     summary = run_pdf_batch(selected, regenerate_existing=regenerate)
     print_header("RESUMO")
+    print(c("muted", f"Selecionados: {summary['selected']}"))
     print(c("success", f"Gerados: {len(summary['generated'])}"))
-    print(c("warning", f"Ignorados: {len(summary['skipped'])}"))
-    print(c("error" if summary["failed"] else "success", f"Falhas: {len(summary['failed'])}"))
+    print(c("warning", f"Já existentes: {len(summary['skipped'])}"))
+    print(c("error" if summary["validation_failed"] else "success", f"Falha de validação: {len(summary['validation_failed'])}"))
+    print(c("error" if summary["generation_failed"] else "success", f"Falha de geração: {len(summary['generation_failed'])}"))
+    if summary["problems"]:
+        print(c("error", "Problemas:"))
+        for chapter, message in summary["problems"]:
+            print(c("muted", f"└─ {chapter.name}: {message}"))
 
 
 def print_header(title: str = "FOMINHA DE MANGA") -> None:
