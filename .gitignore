@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.pyc
+
+# Local archives and migration artifacts
+mangago_downloader.zip
+payload/
+update.diff
+MANIFEST_SHA256.txt
+original_hashes.json

@@ -1,0 +1,3 @@
+[submodule "mangago_downloader"]
+	path = mangago_downloader
+	url = https://github.com/angeline1986/mangago_downloader.git

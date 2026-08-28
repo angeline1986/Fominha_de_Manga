@@ -1,0 +1,304 @@
+#!/usr/bin/env python3
+"""Root menu hub for projects under Fominha_de_Manga."""
+from __future__ import annotations
+
+import os
+import re
+import subprocess
+import sys
+from dataclasses import dataclass
+from pathlib import Path
+from typing import Callable, Iterable, Sequence
+
+
+ROOT_DIR = Path(__file__).resolve().parent
+MANGAGO_DIR = ROOT_DIR / "mangago_downloader"
+MANGAGO_OUTPUT_DIR = MANGAGO_DIR / "output"
+IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"}
+
+
+@dataclass(frozen=True)
+class MenuItem:
+    number: int
+    label: str
+    description: str
+    action: Callable[[], None]
+
+
+@dataclass(frozen=True)
+class MenuSection:
+    title: str
+    items: tuple[MenuItem, ...]
+
+
+def _supports_color() -> bool:
+    return sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+
+
+def _ansi(code: str) -> str:
+    return f"\033[{code}m" if _supports_color() else ""
+
+
+def c(text: str, code: str) -> str:
+    return f"{_ansi(code)}{text}{_ansi('0')}"
+
+
+def ask_number(prompt: str, valid: Iterable[int] | None = None) -> int:
+    valid_set = set(valid) if valid is not None else None
+    while True:
+        raw = input(c(f"{prompt} › ", "36")).strip()
+        try:
+            choice = int(raw)
+        except ValueError:
+            print(c("Escolha inválida.", "31"))
+            continue
+        if valid_set is not None and choice not in valid_set:
+            print(c("Escolha inválida.", "31"))
+            continue
+        return choice
+
+
+def resolve_root_dir() -> Path:
+    return ROOT_DIR
+
+
+def resolve_mangago_output_dir() -> Path:
+    return MANGAGO_OUTPUT_DIR
+
+
+def build_mangago_web_command() -> tuple[list[str], Path, dict[str, str]]:
+    if not MANGAGO_DIR.exists():
+        raise FileNotFoundError("Módulo mangago_downloader não encontrado.")
+
+    venv_bin = MANGAGO_DIR / ".venv" / "bin" / "mangago-downloader-web"
+    command = [str(venv_bin)] if venv_bin.exists() else [sys.executable, "-m", "webapp.server"]
+    env = os.environ.copy()
+    env.setdefault("MANGAGO_LOG_LEVEL", "INFO")
+    return command, MANGAGO_DIR, env
+
+
+def open_mangago_web() -> None:
+    try:
+        command, cwd, env = build_mangago_web_command()
+    except FileNotFoundError as exc:
+        print(c(f"Falha: {exc}", "31"))
+        return
+
+    print(c("Abrindo servidor Web do Mangago Downloader...", "32"))
+    print(c(f"└─ {cwd}", "90"))
+    subprocess.run(command, cwd=cwd, env=env, check=False)
+
+
+def _natural_key(path: Path) -> list[object]:
+    return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", path.name)]
+
+
+def _has_images(directory: Path) -> bool:
+    return any(path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS for path in directory.iterdir())
+
+
+def list_manga_dirs(output_dir: Path = MANGAGO_OUTPUT_DIR) -> list[Path]:
+    if not output_dir.exists():
+        return []
+    return sorted((path for path in output_dir.iterdir() if path.is_dir()), key=_natural_key)
+
+
+def list_chapter_dirs(manga_dir: Path) -> list[Path]:
+    if not manga_dir.exists():
+        return []
+    return sorted(
+        (path for path in manga_dir.iterdir() if path.is_dir() and _has_images(path)),
+        key=_natural_key,
+    )
+
+
+def parse_selection(raw: str, total: int) -> list[int]:
+    value = raw.strip().lower()
+    if value in {"todos", "todas", "all"}:
+        return list(range(1, total + 1))
+
+    selected: set[int] = set()
+    for chunk in value.split(","):
+        part = chunk.strip()
+        if not part:
+            continue
+        if "-" in part:
+            start_text, end_text = part.split("-", 1)
+            start, end = int(start_text), int(end_text)
+            if start > end:
+                start, end = end, start
+            selected.update(range(start, end + 1))
+        else:
+            selected.add(int(part))
+
+    return sorted(number for number in selected if 1 <= number <= total)
+
+
+def _import_convert_to_pdf() -> Callable[[str], str | None]:
+    if not MANGAGO_DIR.exists():
+        raise FileNotFoundError("Módulo mangago_downloader não encontrado.")
+    mangago_path = str(MANGAGO_DIR)
+    if mangago_path not in sys.path:
+        sys.path.insert(0, mangago_path)
+    from src.converter import convert_to_pdf
+
+    return convert_to_pdf
+
+
+def _pdf_path(chapter_dir: Path) -> Path:
+    return chapter_dir / f"{chapter_dir.name}.pdf"
+
+
+def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -> dict[str, list[Path | tuple[Path, str]]]:
+    convert_to_pdf = _import_convert_to_pdf()
+    summary: dict[str, list[Path | tuple[Path, str]]] = {
+        "generated": [],
+        "skipped": [],
+        "failed": [],
+    }
+
+    for chapter_dir in chapters:
+        pdf_path = _pdf_path(chapter_dir)
+        if pdf_path.exists() and not regenerate_existing:
+            summary["skipped"].append(chapter_dir)
+            print(c(f"PDF existente: {chapter_dir.name}", "33"))
+            continue
+
+        print(c(f"Gerando PDF: {chapter_dir.name}", "36"))
+        try:
+            created = convert_to_pdf(str(chapter_dir))
+        except Exception as exc:  # Defensive: keep batch processing remaining chapters.
+            summary["failed"].append((chapter_dir, str(exc)))
+            print(c(f"Falha: {chapter_dir.name} - {exc}", "31"))
+            continue
+
+        if created:
+            summary["generated"].append(chapter_dir)
+            print(c(f"Sucesso: {Path(created).name}", "32"))
+        else:
+            summary["failed"].append((chapter_dir, "convert_to_pdf retornou vazio"))
+            print(c(f"Falha: {chapter_dir.name}", "31"))
+
+    return summary
+
+
+def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
+    if not MANGAGO_DIR.exists():
+        print(c("Módulo mangago_downloader não encontrado.", "31"))
+        return
+    if not output_dir.exists():
+        print(c("Nenhum output encontrado para o Mangago Downloader.", "31"))
+        print(c(f"└─ {output_dir}", "90"))
+        return
+
+    mangas = list_manga_dirs(output_dir)
+    if not mangas:
+        print(c("Nenhuma obra baixada encontrada.", "31"))
+        print(c(f"└─ {output_dir}", "90"))
+        return
+
+    print_header("GERAR PDFS")
+    for index, manga_dir in enumerate(mangas, start=1):
+        print(f"  {c(str(index), '33')}. {manga_dir.name}")
+    print(f"\n  {c('0', '33')}. Voltar")
+
+    manga_choice = ask_number("Escolha a obra", range(0, len(mangas) + 1))
+    if manga_choice == 0:
+        return
+
+    manga_dir = mangas[manga_choice - 1]
+    chapters = list_chapter_dirs(manga_dir)
+    if not chapters:
+        print(c("Nenhum capítulo com imagens encontrado.", "31"))
+        print(c(f"└─ {manga_dir}", "90"))
+        return
+
+    print_header(manga_dir.name.upper())
+    print(f"  {c('1', '33')}. Todos os capítulos")
+    print(f"  {c('2', '33')}. Somente capítulos sem PDF")
+    print(f"  {c('3', '33')}. Selecionar capítulos")
+    print(f"\n  {c('0', '33')}. Voltar")
+
+    mode = ask_number("Escolha o modo", range(0, 4))
+    if mode == 0:
+        return
+
+    selected = chapters
+    if mode == 2:
+        selected = [chapter for chapter in chapters if not _pdf_path(chapter).exists()]
+    elif mode == 3:
+        for index, chapter_dir in enumerate(chapters, start=1):
+            marker = "PDF" if _pdf_path(chapter_dir).exists() else ""
+            print(f"  {c(str(index), '33')}. {chapter_dir.name:<32} {c(marker, '90')}")
+        raw = input(c("Capítulos (1,2,5 ou 1,3,5-9,12 ou todos) › ", "36"))
+        selected = [chapters[index - 1] for index in parse_selection(raw, len(chapters))]
+
+    if not selected:
+        print(c("Nenhum capítulo selecionado.", "31"))
+        return
+
+    existing = [chapter for chapter in selected if _pdf_path(chapter).exists()]
+    regenerate = False
+    if existing:
+        print(c("Alguns capítulos já possuem PDF.", "33"))
+        for chapter in existing:
+            print(c(f"└─ {chapter.name}", "90"))
+        regenerate = ask_number("Regenerar PDFs existentes? 1=Sim 2=Não", {1, 2}) == 1
+
+    summary = run_pdf_batch(selected, regenerate_existing=regenerate)
+    print_header("RESUMO")
+    print(c(f"Gerados: {len(summary['generated'])}", "32"))
+    print(c(f"Ignorados: {len(summary['skipped'])}", "33"))
+    print(c(f"Falhas: {len(summary['failed'])}", "31" if summary["failed"] else "32"))
+
+
+def print_header(title: str = "FOMINHA DE MANGA") -> None:
+    line = "━" * 50
+    print()
+    print(c(title, "1;36"))
+    print(c(line, "90"))
+    print()
+
+
+def build_menu() -> tuple[MenuSection, ...]:
+    return (
+        MenuSection(
+            "DOWNLOAD DE MANGÁS",
+            (MenuItem(1, "Mangago Downloader", "Abrir servidor Web", open_mangago_web),),
+        ),
+        MenuSection(
+            "PDF",
+            (MenuItem(2, "Gerar PDFs", "Gerar PDFs de capítulos baixados", manual_pdf_flow),),
+        ),
+    )
+
+
+def print_main_menu(sections: Sequence[MenuSection]) -> None:
+    print_header()
+    for section in sections:
+        print(c(f"● {section.title}", "1;35"))
+        print()
+        for item in section.items:
+            print(f"  {c(str(item.number), '33')}. {item.label:<22} {c(item.description, '90')}")
+        print()
+    print(c("━" * 50, "90"))
+    print(f"  {c('0', '33')}. Sair")
+    print()
+
+
+def main() -> None:
+    sections = build_menu()
+    actions = {item.number: item.action for section in sections for item in section.items}
+    valid = set(actions) | {0}
+
+    while True:
+        print_main_menu(sections)
+        choice = ask_number("Escolha uma opção", valid)
+        if choice == 0:
+            print(c("Até logo.", "32"))
+            return
+        actions[choice]()
+
+
+if __name__ == "__main__":
+    main()
