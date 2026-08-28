@@ -36,3 +36,8 @@ cd ..
 git add mangago_downloader
 git commit -m "chore: update mangago_downloader submodule"
 ```
+
+## Desenvolvimento
+
+O projeto utiliza Git submodules para manter seus módulos independentes. Para alterar módulos, atualizar suas referências ou consultar o fluxo de commits, veja [Fluxo Git e Submodules](docs/git_workflow.md).
+
