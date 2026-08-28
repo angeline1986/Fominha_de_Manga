@@ -16,6 +16,21 @@ MANGAGO_DIR = ROOT_DIR / "mangago_downloader"
 MANGAGO_OUTPUT_DIR = MANGAGO_DIR / "output"
 IMAGE_EXTENSIONS = {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp", ".tiff"}
 
+HEX = {
+    "text": "#2c3e50",
+    "separator": "#ffd166",
+    "sec_download": "#ef476f",
+    "item_download": "#ff8a5c",
+    "sec_pdf": "#06d6a0",
+    "item_pdf": "#118ab2",
+    "number": "#7209b7",
+    "prompt": "#4361ee",
+    "success": "#06d6a0",
+    "warning": "#ffd166",
+    "error": "#ef476f",
+    "muted": "#6c757d",
+}
+
 
 @dataclass(frozen=True)
 class MenuItem:
@@ -23,37 +38,56 @@ class MenuItem:
     label: str
     description: str
     action: Callable[[], None]
+    color_key: str
 
 
 @dataclass(frozen=True)
 class MenuSection:
     title: str
     items: tuple[MenuItem, ...]
+    color_key: str
 
 
 def _supports_color() -> bool:
-    return sys.stdout.isatty() and os.environ.get("NO_COLOR") is None
+    return (
+        os.environ.get("NO_COLOR") is None
+        and sys.stdout.isatty()
+        and os.environ.get("TERM", "") != "dumb"
+    )
 
 
-def _ansi(code: str) -> str:
-    return f"\033[{code}m" if _supports_color() else ""
+USE_COLOR = _supports_color()
 
 
-def c(text: str, code: str) -> str:
-    return f"{_ansi(code)}{text}{_ansi('0')}"
+def _ansi(hex_color: str, text: object, bold: bool = False) -> str:
+    if not USE_COLOR:
+        return str(text)
+    value = hex_color.lstrip("#")
+    r, g, b = int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16)
+    weight = "1;" if bold else ""
+    return f"\033[{weight}38;2;{r};{g};{b}m{text}\033[0m"
+
+
+def c(key: str, text: object, bold: bool = False) -> str:
+    return _ansi(HEX[key], text, bold=bold)
+
+
+def print_option(number: int, label: str, description: str = "", color_key: str = "text") -> None:
+    suffix = f" {description}" if description else ""
+    print(f"  {c('number', str(number)+'.', bold=True)} {c(color_key, f'{label:<22}')}{suffix}")
 
 
 def ask_number(prompt: str, valid: Iterable[int] | None = None) -> int:
     valid_set = set(valid) if valid is not None else None
     while True:
-        raw = input(c(f"{prompt} › ", "36")).strip()
+        raw = input(c("prompt", prompt, bold=True)).strip()
         try:
             choice = int(raw)
         except ValueError:
-            print(c("Escolha inválida.", "31"))
+            print("Opção inválida.")
             continue
         if valid_set is not None and choice not in valid_set:
-            print(c("Escolha inválida.", "31"))
+            print("Opção inválida.")
             continue
         return choice
 
@@ -81,11 +115,11 @@ def open_mangago_web() -> None:
     try:
         command, cwd, env = build_mangago_web_command()
     except FileNotFoundError as exc:
-        print(c(f"Falha: {exc}", "31"))
+        print(c("error", f"Falha: {exc}"))
         return
 
-    print(c("Abrindo servidor Web do Mangago Downloader...", "32"))
-    print(c(f"└─ {cwd}", "90"))
+    print(c("success", "Abrindo servidor Web do Mangago Downloader..."))
+    print(c("muted", f"└─ {cwd}"))
     subprocess.run(command, cwd=cwd, env=env, check=False)
 
 
@@ -161,65 +195,69 @@ def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -
         pdf_path = _pdf_path(chapter_dir)
         if pdf_path.exists() and not regenerate_existing:
             summary["skipped"].append(chapter_dir)
-            print(c(f"PDF existente: {chapter_dir.name}", "33"))
+            print(c("warning", f"PDF existente: {chapter_dir.name}"))
             continue
 
-        print(c(f"Gerando PDF: {chapter_dir.name}", "36"))
+        print(c("prompt", f"Gerando PDF: {chapter_dir.name}"))
         try:
             created = convert_to_pdf(str(chapter_dir))
         except Exception as exc:  # Defensive: keep batch processing remaining chapters.
             summary["failed"].append((chapter_dir, str(exc)))
-            print(c(f"Falha: {chapter_dir.name} - {exc}", "31"))
+            print(c("error", f"Falha: {chapter_dir.name} - {exc}"))
             continue
 
         if created:
             summary["generated"].append(chapter_dir)
-            print(c(f"Sucesso: {Path(created).name}", "32"))
+            print(c("success", f"Sucesso: {Path(created).name}"))
         else:
             summary["failed"].append((chapter_dir, "convert_to_pdf retornou vazio"))
-            print(c(f"Falha: {chapter_dir.name}", "31"))
+            print(c("error", f"Falha: {chapter_dir.name}"))
 
     return summary
 
 
 def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     if not MANGAGO_DIR.exists():
-        print(c("Módulo mangago_downloader não encontrado.", "31"))
+        print(c("error", "Módulo mangago_downloader não encontrado."))
         return
     if not output_dir.exists():
-        print(c("Nenhum output encontrado para o Mangago Downloader.", "31"))
-        print(c(f"└─ {output_dir}", "90"))
+        print(c("error", "Nenhum output encontrado para o Mangago Downloader."))
+        print(c("muted", f"└─ {output_dir}"))
         return
 
     mangas = list_manga_dirs(output_dir)
     if not mangas:
-        print(c("Nenhuma obra baixada encontrada.", "31"))
-        print(c(f"└─ {output_dir}", "90"))
+        print(c("error", "Nenhuma obra baixada encontrada."))
+        print(c("muted", f"└─ {output_dir}"))
         return
 
     print_header("GERAR PDFS")
     for index, manga_dir in enumerate(mangas, start=1):
-        print(f"  {c(str(index), '33')}. {manga_dir.name}")
-    print(f"\n  {c('0', '33')}. Voltar")
+        print_option(index, manga_dir.name)
+        print()
+    print(f"  {c('number', '0.', bold=True)} Voltar")
 
-    manga_choice = ask_number("Escolha a obra", range(0, len(mangas) + 1))
+    manga_choice = ask_number("\nSelecione uma opção › ", range(0, len(mangas) + 1))
     if manga_choice == 0:
         return
 
     manga_dir = mangas[manga_choice - 1]
     chapters = list_chapter_dirs(manga_dir)
     if not chapters:
-        print(c("Nenhum capítulo com imagens encontrado.", "31"))
-        print(c(f"└─ {manga_dir}", "90"))
+        print(c("error", "Nenhum capítulo com imagens encontrado."))
+        print(c("muted", f"└─ {manga_dir}"))
         return
 
     print_header(manga_dir.name.upper())
-    print(f"  {c('1', '33')}. Todos os capítulos")
-    print(f"  {c('2', '33')}. Somente capítulos sem PDF")
-    print(f"  {c('3', '33')}. Selecionar capítulos")
-    print(f"\n  {c('0', '33')}. Voltar")
+    print_option(1, "Todos os capítulos")
+    print()
+    print_option(2, "Somente capítulos sem PDF")
+    print()
+    print_option(3, "Selecionar capítulos")
+    print()
+    print(f"  {c('number', '0.', bold=True)} Voltar")
 
-    mode = ask_number("Escolha o modo", range(0, 4))
+    mode = ask_number("\nSelecione uma opção › ", range(0, 4))
     if mode == 0:
         return
 
@@ -229,60 +267,62 @@ def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     elif mode == 3:
         for index, chapter_dir in enumerate(chapters, start=1):
             marker = "PDF" if _pdf_path(chapter_dir).exists() else ""
-            print(f"  {c(str(index), '33')}. {chapter_dir.name:<32} {c(marker, '90')}")
-        raw = input(c("Capítulos (1,2,5 ou 1,3,5-9,12 ou todos) › ", "36"))
+            print(f"  {c('number', str(index)+'.', bold=True)} {chapter_dir.name:<32} {c('muted', marker)}")
+        raw = input(c("prompt", "\nCapítulos (1,2,5 ou 1,3,5-9,12 ou todos) › ", bold=True))
         selected = [chapters[index - 1] for index in parse_selection(raw, len(chapters))]
 
     if not selected:
-        print(c("Nenhum capítulo selecionado.", "31"))
+        print(c("error", "Nenhum capítulo selecionado."))
         return
 
     existing = [chapter for chapter in selected if _pdf_path(chapter).exists()]
     regenerate = False
     if existing:
-        print(c("Alguns capítulos já possuem PDF.", "33"))
+        print(c("warning", "Alguns capítulos já possuem PDF."))
         for chapter in existing:
-            print(c(f"└─ {chapter.name}", "90"))
-        regenerate = ask_number("Regenerar PDFs existentes? 1=Sim 2=Não", {1, 2}) == 1
+            print(c("muted", f"└─ {chapter.name}"))
+        regenerate = ask_number("\nRegenerar PDFs existentes? 1=Sim 2=Não › ", {1, 2}) == 1
 
     summary = run_pdf_batch(selected, regenerate_existing=regenerate)
     print_header("RESUMO")
-    print(c(f"Gerados: {len(summary['generated'])}", "32"))
-    print(c(f"Ignorados: {len(summary['skipped'])}", "33"))
-    print(c(f"Falhas: {len(summary['failed'])}", "31" if summary["failed"] else "32"))
+    print(c("success", f"Gerados: {len(summary['generated'])}"))
+    print(c("warning", f"Ignorados: {len(summary['skipped'])}"))
+    print(c("error" if summary["failed"] else "success", f"Falhas: {len(summary['failed'])}"))
 
 
 def print_header(title: str = "FOMINHA DE MANGA") -> None:
-    line = "━" * 50
     print()
-    print(c(title, "1;36"))
-    print(c(line, "90"))
-    print()
+    print(c("number", title, bold=True))
+    print(c("separator", "━" * 50))
 
 
 def build_menu() -> tuple[MenuSection, ...]:
     return (
         MenuSection(
             "DOWNLOAD DE MANGÁS",
-            (MenuItem(1, "Mangago Downloader", "Abrir servidor Web", open_mangago_web),),
+            (MenuItem(1, "Mangago Downloader", "Abrir servidor Web", open_mangago_web, "item_download"),),
+            "sec_download",
         ),
         MenuSection(
             "PDF",
-            (MenuItem(2, "Gerar PDFs", "Gerar PDFs de capítulos baixados", manual_pdf_flow),),
+            (MenuItem(2, "Gerar PDFs", "Gerar PDFs de capítulos baixados", manual_pdf_flow, "item_pdf"),),
+            "sec_pdf",
         ),
     )
 
 
 def print_main_menu(sections: Sequence[MenuSection]) -> None:
     print_header()
+    print()
     for section in sections:
-        print(c(f"● {section.title}", "1;35"))
+        print(c(section.color_key, f"● {section.title}", bold=True))
         print()
         for item in section.items:
-            print(f"  {c(str(item.number), '33')}. {item.label:<22} {c(item.description, '90')}")
+            print_option(item.number, item.label, item.description, item.color_key)
+            print()
         print()
-    print(c("━" * 50, "90"))
-    print(f"  {c('0', '33')}. Sair")
+    print(c("separator", "━" * 50))
+    print(f"  {c('number', '0.', bold=True)} Sair")
     print()
 
 
@@ -293,9 +333,9 @@ def main() -> None:
 
     while True:
         print_main_menu(sections)
-        choice = ask_number("Escolha uma opção", valid)
+        choice = ask_number("Selecione uma opção › ", valid)
         if choice == 0:
-            print(c("Até logo.", "32"))
+            print(c("success", "Até logo."))
             return
         actions[choice]()
 
