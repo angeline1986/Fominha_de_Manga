@@ -84,14 +84,14 @@ class RootMenuHubTests(unittest.TestCase):
 
         self.assertEqual(
             [manga.name for manga in mangas],
-            ["Comix Work", "Legacy Work", "Mangago Work"],
+            ["Comix Work", "Mangago Work"],
         )
 
     def test_list_chapter_dirs_returns_only_chapters_with_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             manga = Path(tmp) / "Manga"
-            empty = manga / "Ch. 1"
-            full = manga / "Ch. 2"
+            empty = manga / "IMG" / "Ch. 1"
+            full = manga / "IMG" / "Ch. 2"
             empty.mkdir(parents=True)
             full.mkdir()
             write_image(full / "page-001.jpg")

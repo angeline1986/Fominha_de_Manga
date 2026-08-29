@@ -136,22 +136,31 @@ def list_manga_dirs(output_dir: Path = MANGAGO_OUTPUT_DIR) -> list[Path]:
         return []
 
     mangas: list[Path] = []
-    for path in output_dir.iterdir():
-        if not path.is_dir():
+    for provider_name in ("comix", "mangago"):
+        provider_dir = output_dir / provider_name
+        if not provider_dir.is_dir():
             continue
-        if path.name.lower() in {"mangago", "comix"}:
-            mangas.extend(child for child in path.iterdir() if child.is_dir())
-        else:
-            mangas.append(path)
 
-    return sorted(mangas, key=_natural_key)
+        mangas.extend(
+            child
+            for child in provider_dir.iterdir()
+            if child.is_dir()
+        )
+
+    return sorted(mangas, key=lambda path: (_natural_key(path.parent), _natural_key(path)))
 
 
 def list_chapter_dirs(manga_dir: Path) -> list[Path]:
-    if not manga_dir.exists():
+    img_dir = manga_dir / "IMG"
+    if not img_dir.exists():
         return []
+
     return sorted(
-        (path for path in manga_dir.iterdir() if path.is_dir() and _has_images(path)),
+        (
+            path
+            for path in img_dir.iterdir()
+            if path.is_dir() and _has_images(path)
+        ),
         key=_natural_key,
     )
 
@@ -190,6 +199,10 @@ def _import_convert_to_pdf() -> Callable[[str], str | None]:
 
 
 def _pdf_path(chapter_dir: Path) -> Path:
+    if chapter_dir.parent.name == "IMG":
+        manga_dir = chapter_dir.parent.parent
+        return manga_dir / "PDF" / chapter_dir.name / f"{chapter_dir.name}.pdf"
+
     return chapter_dir / f"{chapter_dir.name}.pdf"
 
 
@@ -261,32 +274,67 @@ def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     if not MANGAGO_DIR.exists():
         print(c("error", "Módulo mangago_downloader não encontrado."))
         return
+
     if not output_dir.exists():
         print(c("error", "Nenhum output encontrado para o Mangago Downloader."))
         print(c("muted", f"└─ {output_dir}"))
         return
 
-    mangas = list_manga_dirs(output_dir)
-    if not mangas:
-        print(c("error", "Nenhuma obra baixada encontrada."))
+    providers: list[Path] = []
+    for provider_name in ("comix", "mangago"):
+        provider_dir = output_dir / provider_name
+        if provider_dir.is_dir():
+            providers.append(provider_dir)
+
+    if not providers:
+        print(c("error", "Nenhum provider com downloads encontrado."))
         print(c("muted", f"└─ {output_dir}"))
         return
 
     print_header("GERAR PDFS")
+    for index, provider_dir in enumerate(providers, start=1):
+        print_option(index, provider_dir.name.capitalize())
+        print()
+    print(f"  {c('number', '0.', bold=True)} Voltar")
+
+    provider_choice = ask_number(
+        "\nSelecione uma opção › ",
+        range(0, len(providers) + 1),
+    )
+    if provider_choice == 0:
+        return
+
+    provider_dir = providers[provider_choice - 1]
+
+    mangas = sorted(
+        (path for path in provider_dir.iterdir() if path.is_dir()),
+        key=_natural_key,
+    )
+
+    if not mangas:
+        print(c("error", "Nenhuma obra baixada encontrada."))
+        print(c("muted", f"└─ {provider_dir}"))
+        return
+
+    print_header(provider_dir.name.upper())
     for index, manga_dir in enumerate(mangas, start=1):
         print_option(index, manga_dir.name)
         print()
     print(f"  {c('number', '0.', bold=True)} Voltar")
 
-    manga_choice = ask_number("\nSelecione uma opção › ", range(0, len(mangas) + 1))
+    manga_choice = ask_number(
+        "\nSelecione uma opção › ",
+        range(0, len(mangas) + 1),
+    )
     if manga_choice == 0:
         return
 
     manga_dir = mangas[manga_choice - 1]
+
     chapters = list_chapter_dirs(manga_dir)
     if not chapters:
         print(c("error", "Nenhum capítulo com imagens encontrado."))
-        print(c("muted", f"└─ {manga_dir}"))
+        print(c("muted", f"└─ {manga_dir / 'IMG'}"))
         return
 
     print_header(manga_dir.name.upper())
@@ -303,34 +351,84 @@ def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
         return
 
     selected = chapters
+
     if mode == 2:
-        selected = [chapter for chapter in chapters if not _pdf_path(chapter).exists()]
+        selected = [
+            chapter
+            for chapter in chapters
+            if not _pdf_path(chapter).exists()
+        ]
+
     elif mode == 3:
         for index, chapter_dir in enumerate(chapters, start=1):
             marker = "PDF" if _pdf_path(chapter_dir).exists() else ""
-            print(f"  {c('number', str(index)+'.', bold=True)} {chapter_dir.name:<32} {c('muted', marker)}")
-        raw = input(c("prompt", "\nCapítulos (1,2,5 ou 1,3,5-9,12 ou todos) › ", bold=True))
-        selected = [chapters[index - 1] for index in parse_selection(raw, len(chapters))]
+            print(
+                f"  {c('number', str(index)+'.', bold=True)} "
+                f"{chapter_dir.name:<32} "
+                f"{c('muted', marker)}"
+            )
+
+        raw = input(
+            c(
+                "prompt",
+                "\nCapítulos (1,2,5 ou 1,3,5-9,12 ou todos) › ",
+                bold=True,
+            )
+        )
+
+        selected = [
+            chapters[index - 1]
+            for index in parse_selection(raw, len(chapters))
+        ]
 
     if not selected:
-        print(c("error", "Nenhum capítulo selecionado."))
+        print(c("warning", "Nenhum capítulo sem PDF encontrado."))
         return
 
-    existing = [chapter for chapter in selected if _pdf_path(chapter).exists()]
+    existing = [
+        chapter
+        for chapter in selected
+        if _pdf_path(chapter).exists()
+    ]
+
     regenerate = False
+
     if existing:
         print(c("warning", "Alguns capítulos já possuem PDF."))
+
         for chapter in existing:
             print(c("muted", f"└─ {chapter.name}"))
-        regenerate = ask_number("\nRegenerar PDFs existentes? 1=Sim 2=Não › ", {1, 2}) == 1
 
-    summary = run_pdf_batch(selected, regenerate_existing=regenerate)
+        regenerate = (
+            ask_number(
+                "\nRegenerar PDFs existentes? 1=Sim 2=Não › ",
+                {1, 2},
+            )
+            == 1
+        )
+
+    summary = run_pdf_batch(
+        selected,
+        regenerate_existing=regenerate,
+    )
+
     print_header("RESUMO")
     print(c("muted", f"Selecionados: {summary['selected']}"))
     print(c("success", f"Gerados: {len(summary['generated'])}"))
     print(c("warning", f"Já existentes: {len(summary['skipped'])}"))
-    print(c("error" if summary["validation_failed"] else "success", f"Falha de validação: {len(summary['validation_failed'])}"))
-    print(c("error" if summary["generation_failed"] else "success", f"Falha de geração: {len(summary['generation_failed'])}"))
+    print(
+        c(
+            "error" if summary["validation_failed"] else "success",
+            f"Falha de validação: {len(summary['validation_failed'])}",
+        )
+    )
+    print(
+        c(
+            "error" if summary["generation_failed"] else "success",
+            f"Falha de geração: {len(summary['generation_failed'])}",
+        )
+    )
+
     if summary["problems"]:
         print(c("error", "Problemas:"))
         for chapter, message in summary["problems"]:
