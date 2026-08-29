@@ -134,7 +134,17 @@ def _has_images(directory: Path) -> bool:
 def list_manga_dirs(output_dir: Path = MANGAGO_OUTPUT_DIR) -> list[Path]:
     if not output_dir.exists():
         return []
-    return sorted((path for path in output_dir.iterdir() if path.is_dir()), key=_natural_key)
+
+    mangas: list[Path] = []
+    for path in output_dir.iterdir():
+        if not path.is_dir():
+            continue
+        if path.name.lower() in {"mangago", "comix"}:
+            mangas.extend(child for child in path.iterdir() if child.is_dir())
+        else:
+            mangas.append(path)
+
+    return sorted(mangas, key=_natural_key)
 
 
 def list_chapter_dirs(manga_dir: Path) -> list[Path]:

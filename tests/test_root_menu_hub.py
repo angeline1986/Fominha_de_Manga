@@ -70,6 +70,23 @@ class RootMenuHubTests(unittest.TestCase):
 
         self.assertEqual(choice, 0)
 
+    def test_list_manga_dirs_supports_provider_subfolders(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / "output"
+            mangago = output / "mangago" / "Mangago Work"
+            comix = output / "comix" / "Comix Work"
+            legacy = output / "Legacy Work"
+            mangago.mkdir(parents=True)
+            comix.mkdir(parents=True)
+            legacy.mkdir(parents=True)
+
+            mangas = root_menu.list_manga_dirs(output)
+
+        self.assertEqual(
+            [manga.name for manga in mangas],
+            ["Comix Work", "Legacy Work", "Mangago Work"],
+        )
+
     def test_list_chapter_dirs_returns_only_chapters_with_images(self):
         with tempfile.TemporaryDirectory() as tmp:
             manga = Path(tmp) / "Manga"
