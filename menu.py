@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
+from image_stitcher import run_merge_flow
 from pdf_divergence_review import run_divergence_review
 from pdf_batch_validation import (
     IMAGE_EXTENSIONS,
@@ -543,6 +544,16 @@ def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
             print(c("muted", f"└─ {chapter.name}: {message}"))
 
 
+
+def manual_merge_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
+    run_merge_flow(
+        output_dir,
+        ask_number=ask_number,
+        print_header=print_header,
+        print_option=print_option,
+        c=c,
+    )
+
 def print_header(title: str = "FOMINHA DE MANGA") -> None:
     print()
     print(c("number", title, bold=True))
@@ -559,6 +570,11 @@ def build_menu() -> tuple[MenuSection, ...]:
         MenuSection(
             "PDF",
             (MenuItem(2, "Gerar PDFs", "Gerar PDFs de capítulos baixados", manual_pdf_flow, "item_pdf"),),
+            "sec_pdf",
+        ),
+        MenuSection(
+            "FLUXO SECUNDÁRIO",
+            (MenuItem(3, "Unificar imagens", "Gerar imagens verticais pelo Merge V3", manual_merge_flow, "item_pdf"),),
             "sec_pdf",
         ),
     )
