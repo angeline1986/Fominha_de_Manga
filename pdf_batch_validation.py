@@ -1,6 +1,7 @@
 """Validation helpers for the manual batch PDF generator."""
 from __future__ import annotations
 
+import json
 import math
 import re
 from dataclasses import dataclass, field
@@ -167,6 +168,91 @@ def validate_chapter_images(chapter_dir: Path, expected_total: int | None = None
 def count_pdf_pages(pdf_path: Path) -> int:
     data = pdf_path.read_bytes()
     return len(_PDF_PAGE_RE.findall(data))
+
+
+def validation_report_path(chapter_dir: Path) -> Path:
+    """Return the diagnostic report path for a chapter."""
+    chapter = Path(chapter_dir)
+
+    if chapter.parent.name == "IMG":
+        manga_dir = chapter.parent.parent
+    else:
+        manga_dir = chapter.parent
+
+    return manga_dir / "reports" / f"{chapter.name}.validation.json"
+
+
+def _metadata_payload(metadata: Sequence[ImageMetadata]) -> list[dict[str, object]]:
+    return [
+        {
+            "file": item.path.name,
+            "width": item.width,
+            "height": item.height,
+            "format": item.format,
+            "mode": item.mode,
+            "pdf_width": round(item.pdf_width, 2),
+            "pdf_height": round(item.pdf_height, 2),
+        }
+        for item in metadata
+    ]
+
+
+def write_validation_report(
+    chapter_dir: Path,
+    issue_type: str,
+    *,
+    message: str,
+    validation: ValidationResult | None = None,
+    pdf_validation: PdfValidationResult | None = None,
+) -> Path:
+    """Persist structured evidence for a chapter/PDF divergence."""
+    chapter = Path(chapter_dir)
+    report = validation_report_path(chapter)
+    report.parent.mkdir(parents=True, exist_ok=True)
+
+    payload: dict[str, object] = {
+        "chapter": chapter.name,
+        "issue_type": issue_type,
+        "message": message,
+        "pdf_generated": bool(
+            pdf_validation is not None
+            and pdf_validation.path.exists()
+        ),
+    }
+
+    if validation is not None:
+        payload["images"] = {
+            "expected": validation.expected_total,
+            "found": validation.image_count,
+            "errors": list(validation.errors),
+            "metadata": _metadata_payload(validation.metadata),
+        }
+
+    if pdf_validation is not None:
+        payload["pdf"] = {
+            "path": str(pdf_validation.path),
+            "expected_pages": (
+                validation.image_count
+                if validation is not None
+                else None
+            ),
+            "found_pages": pdf_validation.page_count,
+            "errors": list(pdf_validation.errors),
+            "size_bytes": (
+                pdf_validation.path.stat().st_size
+                if pdf_validation.path.exists()
+                else None
+            ),
+        }
+
+    temporary = report.with_name(f"{report.name}.tmp")
+    temporary.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    temporary.replace(report)
+
+    return report
 
 
 def validate_pdf_output(pdf_path: Path, expected_pages: int) -> PdfValidationResult:

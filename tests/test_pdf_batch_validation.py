@@ -118,6 +118,180 @@ class PdfBatchValidationTests(unittest.TestCase):
 
         self.assertTrue(result.ok, result.errors)
 
+    def test_in_progress_marker_blocks_pdf_generation(self):
+        import json
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manga = Path(tmp) / "Manga"
+            chapter = manga / "IMG" / "Ch. 1"
+            chapter.mkdir(parents=True)
+
+            write_image(chapter / "page-001.png")
+            (chapter / ".download-in-progress.json").write_text(
+                json.dumps({
+                    "status": "downloading",
+                    "expected_pages": 3,
+                }),
+                encoding="utf-8",
+            )
+
+            converter = MagicMock()
+
+            with patch.object(
+                menu,
+                "_import_convert_to_pdf",
+                return_value=converter,
+            ):
+                summary = menu.run_pdf_batch([chapter])
+
+            report = (
+                manga
+                / "reports"
+                / "Ch. 1.validation.json"
+            )
+
+            converter.assert_not_called()
+            self.assertEqual(
+                summary["validation_failed"][0][0],
+                chapter,
+            )
+            self.assertTrue(report.is_file())
+
+            payload = json.loads(
+                report.read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                payload["issue_type"],
+                "download_not_completed",
+            )
+
+    def test_complete_marker_uses_expected_page_count(self):
+        import json
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manga = Path(tmp) / "Manga"
+            chapter = manga / "IMG" / "Ch. 1"
+            chapter.mkdir(parents=True)
+
+            write_image(chapter / "page-001.png")
+            write_image(chapter / "page-002.png")
+
+            (chapter / ".download-complete.json").write_text(
+                json.dumps({
+                    "status": "completed",
+                    "expected_pages": 3,
+                }),
+                encoding="utf-8",
+            )
+
+            converter = MagicMock()
+
+            with patch.object(
+                menu,
+                "_import_convert_to_pdf",
+                return_value=converter,
+            ):
+                summary = menu.run_pdf_batch([chapter])
+
+            report = (
+                manga
+                / "reports"
+                / "Ch. 1.validation.json"
+            )
+
+            converter.assert_not_called()
+            self.assertEqual(
+                summary["validation_failed"][0][0],
+                chapter,
+            )
+
+            payload = json.loads(
+                report.read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                payload["issue_type"],
+                "image_validation_failed",
+            )
+            self.assertEqual(
+                payload["images"]["expected"],
+                3,
+            )
+            self.assertEqual(
+                payload["images"]["found"],
+                2,
+            )
+
+    def test_legacy_chapter_without_markers_remains_supported(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            chapter = Path(tmp) / "Ch. 1"
+            chapter.mkdir()
+
+            write_image(chapter / "page-001.png")
+            pdf = chapter / "Ch. 1.pdf"
+
+            def convert(chapter_dir):
+                write_pdf(pdf)
+                return str(pdf)
+
+            converter = MagicMock(side_effect=convert)
+
+            with patch.object(
+                menu,
+                "_import_convert_to_pdf",
+                return_value=converter,
+            ):
+                summary = menu.run_pdf_batch([chapter])
+
+            converter.assert_called_once_with(str(chapter))
+            self.assertEqual(
+                summary["generated"],
+                [chapter],
+            )
+
+    def test_invalid_complete_marker_blocks_pdf_generation(self):
+        import json
+
+        with tempfile.TemporaryDirectory() as tmp:
+            manga = Path(tmp) / "Manga"
+            chapter = manga / "IMG" / "Ch. 1"
+            chapter.mkdir(parents=True)
+
+            write_image(chapter / "page-001.png")
+
+            (chapter / ".download-complete.json").write_text(
+                "{invalid-json",
+                encoding="utf-8",
+            )
+
+            converter = MagicMock()
+
+            with patch.object(
+                menu,
+                "_import_convert_to_pdf",
+                return_value=converter,
+            ):
+                summary = menu.run_pdf_batch([chapter])
+
+            report = (
+                manga
+                / "reports"
+                / "Ch. 1.validation.json"
+            )
+
+            converter.assert_not_called()
+            self.assertEqual(
+                summary["validation_failed"][0][0],
+                chapter,
+            )
+
+            payload = json.loads(
+                report.read_text(encoding="utf-8")
+            )
+            self.assertEqual(
+                payload["issue_type"],
+                "download_state_invalid",
+            )
+
     def test_valid_chapter_calls_convert_to_pdf(self):
         with tempfile.TemporaryDirectory() as tmp:
             chapter = Path(tmp) / "Ch. 1"

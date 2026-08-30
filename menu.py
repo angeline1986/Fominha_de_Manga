@@ -2,6 +2,7 @@
 """Root menu hub for projects under Fominha_de_Manga."""
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -10,7 +11,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
-from pdf_batch_validation import IMAGE_EXTENSIONS, validate_chapter_images, validate_pdf_output
+from pdf_divergence_review import run_divergence_review
+from pdf_batch_validation import (
+    IMAGE_EXTENSIONS,
+    validate_chapter_images,
+    validate_pdf_output,
+    write_validation_report,
+)
 
 
 ROOT_DIR = Path(__file__).resolve().parent
@@ -206,6 +213,30 @@ def _pdf_path(chapter_dir: Path) -> Path:
     return chapter_dir / f"{chapter_dir.name}.pdf"
 
 
+def _completion_marker_path(chapter_dir: Path) -> Path:
+    return chapter_dir / ".download-complete.json"
+
+
+def _in_progress_marker_path(chapter_dir: Path) -> Path:
+    return chapter_dir / ".download-in-progress.json"
+
+
+def _expected_pages_from_marker(chapter_dir: Path) -> int | None:
+    marker = _completion_marker_path(chapter_dir)
+    if not marker.is_file():
+        return None
+
+    try:
+        payload = json.loads(marker.read_text(encoding="utf-8"))
+        if payload.get("status") != "completed":
+            return None
+        expected = int(payload.get("expected_pages") or 0)
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return None
+
+    return expected if expected > 0 else None
+
+
 def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -> dict[str, list[Path | tuple[Path, str]] | int]:
     convert_to_pdf = _import_convert_to_pdf()
     summary: dict[str, list[Path | tuple[Path, str]] | int] = {
@@ -225,13 +256,66 @@ def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -
             print(c("warning", f"PDF existente: {chapter_dir.name}"))
             continue
 
-        validation = validate_chapter_images(chapter_dir)
+        in_progress_marker = _in_progress_marker_path(chapter_dir)
+        complete_marker = _completion_marker_path(chapter_dir)
+
+        if in_progress_marker.is_file():
+            message = (
+                "Download deste capítulo ainda está em andamento. "
+                "A geração do PDF foi bloqueada."
+            )
+            failure = (chapter_dir, message)
+            summary["validation_failed"].append(failure)
+            summary["failed"].append(failure)
+            summary["problems"].append(failure)
+            write_validation_report(
+                chapter_dir,
+                "download_not_completed",
+                message=message,
+            )
+            print(c("error", f"PDF bloqueado: {chapter_dir.name} - {message}"))
+            continue
+
+        expected_pages = _expected_pages_from_marker(chapter_dir)
+
+        if complete_marker.is_file() and expected_pages is None:
+            message = (
+                "Estado de conclusão do capítulo está inválido ou ilegível. "
+                "A geração do PDF foi bloqueada."
+            )
+            failure = (chapter_dir, message)
+            summary["validation_failed"].append(failure)
+            summary["failed"].append(failure)
+            summary["problems"].append(failure)
+            write_validation_report(
+                chapter_dir,
+                "download_state_invalid",
+                message=message,
+            )
+            print(c("error", f"PDF bloqueado: {chapter_dir.name} - {message}"))
+            continue
+
+        if expected_pages is not None:
+            validation = validate_chapter_images(
+                chapter_dir,
+                expected_total=expected_pages,
+            )
+        else:
+            # Compatibilidade com capítulos baixados antes da adoção
+            # dos marcadores persistentes de estado.
+            validation = validate_chapter_images(chapter_dir)
         if not validation.ok:
             message = "; ".join(validation.errors)
             failure = (chapter_dir, message)
             summary["validation_failed"].append(failure)
             summary["failed"].append(failure)
             summary["problems"].append(failure)
+            write_validation_report(
+                chapter_dir,
+                "image_validation_failed",
+                message=message,
+                validation=validation,
+            )
             print(c("error", f"Falha de validação: {chapter_dir.name} - {message}"))
             continue
 
@@ -261,6 +345,23 @@ def run_pdf_batch(chapters: Sequence[Path], regenerate_existing: bool = False) -
             summary["generation_failed"].append(failure)
             summary["failed"].append(failure)
             summary["problems"].append(failure)
+
+            if (
+                pdf_validation.page_count is not None
+                and pdf_validation.page_count != validation.image_count
+            ):
+                issue_type = "pdf_page_count_mismatch"
+            else:
+                issue_type = "pdf_validation_failed"
+
+            write_validation_report(
+                chapter_dir,
+                issue_type,
+                message=message,
+                validation=validation,
+                pdf_validation=pdf_validation,
+            )
+
             print(c("error", f"Falha de validação do PDF: {chapter_dir.name} - {message}"))
             continue
 
@@ -332,10 +433,6 @@ def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     manga_dir = mangas[manga_choice - 1]
 
     chapters = list_chapter_dirs(manga_dir)
-    if not chapters:
-        print(c("error", "Nenhum capítulo com imagens encontrado."))
-        print(c("muted", f"└─ {manga_dir / 'IMG'}"))
-        return
 
     print_header(manga_dir.name.upper())
     print_option(1, "Todos os capítulos")
@@ -344,10 +441,21 @@ def manual_pdf_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     print()
     print_option(3, "Selecionar capítulos")
     print()
+    print_option(4, "Validar divergências")
+    print()
     print(f"  {c('number', '0.', bold=True)} Voltar")
 
-    mode = ask_number("\nSelecione uma opção › ", range(0, 4))
+    mode = ask_number("\nSelecione uma opção › ", range(0, 5))
     if mode == 0:
+        return
+
+    if mode == 4:
+        run_divergence_review(manga_dir, ask_number=ask_number, print_header=print_header, c=c)
+        return
+
+    if not chapters:
+        print(c("error", "Nenhum capítulo com imagens encontrado."))
+        print(c("muted", f"└─ {manga_dir / 'IMG'}"))
         return
 
     selected = chapters
