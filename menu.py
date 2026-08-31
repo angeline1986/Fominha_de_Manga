@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
 from image_stitcher import run_merge_flow
+from image_stitcher_review import run_merge_review_flow
 from bubble_cleaner_flow import run_clean_flow
 from pdf_divergence_review import run_divergence_review
 from pdf_batch_validation import (
@@ -131,6 +132,16 @@ def open_mangago_web() -> None:
     print(c("muted", f"└─ {cwd}"))
     subprocess.run(command, cwd=cwd, env=env, check=False)
 
+
+
+def open_processing_web() -> None:
+    server = ROOT_DIR / "processing_web.py"
+    if not server.is_file():
+        print(c("error", "Central de Processamento não encontrada."))
+        return
+    print(c("success", "Abrindo Central de Processamento Web..."))
+    print(c("muted", "└─ http://127.0.0.1:8766"))
+    subprocess.run([sys.executable, str(server)], cwd=ROOT_DIR, check=False)
 
 def _natural_key(path: Path) -> list[object]:
     return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", path.name)]
@@ -559,6 +570,16 @@ def manual_merge_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
 def manual_clean_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     run_clean_flow(output_dir, ask_number=ask_number, print_header=print_header, print_option=print_option, c=c)
 
+def manual_merge_review_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
+    run_merge_review_flow(
+        output_dir,
+        ask_number=ask_number,
+        print_header=print_header,
+        print_option=print_option,
+        c=c,
+    )
+
+
 def print_header(title: str = "FOMINHA DE MANGA") -> None:
     print()
     print(c("number", title, bold=True))
@@ -573,6 +594,11 @@ def build_menu() -> tuple[MenuSection, ...]:
             "sec_download",
         ),
         MenuSection(
+            "PROCESSAMENTO",
+            (MenuItem(6, "Central de Processamento", "Abrir servidor Web", open_processing_web, "item_pdf"),),
+            "sec_pdf",
+        ),
+        MenuSection(
             "PDF",
             (MenuItem(2, "Gerar PDFs", "Gerar PDFs de capítulos baixados", manual_pdf_flow, "item_pdf"),),
             "sec_pdf",
@@ -582,6 +608,7 @@ def build_menu() -> tuple[MenuSection, ...]:
             (
                 MenuItem(3, "Unificar imagens", "Gerar imagens verticais pelo Merge V3", manual_merge_flow, "item_pdf"),
                 MenuItem(4, "Limpar balões", "Limpar textos de balões com Bubble Cleaner V3.5", manual_clean_flow, "item_pdf"),
+                MenuItem(5, "Tratar merges pendentes", "Propor e revisar exceções sem alterar o Merge V3", manual_merge_review_flow, "item_pdf"),
             ),
             "sec_pdf",
         ),
