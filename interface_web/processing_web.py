@@ -52,7 +52,13 @@ def catalog():
     return out
 
 
+
+
 def review_merge_items(manga, ch):
+    """
+    Mapeia cada merged-xxx para as páginas que entram no merge e para uma
+    janela de análise de até max_source_images, incluindo contexto após o corte.
+    """
     rd = rdir(manga, ch.name)
     mf = rd / "merge-review.json"
     if not mf.is_file():
@@ -61,38 +67,96 @@ def review_merge_items(manga, ch):
         payload = json.loads(mf.read_text(encoding="utf-8"))
         boundaries = [int(x) for x in (payload.get("boundaries") or [])]
         outputs = sorted(rd.glob("merged-*.png"), key=nkey)
+        policy = payload.get("policy") or {}
+        try:
+            max_sources = int(policy.get("max_source_images") or 8)
+        except (TypeError, ValueError):
+            max_sources = 8
+        max_sources = max(2, min(50, max_sources))
+
         if len(boundaries) != len(outputs) + 1:
-            return [{"file":p.name,"index":i+1,"sources":[]} for i,p in enumerate(outputs)]
+            return [{"file":p.name,"index":i+1,"sources":[],"source_spans":[],
+                     "analysis_sources":[],"analysis_limit":max_sources}
+                    for i,p in enumerate(outputs)]
 
         source_names = payload.get("source_pages") or []
         source_dir = manga / "IMG" / ch.name
         spans = []
         y = 0
         from PIL import Image
-        for name in source_names:
+        for source_index, name in enumerate(source_names):
             p = source_dir / name
             if not p.is_file():
                 continue
             with Image.open(p) as im:
                 h = int(im.height)
-            spans.append((name, y, y + h))
+            spans.append({
+                "file": name,
+                "source_index": source_index,
+                "global_start": y,
+                "global_end": y + h,
+                "height": h,
+            })
             y += h
 
         items = []
         for i, out in enumerate(outputs):
             start, end = boundaries[i], boundaries[i + 1]
-            sources = [name for name, a, b in spans if min(end, b) > max(start, a)]
+            source_spans = []
+            for sp in spans:
+                a, b = sp["global_start"], sp["global_end"]
+                overlap_start = max(start, a)
+                overlap_end = min(end, b)
+                if overlap_end <= overlap_start:
+                    continue
+                source_spans.append({
+                    "file": sp["file"],
+                    "source_index": sp["source_index"],
+                    "merge_start": overlap_start - start,
+                    "merge_end": overlap_end - start,
+                    "source_start": overlap_start - a,
+                    "source_end": overlap_end - a,
+                    "source_height": sp["height"],
+                })
+
+            included_indexes = {x["source_index"] for x in source_spans}
+            first_index = source_spans[0]["source_index"] if source_spans else 0
+            window = [sp for sp in spans
+                      if first_index <= sp["source_index"] < first_index + max_sources]
+
+            analysis_sources = [{
+                "file": sp["file"],
+                "source_index": sp["source_index"],
+                "included": sp["source_index"] in included_indexes,
+                "height": sp["height"],
+            } for sp in window]
+
             items.append({
                 "file": out.name,
                 "index": i + 1,
                 "global_start": start,
                 "global_end": end,
-                "sources": sources,
+                "sources": [x["file"] for x in source_spans],
+                "source_spans": source_spans,
+                "analysis_sources": analysis_sources,
+                "analysis_limit": max_sources,
+                "included_count": sum(1 for x in analysis_sources if x["included"]),
+                "context_count": sum(1 for x in analysis_sources if not x["included"]),
             })
         return items
     except Exception as exc:
         print(f"[processing-web] Falha ao mapear fontes do review cap {ch.name}: {exc}")
         return []
+
+def review_max_source_images(rd):
+    mf=rd/"merge-review.json"
+    if not mf.is_file(): return None
+    try:
+        payload=json.loads(mf.read_text(encoding="utf-8"))
+        value=(payload.get("policy") or {}).get("max_source_images")
+        return int(value) if value is not None else None
+    except Exception:
+        return None
 
 def row_state(manga,ch):
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
@@ -115,6 +179,7 @@ def row_state(manga,ch):
         "review_images":len(list(rd.glob("merged-*.png"))) if rd.is_dir() else 0,
         "review_files":[p.name for p in sorted(rd.glob("merged-*.png"),key=nkey)] if rd.is_dir() else [],
         "review_merges":review_merge_items(manga,ch),
+        "review_max_source_images":review_max_source_images(rd),
         "clean":(cdir(manga,ch.name)/"clean-manifest.json").is_file(),
         "pdf":(manga/"PDF"/ch.name/f"{ch.name}.pdf").is_file(),
         "pdf_merge":(pmdir(manga,ch.name)/f"{ch.name}.pdf").is_file(),
@@ -157,7 +222,7 @@ def run_job(job,payload):
             elif job.action=="pdf": job.result=do_pdf(job,chs)
             elif job.action=="pdf_merge": job.result=do_pdf_merge(job,manga,chs)
             elif job.action=="clean": job.result=do_clean(job,manga,chs)
-            elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs)
+            elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
             elif job.action=="review_approve": job.result=do_review_approve(job,manga,chs)
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
             else: raise ValueError("Ação inválida.")
@@ -242,11 +307,19 @@ def reviewmod():
     from processamento.unificacao_imagens import image_stitcher_review
     return image_stitcher_review
 
-def do_review_generate(job,manga,chs):
+def do_review_generate(job,manga,chs,max_source_images=None):
     rv=reviewmod(); out=[]
+    try:
+        limit=int(max_source_images) if max_source_images is not None else 8
+    except (TypeError,ValueError):
+        raise ValueError("Máximo de imagens por merge inválido.")
+    if not 2 <= limit <= 50:
+        raise ValueError("Máximo de imagens por merge deve ficar entre 2 e 50.")
     for i,ch in enumerate(chs,1):
-        job.message=f"Gerando proposta para capítulo {ch.name}..."
-        ok,msg,dest=rv.generate_candidate(manga,ch); out.append({"chapter":ch.name,"status":"ok" if ok else "error","message":msg,"path":str(dest) if dest else None}); job.progress=i
+        job.message=f"Gerando proposta para capítulo {ch.name} · máximo {limit} originais/merge..."
+        ok,msg,dest=rv.generate_candidate(manga,ch,max_source_images=limit)
+        out.append({"chapter":ch.name,"status":"ok" if ok else "error","message":msg,"path":str(dest) if dest else None,"max_source_images":limit})
+        job.progress=i
     return out
 
 def do_review_approve(job,manga,chs):

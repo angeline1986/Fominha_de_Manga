@@ -15,7 +15,18 @@ function appModal({title,message="",chips=[],details=[],confirm=false,confirmTex
   });
 }
 async function askAppModal(title,message,confirmText="Confirmar"){return appModal({title,message,confirm:true,confirmText})}
-async function init(){cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");$("#badge").textContent=data.summary.merge_failed||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><div class="caption">PROCESSAMENTO</div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div>`}function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente").slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES</span></div><div class="kpi"><b>${s.new??0}</b><span>NOVOS</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· PENDENTE</span></b><div class="muted">Merge V3 ainda não concluído.</div></div><button class="btn primary" onclick="goReview('${esc(x.chapter)}')">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+function applySidebarState(){
+  let collapsed=localStorage.getItem("fominha.sidebar.collapsed")==="1";
+  document.body.classList.toggle("sidebar-collapsed",collapsed);
+  let b=$("#sidebarToggle");if(b)b.setAttribute("aria-expanded",String(!collapsed));
+}
+function toggleSidebar(){
+  let collapsed=!document.body.classList.contains("sidebar-collapsed");
+  document.body.classList.toggle("sidebar-collapsed",collapsed);
+  localStorage.setItem("fominha.sidebar.collapsed",collapsed?"1":"0");
+  let b=$("#sidebarToggle");if(b)b.setAttribute("aria-expanded",String(!collapsed));
+}
+async function init(){applySidebarState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");$("#badge").textContent=data.summary.merge_failed||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><div class="caption">PROCESSAMENTO</div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div>`}function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente").slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES</span></div><div class="kpi"><b>${s.new??0}</b><span>NOVOS</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· PENDENTE</span></b><div class="muted">Merge V3 ainda não concluído.</div></div><button class="btn primary" onclick="goReview('${esc(x.chapter)}')">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
   if(x.merge_state==="pendente"||x.merge_failed)return {cls:"warn",text:"Pendente"};
@@ -47,12 +58,25 @@ function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.
  let x=list.find(z=>String(z.chapter)===String(reviewCh))||list[0];reviewCh=x.chapter;
  if(window.reviewExpandedChapter===undefined)window.reviewExpandedChapter=x.chapter;
  let merges=x.review_merges||[],files=x.review_files||[];
+ let proposedLimit=Number(x.review_max_source_images||window.reviewMaxSources||8);
+ if(!Number.isFinite(proposedLimit)||proposedLimit<2)proposedLimit=8;
+ window.reviewMaxSources=proposedLimit;
  let i=Math.min(Math.max(0,Number.isFinite(Number(window.reviewImageIndex))?Number(window.reviewImageIndex):0),Math.max(0,files.length-1));
  window.reviewImageIndex=i;if(!Number.isFinite(Number(window.reviewZoom)))window.reviewZoom=1;
  let current=merges[i]||{file:files[i]||"",index:i+1,sources:[]};
  let reviewUrl=f=>`/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=review&chapter=${encodeURIComponent(x.chapter)}&file=${encodeURIComponent(f)}`;
  let sourceUrl=f=>`/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=source&chapter=${encodeURIComponent(x.chapter)}&file=${encodeURIComponent(f)}`;
- let sourceThumbs=(current.sources||[]).map(f=>`<button class="rv-source" title="${esc(f)}"><img src="${sourceUrl(f)}" alt="${esc(f)}" onerror="this.hidden=true;this.nextElementSibling.classList.add('show')"><span class="rv-source-err">!</span><small>${esc(f)}</small></button>`).join("");
+ let analysisSources=(current.analysis_sources&&current.analysis_sources.length)
+   ? current.analysis_sources
+   : (current.sources||[]).map((f,n)=>({file:f,included:true,source_index:n}));
+ let firstContext=analysisSources.findIndex(src=>!src.included);
+ let sourceThumbs=analysisSources.map((src,n)=>{
+   let separator=(n===firstContext&&firstContext>=0)?`<div class="rv-thumb-cut"><span>CORTE</span></div>`:"";
+   let state=src.included?"included":"context";
+   return `${separator}<button class="rv-source ${state}" title="${esc(src.file)}" onclick="rvOpenSourcePreview('${sourceUrl(src.file)}','${esc(src.file)}',${src.included?'true':'false'})"><img src="${sourceUrl(src.file)}" alt="${esc(src.file)}" onerror="this.hidden=true;this.nextElementSibling.classList.add('show')"><span class="rv-source-err">!</span><small>${esc(src.file)}</small><em>${src.included?"ENTRA":"CONTEXTO"}</em></button>`;
+ }).join("");
+ let contextSources=analysisSources.filter(src=>!src.included);
+ let contextPreview=contextSources.map(src=>`<div class="rv-context-piece" data-source-file="${esc(src.file)}"><div class="rv-context-name">${esc(src.file)} · fora deste merge</div><img class="rv-context-image" src="${sourceUrl(src.file)}" alt="${esc(src.file)}" onload="rvSyncSourceLabel()"></div>`).join("");
  let chapters=list.map(z=>{
    let open=String(z.chapter)===String(window.reviewExpandedChapter);
    let items=z.review_merges||[],count=items.length||z.review_images||0;
@@ -63,16 +87,151 @@ function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.
    </div>`;
  }).join("");
 
- r.innerHTML=`<section class="rv"><header class="rv-head"><div><span class="eyebrow">REVISÃO VISUAL</span><h1>${esc(data.manga)} · cap ${esc(x.chapter)}</h1><p>A proposta só se torna oficial após aprovação.</p></div><div class="rv-actions">${x.review?`<button class="btn danger" onclick="reviewDecision('reject','${esc(x.chapter)}')">Rejeitar</button><button class="btn" onclick="reviewDecision('review','${esc(x.chapter)}')">Regenerar</button><button class="btn primary" onclick="reviewDecision('approve','${esc(x.chapter)}')">Aprovar merge</button>`:`<button class="btn primary" onclick="reviewDecision('review','${esc(x.chapter)}')">Gerar merge proposto</button>`}</div></header>
- ${x.review?`<div class="rv-layout"><main class="rv-view"><div class="rv-canvas"><button class="rv-nav" onclick="rvMove(-1)" ${i<=0?"disabled":""}>&lt;&lt;</button><div class="rv-stage">${current.file?`<img id="rvMain" src="${reviewUrl(current.file)}" style="transform:scale(${window.reviewZoom||1})" onerror="this.hidden=true;document.querySelector('#rvMainErr').classList.add('show')">`:""}<div id="rvMainErr" class="rv-mainerr ${current.file?"":"show"}">Falha ao carregar esta imagem</div></div><button class="rv-nav" onclick="rvMove(1)" ${i>=files.length-1?"disabled":""}>&gt;&gt;</button><span class="rv-count">${files.length?i+1:0} / ${files.length}</span><div class="rv-zoom"><button onclick="rvZoom(-.15)">−</button><b id="rvPct">${Math.round((window.reviewZoom||1)*100)}%</b><button onclick="rvZoom(.15)">+</button></div></div></main>
- <aside class="rv-side"><section><span class="eyebrow">IMAGENS DA PROPOSTA</span><div class="rv-source-summary"><b>${current.file||"merge"}</b><span>${(current.sources||[]).length} imagem(ns) de origem</span></div><div class="rv-source-thumbs">${sourceThumbs||`<div class="rv-source-empty">Mapeamento das imagens de origem indisponível.</div>`}</div><p>Somente as imagens originais que compõem o merge atualmente exibido.</p></section><section><span class="eyebrow">PRÓXIMOS PENDENTES</span><div class="rv-chapters">${chapters}</div></section></aside></div>`:`<div class="rv-empty"><h2>Capítulo ${esc(x.chapter)}</h2><p>Gere uma proposta alternativa para iniciar a revisão visual.</p></div>`}</section>`;
+ r.innerHTML=`<section class="rv">
+ <header class="rv-head"><div><span class="eyebrow">REVISÃO VISUAL</span><h1>${esc(data.manga)} · cap ${esc(x.chapter)}</h1></div></header>
+ ${x.review?`
+ <section class="rv-source-strip">
+   <div class="rv-source-strip-head">
+     <div><span class="eyebrow">IMAGENS DA PROPOSTA</span><b>${current.file||"merge"}</b></div>
+     <span>${analysisSources.length} imagem(ns) analisada(s) · ${(current.sources||[]).length} entram no merge</span>
+   </div>
+   <div class="rv-source-thumbs">${sourceThumbs||`<div class="rv-source-empty">Mapeamento das imagens de origem indisponível.</div>`}</div>
+ </section>
+ <div class="rv-layout">
+   <main class="rv-view"><div class="rv-canvas">
+     
+     <div class="rv-current-source-bar"><b id="rvSourceName">—</b></div><div class="rv-stage" id="rvStage" onscroll="rvSyncSourceLabel()"><div id="rvPreviewStack" class="rv-preview-stack" style="transform:scale(${window.reviewZoom||1})">${current.file?`<img id="rvMain" class="rv-merged-image" src="${reviewUrl(current.file)}" onload="rvSyncSourceLabel()" onerror="this.hidden=true;document.querySelector('#rvMainErr').classList.add('show')">`:""}<div id="rvMainErr" class="rv-mainerr ${current.file?"":"show"}">Falha ao carregar esta imagem</div>${contextSources.length?`<div class="rv-cut-marker"><span>FIM SUGERIDO DO MERGE</span><small>corte seguro encontrado aqui</small></div><div class="rv-context-zone">${contextPreview}<div class="rv-context-note">FORA DESTE MERGE<br><small>permanece para o próximo merge</small></div></div>`:""}</div></div>
+     
+     <span class="rv-count">${files.length?i+1:0} / ${files.length}</span>
+     <div class="rv-zoom"><button onclick="rvZoom(-.10)">−</button><b id="rvPct">${Math.round((window.reviewZoom||1)*100)}%</b><button onclick="rvZoom(.10)">+</button><button class="rv-fit" onclick="rvFitWidth()">Ajustar à largura</button></div>
+   </div></main>
+   <aside class="rv-side">
+     <section class="rv-control-panel rv-config-technical">
+       <div class="rv-config-title"><span class="eyebrow">CONFIGURAÇÃO DA PROPOSTA</span><span class="rv-review-badge">Review</span></div>
+       <div class="rv-config-row">
+         <div class="rv-config-copy"><strong>Máximo de originais</strong><span>Limite usado ao regenerar a proposta</span></div>
+         <div class="rv-stepper">
+           <button type="button" onclick="rvChangeMaxSources(-1)" aria-label="Diminuir máximo">−</button>
+           <div id="reviewMaxSourcesValue" class="rv-stepper-value">${proposedLimit}</div>
+           <button type="button" onclick="rvChangeMaxSources(1)" aria-label="Aumentar máximo">+</button>
+         </div>
+         <input id="reviewMaxSources" type="hidden" value="${proposedLimit}">
+       </div>
+       <div class="rv-config-separator"></div>
+       <div class="rv-actions rv-actions-pair">${x.review?`<button class="btn danger" onclick="reviewDecision('reject','${esc(x.chapter)}')">Rejeitar</button><button class="btn" onclick="reviewDecision('review','${esc(x.chapter)}')">Regenerar</button><button class="btn primary rv-approve-wide" onclick="reviewDecision('approve','${esc(x.chapter)}')">Aprovar merge</button>`:`<button class="btn primary rv-approve-wide" onclick="reviewDecision('review','${esc(x.chapter)}')">Gerar merge proposto</button>`}</div>
+     </section>
+     <section><span class="eyebrow">PRÓXIMOS PENDENTES</span><div class="rv-chapters">${chapters}</div></section>
+   </aside>
+ </div>`:`<div class="rv-empty"><h2>Capítulo ${esc(x.chapter)}</h2><p>Gere uma proposta alternativa para iniciar a revisão visual.</p></div>`}</section>`;
 }
 function rvSet(i){window.reviewImageIndex=i;window.reviewZoom=1;render()}
 function rvMove(d){let x=data.chapters.find(z=>String(z.chapter)===String(reviewCh)),n=x?.review_files?.length||0;window.reviewImageIndex=Math.min(Math.max(0,(window.reviewImageIndex||0)+d),Math.max(0,n-1));window.reviewZoom=1;render()}
 function rvChapter(c){reviewCh=c;window.reviewExpandedChapter=c;window.reviewImageIndex=0;window.reviewZoom=1;render()}
 function rvSelectMerge(c,i){reviewCh=c;window.reviewExpandedChapter=c;window.reviewImageIndex=i;window.reviewZoom=1;render()}
 function rvToggleChapter(c){window.reviewExpandedChapter=String(window.reviewExpandedChapter)===String(c)?null:c;render()}
-function rvZoom(d){let z=Number(window.reviewZoom);if(!Number.isFinite(z))z=1;window.reviewZoom=Math.min(3,Math.max(.4,z+d));let m=$("#rvMain"),p=$("#rvPct");if(m)m.style.transform=`scale(${window.reviewZoom})`;if(p)p.textContent=Math.round(window.reviewZoom*100)+"%"}
+function rvOpenSourcePreview(url,file,included){
+  let old=$("#rvSourceModal");if(old)old.remove();
+  window.rvModalZoomLevel=1;
+  let modal=document.createElement("div");
+  modal.id="rvSourceModal";modal.className="rv-source-modal";
+  modal.innerHTML=`<div class="rv-source-modal-card">
+    <header>
+      <div><b>${file}</b><span>${included?"Compõe o merge":"Contexto · fora deste merge"}</span></div>
+      <button onclick="document.querySelector('#rvSourceModal')?.remove()">×</button>
+    </header>
+    <div class="rv-source-modal-body" id="rvSourceModalBody">
+      <div class="rv-source-modal-stage" id="rvSourceModalStage">
+        <img id="rvSourceModalImg" src="${url}" alt="${file}">
+      </div>
+    </div>
+    <footer class="rv-source-modal-zoom">
+      <button onclick="rvModalZoom(-.10)">−</button>
+      <b id="rvModalPct">100%</b>
+      <button onclick="rvModalZoom(.10)">+</button>
+      <button class="rv-modal-fit" onclick="rvModalFit()">Ajustar</button>
+    </footer>
+  </div>`;
+  modal.addEventListener("click",e=>{if(e.target===modal)modal.remove()});
+  document.body.appendChild(modal);
+}
+function rvModalZoom(delta){
+  let img=$("#rvSourceModalImg"),pct=$("#rvModalPct");
+  if(!img)return;
+  let z=Number(window.rvModalZoomLevel)||1;
+  z=Math.min(3,Math.max(.1,z+delta));
+  window.rvModalZoomLevel=z;
+  img.style.transform=`scale(${z})`;
+  if(pct)pct.textContent=Math.round(z*100)+"%";
+}
+function rvModalFit(){
+  let body=$("#rvSourceModalBody"),img=$("#rvSourceModalImg"),pct=$("#rvModalPct");
+  if(!body||!img||!img.naturalWidth)return;
+  let z=Math.min(3,Math.max(.1,(body.clientWidth-32)/img.naturalWidth));
+  window.rvModalZoomLevel=z;
+  img.style.transform=`scale(${z})`;
+  if(pct)pct.textContent=Math.round(z*100)+"%";
+}
+
+function rvChangeMaxSources(delta){
+  let input=$("#reviewMaxSources"),value=$("#reviewMaxSourcesValue");
+  let current=parseInt(input?.value||window.reviewMaxSources||8,10);
+  if(!Number.isFinite(current))current=8;
+  current=Math.max(2,Math.min(50,current+delta));
+  window.reviewMaxSources=current;
+  if(input)input.value=current;
+  if(value)value.textContent=current;
+}
+
+function rvCurrentMerge(){let x=data.chapters.find(z=>String(z.chapter)===String(reviewCh));let i=Math.max(0,Number(window.reviewImageIndex)||0);return x?.review_merges?.[i]||null}
+function rvFitWidth(){let stage=$("#rvStage"),img=$("#rvMain"),stack=$("#rvPreviewStack");if(!stage||!img||!stack||!img.naturalWidth)return;let z=Math.min(3,Math.max(.1,Math.max(1,stage.clientWidth-24)/img.naturalWidth));window.reviewZoom=z;stack.style.transform=`scale(${z})`;let p=$("#rvPct");if(p)p.textContent=Math.round(z*100)+"%";setTimeout(rvSyncSourceLabel,0)}
+function rvHighlightCurrentSource(span){
+  const stage=$("#rvStage"), img=$("#rvMain");
+  if(!stage||!img||!span)return;
+  let band=$("#rvCurrentSourceBand");
+  if(!band){
+    band=document.createElement("div");
+    band.id="rvCurrentSourceBand";
+    band.className="rv-current-source-band";
+    stage.insertBefore(band,stage.firstChild);
+  }
+  const naturalH=Number(img.naturalHeight||0);
+  const renderedH=Number(img.getBoundingClientRect().height||0);
+  if(!naturalH||!renderedH){band.style.display="none";return;}
+  const scale=renderedH/naturalH;
+  const start=Number(span.merge_start ?? 0);
+  const end=Number(span.merge_end ?? start);
+  band.style.top=`${img.offsetTop + start*scale}px`;
+  band.style.height=`${Math.max(1,(end-start)*scale)}px`;
+  band.style.display="block";
+}
+
+function rvSyncSourceLabel(){
+  let stage=$("#rvStage"),img=$("#rvMain"),name=$("#rvSourceName"),merge=rvCurrentMerge();
+  if(!stage||!img||!name||!merge)return;
+
+  let center=stage.getBoundingClientRect().top+stage.clientHeight/2;
+  let contextEls=[...stage.querySelectorAll(".rv-context-piece")];
+  let contextHit=contextEls.find(el=>{
+    let r=el.getBoundingClientRect();
+    return center>=r.top&&center<r.bottom;
+  });
+  if(contextHit){
+    let file=contextHit.dataset.sourceFile||"";
+    name.textContent=file;
+    return;
+  }
+
+  let spans=merge.source_spans||[];
+  if(!spans.length){name.textContent="—";return}
+  let z=Number(window.reviewZoom)||1;
+  let visibleY=(stage.scrollTop+stage.clientHeight/2)/z;
+  let idx=spans.findIndex(sp=>visibleY>=sp.merge_start&&visibleY<sp.merge_end);
+  if(idx<0)idx=visibleY<spans[0].merge_start?0:spans.length-1;
+  let sp=spans[idx];
+  name.textContent=sp.file;
+  rvHighlightCurrentSource(sp);
+}
+function rvZoom(d){let z=Number(window.reviewZoom);if(!Number.isFinite(z))z=1;window.reviewZoom=Math.min(3,Math.max(.1,z+d));let m=$("#rvPreviewStack"),p=$("#rvPct");if(m)m.style.transform=`scale(${window.reviewZoom})`;if(p)p.textContent=Math.round(window.reviewZoom*100)+"%";setTimeout(rvSyncSourceLabel,0)}
 function openReviewImage(src,index=0){
   reviewViewerIndex=index;reviewViewerScale=1;
   let v=document.createElement("div");v.id="reviewViewer";v.className="review-viewer";
@@ -88,7 +247,23 @@ function reviewShow(i){let a=reviewViewerImages();if(!a.length)return;reviewView
 function reviewPrev(){reviewShow(reviewViewerIndex-1)}
 function reviewNext(){reviewShow(reviewViewerIndex+1)}
 function reviewViewerKey(e){if(e.key==="Escape")closeReviewImage();else if(e.key==="ArrowLeft")reviewPrev();else if(e.key==="ArrowRight")reviewNext();else if(e.key==="+")reviewZoom(.25);else if(e.key==="-")reviewZoom(-.25)}
-async function ract(a){if(a==="review_approve"&&!(await askAppModal("Aprovar merge","Você validou visualmente a proposta?","Aprovar")))return;if(a==="review_reject"&&!(await askAppModal("Rejeitar proposta","Remover somente MERGE_REVIEW?","Remover")))return;job(a,[reviewCh])}async function job(a,ch){let j=await api("/api/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:a,provider:data.provider,manga:data.manga,chapters:ch})});poll(j.job_id)}function jobSummary(j){
+async function reviewDecision(kind,ch){
+  reviewCh=ch;
+  if(kind==="approve"){
+    if(!(await askAppModal("Aprovar merge","Você validou visualmente a proposta?","Aprovar")))return;
+    return job("review_approve",[ch]);
+  }
+  if(kind==="reject"){
+    if(!(await askAppModal("Rejeitar proposta","Remover somente MERGE_REVIEW?","Remover")))return;
+    return job("review_reject",[ch]);
+  }
+  let input=$("#reviewMaxSources");
+  let maxSources=Math.max(2,Math.min(50,parseInt(input?.value||window.reviewMaxSources||8,10)));
+  window.reviewMaxSources=maxSources;
+  return job("review_generate",[ch],{max_source_images:maxSources});
+}
+async function ract(a){if(a==="review_approve")return reviewDecision("approve",reviewCh);if(a==="review_reject")return reviewDecision("reject",reviewCh);if(a==="review_generate")return reviewDecision("review",reviewCh);return job(a,[reviewCh])}
+async function job(a,ch,extra={}){let j=await api("/api/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:a,provider:data.provider,manga:data.manga,chapters:ch,...extra})});poll(j.job_id)}function jobSummary(j){
   let results=Array.isArray(j.result)?j.result:[];
   let ok=results.filter(x=>["ok","success","done","skipped"].includes(String(x.status||"").toLowerCase()));
   let errors=results.filter(x=>String(x.status||"").toLowerCase()==="error");
@@ -231,7 +406,8 @@ async function shutdownServer(){
   if(!(await askAppModal("Finalizar servidor","Finalizar a Central de Processamento e voltar ao menu do terminal?","Finalizar"))) return;
   try{
     await api("/api/shutdown");
-    document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#0d1118;color:#eef2f7;font:14px system-ui"><div style="text-align:center"><h2>Central de Processamento finalizada</h2><p style="color:#94a0b4">Você pode fechar esta aba. O menu do terminal será retomado.</p></div></div>';
+    document.body.innerHTML='<div style="min-height:100vh;display:grid;place-items:center;background:#0d1118;color:#eef2f7;font:14px system-ui"><div style="text-align:center"><h2>Central de Processamento finalizada</h2><p style="color:#94a0b4">Fechando esta aba…</p></div></div>';
+    setTimeout(()=>{try{window.open("","_self");window.close()}catch(_){}},180);
   }catch(e){
     toast("Servidor finalizado.");
   }

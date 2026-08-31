@@ -151,6 +151,204 @@ def build_proposal(total_height, infos, bands):
         return None, proposal, f"Proposta ainda contém trecho não justificado de {size:,} px ({a:,}–{b:,})."
     return cuts, proposal, None
 
+
+
+def _sample_tail_quality(page, *, tail_height=220, sample_width=256):
+    import numpy as np
+    with Image.open(page) as im:
+        rgb = im.convert("RGB")
+        w, h = rgb.size
+        if h < 40:
+            return None
+        th = min(tail_height, max(40, h // 4))
+        sw = min(sample_width, w)
+        x0 = max(0, (w - sw) // 2)
+        arr = np.asarray(rgb.crop((x0, 0, x0 + sw, h)), dtype=np.float32)
+        tail = arr[h-th:h]
+        prev = arr[max(0, h-2*th):h-th]
+        flat = tail.reshape(-1, 3)
+        std = float(flat.std(axis=0).max())
+        dx = float(np.abs(np.diff(tail, axis=1)).mean()) if tail.shape[1] > 1 else 0.0
+        dy = float(np.abs(np.diff(tail, axis=0)).mean()) if tail.shape[0] > 1 else 0.0
+        edge = max(dx, dy)
+        if prev.size:
+            n = min(len(tail), len(prev))
+            transition = float(np.abs(tail[:n] - prev[-n:]).mean())
+        else:
+            transition = 0.0
+        score = std + edge * 1.8 + transition * 0.6
+        return {
+            "score": round(score, 4),
+            "std": round(std, 4),
+            "edge": round(edge, 4),
+            "transition": round(transition, 4),
+            "tail_height": int(th),
+        }
+
+
+def _natural_page_end_candidates(pages, infos, start, end, allowed_end, max_source_images):
+    source_indexes = [
+        i for i, info in enumerate(infos)
+        if min(end, info.global_end) > max(start, info.global_start)
+    ]
+    if not source_indexes:
+        return []
+    first_idx = source_indexes[0]
+    max_idx = min(len(infos) - 1, first_idx + int(max_source_images) - 1)
+    candidates = []
+    for idx in range(max_idx, first_idx - 1, -1):
+        info = infos[idx]
+        center = int(info.global_end)
+        if center <= start + v3.DEFAULT_MIN_CHUNK_HEIGHT:
+            continue
+        if center > allowed_end:
+            continue
+        if end - center < v3.DEFAULT_MIN_CHUNK_HEIGHT:
+            continue
+        quality = _sample_tail_quality(pages[idx])
+        if not quality:
+            continue
+        if quality["std"] > 28.0 or quality["edge"] > 18.0 or quality["score"] > 62.0:
+            continue
+        page, local = v3.page_at_y(infos, max(start, center - 1))
+        candidates.append({
+            "center": center,
+            "page": page,
+            "local_y": local + 1,
+            "review_strategy": "natural_source_page_end",
+            "source_page_index": idx,
+            "source_page_file": pages[idx].name,
+            "tail_quality": quality,
+            "uses_source_count": idx - first_idx + 1,
+        })
+    return candidates
+
+def _uniform_band_candidates(pages, infos, sample_width=256, band_height=18, max_channel_std=7.0, max_edge_mean=10.0):
+    import numpy as np
+    out=[]; gy=0
+    for page,info in zip(pages,infos):
+        with Image.open(page) as im:
+            rgb=im.convert("RGB"); w,h=rgb.size
+            if h < band_height: gy += h; continue
+            sw=min(sample_width,w); x0=max(0,(w-sw)//2)
+            arr=np.asarray(rgb.crop((x0,0,x0+sw,h)),dtype=np.float32)
+            step=max(4,band_height//2)
+            for y in range(0,h-band_height+1,step):
+                strip=arr[y:y+band_height]; flat=strip.reshape(-1,3)
+                std=float(flat.std(axis=0).max())
+                dx=float(np.abs(np.diff(strip,axis=1)).mean()) if strip.shape[1]>1 else 0.0
+                dy=float(np.abs(np.diff(strip,axis=0)).mean()) if strip.shape[0]>1 else 0.0
+                edge=max(dx,dy)
+                if std<=max_channel_std and edge<=max_edge_mean:
+                    out.append({"center":int(gy+y+band_height//2),"band_height":band_height,"uniform_std":std,"edge_mean":edge,"review_strategy":"uniform_color_safe_band"})
+        gy += info.height
+    return out
+
+def _choose_uniform_cut(cands, infos, start, end, allowed_end):
+    lower=start+v3.DEFAULT_MIN_CHUNK_HEIGHT; upper=min(allowed_end,end-v3.DEFAULT_MIN_CHUNK_HEIGHT)
+    target=start+v3.DEFAULT_TARGET_HEIGHT; possible=[]
+    for c in cands:
+        center=int(c["center"])
+        if lower<=center<=upper:
+            page,local=v3.page_at_y(infos,center); x=dict(c); x["page"]=page; x["local_y"]=local; possible.append(x)
+    if not possible: return None
+    return sorted(possible,key=lambda x:(abs(x["center"]-target),x["uniform_std"],x["edge_mean"],x["center"]))[0]
+def _segment_sources(infos, start, end):
+    return [info for info in infos if min(end, info.global_end) > max(start, info.global_start)]
+
+
+
+def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, pages=None):
+    limit = int(max_source_images)
+    if limit < 2:
+        return None, [], "O limite mínimo é 2 imagens de origem por merge."
+
+    centers = {int(c["center"]): dict(c) for c in cuts}
+    inserted = []
+    uniform = None
+
+    for _ in range(10000):
+        bounds = [0] + sorted(centers) + [total_height]
+        violation = None
+        for start, end in zip(bounds, bounds[1:]):
+            sources = _segment_sources(infos, start, end)
+            if len(sources) > limit:
+                violation = (start, end, sources)
+                break
+
+        if violation is None:
+            return [centers[k] for k in sorted(centers)], inserted, None
+
+        start, end, sources = violation
+        allowed_end = sources[limit - 1].global_end
+        target = start + v3.DEFAULT_TARGET_HEIGHT
+        chosen = None
+
+        if pages is not None:
+            natural = _natural_page_end_candidates(
+                pages, infos, start, end, allowed_end, limit
+            )
+            if natural:
+                best_count = max(x["uses_source_count"] for x in natural)
+                same_count = [x for x in natural if x["uses_source_count"] == best_count]
+                chosen = sorted(
+                    same_count,
+                    key=lambda x: (
+                        x["tail_quality"]["score"],
+                        abs(x["center"] - target),
+                        x["center"],
+                    )
+                )[0]
+
+        if chosen is None:
+            lower = start + v3.DEFAULT_MIN_CHUNK_HEIGHT
+            upper = min(allowed_end, end - v3.DEFAULT_MIN_CHUNK_HEIGHT)
+            white = []
+            for b in bands:
+                center = (b.start + b.end) // 2
+                if center in centers or not (lower <= center <= upper):
+                    continue
+                if b.height < v3.DEFAULT_MIN_WHITE_BAND:
+                    continue
+                page, local = v3.page_at_y(infos, center)
+                white.append({
+                    "center": center,
+                    "band_height": b.height,
+                    "white_ratio_mean": b.white_ratio_mean,
+                    "page": page,
+                    "local_y": local,
+                    "review_strategy": "source_limit_safe_white_band",
+                })
+            if white:
+                chosen = sorted(
+                    white,
+                    key=lambda x: (
+                        abs(x["center"] - target),
+                        -x["band_height"],
+                        -x["white_ratio_mean"],
+                        x["center"],
+                    )
+                )[0]
+
+        if chosen is None:
+            if pages is None:
+                return None, inserted, "Detector de faixa uniforme sem páginas de origem."
+            if uniform is None:
+                uniform = _uniform_band_candidates(pages, infos)
+            chosen = _choose_uniform_cut(uniform, infos, start, end, allowed_end)
+            if chosen is None:
+                return None, inserted, (
+                    f"Não existe fim natural, faixa branca nem faixa uniforme segura "
+                    f"que mantenha este trecho em até {limit} imagens de origem. "
+                    "Aumente o máximo e regenere a proposta."
+                )
+
+        centers[int(chosen["center"])] = chosen
+        inserted.append(dict(chosen))
+
+    return None, inserted, "Limite interno atingido ao planejar os cortes."
+
+
 def _render(pages, cuts, dest):
     dest.mkdir(parents=True, exist_ok=True)
     for p in dest.glob("merged-*.png"): p.unlink()
@@ -174,7 +372,7 @@ def _render(pages, cuts, dest):
         canvas.save(target,"PNG"); outputs.append(target)
     return outputs,bounds
 
-def generate_candidate(manga, chapter):
+def generate_candidate(manga, chapter, *, max_source_images=8):
     pages=v3.list_pages(chapter)
     infos,bands,total,_=v3.analyze_chapter(
         pages, sample_width=v3.DEFAULT_SAMPLE_WIDTH,
@@ -183,6 +381,9 @@ def generate_candidate(manga, chapter):
     )
     cuts,proposal,error=build_proposal(total,infos,bands)
     if error: return False,error,None
+    cuts,limit_cuts,limit_error=_enforce_source_limit(cuts,infos,bands,total,max_source_images,pages=pages)
+    if limit_error: return False,limit_error,None
+    proposal=list(proposal)+list(limit_cuts)
     dest=_review(manga,chapter.name)
     outputs,bounds=_render(pages,cuts,dest)
     manifest={
@@ -195,10 +396,14 @@ def generate_candidate(manga, chapter):
                   "normal_max_chunk_height":v3.DEFAULT_MAX_CHUNK_HEIGHT,
                   "review_max_chunk_height":REVIEW_MAX,"small_extension_limit":EXTRA_LIMIT,
                   "extended_safe_zone":True,
-                  "extended_safe_zone_rule":"first_strict_white_band_after_review_max"},
+                  "extended_safe_zone_rule":"first_strict_white_band_after_review_max",
+                  "max_source_images":int(max_source_images),
+                  "source_limit_rule":"natural_page_end_then_white_then_uniform_within_user_limit",
+                  "uniform_color_fallback":"MERGE_REVIEW_ONLY"},
     }
     (dest/"merge-review.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
-    return True,f"Proposta: {len(pages)} originais → {len(outputs)} imagens; {len(proposal)} resgate(s).",dest
+    max_used=max((len(_segment_sources(infos,a,b)) for a,b in zip(bounds,bounds[1:])),default=0)
+    return True,f"Proposta: {len(pages)} originais → {len(outputs)} merges; máximo utilizado: {max_used}/{int(max_source_images)} originais por merge.",dest
 
 def approve(manga, chapter):
     src=_review(manga,chapter); mf=src/"merge-review.json"
