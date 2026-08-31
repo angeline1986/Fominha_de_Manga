@@ -12,6 +12,7 @@ from pathlib import Path
 from typing import Callable, Iterable, Sequence
 
 from image_stitcher import run_merge_flow
+from bubble_cleaner_flow import run_clean_flow
 from pdf_divergence_review import run_divergence_review
 from pdf_batch_validation import (
     IMAGE_EXTENSIONS,
@@ -554,6 +555,10 @@ def manual_merge_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
         c=c,
     )
 
+
+def manual_clean_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
+    run_clean_flow(output_dir, ask_number=ask_number, print_header=print_header, print_option=print_option, c=c)
+
 def print_header(title: str = "FOMINHA DE MANGA") -> None:
     print()
     print(c("number", title, bold=True))
@@ -574,7 +579,10 @@ def build_menu() -> tuple[MenuSection, ...]:
         ),
         MenuSection(
             "FLUXO SECUNDÁRIO",
-            (MenuItem(3, "Unificar imagens", "Gerar imagens verticais pelo Merge V3", manual_merge_flow, "item_pdf"),),
+            (
+                MenuItem(3, "Unificar imagens", "Gerar imagens verticais pelo Merge V3", manual_merge_flow, "item_pdf"),
+                MenuItem(4, "Limpar balões", "Limpar textos de balões com Bubble Cleaner V3.5", manual_clean_flow, "item_pdf"),
+            ),
             "sec_pdf",
         ),
     )
