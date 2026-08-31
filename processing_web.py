@@ -32,6 +32,16 @@ def chapters(manga):
 def rdir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_REVIEW"/c
 def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"CLEAN"/c
 def pmdir(m,c): return m/"FLUXO_SECUNDARIO"/"PDF_MERGE"/c
+def merge_status_file(ch): return ch.parent.parent/"FLUXO_SECUNDARIO"/"MERGE_STATUS"/ch.name/"merge-attempt.json"
+
+def set_merge_failure(ch,message):
+    p=merge_status_file(ch); p.parent.mkdir(parents=True,exist_ok=True)
+    p.write_text(json.dumps({"schema_version":1,"chapter":ch.name,"status":"error","message":str(message)},ensure_ascii=False,indent=2),encoding="utf-8")
+
+def clear_merge_failure(ch):
+    p=merge_status_file(ch)
+    if p.is_file(): p.unlink()
+    if p.parent.is_dir() and not any(p.parent.iterdir()): p.parent.rmdir()
 
 def catalog():
     out={}
@@ -54,9 +64,11 @@ def row_state(manga,ch):
         "pages":sum(1 for p in ch.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS and p.name.lower().startswith("page-")),
         "merge":merge_ok,
         "merge_error":merge_error,
+        "merge_failed":merge_status_file(ch).is_file(),
         "merged_images":len(list(md.glob("merged-*.png"))) if md.is_dir() else 0,
         "review":(rd/"merge-review.json").is_file(),
         "review_images":len(list(rd.glob("merged-*.png"))) if rd.is_dir() else 0,
+        "review_files":[p.name for p in sorted(rd.glob("merged-*.png"),key=nkey)] if rd.is_dir() else [],
         "clean":(cdir(manga,ch.name)/"clean-manifest.json").is_file(),
         "pdf":(manga/"PDF"/ch.name/f"{ch.name}.pdf").is_file(),
         "pdf_merge":(pmdir(manga,ch.name)/f"{ch.name}.pdf").is_file(),
@@ -66,6 +78,7 @@ def state(provider,manga_name):
     manga=manga_path(provider,manga_name); rows=[row_state(manga,ch) for ch in chapters(manga)]
     return {"provider":provider,"manga":manga_name,"chapters":rows,"summary":{
         "chapters":len(rows),"merges":sum(x["merge"] for x in rows),"pending":sum(not x["merge"] for x in rows),
+        "merge_failed":sum(x["merge_failed"] for x in rows),
         "review":sum(x["review"] for x in rows),"pdfs":sum(x["pdf"] for x in rows),"clean":sum(x["clean"] for x in rows),
         "pdf_merge":sum(x["pdf_merge"] for x in rows)}}
 
@@ -111,10 +124,13 @@ def do_merge(job,chs):
     def process_one(ch):
         try:
             if is_chapter_merged(ch):
+                clear_merge_failure(ch)
                 return {"chapter":ch.name,"status":"skipped","message":"MERGE já existente"}
             r=merge_chapter(ch)
+            clear_merge_failure(ch)
             return {"chapter":ch.name,"status":"ok","merged_images":r.merged_images}
         except Exception as e:
+            set_merge_failure(ch,e)
             return {"chapter":ch.name,"status":"error","message":str(e)}
 
     out=[]
@@ -190,10 +206,19 @@ def do_review_approve(job,manga,chs):
     rv=reviewmod(); out=[]
     for i,ch in enumerate(chs,1):
         job.message=f"Aprovando capítulo {ch.name}..."
-        ok,msg=rv.approve(manga,ch.name)
+        try:
+            approved=rv.approve(manga,ch.name)
+            if not isinstance(approved,(tuple,list)) or len(approved)<2:
+                raise TypeError(f"approve() retornou formato inesperado: {type(approved).__name__}: {approved!r}")
+            ok,msg=approved[0],approved[1]
+        except Exception as exc:
+            out.append({"chapter":ch.name,"status":"error","message":f"Falha ao aprovar proposta ({type(exc).__name__}): {exc}"})
+            job.progress=i
+            continue
         if ok and is_chapter_merged(ch):
             rd=rdir(manga,ch.name)
             if rd.is_dir(): shutil.rmtree(rd)
+            clear_merge_failure(ch)
             out.append({"chapter":ch.name,"status":"ok","message":msg})
         else: out.append({"chapter":ch.name,"status":"error","message":msg if not ok else "MERGE promovido, mas manifesto oficial não reconhecido."})
         job.progress=i

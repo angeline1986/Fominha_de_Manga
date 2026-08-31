@@ -98,12 +98,24 @@ def build_proposal(total_height, infos, bands):
         else:
             extended = min(total_height-v3.DEFAULT_MIN_CHUNK_HEIGHT, current+REVIEW_MAX)
             safe = [x for x in _strict_candidates(infos, bands, current, extended) if x["center"] > hard]
-            if not safe:
-                return None, proposal, (
-                    "Sem faixa branca V3 >=150 px até "
-                    f"{REVIEW_MAX:,} px após o último corte. Requer análise específica."
-                )
-            chosen, strategy = safe[0], "strict_small_extension"
+            if safe:
+                chosen, strategy = safe[0], "strict_small_extension"
+            else:
+                # Terceira estratégia exclusiva do fluxo de REVIEW:
+                # procura a primeira faixa que continue atendendo aos mesmos
+                # critérios estritos de branco do V3, mesmo além de 13.000 px.
+                # Não há corte forçado; a saída continua dependendo de revisão visual.
+                review_upper = total_height - v3.DEFAULT_MIN_CHUNK_HEIGHT
+                farther = [
+                    x for x in _strict_candidates(infos, bands, current, review_upper)
+                    if x["center"] > extended
+                ]
+                if not farther:
+                    return None, proposal, (
+                        "Nenhuma faixa branca segura foi encontrada após o último corte. "
+                        "Nenhuma proposta foi criada."
+                    )
+                chosen, strategy = farther[0], "strict_extended_safe_zone"
 
         cut = {
             "center": chosen["center"],
@@ -124,10 +136,19 @@ def build_proposal(total_height, infos, bands):
 
     cuts = sorted({int(c["center"]): c for c in cuts}.values(), key=lambda x: x["center"])
     bounds = [0] + [int(c["center"]) for c in cuts] + [total_height]
-    oversized = [(a,b,b-a) for a,b in zip(bounds,bounds[1:]) if b-a > REVIEW_MAX]
+    proposal_by_center = {int(x["center"]): x for x in proposal}
+    oversized = []
+    for a,b in zip(bounds,bounds[1:]):
+        size = b-a
+        if size <= REVIEW_MAX:
+            continue
+        rescue = proposal_by_center.get(int(b))
+        if not rescue or rescue.get("strategy") != "strict_extended_safe_zone":
+            oversized.append((a,b,size))
+
     if oversized:
         a,b,size = oversized[0]
-        return None, proposal, f"Proposta ainda contém trecho de {size:,} px ({a:,}–{b:,})."
+        return None, proposal, f"Proposta ainda contém trecho não justificado de {size:,} px ({a:,}–{b:,})."
     return cuts, proposal, None
 
 def _render(pages, cuts, dest):
@@ -172,7 +193,9 @@ def generate_candidate(manga, chapter):
         "policy":{"main_v3_modified":False,"forced_cut":False,
                   "min_white_band":v3.DEFAULT_MIN_WHITE_BAND,
                   "normal_max_chunk_height":v3.DEFAULT_MAX_CHUNK_HEIGHT,
-                  "review_max_chunk_height":REVIEW_MAX,"small_extension_limit":EXTRA_LIMIT},
+                  "review_max_chunk_height":REVIEW_MAX,"small_extension_limit":EXTRA_LIMIT,
+                  "extended_safe_zone":True,
+                  "extended_safe_zone_rule":"first_strict_white_band_after_review_max"},
     }
     (dest/"merge-review.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
     return True,f"Proposta: {len(pages)} originais → {len(outputs)} imagens; {len(proposal)} resgate(s).",dest
@@ -180,17 +203,75 @@ def generate_candidate(manga, chapter):
 def approve(manga, chapter):
     src=_review(manga,chapter); mf=src/"merge-review.json"
     if not mf.is_file(): return False,"Nenhuma proposta encontrada."
+
+    chapter_dir=manga/"IMG"/chapter
     dst=_official(manga,chapter)
-    if dst.exists(): return False,"Já existe MERGE oficial para este capítulo."
+
+    if dst.exists():
+        if v3.is_chapter_merged(chapter_dir):
+            return False,"Já existe MERGE oficial válido para este capítulo."
+        stale_manifest=dst/"merge-manifest.json"
+        stale_review_promotion=False
+        if stale_manifest.is_file():
+            try:
+                stale_payload=json.loads(stale_manifest.read_text(encoding="utf-8"))
+                stale_review_promotion=stale_payload.get("algorithm")=="merge_review_v1_approved"
+            except (OSError,ValueError,TypeError,json.JSONDecodeError):
+                stale_review_promotion=False
+        if stale_review_promotion:
+            shutil.rmtree(dst)
+        else:
+            return False,"Já existe MERGE oficial não reconhecido; promoção cancelada por segurança."
+
     payload=json.loads(mf.read_text(encoding="utf-8"))
     outputs=sorted(src.glob("merged-*.png"),key=_key)
     if not outputs: return False,"Proposta sem imagens."
-    dst.mkdir(parents=True)
-    for p in outputs: shutil.copy2(p,dst/p.name)
-    payload["status"]="approved"; payload["approved_at"]=datetime.now(timezone.utc).isoformat()
-    payload["algorithm"]="merge_review_v1_approved"
-    (dst/"merge-manifest.json").write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
-    return True,f"Merge promovido para {dst}"
+
+    boundaries=payload.get("boundaries") or []
+    if len(boundaries) != len(outputs)+1:
+        return False,"Manifesto da proposta possui boundaries incompatíveis com as imagens."
+
+    official_outputs=[]
+    width=None
+    for index,p in enumerate(outputs):
+        with Image.open(p) as im:
+            im.load()
+            if width is None: width=im.width
+            elif im.width != width: return False,f"Largura divergente na proposta: {p.name}"
+            start=int(boundaries[index]); end=int(boundaries[index+1])
+            if end-start != im.height: return False,f"Altura divergente na proposta: {p.name}"
+            official_outputs.append({"file":p.name,"width":im.width,"height":im.height,"global_start":start,"global_end":end,"sources":[]})
+
+    official_manifest={
+        "schema_version":1,
+        "algorithm":"merge_review_v1_approved",
+        "status":"approved",
+        "approved_at":datetime.now(timezone.utc).isoformat(),
+        "source_dir":str(chapter_dir),
+        "output_dir":str(dst),
+        "source_pages":len(payload.get("source_pages") or []),
+        "source_width":int(width or 0),
+        "source_total_height":int(boundaries[-1]),
+        "merged_images":len(official_outputs),
+        "parameters":{"target_height":v3.DEFAULT_TARGET_HEIGHT,"search_before":v3.DEFAULT_SEARCH_BEFORE,"search_after":v3.DEFAULT_SEARCH_AFTER,"min_chunk_height":v3.DEFAULT_MIN_CHUNK_HEIGHT,"min_white_band":v3.DEFAULT_MIN_WHITE_BAND,"max_chunk_height":REVIEW_MAX,"white_ratio":v3.DEFAULT_WHITE_RATIO,"light_threshold":v3.DEFAULT_LIGHT_THRESHOLD,"sample_width":v3.DEFAULT_SAMPLE_WIDTH},
+        "cuts":payload.get("cuts") or [],
+        "decisions":payload.get("proposal") or [],
+        "outputs":official_outputs,
+        "validation":{"ok":True,"errors":[],"coverage_start":0,"coverage_end":int(boundaries[-1])},
+        "safety":{"source_files_modified":False,"forced_cut_without_white_band":False,"all_source_pixels_preserved_in_order":True,"main_v3_modified":False},
+        "review":{"created_at":payload.get("created_at"),"policy":payload.get("policy") or {},"original_manifest":"merge-review.json"},
+    }
+
+    try:
+        dst.mkdir(parents=True)
+        for p in outputs: shutil.copy2(p,dst/p.name)
+        (dst/"merge-manifest.json").write_text(json.dumps(official_manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        if not v3.is_chapter_merged(chapter_dir): raise RuntimeError("MERGE promovido, mas manifesto oficial não foi reconhecido.")
+    except Exception as exc:
+        if dst.is_dir(): shutil.rmtree(dst)
+        return False,f"Falha ao promover MERGE: {exc}"
+
+    return True,f"Merge promovido e validado em {dst}"
 
 def _parse_review_selection(raw: str, total: int) -> list[int]:
     value = raw.strip().lower()
