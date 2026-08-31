@@ -6,7 +6,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Callable
 from PIL import Image
-import image_stitcher as v3
+from processamento.unificacao_imagens import image_stitcher as v3
 
 SECONDARY = "FLUXO_SECUNDARIO"
 REVIEW = "MERGE_REVIEW"

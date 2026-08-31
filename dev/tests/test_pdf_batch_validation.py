@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 from PIL import Image
 
 import menu
-from pdf_batch_validation import (
+from processamento.pdf_original.pdf_batch_validation import (
     count_pdf_pages,
     list_supported_images,
     validate_chapter_images,

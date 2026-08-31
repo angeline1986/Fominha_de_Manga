@@ -4,7 +4,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from image_stitcher import merge_chapter, merge_output_dir
+from processamento.unificacao_imagens.image_stitcher import merge_chapter, merge_output_dir
 
 
 class ImageStitcherSafetyTests(unittest.TestCase):

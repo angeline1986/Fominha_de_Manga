@@ -1,5 +1,5 @@
 import unittest
-from pdf_divergence_review import build_analysis
+from processamento.pdf_original.pdf_divergence_review import build_analysis
 class TestReview(unittest.TestCase):
     def test_image(self):
         d={"chapter":"28","issue_type":"image_validation_failed","pdf_generated":False,"images":{"expected":1,"found":1,"errors":["x page-001.png"],"metadata":[{"file":"page-001.png","width":1280,"height":3,"pdf_width":960,"pdf_height":2.25}]}}

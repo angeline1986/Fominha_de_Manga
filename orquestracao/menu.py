@@ -10,12 +10,15 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Callable, Iterable, Sequence
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-from image_stitcher import run_merge_flow
-from image_stitcher_review import run_merge_review_flow
-from bubble_cleaner_flow import run_clean_flow
-from pdf_divergence_review import run_divergence_review
-from pdf_batch_validation import (
+from processamento.unificacao_imagens.image_stitcher import run_merge_flow
+from processamento.unificacao_imagens.image_stitcher_review import run_merge_review_flow
+from processamento.limpeza_baloes.bubble_cleaner_flow import run_clean_flow
+from processamento.pdf_original.pdf_divergence_review import run_divergence_review
+from processamento.pdf_original.pdf_batch_validation import (
     IMAGE_EXTENSIONS,
     validate_chapter_images,
     validate_pdf_output,
@@ -23,8 +26,8 @@ from pdf_batch_validation import (
 )
 
 
-ROOT_DIR = Path(__file__).resolve().parent
-MANGAGO_DIR = ROOT_DIR / "mangago_downloader"
+ROOT_DIR = Path(__file__).resolve().parents[1]
+MANGAGO_DIR = ROOT_DIR / "download" / "mangago_downloader"
 MANGAGO_OUTPUT_DIR = MANGAGO_DIR / "output"
 HEX = {
     "text": "#2c3e50",
@@ -135,7 +138,7 @@ def open_mangago_web() -> None:
 
 
 def open_processing_web() -> None:
-    server = ROOT_DIR / "processing_web.py"
+    server = ROOT_DIR / "interface_web" / "processing_web.py"
     if not server.is_file():
         print(c("error", "Central de Processamento não encontrada."))
         return

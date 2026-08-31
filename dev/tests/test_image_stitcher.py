@@ -5,7 +5,7 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw
 
-from image_stitcher import (
+from processamento.unificacao_imagens.image_stitcher import (
     DEFAULT_MIN_WHITE_BAND,
     WhiteBand,
     choose_cuts,

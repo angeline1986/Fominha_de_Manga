@@ -7,9 +7,10 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-ROOT=Path(__file__).resolve().parent
-OUTPUT=ROOT/"mangago_downloader"/"output"
-STATIC=ROOT/"processing_web"
+ROOT=Path(__file__).resolve().parents[1]
+OUTPUT=ROOT/"download"/"mangago_downloader"/"output"
+STATIC=Path(__file__).resolve().parent
+if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
 HOST="127.0.0.1"
 PORT=int(os.environ.get("FOMINHA_PROCESSING_PORT","8766"))
 IMAGE_EXTS={".png",".jpg",".jpeg",".webp"}
@@ -50,8 +51,51 @@ def catalog():
         out[provider]=sorted([x.name for x in p.iterdir() if x.is_dir() and (x/"IMG").is_dir()],key=nkey) if p.is_dir() else []
     return out
 
+
+def review_merge_items(manga, ch):
+    rd = rdir(manga, ch.name)
+    mf = rd / "merge-review.json"
+    if not mf.is_file():
+        return []
+    try:
+        payload = json.loads(mf.read_text(encoding="utf-8"))
+        boundaries = [int(x) for x in (payload.get("boundaries") or [])]
+        outputs = sorted(rd.glob("merged-*.png"), key=nkey)
+        if len(boundaries) != len(outputs) + 1:
+            return [{"file":p.name,"index":i+1,"sources":[]} for i,p in enumerate(outputs)]
+
+        source_names = payload.get("source_pages") or []
+        source_dir = manga / "IMG" / ch.name
+        spans = []
+        y = 0
+        from PIL import Image
+        for name in source_names:
+            p = source_dir / name
+            if not p.is_file():
+                continue
+            with Image.open(p) as im:
+                h = int(im.height)
+            spans.append((name, y, y + h))
+            y += h
+
+        items = []
+        for i, out in enumerate(outputs):
+            start, end = boundaries[i], boundaries[i + 1]
+            sources = [name for name, a, b in spans if min(end, b) > max(start, a)]
+            items.append({
+                "file": out.name,
+                "index": i + 1,
+                "global_start": start,
+                "global_end": end,
+                "sources": sources,
+            })
+        return items
+    except Exception as exc:
+        print(f"[processing-web] Falha ao mapear fontes do review cap {ch.name}: {exc}")
+        return []
+
 def row_state(manga,ch):
-    from image_stitcher import is_chapter_merged, merge_output_dir
+    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
     md=merge_output_dir(ch); rd=rdir(manga,ch.name)
     merge_ok=False
     merge_error=None
@@ -65,10 +109,12 @@ def row_state(manga,ch):
         "merge":merge_ok,
         "merge_error":merge_error,
         "merge_failed":merge_status_file(ch).is_file(),
+        "merge_state":"concluido" if merge_ok else ("pendente" if merge_status_file(ch).is_file() else "novo"),
         "merged_images":len(list(md.glob("merged-*.png"))) if md.is_dir() else 0,
         "review":(rd/"merge-review.json").is_file(),
         "review_images":len(list(rd.glob("merged-*.png"))) if rd.is_dir() else 0,
         "review_files":[p.name for p in sorted(rd.glob("merged-*.png"),key=nkey)] if rd.is_dir() else [],
+        "review_merges":review_merge_items(manga,ch),
         "clean":(cdir(manga,ch.name)/"clean-manifest.json").is_file(),
         "pdf":(manga/"PDF"/ch.name/f"{ch.name}.pdf").is_file(),
         "pdf_merge":(pmdir(manga,ch.name)/f"{ch.name}.pdf").is_file(),
@@ -77,7 +123,9 @@ def row_state(manga,ch):
 def state(provider,manga_name):
     manga=manga_path(provider,manga_name); rows=[row_state(manga,ch) for ch in chapters(manga)]
     return {"provider":provider,"manga":manga_name,"chapters":rows,"summary":{
-        "chapters":len(rows),"merges":sum(x["merge"] for x in rows),"pending":sum(not x["merge"] for x in rows),
+        "chapters":len(rows),"merges":sum(x["merge"] for x in rows),
+        "pending":sum(x["merge_state"]=="pendente" for x in rows),
+        "new":sum(x["merge_state"]=="novo" for x in rows),
         "merge_failed":sum(x["merge_failed"] for x in rows),
         "review":sum(x["review"] for x in rows),"pdfs":sum(x["pdf"] for x in rows),"clean":sum(x["clean"] for x in rows),
         "pdf_merge":sum(x["pdf_merge"] for x in rows)}}
@@ -119,7 +167,7 @@ def run_job(job,payload):
 
 def do_merge(job,chs):
     from concurrent.futures import ThreadPoolExecutor, as_completed
-    from image_stitcher import is_chapter_merged, merge_chapter
+    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_chapter
 
     def process_one(ch):
         try:
@@ -152,19 +200,19 @@ def do_merge(job,chs):
     return out
 
 def do_pdf(job,chs):
-    from menu import run_pdf_batch
+    from orquestracao.menu import run_pdf_batch
     job.message="Validando imagens e gerando PDFs..."
     r=run_pdf_batch(chs,regenerate_existing=False); job.progress=len(chs)
     return {"selected":r["selected"],"generated":[x.name for x in r["generated"]],"skipped":[x.name for x in r["skipped"]],"problems":[{"chapter":c.name,"message":m} for c,m in r["problems"]]}
 
 def pdf_generator():
-    d=ROOT/"mangago_downloader"
+    d=ROOT/"download"/"mangago_downloader"
     if str(d) not in sys.path: sys.path.insert(0,str(d))
     from src.pdf.generator import generate_pdf_from_images
     return generate_pdf_from_images
 
 def do_pdf_merge(job,manga,chs):
-    from image_stitcher import is_chapter_merged, merge_output_dir
+    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
     gen=pdf_generator(); out=[]
     for i,ch in enumerate(chs,1):
         job.message=f"Gerando PDF do Merge: {ch.name}..."
@@ -177,7 +225,7 @@ def do_pdf_merge(job,manga,chs):
     return out
 
 def do_clean(job,manga,chs):
-    from bubble_cleaner import EasyOCRBackend,process_image,resolve_model
+    from processamento.limpeza_baloes.bubble_cleaner import EasyOCRBackend,process_image,resolve_model
     model=resolve_model(None); ocr=EasyOCRBackend(["en"]); out=[]
     for i,ch in enumerate(chs,1):
         target=cdir(manga,ch.name); target.mkdir(parents=True,exist_ok=True); imgs=sorted([p for p in ch.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS],key=nkey); reports=[]; fails=[]
@@ -191,7 +239,7 @@ def do_clean(job,manga,chs):
     return out
 
 def reviewmod():
-    import image_stitcher_review
+    from processamento.unificacao_imagens import image_stitcher_review
     return image_stitcher_review
 
 def do_review_generate(job,manga,chs):
@@ -202,7 +250,7 @@ def do_review_generate(job,manga,chs):
     return out
 
 def do_review_approve(job,manga,chs):
-    from image_stitcher import is_chapter_merged
+    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged
     rv=reviewmod(); out=[]
     for i,ch in enumerate(chs,1):
         job.message=f"Aprovando capítulo {ch.name}..."
@@ -262,7 +310,16 @@ class Handler(BaseHTTPRequestHandler):
         if not target.is_relative_to(base) or not target.is_file(): self.send_error(404); return
         raw=target.read_bytes(); self.send_response(200); self.send_header("Content-Type",mimetypes.guess_type(target.name)[0] or "application/octet-stream"); self.send_header("Content-Length",str(len(raw))); self.end_headers(); self.wfile.write(raw)
     def media(self,q):
-        manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); base=rdir(manga,q.get("chapter",[""])[0]).resolve(); target=(base/q.get("file",[""])[0]).resolve()
+        manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+        chapter=q.get("chapter",[""])[0]
+        kind=q.get("kind",["review"])[0]
+        if kind=="review":
+            base=rdir(manga,chapter).resolve()
+        elif kind=="source":
+            base=(manga/"IMG"/chapter).resolve()
+        else:
+            self.send_error(404); return
+        target=(base/q.get("file",[""])[0]).resolve()
         if not target.is_relative_to(base) or not target.is_file() or target.suffix.lower() not in IMAGE_EXTS: self.send_error(404); return
         raw=target.read_bytes(); self.send_response(200); self.send_header("Content-Type",mimetypes.guess_type(target.name)[0] or "image/png"); self.send_header("Content-Length",str(len(raw))); self.send_header("Cache-Control","no-store"); self.end_headers(); self.wfile.write(raw)
 

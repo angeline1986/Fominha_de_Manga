@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import json, re, time
 from pathlib import Path
-from bubble_cleaner import EasyOCRBackend, process_image, resolve_model
+from processamento.limpeza_baloes.bubble_cleaner import EasyOCRBackend, process_image, resolve_model
 EXT={".png",".jpg",".jpeg",".webp"}
 def key(p): return [int(x) if x.isdigit() else x.lower() for x in re.split(r"(\d+)",p.name)]
 def run_clean_flow(output_dir, *, ask_number, print_header, print_option, c):
