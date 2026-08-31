@@ -105,16 +105,34 @@ def run_job(job,payload):
         job.status="error"; job.error=str(e); job.message=str(e); traceback.print_exc()
 
 def do_merge(job,chs):
+    from concurrent.futures import ThreadPoolExecutor, as_completed
     from image_stitcher import is_chapter_merged, merge_chapter
+
+    def process_one(ch):
+        try:
+            if is_chapter_merged(ch):
+                return {"chapter":ch.name,"status":"skipped","message":"MERGE já existente"}
+            r=merge_chapter(ch)
+            return {"chapter":ch.name,"status":"ok","merged_images":r.merged_images}
+        except Exception as e:
+            return {"chapter":ch.name,"status":"error","message":str(e)}
+
     out=[]
-    for i,ch in enumerate(chs,1):
-        job.message=f"Unificando capítulo {ch.name}..."
-        if is_chapter_merged(ch): out.append({"chapter":ch.name,"status":"skipped","message":"MERGE já existente"})
-        else:
-            try:
-                r=merge_chapter(ch); out.append({"chapter":ch.name,"status":"ok","merged_images":r.merged_images})
-            except Exception as e: out.append({"chapter":ch.name,"status":"error","message":str(e)})
-        job.progress=i
+    total=len(chs)
+    with ThreadPoolExecutor(max_workers=3, thread_name_prefix="merge-v3") as executor:
+        futures={executor.submit(process_one,ch):ch for ch in chs}
+        for i,future in enumerate(as_completed(futures),1):
+            item=future.result()
+            out.append(item)
+            job.progress=i
+            remaining=max(0,total-i)
+            active=min(3,remaining)
+            job.message=f"Unificação: {i}/{total} concluído(s)"
+            if active:
+                job.message+=f" · até {active} em processamento"
+
+    order={ch.name:i for i,ch in enumerate(chs)}
+    out.sort(key=lambda item:order.get(item.get("chapter"),999999))
     return out
 
 def do_pdf(job,chs):
