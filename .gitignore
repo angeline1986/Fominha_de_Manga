@@ -8,3 +8,12 @@ payload/
 update.diff
 MANIFEST_SHA256.txt
 original_hashes.json
+
+# Local runtime caches
+.cache/
+
+# Local patch backups
+*.bak_*
+
+# Bubble Cleaner generated outputs
+bubble_cleaner_output/
