@@ -552,8 +552,24 @@ def do_review_generate(job,manga,chs,max_source_images=None):
         raise ValueError("Máximo de imagens por merge deve ficar entre 2 e 50.")
     for i,ch in enumerate(chs,1):
         job.message=f"Gerando proposta para capítulo {ch.name} · máximo {limit} originais/merge..."
+        failure=read_merge_failure(ch) or {}
+        partition=failure.get("partition") or {}
+        level2_validated=bool(
+            failure.get("level2_status")=="validated"
+            or partition.get("level2_validated")
+        )
+        pending_segments=(
+            partition.get("pending_segments") or None
+            if level2_validated
+            else None
+        )
         try:
-            ok,msg,dest=rv.generate_candidate(manga, ch, max_source_images=limit)
+            ok,msg,dest=rv.generate_candidate(
+                manga,
+                ch,
+                max_source_images=limit,
+                pending_segments=pending_segments,
+            )
         except rv.ReviewSourceLimitError as exc:
             item=exc.as_dict()
             item["chapter"]=ch.name

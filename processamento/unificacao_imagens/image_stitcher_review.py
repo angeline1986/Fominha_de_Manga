@@ -85,12 +85,17 @@ def _v3_from(origin, total_height, bands):
         result.append(item)
     return result
 
-def build_proposal(total_height, infos, bands):
+def build_proposal(total_height, infos, bands, *, terminal_max_height=None):
     cuts = _v3_from(0, total_height, bands)
     proposal = []
     current = cuts[-1]["center"] if cuts else 0
 
     while total_height-current > v3.DEFAULT_MAX_CHUNK_HEIGHT:
+        if (
+            terminal_max_height is not None
+            and total_height-current <= int(terminal_max_height)
+        ):
+            break
         hard = min(total_height-v3.DEFAULT_MIN_CHUNK_HEIGHT, current+v3.DEFAULT_MAX_CHUNK_HEIGHT)
         safe = _strict_candidates(infos, bands, current, hard)
         if safe:
@@ -186,10 +191,10 @@ def _segment_sources(infos, start, end):
     return [info for info in infos if min(end, info.global_end) > max(start, info.global_start)]
 
 
-def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, pages=None):
+def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, pages=None, uniform_candidates=None):
     limit=int(max_source_images)
     if limit<2: return None,[],"O limite mínimo é 2 imagens de origem por merge."
-    centers={int(c["center"]):dict(c) for c in cuts}; inserted=[]; uniform=None
+    centers={int(c["center"]):dict(c) for c in cuts}; inserted=[]; uniform=(list(uniform_candidates) if uniform_candidates is not None else None)
     for _ in range(10000):
         bounds=[0]+sorted(centers)+[total_height]; violation=None
         for start,end in zip(bounds,bounds[1:]):
@@ -207,8 +212,10 @@ def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, p
         if white:
             chosen=sorted(white,key=lambda x:(abs(x["center"]-target),-x["band_height"],-x["white_ratio_mean"],x["center"]))[0]
         else:
-            if pages is None: return None,inserted,"Detector de faixa uniforme sem páginas de origem."
-            if uniform is None: uniform=_uniform_band_candidates(pages,infos)
+            if uniform is None:
+                if pages is None:
+                    return None,inserted,"Detector de faixa uniforme sem páginas de origem."
+                uniform=_uniform_band_candidates(pages,infos)
             chosen=_choose_uniform_cut(uniform,infos,start,end,allowed_end)
             if chosen is None: return None,inserted,f"Não existe faixa branca nem faixa uniforme segura que mantenha este trecho em até {limit} imagens de origem. Aumente o máximo e regenere a proposta."
         centers[int(chosen["center"])]=chosen; inserted.append(dict(chosen))
@@ -237,39 +244,608 @@ def _render(pages, cuts, dest):
         canvas.save(target,"PNG"); outputs.append(target)
     return outputs,bounds
 
-def generate_candidate(manga, chapter, *, max_source_images=8):
-    pages=v3.list_pages(chapter)
-    infos,bands,total,_=v3.analyze_chapter(
-        pages, sample_width=v3.DEFAULT_SAMPLE_WIDTH,
+def _region_view(infos, bands, start, end):
+    """Cria uma visão local 0..N de um intervalo global do capítulo."""
+    local_infos = []
+
+    for info in infos:
+        lo = max(int(start), int(info.global_start))
+        hi = min(int(end), int(info.global_end))
+
+        if hi <= lo:
+            continue
+
+        local_infos.append(
+            v3.PageInfo(
+                info.path,
+                info.width,
+                hi - lo,
+                lo - start,
+                hi - start,
+            )
+        )
+
+    local_bands = []
+
+    for band in bands:
+        lo = max(int(start), int(band.start))
+        hi = min(int(end), int(band.end))
+
+        if hi <= lo:
+            continue
+
+        local_bands.append(
+            v3.WhiteBand(
+                lo - start,
+                hi - start,
+                hi - lo,
+                band.white_ratio_mean,
+            )
+        )
+
+    return local_infos, local_bands
+
+
+def _globalize_review_items(items, origin, full_infos):
+    """Converte cuts/proposal locais novamente para coordenadas globais."""
+    result = []
+
+    for raw in items:
+        item = dict(raw)
+
+        for key in ("center", "band_start", "band_end"):
+            if key in item:
+                item[key] = int(item[key]) + int(origin)
+
+        if "center" in item:
+            page, local_y = v3.page_at_y(
+                full_infos,
+                int(item["center"]),
+            )
+            item["page"] = page
+            item["local_y"] = local_y
+
+        result.append(item)
+
+    return result
+
+
+def _normalize_pending_segments(pending_segments, total_height):
+    normalized = []
+
+    for index, raw in enumerate(pending_segments or [], 1):
+        try:
+            start = int(raw["global_start"])
+            end = int(raw["global_end"])
+        except (KeyError, TypeError, ValueError):
+            return None, (
+                f"Pending segment #{index} possui limites inválidos."
+            )
+
+        if start < 0 or end <= start or end > int(total_height):
+            return None, (
+                f"Pending segment #{index} fora da cobertura do capítulo: "
+                f"{start}..{end}."
+            )
+
+        normalized.append(
+            {
+                "segment_id": raw.get("id", index),
+                "global_start": start,
+                "global_end": end,
+            }
+        )
+
+    normalized.sort(
+        key=lambda x: (
+            x["global_start"],
+            x["global_end"],
+        )
+    )
+
+    previous_end = None
+
+    for item in normalized:
+        if (
+            previous_end is not None
+            and item["global_start"] < previous_end
+        ):
+            return None, (
+                "Pending segments sobrepostos não são permitidos."
+            )
+
+        previous_end = item["global_end"]
+
+    if not normalized:
+        return None, "Nenhum pending segment informado para revisão."
+
+    return normalized, None
+
+
+def _render_scoped_bounds(
+    infos,
+    bounds,
+    dest,
+    output_index,
+):
+    """Renderiza bounds GLOBAIS diretamente das fontes originais."""
+    if not infos:
+        raise ValueError("Capítulo sem PageInfo para renderização.")
+
+    width = int(infos[0].width)
+    outputs = []
+
+    for start, end in zip(bounds, bounds[1:]):
+        start = int(start)
+        end = int(end)
+
+        canvas = Image.new(
+            "RGB",
+            (width, end - start),
+            "white",
+        )
+
+        for info in infos:
+            lo = max(start, int(info.global_start))
+            hi = min(end, int(info.global_end))
+
+            if hi <= lo:
+                continue
+
+            with Image.open(info.path) as im:
+                rgb = im.convert("RGB")
+
+                crop = rgb.crop(
+                    (
+                        0,
+                        lo - int(info.global_start),
+                        width,
+                        hi - int(info.global_start),
+                    )
+                )
+
+                canvas.paste(
+                    crop,
+                    (
+                        0,
+                        lo - start,
+                    ),
+                )
+
+        target = dest / f"merged-{output_index:03d}.png"
+        canvas.save(target, "PNG")
+
+        outputs.append(target)
+        output_index += 1
+
+    return outputs, output_index
+
+
+def _generate_pending_candidate(
+    manga,
+    chapter,
+    pages,
+    infos,
+    bands,
+    total,
+    pending_segments,
+    max_source_images,
+):
+    pending, pending_error = _normalize_pending_segments(
+        pending_segments,
+        total,
+    )
+
+    if pending_error:
+        return False, pending_error, None
+
+    # Uniform bands são calculadas no sistema global uma única vez.
+    # Cada região recebe somente os candidatos que realmente pertencem
+    # ao seu intervalo, rebaseados para 0..region_height.
+    global_uniform = None
+
+    plans = []
+    all_cuts = []
+    all_proposal = []
+    max_used = 0
+
+    for region_index, region in enumerate(pending, 1):
+        start = int(region["global_start"])
+        end = int(region["global_end"])
+        region_height = end - start
+
+        local_infos, local_bands = _region_view(
+            infos,
+            bands,
+            start,
+            end,
+        )
+
+        if not local_infos:
+            return (
+                False,
+                f"Pending segment {start}..{end} "
+                "não possui imagens de origem.",
+                None,
+            )
+
+        cuts, proposal, error = build_proposal(
+            region_height,
+            local_infos,
+            local_bands,
+            terminal_max_height=REVIEW_MAX,
+        )
+
+        if error:
+            return (
+                False,
+                f"Região {start}..{end}: {error}",
+                None,
+            )
+
+        initial_bounds = (
+            [0]
+            + [int(c["center"]) for c in cuts]
+            + [region_height]
+        )
+
+        violates_source_limit = any(
+            len(_segment_sources(local_infos, a, b))
+            > int(max_source_images)
+            for a, b in zip(
+                initial_bounds,
+                initial_bounds[1:],
+            )
+        )
+
+        local_uniform = None
+
+        if violates_source_limit:
+            if global_uniform is None:
+                global_uniform = _uniform_band_candidates(
+                    pages,
+                    infos,
+                )
+
+            local_uniform = []
+
+            for raw in global_uniform:
+                center = int(raw["center"])
+
+                if not (start <= center <= end):
+                    continue
+
+                item = dict(raw)
+                item["center"] = center - start
+
+                local_uniform.append(item)
+
+        cuts, limit_cuts, limit_error = _enforce_source_limit(
+            cuts,
+            local_infos,
+            local_bands,
+            region_height,
+            max_source_images,
+            pages=None,
+            uniform_candidates=local_uniform,
+        )
+
+        if limit_error:
+            return (
+                False,
+                f"Região {start}..{end}: {limit_error}",
+                None,
+            )
+
+        proposal = list(proposal) + list(limit_cuts)
+
+        local_bounds = (
+            [0]
+            + [int(c["center"]) for c in cuts]
+            + [region_height]
+        )
+
+        global_bounds = [
+            start + int(value)
+            for value in local_bounds
+        ]
+
+        global_cuts = _globalize_review_items(
+            cuts,
+            start,
+            infos,
+        )
+
+        global_proposal = _globalize_review_items(
+            proposal,
+            start,
+            infos,
+        )
+
+        source_pages = [
+            info.path.name
+            for info in infos
+            if min(end, int(info.global_end))
+            > max(start, int(info.global_start))
+        ]
+
+        used = max(
+            (
+                len(_segment_sources(local_infos, a, b))
+                for a, b in zip(
+                    local_bounds,
+                    local_bounds[1:],
+                )
+            ),
+            default=0,
+        )
+
+        max_used = max(max_used, used)
+
+        plans.append(
+            {
+                "region_id": region_index,
+                "segment_id": region["segment_id"],
+                "global_start": start,
+                "global_end": end,
+                "boundaries": global_bounds,
+                "cuts": global_cuts,
+                "proposal": global_proposal,
+                "source_pages": source_pages,
+                "outputs": [],
+            }
+        )
+
+        all_cuts.extend(global_cuts)
+        all_proposal.extend(global_proposal)
+
+    # Só tocamos no diretório de proposta depois que TODAS as regiões
+    # foram planejadas com sucesso. Assim uma falha posterior não deixa
+    # uma proposta parcial.
+    dest = _review(manga, chapter.name)
+    dest.mkdir(parents=True, exist_ok=True)
+
+    for old in dest.glob("merged-*.png"):
+        old.unlink()
+
+    output_index = 1
+    all_outputs = []
+
+    for plan in plans:
+        outputs, output_index = _render_scoped_bounds(
+            infos,
+            plan["boundaries"],
+            dest,
+            output_index,
+        )
+
+        plan["outputs"] = [p.name for p in outputs]
+        all_outputs.extend(outputs)
+
+    scoped_page_names = []
+
+    for info in infos:
+        for region in pending:
+            if (
+                min(
+                    int(region["global_end"]),
+                    int(info.global_end),
+                )
+                > max(
+                    int(region["global_start"]),
+                    int(info.global_start),
+                )
+            ):
+                scoped_page_names.append(info.path.name)
+                break
+
+    intervals = [
+        [
+            int(region["global_start"]),
+            int(region["global_end"]),
+        ]
+        for region in pending
+    ]
+
+    manifest = {
+        "schema_version": 1,
+        "status": "candidate",
+        "algorithm": "merge_review_v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "chapter": chapter.name,
+        "source_pages": scoped_page_names,
+        "proposal": all_proposal,
+        "cuts": all_cuts,
+
+        # O formato antigo só representa uma cobertura contínua.
+        # Para uma única região podemos mantê-lo por compatibilidade.
+        # Para múltiplas regiões, `regions` é a fonte de verdade.
+        "boundaries": (
+            plans[0]["boundaries"]
+            if len(plans) == 1
+            else []
+        ),
+
+        "outputs": [p.name for p in all_outputs],
+
+        "scope": {
+            "type": "pending_segments",
+            "intervals": intervals,
+        },
+
+        "regions": plans,
+
+        "policy": {
+            "main_v3_modified": False,
+            "forced_cut": False,
+            "min_white_band": v3.DEFAULT_MIN_WHITE_BAND,
+            "normal_max_chunk_height": (
+                v3.DEFAULT_MAX_CHUNK_HEIGHT
+            ),
+            "review_max_chunk_height": REVIEW_MAX,
+            "small_extension_limit": EXTRA_LIMIT,
+            "extended_safe_zone": True,
+            "extended_safe_zone_rule": (
+                "first_strict_white_band_after_review_max"
+            ),
+            "max_source_images": int(max_source_images),
+            "source_limit_rule": (
+                "white_first_then_uniform_color_safe_band_"
+                "within_user_limit"
+            ),
+            "uniform_color_fallback": "MERGE_REVIEW_ONLY",
+            "pending_scope_isolated": True,
+        },
+    }
+
+    (dest / "merge-review.json").write_text(
+        json.dumps(
+            manifest,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    return (
+        True,
+        (
+            f"Proposta: {len(scoped_page_names)} originais "
+            f"em {len(plans)} região(ões) pendente(s) "
+            f"→ {len(all_outputs)} merges; "
+            f"máximo utilizado: "
+            f"{max_used}/{int(max_source_images)} "
+            "originais por merge."
+        ),
+        dest,
+    )
+
+
+def generate_candidate(
+    manga,
+    chapter,
+    *,
+    max_source_images=8,
+    pending_segments=None,
+):
+    pages = v3.list_pages(chapter)
+
+    infos, bands, total, _ = v3.analyze_chapter(
+        pages,
+        sample_width=v3.DEFAULT_SAMPLE_WIDTH,
         light_threshold=v3.DEFAULT_LIGHT_THRESHOLD,
         white_ratio_threshold=v3.DEFAULT_WHITE_RATIO,
     )
-    cuts,proposal,error=build_proposal(total,infos,bands)
-    if error: return False,error,None
-    cuts,limit_cuts,limit_error=_enforce_source_limit(cuts,infos,bands,total,max_source_images,pages=pages)
-    if limit_error: return False,limit_error,None
-    proposal=list(proposal)+list(limit_cuts)
-    dest=_review(manga,chapter.name)
-    outputs,bounds=_render(pages,cuts,dest)
-    manifest={
-        "schema_version":1,"status":"candidate","algorithm":"merge_review_v1",
-        "created_at":datetime.now(timezone.utc).isoformat(),"chapter":chapter.name,
-        "source_pages":[p.name for p in pages],"proposal":proposal,"cuts":cuts,
-        "boundaries":bounds,"outputs":[p.name for p in outputs],
-        "policy":{"main_v3_modified":False,"forced_cut":False,
-                  "min_white_band":v3.DEFAULT_MIN_WHITE_BAND,
-                  "normal_max_chunk_height":v3.DEFAULT_MAX_CHUNK_HEIGHT,
-                  "review_max_chunk_height":REVIEW_MAX,"small_extension_limit":EXTRA_LIMIT,
-                  "extended_safe_zone":True,
-                  "extended_safe_zone_rule":"first_strict_white_band_after_review_max",
-                  "max_source_images":int(max_source_images),
-                  "source_limit_rule":"white_first_then_uniform_color_safe_band_within_user_limit",
-                  "uniform_color_fallback":"MERGE_REVIEW_ONLY"},
-    }
-    (dest/"merge-review.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
-    max_used=max((len(_segment_sources(infos,a,b)) for a,b in zip(bounds,bounds[1:])),default=0)
-    return True,f"Proposta: {len(pages)} originais → {len(outputs)} merges; máximo utilizado: {max_used}/{int(max_source_images)} originais por merge.",dest
 
+    if pending_segments is not None:
+        return _generate_pending_candidate(
+            manga,
+            chapter,
+            pages,
+            infos,
+            bands,
+            total,
+            pending_segments,
+            max_source_images,
+        )
+
+    # --------------------------------------------------------------
+    # Caminho histórico M2/M3: permanece funcionalmente inalterado.
+    # --------------------------------------------------------------
+    cuts, proposal, error = build_proposal(
+        total,
+        infos,
+        bands,
+    )
+
+    if error:
+        return False, error, None
+
+    cuts, limit_cuts, limit_error = _enforce_source_limit(
+        cuts,
+        infos,
+        bands,
+        total,
+        max_source_images,
+        pages=pages,
+    )
+
+    if limit_error:
+        return False, limit_error, None
+
+    proposal = list(proposal) + list(limit_cuts)
+
+    dest = _review(manga, chapter.name)
+    outputs, bounds = _render(
+        pages,
+        cuts,
+        dest,
+    )
+
+    manifest = {
+        "schema_version": 1,
+        "status": "candidate",
+        "algorithm": "merge_review_v1",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+        "chapter": chapter.name,
+        "source_pages": [p.name for p in pages],
+        "proposal": proposal,
+        "cuts": cuts,
+        "boundaries": bounds,
+        "outputs": [p.name for p in outputs],
+        "policy": {
+            "main_v3_modified": False,
+            "forced_cut": False,
+            "min_white_band": v3.DEFAULT_MIN_WHITE_BAND,
+            "normal_max_chunk_height": (
+                v3.DEFAULT_MAX_CHUNK_HEIGHT
+            ),
+            "review_max_chunk_height": REVIEW_MAX,
+            "small_extension_limit": EXTRA_LIMIT,
+            "extended_safe_zone": True,
+            "extended_safe_zone_rule": (
+                "first_strict_white_band_after_review_max"
+            ),
+            "max_source_images": int(max_source_images),
+            "source_limit_rule": (
+                "white_first_then_uniform_color_safe_band_"
+                "within_user_limit"
+            ),
+            "uniform_color_fallback": "MERGE_REVIEW_ONLY",
+        },
+    }
+
+    (dest / "merge-review.json").write_text(
+        json.dumps(
+            manifest,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    max_used = max(
+        (
+            len(_segment_sources(infos, a, b))
+            for a, b in zip(
+                bounds,
+                bounds[1:],
+            )
+        ),
+        default=0,
+    )
+
+    return (
+        True,
+        (
+            f"Proposta: {len(pages)} originais "
+            f"→ {len(outputs)} merges; "
+            f"máximo utilizado: "
+            f"{max_used}/{int(max_source_images)} "
+            "originais por merge."
+        ),
+        dest,
+    )
 def approve(manga, chapter):
     src=_review(manga,chapter); mf=src/"merge-review.json"
     if not mf.is_file(): return False,"Nenhuma proposta encontrada."
