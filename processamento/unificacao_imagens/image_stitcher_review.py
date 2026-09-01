@@ -868,6 +868,518 @@ def generate_candidate(
         ),
         dest,
     )
+
+def _approve_scoped_level2_review(
+    manga,
+    chapter,
+    review_dir,
+    review_payload,
+):
+    """Compose Level II PASSED artifacts with scoped Review outputs."""
+    manga = Path(manga)
+    chapter_name = str(chapter)
+
+    level2_dir = (
+        manga
+        / SECONDARY
+        / "MERGE_LEVEL2"
+        / chapter_name
+    )
+    level2_manifest_path = (
+        level2_dir / "merge-level2-manifest.json"
+    )
+
+    if not level2_manifest_path.is_file():
+        return False, (
+            "Manifesto Level II não encontrado para aprovação scoped: "
+            f"{level2_manifest_path}"
+        )
+
+    try:
+        level2_payload = json.loads(
+            level2_manifest_path.read_text(
+                encoding="utf-8"
+            )
+        )
+    except Exception as exc:
+        return False, f"Manifesto Level II inválido: {exc}"
+
+    try:
+        total_height = int(
+            level2_payload["total_height"]
+        )
+    except (KeyError, TypeError, ValueError):
+        return False, (
+            "Manifesto Level II sem total_height válido."
+        )
+
+    if total_height <= 0:
+        return False, (
+            "total_height do Level II deve ser positivo."
+        )
+
+    # O Review scoped só é promovível se ainda representar
+    # exatamente os segmentos pendentes do Level II atual.
+    #
+    # Isso impede promover uma proposta gerada para um estado
+    # anterior do capítulo após nova validação/regeneração.
+    scope = review_payload.get("scope") or {}
+
+    if scope.get("type") != "pending_segments":
+        return False, (
+            "Review scoped possui tipo de scope inválido."
+        )
+
+    try:
+        level2_pending_intervals = sorted(
+            (
+                int(item["global_start"]),
+                int(item["global_end"]),
+            )
+            for item in (
+                level2_payload.get("pending_segments") or []
+            )
+        )
+
+        review_scope_intervals = sorted(
+            (
+                int(item[0]),
+                int(item[1]),
+            )
+            for item in (
+                scope.get("intervals") or []
+            )
+        )
+
+        review_region_intervals = sorted(
+            (
+                int(item["global_start"]),
+                int(item["global_end"]),
+            )
+            for item in (
+                review_payload.get("regions") or []
+            )
+        )
+    except (
+        KeyError,
+        TypeError,
+        ValueError,
+        IndexError,
+    ):
+        return False, (
+            "Review/Level II possuem intervalos "
+            "scoped inválidos."
+        )
+
+    if not level2_pending_intervals:
+        return False, (
+            "Level II não possui segmentos pendentes "
+            "para composição scoped."
+        )
+
+    if (
+        review_scope_intervals
+        != level2_pending_intervals
+    ):
+        return False, (
+            "Review scoped está desatualizado: "
+            "scope.intervals não corresponde aos "
+            "pending_segments atuais do Level II."
+        )
+
+    if (
+        review_region_intervals
+        != level2_pending_intervals
+    ):
+        return False, (
+            "Review scoped está inconsistente: "
+            "regions não corresponde aos "
+            "pending_segments atuais do Level II."
+        )
+
+    pieces = []
+
+    # Level II: artefatos PASSED já materializados.
+    for segment in level2_payload.get("segments") or []:
+        if (
+            str(segment.get("status") or "").lower()
+            != "passed"
+        ):
+            continue
+
+        try:
+            start = int(segment["global_start"])
+            end = int(segment["global_end"])
+        except (KeyError, TypeError, ValueError):
+            return False, (
+                "Segmento PASSED do Level II "
+                "possui intervalo inválido."
+            )
+
+        artifact = segment.get("artifact") or {}
+        filename = str(
+            artifact.get("file") or ""
+        ).strip()
+
+        # Compatibilidade defensiva com o array
+        # artifacts do manifesto Level II.
+        if not filename:
+            segment_id = segment.get("id")
+            for candidate in (
+                level2_payload.get("artifacts") or []
+            ):
+                if (
+                    candidate.get("segment_id")
+                    == segment_id
+                ):
+                    filename = str(
+                        candidate.get("file") or ""
+                    ).strip()
+                    break
+
+        if not filename:
+            return False, (
+                "Segmento PASSED do Level II não "
+                "possui artefato materializado."
+            )
+
+        pieces.append(
+            {
+                "kind": "level2",
+                "source": level2_dir / filename,
+                "source_file": filename,
+                "global_start": start,
+                "global_end": end,
+            }
+        )
+
+    # Review scoped: regions é a fonte de verdade.
+    regions = review_payload.get("regions") or []
+
+    if not regions:
+        return False, (
+            "Review scoped não possui regions."
+        )
+
+    for region in regions:
+        try:
+            region_start = int(
+                region["global_start"]
+            )
+            region_end = int(
+                region["global_end"]
+            )
+            boundaries = [
+                int(value)
+                for value in (
+                    region.get("boundaries") or []
+                )
+            ]
+        except (KeyError, TypeError, ValueError):
+            return False, (
+                "Região Review possui "
+                "intervalo/boundaries inválidos."
+            )
+
+        filenames = [
+            str(value)
+            for value in (
+                region.get("outputs") or []
+            )
+        ]
+
+        if (
+            len(boundaries) < 2
+            or boundaries[0] != region_start
+            or boundaries[-1] != region_end
+        ):
+            return False, (
+                "Boundaries do Review não correspondem "
+                "ao intervalo global da região."
+            )
+
+        if len(filenames) != len(boundaries) - 1:
+            return False, (
+                "Quantidade de outputs do Review não "
+                "corresponde aos boundaries da região."
+            )
+
+        for filename, start, end in zip(
+            filenames,
+            boundaries,
+            boundaries[1:],
+        ):
+            pieces.append(
+                {
+                    "kind": "review",
+                    "source": review_dir / filename,
+                    "source_file": filename,
+                    "global_start": int(start),
+                    "global_end": int(end),
+                }
+            )
+
+    if not pieces:
+        return False, (
+            "Nenhum artefato disponível "
+            "para composição final."
+        )
+
+    pieces.sort(
+        key=lambda item: (
+            item["global_start"],
+            item["global_end"],
+            item["kind"],
+            item["source_file"],
+        )
+    )
+
+    # Fail-before-write.
+    expected_start = 0
+    expected_width = None
+
+    for piece in pieces:
+        start = piece["global_start"]
+        end = piece["global_end"]
+        source = piece["source"]
+
+        if end <= start:
+            return False, (
+                "Intervalo inválido na composição final: "
+                f"{start}..{end}."
+            )
+
+        if start > expected_start:
+            return False, (
+                "Composição final possui GAP: "
+                f"esperado início {expected_start}, "
+                f"encontrado {start}."
+            )
+
+        if start < expected_start:
+            return False, (
+                "Composição final possui OVERLAP: "
+                f"esperado início {expected_start}, "
+                f"encontrado {start}."
+            )
+
+        if not source.is_file():
+            return False, (
+                "Artefato ausente na composição final: "
+                f"{source}"
+            )
+
+        try:
+            with Image.open(source) as image:
+                width, height = image.size
+                image.verify()
+        except Exception as exc:
+            return False, (
+                "Artefato inválido na composição final "
+                f"({source.name}): {exc}"
+            )
+
+        expected_height = end - start
+
+        if int(height) != expected_height:
+            return False, (
+                f"Altura incompatível em {source.name}: "
+                f"{height} != {expected_height}."
+            )
+
+        if expected_width is None:
+            expected_width = int(width)
+        elif int(width) != expected_width:
+            return False, (
+                f"Largura incompatível em {source.name}: "
+                f"{width} != {expected_width}."
+            )
+
+        expected_start = end
+
+    if expected_start != total_height:
+        return False, (
+            "Cobertura final incompleta: "
+            f"{expected_start} != {total_height}."
+        )
+
+    official_dir = _official(
+        manga,
+        chapter_name,
+    )
+
+    # Só chegamos aqui após validar TODOS os artefatos.
+    if official_dir.exists():
+        if v3.is_chapter_merged(
+            manga / "IMG" / chapter_name
+        ):
+            return False, (
+                "Já existe MERGE oficial válido "
+                "para este capítulo."
+            )
+
+        stale_manifest = (
+            official_dir / "merge-manifest.json"
+        )
+        stale_review_promotion = False
+
+        if stale_manifest.is_file():
+            try:
+                stale_payload = json.loads(
+                    stale_manifest.read_text(
+                        encoding="utf-8"
+                    )
+                )
+                stale_review_promotion = (
+                    stale_payload.get("algorithm")
+                    == "merge_review_v1_approved"
+                )
+            except Exception:
+                stale_review_promotion = False
+
+        if not stale_review_promotion:
+            return False, (
+                "Já existe MERGE oficial não reconhecido; "
+                "promoção cancelada por segurança."
+            )
+
+        shutil.rmtree(official_dir)
+
+    official_dir.mkdir(
+        parents=True,
+        exist_ok=False,
+    )
+
+    outputs = []
+
+    try:
+        for index, piece in enumerate(
+            pieces,
+            1,
+        ):
+            filename = f"merged-{index:03d}.png"
+            destination = (
+                official_dir / filename
+            )
+
+            # Preserva exatamente os bytes do artefato.
+            shutil.copy2(
+                piece["source"],
+                destination,
+            )
+
+            outputs.append(
+                {
+                    "file": filename,
+                    "global_start": (
+                        piece["global_start"]
+                    ),
+                    "global_end": (
+                        piece["global_end"]
+                    ),
+                    "width": expected_width,
+                    "height": (
+                        piece["global_end"]
+                        - piece["global_start"]
+                    ),
+                    "sources": [],
+                    "source_stage": piece["kind"],
+                    "source_file": (
+                        piece["source_file"]
+                    ),
+                }
+            )
+
+        manifest = {
+            "schema_version": 1,
+            "algorithm": (
+                "merge_level2_review_composition_v1"
+            ),
+            "status": "approved",
+            "approved_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+            "source_dir": str(
+                manga / "IMG" / chapter_name
+            ),
+            "output_dir": str(
+                official_dir
+            ),
+            "source_width": int(
+                expected_width or 0
+            ),
+            "source_total_height": (
+                total_height
+            ),
+            "merged_images": len(outputs),
+            "outputs": outputs,
+            "validation": {
+                "ok": True,
+                "errors": [],
+                "coverage_start": 0,
+                "coverage_end": total_height,
+            },
+            "safety": {
+                "source_files_modified": False,
+                "forced_cut_without_white_band": False,
+                "all_source_pixels_preserved_in_order": True,
+                "level2_passed_artifacts_rerendered": False,
+                "review_artifacts_rerendered": False,
+            },
+            "composition": {
+                "level2_manifest": (
+                    "merge-level2-manifest.json"
+                ),
+                "review_manifest": (
+                    "merge-review.json"
+                ),
+                "scope": (
+                    review_payload.get("scope")
+                ),
+            },
+        }
+
+        (
+            official_dir / "merge-manifest.json"
+        ).write_text(
+            json.dumps(
+                manifest,
+                ensure_ascii=False,
+                indent=2,
+            )
+            + "\n",
+            encoding="utf-8",
+        )
+
+        chapter_dir = (
+            manga / "IMG" / chapter_name
+        )
+
+        if not v3.is_chapter_merged(
+            chapter_dir
+        ):
+            raise RuntimeError(
+                "MERGE composto não foi reconhecido "
+                "como oficial."
+            )
+
+    except Exception as exc:
+        if official_dir.is_dir():
+            shutil.rmtree(
+                official_dir
+            )
+
+        return False, (
+            "Falha ao materializar "
+            f"composição final: {exc}"
+        )
+
+    return True, (
+        "Merge composto e validado em "
+        f"{official_dir}"
+    )
+
+
 def approve(manga, chapter):
     src=_review(manga,chapter); mf=src/"merge-review.json"
     if not mf.is_file(): return False,"Nenhuma proposta encontrada."
@@ -892,6 +1404,15 @@ def approve(manga, chapter):
             return False,"Já existe MERGE oficial não reconhecido; promoção cancelada por segurança."
 
     payload=json.loads(mf.read_text(encoding="utf-8"))
+    scope=payload.get("scope") or {}
+    if scope.get("type")=="pending_segments":
+        return _approve_scoped_level2_review(
+            manga,
+            chapter,
+            src,
+            payload,
+        )
+
     outputs=sorted(src.glob("merged-*.png"),key=_key)
     if not outputs: return False,"Proposta sem imagens."
 
