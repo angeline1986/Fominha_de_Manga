@@ -186,7 +186,19 @@ def _sample_tail_quality(page, *, tail_height=220, sample_width=256):
         }
 
 
-def _natural_page_end_candidates(pages, infos, start, end, allowed_end, max_source_images):
+class ReviewSourceLimitError(RuntimeError):
+    def __init__(self, message, diagnostic):
+        super().__init__(message)
+        self.message=message
+        self.diagnostic=diagnostic
+
+    def as_dict(self):
+        return {"ok":False,"status":"error","error":"review_source_limit","message":self.message,"diagnostic":self.diagnostic}
+
+
+def _natural_page_end_candidates(pages, infos, start, end, allowed_end, max_source_images, diagnostics=None):
+    if diagnostics is None:
+        diagnostics = []
     source_indexes = [
         i for i, info in enumerate(infos)
         if min(end, info.global_end) > max(start, info.global_start)
@@ -194,32 +206,58 @@ def _natural_page_end_candidates(pages, infos, start, end, allowed_end, max_sour
     if not source_indexes:
         return []
     first_idx = source_indexes[0]
-    max_idx = min(len(infos) - 1, first_idx + int(max_source_images) - 1)
+    max_idx = min(len(infos)-1, first_idx+int(max_source_images)-1)
     candidates = []
-    for idx in range(max_idx, first_idx - 1, -1):
+    for idx in range(first_idx, max_idx+1):
         info = infos[idx]
         center = int(info.global_end)
+        entry = {
+            "file": pages[idx].name,
+            "source_page_index": idx,
+            "center": center,
+            "uses_source_count": idx-first_idx+1,
+            "accepted": False,
+            "reason": "",
+        }
         if center <= start + v3.DEFAULT_MIN_CHUNK_HEIGHT:
+            entry["reason"]="bloco anterior ficaria abaixo da altura mínima"
+            diagnostics.append(entry)
             continue
         if center > allowed_end:
-            continue
-        if end - center < v3.DEFAULT_MIN_CHUNK_HEIGHT:
+            entry["reason"]="ultrapassa o máximo de originais informado"
+            diagnostics.append(entry)
             continue
         quality = _sample_tail_quality(pages[idx])
         if not quality:
+            entry["reason"]="não foi possível medir o final da imagem"
+            diagnostics.append(entry)
             continue
-        if quality["std"] > 28.0 or quality["edge"] > 18.0 or quality["score"] > 62.0:
+        entry["tail_quality"]=quality
+        reasons=[]
+        if quality["std"] > 28.0:
+            reasons.append(f"std {quality['std']:.2f} > 28.00")
+        if quality["edge"] > 18.0:
+            reasons.append(f"edge {quality['edge']:.2f} > 18.00")
+        if quality["score"] > 62.0:
+            reasons.append(f"score {quality['score']:.2f} > 62.00")
+        if reasons:
+            entry["reason"]="; ".join(reasons)
+            diagnostics.append(entry)
             continue
-        page, local = v3.page_at_y(infos, max(start, center - 1))
+        page, local = v3.page_at_y(infos, max(start, center-1))
+        entry["accepted"]=True
+        entry["reason"]="fim natural aceito"
+        diagnostics.append(entry)
         candidates.append({
             "center": center,
             "page": page,
-            "local_y": local + 1,
+            "local_y": local+1,
             "review_strategy": "natural_source_page_end",
             "source_page_index": idx,
             "source_page_file": pages[idx].name,
             "tail_quality": quality,
-            "uses_source_count": idx - first_idx + 1,
+            "uses_source_count": idx-first_idx+1,
+            "next_existing_cut_distance": max(0,int(end-center)),
         })
     return candidates
 
@@ -259,6 +297,7 @@ def _segment_sources(infos, start, end):
 
 
 def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, pages=None):
+    natural_end_diagnostics = []
     limit = int(max_source_images)
     if limit < 2:
         return None, [], "O limite mínimo é 2 imagens de origem por merge."
@@ -286,7 +325,7 @@ def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, p
 
         if pages is not None:
             natural = _natural_page_end_candidates(
-                pages, infos, start, end, allowed_end, limit
+                pages, infos, start, end, allowed_end, limit, natural_end_diagnostics
             )
             if natural:
                 best_count = max(x["uses_source_count"] for x in natural)
@@ -337,13 +376,46 @@ def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, p
                 uniform = _uniform_band_candidates(pages, infos)
             chosen = _choose_uniform_cut(uniform, infos, start, end, allowed_end)
             if chosen is None:
-                return None, inserted, (
-                    f"Não existe fim natural, faixa branca nem faixa uniforme segura "
-                    f"que mantenha este trecho em até {limit} imagens de origem. "
-                    "Aumente o máximo e regenere a proposta."
+                diag=[d for d in natural_end_diagnostics if d.get("uses_source_count",999999) <= limit]
+                diag.sort(key=lambda d:d.get("uses_source_count",0))
+                failed_pairs=[
+                    (i,info) for i,info in enumerate(infos)
+                    if min(allowed_end,info.global_end) > max(start,info.global_start)
+                ]
+                failed_sources=[pages[i].name for i,info in failed_pairs][:limit]
+                failed_end=min(total_height, failed_pairs[-1][1].global_end if failed_pairs else allowed_end)
+                diagnostic={
+                    "resolved_cuts_count": len(inserted),
+                    "failed_start": int(start),
+                    "failed_end": int(failed_end),
+                    "failed_sources": failed_sources,
+                    "evaluated_candidates": diag,
+                    "inserted_cuts": inserted,
+                    "max_source_images": int(limit),
+                }
+                raise ReviewSourceLimitError(
+                    f"Não foi possível concluir a proposta com máximo de {limit} originais.",
+                    diagnostic,
                 )
 
-        centers[int(chosen["center"])] = chosen
+        chosen_center = int(chosen["center"])
+
+        if chosen.get("review_strategy") == "natural_source_page_end":
+            absorbed = []
+            next_existing = min((c for c in centers if c > chosen_center), default=None)
+            while (
+                next_existing is not None
+                and next_existing - chosen_center < v3.DEFAULT_MIN_CHUNK_HEIGHT
+            ):
+                absorbed.append(next_existing)
+                centers.pop(next_existing, None)
+                next_existing = min((c for c in centers if c > chosen_center), default=None)
+
+            if absorbed:
+                chosen["absorbed_review_cuts"] = absorbed
+                chosen["review_strategy"] = "natural_source_page_end_with_absorption"
+
+        centers[chosen_center] = chosen
         inserted.append(dict(chosen))
 
     return None, inserted, "Limite interno atingido ao planejar os cortes."
@@ -398,7 +470,7 @@ def generate_candidate(manga, chapter, *, max_source_images=8):
                   "extended_safe_zone":True,
                   "extended_safe_zone_rule":"first_strict_white_band_after_review_max",
                   "max_source_images":int(max_source_images),
-                  "source_limit_rule":"natural_page_end_then_white_then_uniform_within_user_limit",
+                  "source_limit_rule":"natural_page_end_with_absorption_then_white_then_uniform_within_user_limit",
                   "uniform_color_fallback":"MERGE_REVIEW_ONLY"},
     }
     (dest/"merge-review.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
@@ -634,4 +706,3 @@ def run_merge_review_flow(output_dir: Path, *, ask_number: Callable, print_heade
             manga, selected[n - 1],
             ask_number, print_header, print_option, c
         )
-

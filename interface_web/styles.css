@@ -293,3 +293,90 @@ body.sidebar-collapsed #job{left:20px}
   position:relative!important;
   z-index:1!important;
 }
+
+/* Rodada: menu e pendente sem proposta */
+.server-stop-wrap{
+  margin-top:32px;
+  padding-top:24px;
+  border-top:1px solid var(--line);
+}
+.server-stop-wrap .server-stop{width:100%}
+.server-context,.online{display:none!important}
+
+.rv-pending-empty{
+  display:grid;
+  gap:18px;
+  align-content:start;
+}
+.rv-pending-empty>p{margin:0}
+.rv-pending-config{
+  display:flex;
+  align-items:end;
+  justify-content:space-between;
+  gap:16px;
+  max-width:520px;
+  padding:14px;
+  border:1px solid #d8dde5;
+  border-radius:12px;
+  background:#f7f8fa;
+}
+.rv-pending-config .rv-config-copy strong{color:#252a34}
+.rv-pending-config .rv-config-copy span{color:#717b8b}
+.rv-generate-pending{width:max-content;min-width:150px}
+
+.app-modal-detail span{overflow-wrap:anywhere}
+.app-modal-actions{justify-content:flex-end;gap:8px}
+
+.head > .btn,
+.head button.btn{
+  height:36px!important;
+  min-height:36px!important;
+  padding:0 14px!important;
+  align-self:center!important;
+}
+
+.rv-pending-list-empty{
+  margin-top:18px;
+  padding:14px;
+  border:1px solid #d8dde5;
+  border-radius:12px;
+  background:#f7f8fa;
+}
+.rv-pending-caps{
+  display:grid;
+  gap:7px;
+  margin-top:10px;
+}
+.rv-pending-cap{
+  min-height:42px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:10px;
+  width:100%;
+  padding:0 12px;
+  border:1px solid transparent;
+  border-radius:9px;
+  background:#fff;
+  color:#252a34;
+  font:inherit;
+  cursor:pointer;
+}
+.rv-pending-cap:hover{
+  border-color:#c8c0f5;
+  background:#f1effe;
+}
+.rv-pending-cap.active{
+  border-color:#6654d9;
+  background:#f1effe;
+  color:#5542c7;
+  font-weight:700;
+}
+
+/* Feedback PDF do Merge */
+.app-modal-detail,
+.app-modal-detail span,
+.app-modal-detail div{
+  overflow-wrap:anywhere;
+  white-space:pre-line;
+}

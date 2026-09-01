@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, mimetypes, os, re, shutil, sys, threading, traceback, urllib.parse, webbrowser
+import json, mimetypes, os, re, shutil, subprocess, sys, threading, traceback, urllib.parse, webbrowser
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -157,6 +157,40 @@ def review_max_source_images(rd):
         return int(value) if value is not None else None
     except Exception:
         return None
+
+def pdf_merge_files(manga, chapter):
+    try:
+        folder=manga/"FLUXO_SECUNDARIO"/"PDF_MERGE"/str(chapter)
+        if not folder.is_dir():
+            return []
+        return [p.name for p in sorted(folder.glob("*.pdf"), key=nkey) if p.is_file()]
+    except Exception:
+        return []
+
+
+def latest_pdf_merge_batch(manga):
+    root = manga / "FLUXO_SECUNDARIO" / "PDF_MERGE"
+    if not root.is_dir():
+        return []
+    items = []
+    for p in root.rglob("*.pdf"):
+        if not p.is_file():
+            continue
+        try:
+            mtime = p.stat().st_mtime
+        except OSError:
+            continue
+        try:
+            chapter = p.parent.relative_to(root).parts[0]
+        except Exception:
+            chapter = p.parent.name
+        items.append({"file": p.name, "chapter": str(chapter), "mtime": float(mtime)})
+    if not items:
+        return []
+    newest = max(x["mtime"] for x in items)
+    batch = [x for x in items if newest - x["mtime"] <= 12.0]
+    batch.sort(key=lambda x: (str(x["chapter"]), x["file"]))
+    return batch
 
 def row_state(manga,ch):
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
@@ -317,7 +351,15 @@ def do_review_generate(job,manga,chs,max_source_images=None):
         raise ValueError("Máximo de imagens por merge deve ficar entre 2 e 50.")
     for i,ch in enumerate(chs,1):
         job.message=f"Gerando proposta para capítulo {ch.name} · máximo {limit} originais/merge..."
-        ok,msg,dest=rv.generate_candidate(manga,ch,max_source_images=limit)
+        try:
+            ok,msg,dest=rv.generate_candidate(manga, ch, max_source_images=limit)
+        except rv.ReviewSourceLimitError as exc:
+            item=exc.as_dict()
+            item["chapter"]=str(ch)
+            item["max_source_images"]=int(limit)
+            out.append(item)
+            job.progress=i
+            continue
         out.append({"chapter":ch.name,"status":"ok" if ok else "error","message":msg,"path":str(dest) if dest else None,"max_source_images":limit})
         job.progress=i
     return out
@@ -364,6 +406,25 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if u.path=="/api/catalog": return self.send_json(catalog())
             if u.path=="/api/state": return self.send_json(state(q.get("provider",[""])[0],q.get("manga",[""])[0]))
+            if u.path=="/api/pdf-merge-latest":
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+                files=latest_pdf_merge_batch(manga)
+                return self.send_json({"ok":True,"files":files})
+            if u.path=="/api/pdf-merge-files":
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+                chapter=str(q.get("chapter",[""])[0])
+                return self.send_json({"ok":True,"chapter":chapter,"files":pdf_merge_files(manga,chapter)})
+            if u.path=="/api/open-folder":
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+                chapter=str(q.get("chapter",[""])[0])
+                kind=str(q.get("kind",["merge"])[0]).lower()
+                folder_name="PDF_MERGE" if kind=="pdf_merge" else "MERGE"
+                base=(manga/"FLUXO_SECUNDARIO"/folder_name).resolve()
+                target=base if (kind=="pdf_merge" and not chapter) else (base/chapter).resolve()
+                if not target.is_relative_to(base) or not target.is_dir():
+                    raise ValueError(f"Pasta {folder_name} não encontrada.")
+                subprocess.Popen(["open",str(target)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+                return self.send_json({"ok":True,"message":"Pasta aberta."})
             if u.path=="/api/shutdown":
                 self.send_json({"ok":True,"message":"Servidor finalizado."})
                 threading.Thread(target=self.server.shutdown,daemon=True).start()

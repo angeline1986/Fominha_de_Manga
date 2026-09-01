@@ -26,7 +26,103 @@ function toggleSidebar(){
   localStorage.setItem("fominha.sidebar.collapsed",collapsed?"1":"0");
   let b=$("#sidebarToggle");if(b)b.setAttribute("aria-expanded",String(!collapsed));
 }
-async function init(){applySidebarState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");$("#badge").textContent=data.summary.merge_failed||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><div class="caption">PROCESSAMENTO</div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div>`}function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente").slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES</span></div><div class="kpi"><b>${s.new??0}</b><span>NOVOS</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· PENDENTE</span></b><div class="muted">Merge V3 ainda não concluído.</div></div><button class="btn primary" onclick="goReview('${esc(x.chapter)}')">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+async function init(){applySidebarState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");$("#badge").textContent=data.summary.merge_failed||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div>`}
+function normalizePdfMergeTable(){
+  const tables=[...document.querySelectorAll("table")];
+  const table=tables.find(t=>{
+    const labels=[...t.querySelectorAll("thead th")].map(x=>x.textContent.trim().toUpperCase());
+    return labels.includes("PDF MERGE");
+  });
+  if(!table) return;
+
+  const headCells=[...table.querySelectorAll("thead th")];
+  const removeHeaderIndexes=[];
+  headCells.forEach((th,i)=>{
+    const label=th.textContent.trim().toUpperCase();
+    if(label==="IMAGENS" || label==="PDF") removeHeaderIndexes.push(i);
+  });
+  removeHeaderIndexes.sort((a,b)=>b-a).forEach(i=>{
+    table.querySelectorAll("tr").forEach(tr=>{
+      const cells=[...tr.children];
+      if(cells[i]) cells[i].remove();
+    });
+  });
+
+  const desiredHead=[...table.querySelectorAll("thead th")].length;
+  table.querySelectorAll("tbody tr").forEach(tr=>{
+    let cells=[...tr.children];
+    if(desiredHead===5 && cells.length===7){
+      cells[5]?.remove();
+      cells=[...tr.children];
+      cells[2]?.remove();
+    }
+  });
+}
+
+async function enhancePdfMergeSuccessModal(){
+  const modal=document.querySelector("#appModal");
+  if(!modal) return;
+
+  const title=modal.querySelector("h1,h2,.app-modal-title")?.textContent?.trim() || "";
+  if(title!=="PDF do Merge gerado") return;
+  if(modal.dataset.pdfMergeEnhanced==="1") return;
+  modal.dataset.pdfMergeEnhanced="1";
+
+  let files=[];
+  try{
+    const r=await api(`/api/pdf-merge-latest?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}`);
+    files=Array.isArray(r?.files)?r.files:[];
+  }catch(e){}
+
+  const detail=modal.querySelector(".app-modal-detail");
+  if(detail && files.length){
+    const grouped=new Map();
+    files.forEach(x=>{
+      const ch=String(x.chapter||"");
+      if(!grouped.has(ch)) grouped.set(ch,[]);
+      grouped.get(ch).push(x.file);
+    });
+
+    detail.innerHTML=[...grouped.entries()].map(([ch,names])=>`
+      <div class="pdf-merge-result-group">
+        <strong>${ch?`Cap. ${esc(ch)}`:"Resultado"}</strong>
+        ${names.map(n=>`<span>${esc(n)}</span>`).join("")}
+      </div>
+    `).join("");
+  }
+
+  const actions=modal.querySelector(".app-modal-actions");
+  const closeBtn=actions?.querySelector("[data-modal-ok]") || actions?.querySelector("button:last-child");
+  if(actions && closeBtn && !actions.querySelector(".pdf-merge-open-folder")){
+    const chapters=[...new Set(files.map(x=>String(x.chapter||"")).filter(Boolean))];
+    const openBtn=document.createElement("button");
+    openBtn.className="btn pdf-merge-open-folder";
+    openBtn.textContent="Abrir pasta";
+    openBtn.onclick=async()=>{
+      const chapter=chapters.length===1?chapters[0]:"";
+      try{
+        await api(`/api/open-folder?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&chapter=${encodeURIComponent(chapter)}&kind=pdf_merge`);
+      }catch(e){
+        toast(e.message||"Não foi possível abrir a pasta.");
+      }
+    };
+    actions.insertBefore(openBtn,closeBtn);
+  }
+}
+
+function installPdfMergeUiNormalizer(){
+  if(window.__pdfMergeUiNormalizerInstalled) return;
+  window.__pdfMergeUiNormalizerInstalled=true;
+  const run=()=>{
+    normalizePdfMergeTable();
+    enhancePdfMergeSuccessModal();
+  };
+  const observer=new MutationObserver(()=>requestAnimationFrame(run));
+  observer.observe(document.body,{childList:true,subtree:true});
+  requestAnimationFrame(run);
+}
+
+function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente").slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.new??0}</b><span>NOVOS</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· PENDENTE DE REVISÃO</span></b><div class="muted">Auto-Merge não conseguiu concluir este capítulo.</div></div><button class="btn primary" onclick="goReview('${esc(x.chapter)}')">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
   if(x.merge_state==="pendente"||x.merge_failed)return {cls:"warn",text:"Pendente"};
@@ -41,12 +137,12 @@ function tableFilteredRows(k){
   return rows;
 }
 function table(r,k){
-  let cfg={pdf:["Gerar PDF","Gerar PDFs a partir das imagens originais validadas.","pdf"],merge:["Unificar imagens","Aplicar o Merge V3 preservando IMG.","merge"],clean:["Limpar balões","Executar Bubble Cleaner V3.5.","clean"],pdf_merge:["PDF do Merge","Gerar PDF com as imagens oficialmente unificadas.","pdf_merge"]}[k];
+  let cfg={pdf:["Gerar PDF","Gerar PDFs a partir das imagens originais validadas.","pdf"],merge:["Auto-Merge","Aplicar o Merge V3 preservando IMG.","merge"],clean:["Limpar balões","Executar Bubble Cleaner V3.5.","clean"],pdf_merge:["PDF do Merge","Gerar PDF com as imagens oficialmente unificadas.","pdf_merge"]}[k];
   let all=tableFilteredRows(k),pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));tablePage=Math.min(Math.max(1,tablePage),pages);
   let rows=all.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
   let statusFilter=k==="merge"?`<div class="status-filter"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="novo"?"active":""}" onclick="setTableStatus('novo')">Novos</button><button class="tab ${tableStatus==="pendente"?"active":""}" onclick="setTableStatus('pendente')">Pendentes</button></div>`:"";
   let pager=`<div class="table-pager"><span>${all.length?((tablePage-1)*PAGE_SIZE+1):0}–${Math.min(tablePage*PAGE_SIZE,all.length)} de ${all.length}</span><div><button class="btn" ${tablePage<=1?"disabled":""} onclick="changeTablePage(-1)">&lt;&lt;</button><span class="page-indicator">${tablePage} / ${pages}</span><button class="btn" ${tablePage>=pages?"disabled":""} onclick="changeTablePage(1)">&gt;&gt;</button></div></div>`;
-  r.innerHTML=head(cfg[0],cfg[1])+`<div class="toolbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()">${statusFilter}<button class="btn" onclick="allv()">Selecionar visíveis</button><button class="btn primary" onclick="runSelected('${cfg[2]}')">Executar</button></div><div class="panel"><table><thead><tr><th></th><th>CAP.</th><th>IMAGENS</th><th>MERGE</th><th>CLEAN</th><th>PDF</th><th>PDF MERGE</th></tr></thead><tbody>${rows.map(x=>{let ml=mergeLabel(x);return `<tr data-n="${esc(x.chapter).toLowerCase()}"><td><input class="ck" type="checkbox" value="${esc(x.chapter)}"></td><td>${esc(x.chapter)}</td><td>${x.pages}</td><td class="${ml.cls}">${ml.text}</td><td class="${x.clean?'ok':'muted'}">${x.clean?'✓':'—'}</td><td class="${x.pdf?'ok':'warn'}">${x.pdf?'✓':'Pendente'}</td><td class="${x.pdf_merge?'ok':'muted'}">${x.pdf_merge?'✓':'—'}</td></tr>`}).join("")}</tbody></table>${pager}</div>`;
+  r.innerHTML=head(cfg[0],cfg[1])+`<div class="toolbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()">${statusFilter}<button class="btn" onclick="allv()">Selecionar visíveis</button><button class="btn primary" onclick="runSelected('${cfg[2]}')">Executar</button></div><div class="panel"><table><thead><tr><th></th><th>CAP.</th><th>MERGE</th><th>CLEAN</th><th>PDF MERGE</th></tr></thead><tbody>${rows.map(x=>{let ml=mergeLabel(x);return `<tr data-n="${esc(x.chapter).toLowerCase()}"><td><input class="ck" type="checkbox" value="${esc(x.chapter)}"></td><td>${esc(x.chapter)}</td><td>${x.pages}</td><td class="${ml.cls}">${ml.text}</td><td class="${x.clean?'ok':'muted'}">${x.clean?'✓':'—'}</td><td class="${x.pdf?'ok':'warn'}">${x.pdf?'✓':'Pendente'}</td><td class="${x.pdf_merge?'ok':'muted'}">${x.pdf_merge?'✓':'—'}</td></tr>`}).join("")}</tbody></table>${pager}</div>`;
 }
 function setTableStatus(v){tableStatus=v;tablePage=1;render()}
 function changeTablePage(d){tablePage+=d;render()}
@@ -54,7 +150,7 @@ function filter(){tablePage=1;render()}
 function allv(){document.querySelectorAll("tbody .ck").forEach(x=>x.checked=true)}
 function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.value)}async function runSelected(a){let ch=chosen();if(!ch.length)return toast("Selecione ao menos um capítulo.");if(await askAppModal("Confirmar",`${ch.length} capítulo(s) selecionado(s).`,"Executar"))job(a,ch)}function goReview(ch){page="review";reviewCh=ch;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page==="review"));render()}function review(r){
  let list=data.chapters.filter(x=>x.merge_failed||x.review);
- if(!list.length){r.innerHTML=head("Tratar merges pendentes","Revise propostas alternativas antes de torná-las oficiais.")+`<div class="empty">Nenhum capítulo aguardando tratamento.</div>`;return}
+ if(!list.length){r.innerHTML=head("Revisão Merge pendentes","Revise propostas alternativas antes de torná-las oficiais.")+`<div class="empty">Nenhum capítulo aguardando tratamento.</div>`;return}
  let x=list.find(z=>String(z.chapter)===String(reviewCh))||list[0];reviewCh=x.chapter;
  if(window.reviewExpandedChapter===undefined)window.reviewExpandedChapter=x.chapter;
  let merges=x.review_merges||[],files=x.review_files||[];
@@ -88,7 +184,7 @@ function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.
  }).join("");
 
  r.innerHTML=`<section class="rv">
- <header class="rv-head"><div><span class="eyebrow">REVISÃO VISUAL</span><h1>${esc(data.manga)} · cap ${esc(x.chapter)}</h1></div></header>
+ <header class="rv-head"><div><h1>Revisão Merge</h1></div></header>
  ${x.review?`
  <section class="rv-source-strip">
    <div class="rv-source-strip-head">
@@ -122,7 +218,30 @@ function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.
      </section>
      <section><span class="eyebrow">PRÓXIMOS PENDENTES</span><div class="rv-chapters">${chapters}</div></section>
    </aside>
- </div>`:`<div class="rv-empty"><h2>Capítulo ${esc(x.chapter)}</h2><p>Gere uma proposta alternativa para iniciar a revisão visual.</p></div>`}</section>`;
+ </div>`:`<div class="rv-empty rv-pending-empty">
+    <h2>Capítulo ${esc(x.chapter)}</h2>
+    <p>Este capítulo está pendente e ainda não possui uma proposta de merge.</p>
+    <div class="rv-pending-config">
+      <div class="rv-config-copy"><strong>Máximo de originais</strong><span>Limite usado para gerar a proposta</span></div>
+      <div class="rv-stepper">
+        <button type="button" onclick="rvChangeMaxSources(-1)" aria-label="Diminuir máximo">−</button>
+        <div id="reviewMaxSourcesValue" class="rv-stepper-value">${proposedLimit}</div>
+        <button type="button" onclick="rvChangeMaxSources(1)" aria-label="Aumentar máximo">+</button>
+      </div>
+      <input id="reviewMaxSources" type="hidden" value="${proposedLimit}">
+    </div>
+    <button class="btn primary rv-generate-pending" onclick="reviewDecision('review','${esc(x.chapter)}')">Gerar proposta</button>
+    <aside class="rv-pending-list-empty">
+      <span class="eyebrow">PENDENTES DE REVISÃO</span>
+      <div class="rv-pending-caps">
+        ${data.chapters.filter(c=>c.merge_state==="pending"||c.merge_failed).map(c=>`
+          <button class="rv-pending-cap ${String(c.chapter)===String(x.chapter)?"active":""}"
+                  onclick="reviewCh='${esc(c.chapter)}';window.reviewImageIndex=0;render()">
+            <span>Capítulo ${esc(c.chapter)}</span><b>›</b>
+          </button>`).join("")}
+      </div>
+    </aside>
+  </div>`}</section>`;
 }
 function rvSet(i){window.reviewImageIndex=i;window.reviewZoom=1;render()}
 function rvMove(d){let x=data.chapters.find(z=>String(z.chapter)===String(reviewCh)),n=x?.review_files?.length||0;window.reviewImageIndex=Math.min(Math.max(0,(window.reviewImageIndex||0)+d),Math.max(0,n-1));window.reviewZoom=1;render()}
@@ -280,7 +399,140 @@ async function job(a,ch,extra={}){let j=await api("/api/action",{method:"POST",h
   return {kind,title,ok:ok.length,errors:errors.length,other:other.length,details,results};
 }
 
+async function openMergeFolder(chapter){
+  try{
+    await api(`/api/open-folder?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&chapter=${encodeURIComponent(chapter)}`);
+  }catch(e){
+    toast(e.message||"Não foi possível abrir a pasta.");
+  }
+}
+function pdfMergeFileNames(payload){
+  const raw=payload?.pdf_merge_files ?? payload?.files ?? payload?.outputs ?? [];
+  const list=Array.isArray(raw)?raw:[];
+  return list.map(item=>{
+    if(typeof item==="string") return item.split("/").pop();
+    const value=item?.file ?? item?.name ?? item?.path ?? "";
+    return String(value).split("/").pop();
+  }).filter(Boolean);
+}
+
+async function fetchPdfMergeFiles(chapter){
+  try{
+    const r=await api(`/api/pdf-merge-files?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&chapter=${encodeURIComponent(chapter)}`);
+    return Array.isArray(r?.files)?r.files:[];
+  }catch(e){return [];}
+}
+
+async function openPdfMergeFolder(chapter){
+  try{
+    await api(`/api/open-folder?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&chapter=${encodeURIComponent(chapter)}&kind=pdf_merge`);
+  }catch(e){
+    toast(e.message||"Não foi possível abrir a pasta.");
+  }
+}
+
+function pdfMergeResultModal(job,state){
+  const action=String(job?.action||job?.request?.action||"").toLowerCase();
+  if(!["pdf_merge","generate_pdf_merge","pdfmerge"].includes(action)) return false;
+  const status=String(job?.status||"").toLowerCase();
+  if(!["done","success","completed","error","failed"].includes(status)) return false;
+  const payload=job?.result ?? job?.response ?? job;
+  const success=["done","success","completed"].includes(status) && payload?.ok!==false;
+  const chapter=String(payload?.chapter ?? job?.chapter ?? job?.request?.chapter ?? "");
+  let files=pdfMergeFileNames(payload);
+
+  const modalPromise=appModal({
+    title:success?"PDF do Merge gerado":"Não foi possível gerar o PDF do Merge",
+    message:success?"O PDF do Merge foi gerado com sucesso.":(payload?.message||payload?.error||"A geração não foi concluída."),
+    kind:success?"success":"error",
+    chips:[],
+    details:success
+      ? [{title:chapter?`Cap. ${chapter}`:"Resultado",message:files.length?files.join("\n"):"Consultando arquivo gerado..."}]
+      : [{title:chapter?`Cap. ${chapter}`:"Erro",message:payload?.message||payload?.error||"Erro não detalhado pelo processamento."}],
+    confirmText:"Fechar"
+  });
+
+  const finalizeSuccessUi=(resolvedFiles)=>{
+    const modal=document.querySelector("#appModal");
+    if(!modal) return;
+    const detail=modal.querySelector(".app-modal-detail");
+    if(detail && resolvedFiles.length){
+      detail.innerHTML=`<strong>${chapter?`Cap. ${esc(chapter)}`:"Resultado"}</strong>`+
+        resolvedFiles.map(f=>`<span>${esc(f)}</span>`).join("");
+    }
+    const actions=modal.querySelector(".app-modal-actions");
+    const closeBtn=actions?.querySelector("[data-modal-ok]") || actions?.querySelector("button:last-child");
+    if(actions && closeBtn && !actions.querySelector(".pdf-merge-open-folder")){
+      const openBtn=document.createElement("button");
+      openBtn.className="btn pdf-merge-open-folder";
+      openBtn.textContent="Abrir pasta";
+      openBtn.onclick=()=>openPdfMergeFolder(chapter);
+      actions.insertBefore(openBtn,closeBtn);
+    }
+  };
+
+  if(success){
+    if(files.length){
+      requestAnimationFrame(()=>finalizeSuccessUi(files));
+    }else if(chapter){
+      fetchPdfMergeFiles(chapter).then(resolved=>{
+        files=resolved||[];
+        finalizeSuccessUi(files);
+      });
+    }
+  }
+
+  modalPromise.then(()=>load());
+  return true;
+}
+
+async function formatReviewDiagnosticMessage(message){
+  const text=String(message||"");
+  if(!text.includes("Diagnóstico dos fins naturais:")) return text;
+  const parts=text.split("Diagnóstico dos fins naturais:");
+  const intro=(parts[0]||"").trim();
+  const items=String(parts[1]||"").split("|").map(x=>x.trim()).filter(Boolean);
+  return intro+"\n\nFins naturais avaliados:\n"+items.map(x=>"- "+x).join("\n");
+}
+
+function reviewStructuredDiagnosticText(d){
+  if(!d) return "";
+  const src=Array.isArray(d.failed_sources)?d.failed_sources:[];
+  const cand=Array.isArray(d.evaluated_candidates)?d.evaluated_candidates:[];
+  const lines=[
+    `Trechos já resolvidos: ${Number(d.resolved_cuts_count||0)}`,
+    "",
+    "Falha encontrada no próximo trecho:",
+    "Originais envolvidos:",
+    src.length ? `${src[0]} → ${src[src.length-1]}` : "Não identificado",
+    "",
+    "Intervalo global:",
+    `Y ${d.failed_start ?? "?"} → ${d.failed_end ?? "?"}`,
+    "",
+    "Candidatos avaliados:"
+  ];
+  cand.forEach(c=>lines.push(`${c.file||"?"} → ${c.accepted?"aceito":"rejeitado"}${c.reason?": "+c.reason:""}`));
+  lines.push("");
+  lines.push(`Nenhum fim natural, faixa branca segura ou faixa uniforme segura foi encontrado dentro do limite de ${d.max_source_images ?? "?"} originais para este trecho.`);
+  return lines.join("\n");
+}
+
 function reviewResultModal(j,s){
+  const structuredDiagnostic =
+    j?.result?.diagnostic ? j.result :
+    Array.isArray(j?.result) ? j.result.find(x=>x?.diagnostic) :
+    Array.isArray(j?.result?.results) ? j.result.results.find(x=>x?.diagnostic) : null;
+
+  if(structuredDiagnostic?.diagnostic){
+    appModal({
+      title:"Não foi possível gerar a proposta",
+      message:(structuredDiagnostic.message||"A proposta não pôde ser concluída.")+"\n\n"+reviewStructuredDiagnosticText(structuredDiagnostic.diagnostic),
+      kind:"error",
+      confirmText:"Fechar"
+    }).then(()=>load());
+    return true;
+  }
+  if(pdfMergeResultModal(j,s)) return true;
   if(!["review_generate","review_approve","review_reject"].includes(j.action)) return false;
 
   let first=(s.results||[])[0]||{};
@@ -313,14 +565,30 @@ function reviewResultModal(j,s){
   }
 
   if(j.action==="review_approve"){
-    appModal({
+    let modalPromise=appModal({
       title:success?"Merge aprovado":"Não foi possível aprovar o merge",
-      message:success?"A sugestão validada foi promovida para o MERGE oficial.":"A sugestão não pôde ser promovida para o MERGE oficial.",
+      message:success?"A sugestão foi promovida para o MERGE.":"A sugestão não pôde ser promovida para o MERGE oficial.",
       kind:success?"success":"error",
-      chips:[{value:success?1:0,label:"aprovado"}],
-      details:message?[{title:chapter?`Cap. ${chapter}`:"Resultado",message}]:[],
+      chips:[],
+      details:success
+        ? [{title:chapter?`Cap. ${chapter}`:"Resultado",message:"Merge promovido e validado."}]
+        : (message?[{title:chapter?`Cap. ${chapter}`:"Resultado",message}]:[]),
       confirmText:"Fechar"
-    }).then(()=>load());
+    });
+
+    if(success && chapter){
+      let actions=document.querySelector("#appModal .app-modal-actions");
+      let closeBtn=actions?.querySelector("[data-modal-ok]");
+      if(actions && closeBtn){
+        let openBtn=document.createElement("button");
+        openBtn.className="btn";
+        openBtn.textContent="Abrir pasta";
+        openBtn.onclick=()=>openMergeFolder(chapter);
+        actions.insertBefore(openBtn,closeBtn);
+      }
+    }
+
+    modalPromise.then(()=>load());
     return true;
   }
 
@@ -411,4 +679,11 @@ async function shutdownServer(){
   }catch(e){
     toast("Servidor finalizado.");
   }
+}
+
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",installPdfMergeUiNormalizer,{once:true});
+}else{
+  installPdfMergeUiNormalizer();
 }
