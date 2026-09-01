@@ -691,5 +691,121 @@ class MergeReviewPendingScopeTests(unittest.TestCase):
             )
 
 
+
+    def test_uniform_detector_rejects_center_only_uniform_strip(self):
+        """
+        Uma faixa uniforme apenas no miolo da imagem não é segura.
+
+        Reproduz a classe de falso positivo observada no capítulo 6:
+        o detector central vê cor uniforme, mas esquerda/direita possuem
+        conteúdo estruturalmente diferente.
+        """
+        import tempfile
+        from pathlib import Path
+
+        from PIL import Image, ImageDraw
+
+        from processamento.unificacao_imagens import image_stitcher as v3
+        from processamento.unificacao_imagens import image_stitcher_review as rv
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            page = root / "page-001.png"
+
+            width = 720
+            height = 120
+
+            image = Image.new(
+                "RGB",
+                (width, height),
+                (237, 239, 243),
+            )
+
+            draw = ImageDraw.Draw(image)
+
+            # Fora da amostra central de 256 px, introduzimos regiões
+            # estruturalmente muito diferentes.
+            center_width = 256
+            center_x0 = (width - center_width) // 2
+            center_x1 = center_x0 + center_width
+
+            draw.rectangle(
+                (0, 0, center_x0 - 1, height - 1),
+                fill=(250, 250, 250),
+            )
+            draw.rectangle(
+                (center_x1, 0, width - 1, height - 1),
+                fill=(0, 0, 0),
+            )
+
+            image.save(page, "PNG")
+
+            pages = [page]
+
+            infos, _, _, _ = v3.analyze_chapter(
+                pages,
+                sample_width=v3.DEFAULT_SAMPLE_WIDTH,
+                light_threshold=v3.DEFAULT_LIGHT_THRESHOLD,
+                white_ratio_threshold=v3.DEFAULT_WHITE_RATIO,
+            )
+
+            candidates = rv._uniform_band_candidates(
+                pages,
+                infos,
+            )
+
+            self.assertEqual(
+                candidates,
+                [],
+                "Faixa uniforme apenas no centro não pode ser "
+                "considerada segura para corte.",
+            )
+
+    def test_uniform_detector_accepts_full_width_uniform_strip(self):
+        """
+        Uma faixa realmente uniforme em toda a largura continua elegível.
+
+        Protege o comportamento necessário para casos como o corte
+        full-width preto observado no capítulo 6.
+        """
+        import tempfile
+        from pathlib import Path
+
+        from PIL import Image
+
+        from processamento.unificacao_imagens import image_stitcher as v3
+        from processamento.unificacao_imagens import image_stitcher_review as rv
+
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            page = root / "page-001.png"
+
+            image = Image.new(
+                "RGB",
+                (720, 120),
+                (0, 0, 0),
+            )
+            image.save(page, "PNG")
+
+            pages = [page]
+
+            infos, _, _, _ = v3.analyze_chapter(
+                pages,
+                sample_width=v3.DEFAULT_SAMPLE_WIDTH,
+                light_threshold=v3.DEFAULT_LIGHT_THRESHOLD,
+                white_ratio_threshold=v3.DEFAULT_WHITE_RATIO,
+            )
+
+            candidates = rv._uniform_band_candidates(
+                pages,
+                infos,
+            )
+
+            self.assertGreater(
+                len(candidates),
+                0,
+                "Faixa uniforme em toda a largura deve continuar elegível.",
+            )
+
 if __name__ == "__main__":
     unittest.main()

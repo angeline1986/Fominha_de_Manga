@@ -166,6 +166,7 @@ def _uniform_band_candidates(pages, infos, sample_width=256, band_height=18, max
             if h < band_height: gy += h; continue
             sw=min(sample_width,w); x0=max(0,(w-sw)//2)
             arr=np.asarray(rgb.crop((x0,0,x0+sw,h)),dtype=np.float32)
+            full_arr=np.asarray(rgb,dtype=np.float32)
             step=max(4,band_height//2)
             for y in range(0,h-band_height+1,step):
                 strip=arr[y:y+band_height]; flat=strip.reshape(-1,3)
@@ -173,8 +174,29 @@ def _uniform_band_candidates(pages, infos, sample_width=256, band_height=18, max
                 dx=float(np.abs(np.diff(strip,axis=1)).mean()) if strip.shape[1]>1 else 0.0
                 dy=float(np.abs(np.diff(strip,axis=0)).mean()) if strip.shape[0]>1 else 0.0
                 edge=max(dx,dy)
-                if std<=max_channel_std and edge<=max_edge_mean:
-                    out.append({"center":int(gy+y+band_height//2),"band_height":band_height,"uniform_std":std,"edge_mean":edge,"review_strategy":"uniform_color_safe_band"})
+
+                full_strip=full_arr[y:y+band_height]
+                full_flat=full_strip.reshape(-1,3)
+                full_std=float(full_flat.std(axis=0).max())
+                full_dx=float(np.abs(np.diff(full_strip,axis=1)).mean()) if full_strip.shape[1]>1 else 0.0
+                full_dy=float(np.abs(np.diff(full_strip,axis=0)).mean()) if full_strip.shape[0]>1 else 0.0
+                full_edge=max(full_dx,full_dy)
+
+                if (
+                    std<=max_channel_std
+                    and edge<=max_edge_mean
+                    and full_std<=max_channel_std
+                    and full_edge<=max_edge_mean
+                ):
+                    out.append({
+                        "center":int(gy+y+band_height//2),
+                        "band_height":band_height,
+                        "uniform_std":std,
+                        "edge_mean":edge,
+                        "full_width_uniform_std":full_std,
+                        "full_width_edge_mean":full_edge,
+                        "review_strategy":"uniform_color_safe_band",
+                    })
         gy += info.height
     return out
 
