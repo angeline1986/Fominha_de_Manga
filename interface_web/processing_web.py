@@ -199,6 +199,245 @@ def clear_merge_failure(ch):
     if p.is_file(): p.unlink()
     if p.parent.is_dir() and not any(p.parent.iterdir()): p.parent.rmdir()
 
+
+def _promote_level2_complete(ch, part):
+    """Promove Level II 100% PASSED para o MERGE oficial."""
+    from datetime import datetime, timezone
+    from PIL import Image
+    from processamento.unificacao_imagens import image_stitcher as v3
+
+    manga = ch.parent.parent
+    level2_dir = l2dir(manga, ch.name)
+    manifest_path = level2_dir / "merge-level2-manifest.json"
+
+    if not manifest_path.is_file():
+        return False, "Manifesto Level II não encontrado."
+
+    try:
+        level2_payload = json.loads(
+            manifest_path.read_text(encoding="utf-8")
+        )
+    except Exception as exc:
+        return False, f"Manifesto Level II inválido: {exc}"
+
+    pending = level2_payload.get("pending_segments") or []
+    if pending:
+        return False, (
+            "Level II ainda possui segmentos pendentes; "
+            "promoção direta cancelada."
+        )
+
+    artifacts = level2_payload.get("artifacts") or []
+    if not artifacts:
+        return False, "Level II não possui artefatos PASSED."
+
+    total_height = int(
+        level2_payload.get("total_height")
+        or part.get("total_height")
+        or 0
+    )
+    if total_height <= 0:
+        return False, "Altura total do Level II inválida."
+
+    pieces = []
+
+    try:
+        for artifact in artifacts:
+            start = int(artifact["global_start"])
+            end = int(artifact["global_end"])
+            filename = str(artifact["file"])
+
+            if start < 0 or end <= start:
+                return False, (
+                    f"Intervalo Level II inválido: "
+                    f"{start}..{end}."
+                )
+
+            source = level2_dir / filename
+            if not source.is_file():
+                return False, (
+                    f"Artefato Level II ausente: {filename}."
+                )
+
+            pieces.append(
+                {
+                    "global_start": start,
+                    "global_end": end,
+                    "source": source,
+                    "source_file": filename,
+                }
+            )
+    except (KeyError, TypeError, ValueError) as exc:
+        return False, (
+            f"Metadados de artefato Level II inválidos: {exc}"
+        )
+
+    pieces.sort(
+        key=lambda item: (
+            item["global_start"],
+            item["global_end"],
+            item["source_file"],
+        )
+    )
+
+    expected_start = 0
+    expected_width = None
+
+    for piece in pieces:
+        start = piece["global_start"]
+        end = piece["global_end"]
+        source = piece["source"]
+
+        if start != expected_start:
+            relation = "lacuna" if start > expected_start else "sobreposição"
+            return False, (
+                f"Cobertura Level II inválida ({relation}): "
+                f"esperado {expected_start}, encontrado {start}."
+            )
+
+        try:
+            with Image.open(source) as im:
+                width = int(im.width)
+                height = int(im.height)
+        except Exception as exc:
+            return False, (
+                f"Artefato Level II ilegível "
+                f"{source.name}: {exc}"
+            )
+
+        expected_height = end - start
+        if height != expected_height:
+            return False, (
+                f"Altura incompatível em {source.name}: "
+                f"{height} != {expected_height}."
+            )
+
+        if expected_width is None:
+            expected_width = width
+        elif width != expected_width:
+            return False, (
+                f"Largura incompatível em {source.name}: "
+                f"{width} != {expected_width}."
+            )
+
+        expected_start = end
+
+    if expected_start != total_height:
+        return False, (
+            "Cobertura Level II incompleta: "
+            f"{expected_start} != {total_height}."
+        )
+
+    official_dir = v3.merge_output_dir(ch)
+
+    if official_dir.exists():
+        if v3.is_chapter_merged(ch):
+            return False, (
+                "Já existe MERGE oficial válido para este capítulo."
+            )
+
+        return False, (
+            "Já existe MERGE oficial não reconhecido; "
+            "promoção cancelada por segurança."
+        )
+
+    official_dir.mkdir(
+        parents=True,
+        exist_ok=False,
+    )
+
+    outputs = []
+
+    try:
+        for index, piece in enumerate(pieces, 1):
+            filename = f"merged-{index:03d}.png"
+            destination = official_dir / filename
+
+            # Preserva exatamente o artefato validado do Level II.
+            shutil.copy2(
+                piece["source"],
+                destination,
+            )
+
+            outputs.append(
+                {
+                    "file": filename,
+                    "global_start": piece["global_start"],
+                    "global_end": piece["global_end"],
+                    "width": expected_width,
+                    "height": (
+                        piece["global_end"]
+                        - piece["global_start"]
+                    ),
+                    "sources": [],
+                    "source_stage": "level2",
+                    "source_file": piece["source_file"],
+                }
+            )
+
+        manifest = {
+            "schema_version": 1,
+            "algorithm": "merge_level2_composition_v1",
+            "status": "approved",
+            "approved_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+            "source_dir": str(ch),
+            "output_dir": str(official_dir),
+            "source_width": int(expected_width or 0),
+            "source_total_height": total_height,
+            "merged_images": len(outputs),
+            "outputs": outputs,
+            "validation": {
+                "ok": True,
+                "errors": [],
+                "coverage_start": 0,
+                "coverage_end": total_height,
+            },
+            "safety": {
+                "source_files_modified": False,
+                "forced_cut_without_white_band": False,
+                "all_source_pixels_preserved_in_order": True,
+                "level2_passed_artifacts_rerendered": False,
+            },
+            "composition": {
+                "level2_manifest": (
+                    "merge-level2-manifest.json"
+                ),
+                "review_manifest": None,
+                "scope": "level2_all_passed",
+            },
+        }
+
+        (
+            official_dir / "merge-manifest.json"
+        ).write_text(
+            json.dumps(
+                manifest,
+                ensure_ascii=False,
+                indent=2,
+            ) + "\n",
+            encoding="utf-8",
+        )
+
+        if not v3.is_chapter_merged(ch):
+            raise RuntimeError(
+                "MERGE Level II promovido, mas manifesto "
+                "oficial não foi reconhecido."
+            )
+
+    except Exception as exc:
+        if official_dir.is_dir():
+            shutil.rmtree(official_dir)
+
+        return False, (
+            f"Falha ao promover Level II completo: {exc}"
+        )
+
+    return True, (
+        f"Level II concluído e promovido para {official_dir}"
+    )
+
 def validate_merge_level2(ch):
     from PIL import Image
     failure=read_merge_failure(ch)
@@ -249,6 +488,56 @@ def validate_merge_level2(ch):
     failure["status"]="partial" if pending else "validated"
     p=merge_status_file(ch); p.parent.mkdir(parents=True,exist_ok=True)
     p.write_text(json.dumps(failure,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+
+    if not pending:
+        total_height = int(
+            part.get("total_height") or 0
+        )
+
+        intervals = sorted(
+            (
+                int(seg["global_start"]),
+                int(seg["global_end"]),
+            )
+            for seg in (
+                part.get("resolved_segments") or []
+            )
+        )
+
+        complete_coverage = bool(
+            total_height > 0
+            and intervals
+            and intervals[0][0] == 0
+            and intervals[-1][1] == total_height
+            and all(
+                current_end == next_start
+                for (
+                    (_, current_end),
+                    (next_start, _),
+                )
+                in zip(
+                    intervals,
+                    intervals[1:],
+                )
+            )
+        )
+
+        if complete_coverage:
+            promoted, promote_msg = _promote_level2_complete(
+                ch,
+                part,
+            )
+            if not promoted:
+                return False, promote_msg, part
+
+            clear_merge_failure(ch)
+
+            return True, (
+                f"Nível II validou {len(resolved)} trecho(s) "
+                "automático(s); nenhum trecho requer revisão. "
+                f"{promote_msg}"
+            ), part
+
     return True,f"Nível II validou {len(resolved)} trecho(s) automático(s); {len(pending)} segue(m) para revisão.",part
 
 def catalog():
@@ -366,6 +655,18 @@ def latest_pdf_merge_batch(manga):
     batch.sort(key=lambda x: (str(x["chapter"]), x["file"]))
     return batch
 
+
+def _is_level2_validated(failure):
+    """Interpreta de forma única o estado persistido do Level II."""
+    failure = failure or {}
+    partition = failure.get("partition") or {}
+
+    return bool(
+        failure.get("level2_status") == "validated"
+        or partition.get("level2_validated")
+    )
+
+
 def row_state(manga,ch):
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
     md=merge_output_dir(ch); rd=rdir(manga,ch.name)
@@ -374,9 +675,26 @@ def row_state(manga,ch):
     except Exception as exc: merge_error=str(exc)
     failure=read_merge_failure(ch); merge_failed=bool(failure)
     partition=(failure or {}).get("partition")
-    has_level2=bool(partition and (partition.get("resolved_segments") or []) and (partition.get("pending_segments") or []))
-    level2_validated=bool(partition and partition.get("level2_validated"))
-    needs_review=bool(merge_failed and (not has_level2 or level2_validated))
+    has_level2_data=bool(
+        partition
+        and (partition.get("resolved_segments") or [])
+    )
+    has_level2=bool(
+        has_level2_data
+        and (partition.get("pending_segments") or [])
+    )
+    level2_validated=_is_level2_validated(failure)
+    validated_without_pending=bool(
+        merge_failed
+        and has_level2_data
+        and level2_validated
+        and not (partition.get("pending_segments") or [])
+    )
+    needs_review=bool(
+        merge_failed
+        and not validated_without_pending
+        and (not has_level2 or level2_validated)
+    )
     review_items=review_merge_items(manga,ch)
     all_review_files=[p.name for p in sorted(rd.glob("merged-*.png"),key=nkey)] if rd.is_dir() else []
     visible=[x.get("file") for x in review_items if x.get("file")]
@@ -388,7 +706,7 @@ def row_state(manga,ch):
         "merge_failure":failure,"merge_partition":partition,
         "merge_level2":has_level2,"merge_level2_validated":level2_validated,
         "needs_review":needs_review,
-        "merge_state":"concluido" if merge_ok else ("pendente_review" if needs_review else ("parcial" if has_level2 else ("pendente_review" if merge_failed else "novo"))),
+        "merge_state":"concluido" if merge_ok else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("pendente_review" if merge_failed else "novo"))),
         "merged_images":len(list(md.glob("merged-*.png"))) if md.is_dir() else 0,
         "review":review_exists,
         "review_images":len(review_items) if review_exists else 0,
@@ -554,15 +872,29 @@ def do_review_generate(job,manga,chs,max_source_images=None):
         job.message=f"Gerando proposta para capítulo {ch.name} · máximo {limit} originais/merge..."
         failure=read_merge_failure(ch) or {}
         partition=failure.get("partition") or {}
-        level2_validated=bool(
-            failure.get("level2_status")=="validated"
-            or partition.get("level2_validated")
+        level2_validated=_is_level2_validated(
+            failure
         )
         pending_segments=(
             partition.get("pending_segments") or None
             if level2_validated
             else None
         )
+
+        if level2_validated and not pending_segments:
+            out.append({
+                "chapter": ch.name,
+                "status": "error",
+                "message": (
+                    "Level II validado sem segmentos pendentes; "
+                    "Review não será gerado para o capítulo inteiro."
+                ),
+                "path": None,
+                "max_source_images": limit,
+            })
+            job.progress=i
+            continue
+
         try:
             ok,msg,dest=rv.generate_candidate(
                 manga,
