@@ -31,18 +31,225 @@ def chapters(manga):
     return sorted([p for p in root.iterdir() if p.is_dir() and any(f.is_file() and f.suffix.lower() in IMAGE_EXTS for f in p.iterdir())],key=nkey)
 
 def rdir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_REVIEW"/c
+def l2dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL2"/c
 def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"CLEAN"/c
 def pmdir(m,c): return m/"FLUXO_SECUNDARIO"/"PDF_MERGE"/c
 def merge_status_file(ch): return ch.parent.parent/"FLUXO_SECUNDARIO"/"MERGE_STATUS"/ch.name/"merge-attempt.json"
 
+
+def _segment_source_names(infos,start,end):
+    return [info.path.name for info in infos if min(int(end),int(info.global_end)) > max(int(start),int(info.global_start))]
+
+def _segment_bounds(infos,start,end):
+    sources=[]
+    for info in infos:
+        lo=max(int(start),int(info.global_start)); hi=min(int(end),int(info.global_end))
+        if hi<=lo: continue
+        sources.append({
+            "file":info.path.name,
+            "global_start":int(info.global_start),"global_end":int(info.global_end),
+            "source_y_start":int(lo-info.global_start),
+            "source_y_end":int(hi-info.global_start),
+        })
+    return sources
+
+def _page_range_label(sources):
+    if not sources: return "Y ?"
+    names=[x["file"] if isinstance(x,dict) else str(x) for x in sources]
+    return names[0] if names[0]==names[-1] else f"{names[0]} → {names[-1]}"
+
+def _passed_segment(index,start,end,infos):
+    sources=_segment_bounds(infos,start,end)
+    return {
+        "id":index,"index":index,"status":"passed","validation":"auto",
+        "global_start":int(start),"global_end":int(end),"height":int(end-start),
+        "sources":[x["file"] for x in sources],"source_spans":sources,
+        "label":_page_range_label(sources),
+    }
+
+def _failed_segment(index,start,end,infos,reason="auto_merge_oversized_chunk"):
+    sources=_segment_bounds(infos,start,end)
+    return {
+        "id":index,"index":index,"status":"failed","validation":"review_required",
+        "global_start":int(start),"global_end":int(end),"height":int(end-start),
+        "sources":[x["file"] for x in sources],"source_spans":sources,
+        "label":_page_range_label(sources),"reason":reason,
+    }
+
+def _v3_cuts_from(origin,total,bands):
+    shifted=[]
+    for b in bands:
+        if b.end<=origin: continue
+        class B: pass
+        x=B(); x.start=b.start-origin; x.end=b.end-origin
+        x.height=b.height; x.white_ratio_mean=b.white_ratio_mean
+        shifted.append(x)
+    from processamento.unificacao_imagens import image_stitcher as v3
+    cuts,_=v3.choose_cuts(
+        total-origin,shifted,
+        target_height=v3.DEFAULT_TARGET_HEIGHT,
+        search_before=v3.DEFAULT_SEARCH_BEFORE,
+        search_after=v3.DEFAULT_SEARCH_AFTER,
+        min_chunk_height=v3.DEFAULT_MIN_CHUNK_HEIGHT,
+        min_white_band=v3.DEFAULT_MIN_WHITE_BAND,
+        max_chunk_height=v3.DEFAULT_MAX_CHUNK_HEIGHT,
+    )
+    out=[]
+    for c in cuts:
+        item=dict(c); item["center"]=int(item["center"])+origin
+        if "band_start" in item: item["band_start"]=int(item["band_start"])+origin
+        if "band_end" in item: item["band_end"]=int(item["band_end"])+origin
+        out.append(item)
+    return out
+
+def _next_safe_band_after(start,total,bands):
+    from processamento.unificacao_imagens import image_stitcher as v3
+    lower=int(start)+int(v3.DEFAULT_MAX_CHUNK_HEIGHT)
+    upper=int(total)-int(v3.DEFAULT_MIN_CHUNK_HEIGHT)
+    candidates=[]
+    for b in bands:
+        center=(int(b.start)+int(b.end))//2
+        if center<=lower or center>upper: continue
+        if int(b.height)<int(v3.DEFAULT_MIN_WHITE_BAND): continue
+        candidates.append(center)
+    return min(candidates) if candidates else None
+
+def _analyze_merge_partition(ch):
+    try:
+        from processamento.unificacao_imagens import image_stitcher as v3
+        pages=v3.list_pages(ch)
+        if not pages: return None
+        infos,bands,total,_=v3.analyze_chapter(
+            pages,
+            sample_width=v3.DEFAULT_SAMPLE_WIDTH,
+            light_threshold=v3.DEFAULT_LIGHT_THRESHOLD,
+            white_ratio_threshold=v3.DEFAULT_WHITE_RATIO,
+        )
+        cuts=_v3_cuts_from(0,total,bands)
+        bounds=[0]+[int(c["center"]) for c in cuts]+[int(total)]
+        segments=[]; idx=1
+        for start,end in zip(bounds,bounds[1:]):
+            if end-start<=int(v3.DEFAULT_MAX_CHUNK_HEIGHT):
+                segments.append(_passed_segment(idx,start,end,infos)); idx+=1
+                continue
+            rescue=_next_safe_band_after(start,total,bands)
+            if rescue:
+                segments.append(_failed_segment(idx,start,rescue,infos)); idx+=1
+                cont=[rescue]+[int(c["center"]) for c in _v3_cuts_from(rescue,total,bands)]+[int(total)]
+                for a,b in zip(cont,cont[1:]):
+                    if b-a<=int(v3.DEFAULT_MAX_CHUNK_HEIGHT):
+                        segments.append(_passed_segment(idx,a,b,infos)); idx+=1
+                    else:
+                        segments.append(_failed_segment(idx,a,b,infos)); idx+=1
+                break
+            segments.append(_failed_segment(idx,start,end,infos)); idx+=1
+        pending=[x for x in segments if x["status"]=="failed"]
+        if not pending: return None
+        resolved=[x for x in segments if x["status"]=="passed"]
+        pending_sources={name for seg in pending for name in (seg.get("sources") or [])}
+        resolved_sources={name for seg in resolved for name in (seg.get("sources") or [])}
+        resolved_only=resolved_sources-pending_sources
+        return {
+            "schema_version":2,
+            "algorithm":"whitespace_v3_level2_partition",
+            "status":"partial" if resolved else "pending_review",
+            "level2_validated":False,
+            "max_chunk_height":int(v3.DEFAULT_MAX_CHUNK_HEIGHT),
+            "total_height":int(total),
+            "source_pages_count":len(pages),
+            "segments":segments,
+            "resolved_segments":resolved,
+            "pending_segments":pending,
+            "resolved_source_pages":sorted(resolved_only,key=nkey),
+            "pending_source_pages":sorted(pending_sources,key=nkey),
+            "resolved_source_pages_count":len(resolved_only),
+            "pending_source_pages_count":len(pending_sources),
+            "pending_segments_count":len(pending),
+            "resolved_segments_count":len(resolved),
+        }
+    except Exception as exc:
+        print(f"[processing-web] Falha ao classificar trechos do merge cap {ch.name}: {exc}")
+        return None
+
+def read_merge_failure(ch):
+    p=merge_status_file(ch)
+    if not p.is_file(): return None
+    try:
+        payload=json.loads(p.read_text(encoding="utf-8"))
+    except Exception:
+        return {"schema_version":1,"chapter":ch.name,"status":"error","message":"Falha de merge não legível."}
+    part_payload=payload.get("partition") or {}
+    if not payload.get("partition") or int(part_payload.get("schema_version") or 0)<2:
+        part=_analyze_merge_partition(ch)
+        if part:
+            payload["partition"]=part
+            try: p.write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
+            except Exception as exc: print(f"[processing-web] Não foi possível persistir partição do cap {ch.name}: {exc}")
+    return payload
+
 def set_merge_failure(ch,message):
     p=merge_status_file(ch); p.parent.mkdir(parents=True,exist_ok=True)
-    p.write_text(json.dumps({"schema_version":1,"chapter":ch.name,"status":"error","message":str(message)},ensure_ascii=False,indent=2),encoding="utf-8")
+    payload={"schema_version":2,"chapter":ch.name,"status":"error","message":str(message)}
+    part=_analyze_merge_partition(ch)
+    if part: payload["partition"]=part
+    p.write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
 
 def clear_merge_failure(ch):
     p=merge_status_file(ch)
     if p.is_file(): p.unlink()
     if p.parent.is_dir() and not any(p.parent.iterdir()): p.parent.rmdir()
+
+def validate_merge_level2(ch):
+    from PIL import Image
+    failure=read_merge_failure(ch)
+    if not failure: return False,"Nenhuma falha do Auto-Merge Nível I encontrada.",None
+    part=failure.get("partition") or _analyze_merge_partition(ch)
+    if not part: return False,"Não há resultado misto para validar no Nível II.",None
+    resolved=part.get("resolved_segments") or []
+    pending=part.get("pending_segments") or []
+    if not resolved: return False,"Nenhum trecho automático aproveitável foi encontrado.",part
+    manga=ch.parent.parent
+    dest=l2dir(manga,ch.name); dest.mkdir(parents=True,exist_ok=True)
+    for old in dest.glob("passed-*.png"): old.unlink()
+    part["level2_validated"]=True
+    part["status"]="partial" if pending else "validated"
+    by_id={int(seg["id"]):seg for seg in part.get("segments") or []}
+    artifacts=[]
+    for seg in resolved:
+        seg["status"]="passed"; seg["validation"]="auto"; seg["validated_ok"]=True
+        if int(seg["id"]) in by_id:
+            by_id[int(seg["id"])].update({"status":"passed","validation":"auto","validated_ok":True})
+        out_name=f"passed-{int(seg['id']):03d}.png"
+        out_path=dest/out_name
+        width=None
+        canvas=Image.new("RGB",(1,1),"white")
+        for span in seg.get("source_spans") or []:
+            src=ch/span["file"]
+            with Image.open(src) as im:
+                if width is None:
+                    width=im.width
+                    canvas=Image.new("RGB",(width,int(seg["height"])),"white")
+                crop=im.convert("RGB").crop((0,int(span["source_y_start"]),width,int(span["source_y_end"])))
+                canvas.paste(crop,(0,int(span["global_start"])-int(seg["global_start"])+int(span["source_y_start"])))
+        canvas.save(out_path,"PNG")
+        seg["artifact"]={"file":out_name,"path":str(out_path),"storage":"MERGE_LEVEL2"}
+        if int(seg["id"]) in by_id: by_id[int(seg["id"])]["artifact"]=dict(seg["artifact"])
+        artifacts.append({"segment_id":int(seg["id"]),"file":out_name,"global_start":int(seg["global_start"]),"global_end":int(seg["global_end"]),"sources":seg.get("sources") or [],"validation":"auto","validated_ok":True})
+    for seg in pending:
+        seg["status"]="failed"; seg["validation"]="review_required"
+        if int(seg["id"]) in by_id:
+            by_id[int(seg["id"])].update({"status":"failed","validation":"review_required"})
+    part["segments"]=[by_id[int(seg["id"])] for seg in part.get("segments") or []]
+    part["resolved_segments"]=[seg for seg in part["segments"] if seg.get("status")=="passed"]
+    part["pending_segments"]=[seg for seg in part["segments"] if seg.get("status")=="failed"]
+    manifest={"schema_version":1,"algorithm":"merge_level2_auto_segments","chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),"total_height":int(part.get("total_height") or 0),"segments":part["resolved_segments"],"artifacts":artifacts,"pending_segments":part["pending_segments"],"coverage":{"auto_segments":[[int(s["global_start"]),int(s["global_end"])] for s in part["resolved_segments"]]}}
+    (dest/"merge-level2-manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    failure["partition"]=part
+    failure["level2_status"]="validated"
+    failure["status"]="partial" if pending else "validated"
+    p=merge_status_file(ch); p.parent.mkdir(parents=True,exist_ok=True)
+    p.write_text(json.dumps(failure,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    return True,f"Nível II validou {len(resolved)} trecho(s) automático(s); {len(pending)} segue(m) para revisão.",part
 
 def catalog():
     out={}
@@ -55,95 +262,62 @@ def catalog():
 
 
 def review_merge_items(manga, ch):
-    """
-    Mapeia cada merged-xxx para as páginas que entram no merge e para uma
-    janela de análise de até max_source_images, incluindo contexto após o corte.
-    """
-    rd = rdir(manga, ch.name)
-    mf = rd / "merge-review.json"
-    if not mf.is_file():
-        return []
+    rd=rdir(manga,ch.name); mf=rd/"merge-review.json"
+    if not mf.is_file(): return []
     try:
-        payload = json.loads(mf.read_text(encoding="utf-8"))
-        boundaries = [int(x) for x in (payload.get("boundaries") or [])]
-        outputs = sorted(rd.glob("merged-*.png"), key=nkey)
-        policy = payload.get("policy") or {}
-        try:
-            max_sources = int(policy.get("max_source_images") or 8)
-        except (TypeError, ValueError):
-            max_sources = 8
-        max_sources = max(2, min(50, max_sources))
+        payload=json.loads(mf.read_text(encoding="utf-8"))
+        boundaries=[int(x) for x in (payload.get("boundaries") or [])]
+        outputs=sorted(rd.glob("merged-*.png"),key=nkey)
+        policy=payload.get("policy") or {}
+        try: max_sources=int(policy.get("max_source_images") or 8)
+        except (TypeError,ValueError): max_sources=8
+        max_sources=max(2,min(50,max_sources))
+        if len(boundaries)!=len(outputs)+1:
+            return [{"file":p.name,"index":i+1,"sources":[],"source_spans":[],"analysis_sources":[],"analysis_limit":max_sources,"needs_review":True,"review_reasons":["mapeamento_incompleto"]} for i,p in enumerate(outputs)]
 
-        if len(boundaries) != len(outputs) + 1:
-            return [{"file":p.name,"index":i+1,"sources":[],"source_spans":[],
-                     "analysis_sources":[],"analysis_limit":max_sources}
-                    for i,p in enumerate(outputs)]
-
-        source_names = payload.get("source_pages") or []
-        source_dir = manga / "IMG" / ch.name
-        spans = []
-        y = 0
+        source_names=payload.get("source_pages") or []
+        source_dir=manga/"IMG"/ch.name
+        spans=[]; y=0
         from PIL import Image
-        for source_index, name in enumerate(source_names):
-            p = source_dir / name
-            if not p.is_file():
-                continue
-            with Image.open(p) as im:
-                h = int(im.height)
-            spans.append({
-                "file": name,
-                "source_index": source_index,
-                "global_start": y,
-                "global_end": y + h,
-                "height": h,
-            })
-            y += h
+        for source_index,name in enumerate(source_names):
+            p=source_dir/name
+            if not p.is_file(): continue
+            with Image.open(p) as im: h=int(im.height)
+            spans.append({"file":name,"source_index":source_index,"global_start":y,"global_end":y+h,"height":h}); y+=h
 
-        items = []
-        for i, out in enumerate(outputs):
-            start, end = boundaries[i], boundaries[i + 1]
-            source_spans = []
+        failure=read_merge_failure(ch) or {}
+        partition=failure.get("partition") or {}
+        pending_intervals=[(int(x["global_start"]),int(x["global_end"])) for x in (partition.get("pending_segments") or []) if x.get("global_start") is not None and x.get("global_end") is not None]
+
+        review_centers=set()
+        for cut in (payload.get("cuts") or []):
+            if cut.get("review_strategy"):
+                try: review_centers.add(int(cut["center"]))
+                except Exception: pass
+        for item in (payload.get("proposal") or []):
+            try: review_centers.add(int(item["center"]))
+            except Exception: pass
+
+        items=[]
+        for i,out in enumerate(outputs):
+            start,end=boundaries[i],boundaries[i+1]
+            source_spans=[]
             for sp in spans:
-                a, b = sp["global_start"], sp["global_end"]
-                overlap_start = max(start, a)
-                overlap_end = min(end, b)
-                if overlap_end <= overlap_start:
-                    continue
-                source_spans.append({
-                    "file": sp["file"],
-                    "source_index": sp["source_index"],
-                    "merge_start": overlap_start - start,
-                    "merge_end": overlap_end - start,
-                    "source_start": overlap_start - a,
-                    "source_end": overlap_end - a,
-                    "source_height": sp["height"],
-                })
-
-            included_indexes = {x["source_index"] for x in source_spans}
-            first_index = source_spans[0]["source_index"] if source_spans else 0
-            window = [sp for sp in spans
-                      if first_index <= sp["source_index"] < first_index + max_sources]
-
-            analysis_sources = [{
-                "file": sp["file"],
-                "source_index": sp["source_index"],
-                "included": sp["source_index"] in included_indexes,
-                "height": sp["height"],
-            } for sp in window]
-
-            items.append({
-                "file": out.name,
-                "index": i + 1,
-                "global_start": start,
-                "global_end": end,
-                "sources": [x["file"] for x in source_spans],
-                "source_spans": source_spans,
-                "analysis_sources": analysis_sources,
-                "analysis_limit": max_sources,
-                "included_count": sum(1 for x in analysis_sources if x["included"]),
-                "context_count": sum(1 for x in analysis_sources if not x["included"]),
-            })
-        return items
+                a,b=sp["global_start"],sp["global_end"]
+                lo,hi=max(start,a),min(end,b)
+                if hi<=lo: continue
+                source_spans.append({"file":sp["file"],"source_index":sp["source_index"],"merge_start":lo-start,"merge_end":hi-start,"source_start":lo-a,"source_end":hi-a,"source_height":sp["height"]})
+            included={x["source_index"] for x in source_spans}
+            first=source_spans[0]["source_index"] if source_spans else 0
+            window=[sp for sp in spans if first<=sp["source_index"]<first+max_sources]
+            analysis=[{"file":sp["file"],"source_index":sp["source_index"],"included":sp["source_index"] in included,"height":sp["height"]} for sp in window]
+            reasons=[]
+            if any(min(end,b)>max(start,a) for a,b in pending_intervals): reasons.append("auto_merge_pending_interval")
+            if not pending_intervals and (start in review_centers or end in review_centers): reasons.append("review_cut_boundary")
+            items.append({"file":out.name,"index":i+1,"global_start":start,"global_end":end,"sources":[x["file"] for x in source_spans],"source_spans":source_spans,"analysis_sources":analysis,"analysis_limit":max_sources,"included_count":sum(1 for x in analysis if x["included"]),"context_count":sum(1 for x in analysis if not x["included"]),"needs_review":bool(reasons),"review_reasons":reasons})
+        has_scope=bool(pending_intervals or review_centers)
+        scoped=[x for x in items if x["needs_review"]]
+        return scoped if has_scope and scoped else items
     except Exception as exc:
         print(f"[processing-web] Falha ao mapear fontes do review cap {ch.name}: {exc}")
         return []
@@ -195,24 +369,33 @@ def latest_pdf_merge_batch(manga):
 def row_state(manga,ch):
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
     md=merge_output_dir(ch); rd=rdir(manga,ch.name)
-    merge_ok=False
-    merge_error=None
-    try:
-        merge_ok=bool(is_chapter_merged(ch))
-    except Exception as exc:
-        merge_error=str(exc)
+    merge_ok=False; merge_error=None
+    try: merge_ok=bool(is_chapter_merged(ch))
+    except Exception as exc: merge_error=str(exc)
+    failure=read_merge_failure(ch); merge_failed=bool(failure)
+    partition=(failure or {}).get("partition")
+    has_level2=bool(partition and (partition.get("resolved_segments") or []) and (partition.get("pending_segments") or []))
+    level2_validated=bool(partition and partition.get("level2_validated"))
+    needs_review=bool(merge_failed and (not has_level2 or level2_validated))
+    review_items=review_merge_items(manga,ch)
+    all_review_files=[p.name for p in sorted(rd.glob("merged-*.png"),key=nkey)] if rd.is_dir() else []
+    visible=[x.get("file") for x in review_items if x.get("file")]
+    review_exists=(rd/"merge-review.json").is_file()
     return {
         "chapter":ch.name,
         "pages":sum(1 for p in ch.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS and p.name.lower().startswith("page-")),
-        "merge":merge_ok,
-        "merge_error":merge_error,
-        "merge_failed":merge_status_file(ch).is_file(),
-        "merge_state":"concluido" if merge_ok else ("pendente" if merge_status_file(ch).is_file() else "novo"),
+        "merge":merge_ok,"merge_error":merge_error,"merge_failed":merge_failed,
+        "merge_failure":failure,"merge_partition":partition,
+        "merge_level2":has_level2,"merge_level2_validated":level2_validated,
+        "needs_review":needs_review,
+        "merge_state":"concluido" if merge_ok else ("pendente_review" if needs_review else ("parcial" if has_level2 else ("pendente_review" if merge_failed else "novo"))),
         "merged_images":len(list(md.glob("merged-*.png"))) if md.is_dir() else 0,
-        "review":(rd/"merge-review.json").is_file(),
-        "review_images":len(list(rd.glob("merged-*.png"))) if rd.is_dir() else 0,
-        "review_files":[p.name for p in sorted(rd.glob("merged-*.png"),key=nkey)] if rd.is_dir() else [],
-        "review_merges":review_merge_items(manga,ch),
+        "review":review_exists,
+        "review_images":len(review_items) if review_exists else 0,
+        "review_total_images":len(all_review_files),
+        "review_auto_resolved_images":max(0,len(all_review_files)-len(visible)) if review_exists else 0,
+        "review_files":visible if review_exists else [],
+        "review_merges":review_items,
         "review_max_source_images":review_max_source_images(rd),
         "clean":(cdir(manga,ch.name)/"clean-manifest.json").is_file(),
         "pdf":(manga/"PDF"/ch.name/f"{ch.name}.pdf").is_file(),
@@ -223,9 +406,11 @@ def state(provider,manga_name):
     manga=manga_path(provider,manga_name); rows=[row_state(manga,ch) for ch in chapters(manga)]
     return {"provider":provider,"manga":manga_name,"chapters":rows,"summary":{
         "chapters":len(rows),"merges":sum(x["merge"] for x in rows),
-        "pending":sum(x["merge_state"]=="pendente" for x in rows),
+        "pending":sum(x["merge_state"]=="pendente_review" for x in rows),
         "new":sum(x["merge_state"]=="novo" for x in rows),
+        "partial":sum(x["merge_state"]=="parcial" for x in rows),
         "merge_failed":sum(x["merge_failed"] for x in rows),
+        "review_pending":sum(x["needs_review"] for x in rows),
         "review":sum(x["review"] for x in rows),"pdfs":sum(x["pdf"] for x in rows),"clean":sum(x["clean"] for x in rows),
         "pdf_merge":sum(x["pdf_merge"] for x in rows)}}
 
@@ -256,6 +441,7 @@ def run_job(job,payload):
             elif job.action=="pdf": job.result=do_pdf(job,chs)
             elif job.action=="pdf_merge": job.result=do_pdf_merge(job,manga,chs)
             elif job.action=="clean": job.result=do_clean(job,manga,chs)
+            elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
             elif job.action=="review_approve": job.result=do_review_approve(job,manga,chs)
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
@@ -296,6 +482,21 @@ def do_merge(job,chs):
 
     order={ch.name:i for i,ch in enumerate(chs)}
     out.sort(key=lambda item:order.get(item.get("chapter"),999999))
+    return out
+
+def do_merge_level2(job,chs):
+    out=[]
+    for i,ch in enumerate(chs,1):
+        job.message=f"Auto-Merge Nível II: capítulo {ch.name}..."
+        ok,msg,part=validate_merge_level2(ch)
+        out.append({
+            "chapter":ch.name,
+            "status":"ok" if ok else "error",
+            "message":msg,
+            "resolved_segments":len((part or {}).get("resolved_segments") or []),
+            "pending_segments":len((part or {}).get("pending_segments") or []),
+        })
+        job.progress=i
     return out
 
 def do_pdf(job,chs):
@@ -355,7 +556,7 @@ def do_review_generate(job,manga,chs,max_source_images=None):
             ok,msg,dest=rv.generate_candidate(manga, ch, max_source_images=limit)
         except rv.ReviewSourceLimitError as exc:
             item=exc.as_dict()
-            item["chapter"]=str(ch)
+            item["chapter"]=ch.name
             item["max_source_images"]=int(limit)
             out.append(item)
             job.progress=i

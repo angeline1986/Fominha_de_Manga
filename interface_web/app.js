@@ -26,7 +26,7 @@ function toggleSidebar(){
   localStorage.setItem("fominha.sidebar.collapsed",collapsed?"1":"0");
   let b=$("#sidebarToggle");if(b)b.setAttribute("aria-expanded",String(!collapsed));
 }
-async function init(){applySidebarState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");$("#badge").textContent=data.summary.merge_failed||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div>`}
+async function init(){applySidebarState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");$("#badge").textContent=data.summary.review_pending??data.summary.pending??0;let b2=$("#badgeLevel2");if(b2)b2.textContent=data.summary.partial||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div>`}
 function normalizePdfMergeTable(){
   const tables=[...document.querySelectorAll("table")];
   const table=tables.find(t=>{
@@ -122,17 +122,18 @@ function installPdfMergeUiNormalizer(){
   requestAnimationFrame(run);
 }
 
-function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente").slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.new??0}</b><span>NOVOS</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· PENDENTE DE REVISÃO</span></b><div class="muted">Auto-Merge não conseguiu concluir este capítulo.</div></div><button class="btn primary" onclick="goReview('${esc(x.chapter)}')">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||x.merge_state==="parcial").slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
-  if(x.merge_state==="pendente"||x.merge_failed)return {cls:"warn",text:"Pendente"};
+  if(x.merge_state==="parcial")return {cls:"warn",text:"Parcial"};
+  if(x.merge_state==="pendente_review"||x.merge_state==="pendente"||x.merge_failed)return {cls:"warn",text:"Pendente"};
   return {cls:"muted",text:"Novo"};
 }
 function tableFilteredRows(k){
   let q=String(window._tableQuery||"").trim().toLowerCase();
   let rows=data.chapters.filter(x=>String(x.chapter).toLowerCase().includes(q));
   if(k==="merge"&&tableStatus!=="all"){
-    rows=rows.filter(x=>(x.merge_state||(!x.merge&&!x.merge_failed?"novo":x.merge_failed?"pendente":"concluido"))===tableStatus);
+    rows=rows.filter(x=>(x.merge_state||(!x.merge&&!x.merge_failed?"novo":x.merge_failed?"pendente_review":"concluido"))===tableStatus);
   }
   return rows;
 }
@@ -140,7 +141,7 @@ function table(r,k){
   let cfg={pdf:["Gerar PDF","Gerar PDFs a partir das imagens originais validadas.","pdf"],merge:["Auto-Merge","Aplicar o Merge V3 preservando IMG.","merge"],clean:["Limpar balões","Executar Bubble Cleaner V3.5.","clean"],pdf_merge:["PDF do Merge","Gerar PDF com as imagens oficialmente unificadas.","pdf_merge"]}[k];
   let all=tableFilteredRows(k),pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));tablePage=Math.min(Math.max(1,tablePage),pages);
   let rows=all.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
-  let statusFilter=k==="merge"?`<div class="status-filter"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="novo"?"active":""}" onclick="setTableStatus('novo')">Novos</button><button class="tab ${tableStatus==="pendente"?"active":""}" onclick="setTableStatus('pendente')">Pendentes</button></div>`:"";
+  let statusFilter=k==="merge"?`<div class="status-filter"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="novo"?"active":""}" onclick="setTableStatus('novo')">Novos</button><button class="tab ${tableStatus==="pendente_review"?"active":""}" onclick="setTableStatus('pendente_review')">Pendentes</button><button class="tab ${tableStatus==="parcial"?"active":""}" onclick="setTableStatus('parcial')">Parciais</button></div>`:"";
   let pager=`<div class="table-pager"><span>${all.length?((tablePage-1)*PAGE_SIZE+1):0}–${Math.min(tablePage*PAGE_SIZE,all.length)} de ${all.length}</span><div><button class="btn" ${tablePage<=1?"disabled":""} onclick="changeTablePage(-1)">&lt;&lt;</button><span class="page-indicator">${tablePage} / ${pages}</span><button class="btn" ${tablePage>=pages?"disabled":""} onclick="changeTablePage(1)">&gt;&gt;</button></div></div>`;
   r.innerHTML=head(cfg[0],cfg[1])+`<div class="toolbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()">${statusFilter}<button class="btn" onclick="allv()">Selecionar visíveis</button><button class="btn primary" onclick="runSelected('${cfg[2]}')">Executar</button></div><div class="panel"><table><thead><tr><th></th><th>CAP.</th><th>MERGE</th><th>CLEAN</th><th>PDF MERGE</th></tr></thead><tbody>${rows.map(x=>{let ml=mergeLabel(x);return `<tr data-n="${esc(x.chapter).toLowerCase()}"><td><input class="ck" type="checkbox" value="${esc(x.chapter)}"></td><td>${esc(x.chapter)}</td><td>${x.pages}</td><td class="${ml.cls}">${ml.text}</td><td class="${x.clean?'ok':'muted'}">${x.clean?'✓':'—'}</td><td class="${x.pdf?'ok':'warn'}">${x.pdf?'✓':'Pendente'}</td><td class="${x.pdf_merge?'ok':'muted'}">${x.pdf_merge?'✓':'—'}</td></tr>`}).join("")}</tbody></table>${pager}</div>`;
 }
@@ -148,10 +149,67 @@ function setTableStatus(v){tableStatus=v;tablePage=1;render()}
 function changeTablePage(d){tablePage+=d;render()}
 function filter(){tablePage=1;render()}
 function allv(){document.querySelectorAll("tbody .ck").forEach(x=>x.checked=true)}
-function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.value)}async function runSelected(a){let ch=chosen();if(!ch.length)return toast("Selecione ao menos um capítulo.");if(await askAppModal("Confirmar",`${ch.length} capítulo(s) selecionado(s).`,"Executar"))job(a,ch)}function goReview(ch){page="review";reviewCh=ch;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page==="review"));render()}function review(r){
- let list=data.chapters.filter(x=>x.merge_failed||x.review);
+function mergePartialText(x){
+  const p=x?.merge_partition||{};
+  const resolved=Number(p.resolved_source_pages_count||0),pending=Number(p.pending_source_pages_count||0);
+  if(!pending)return "Auto-Merge não conseguiu concluir este capítulo.";
+  return `${resolved} página(s) resolvida(s) automaticamente · ${pending} página(s) permanecem para revisão.`;
+}
+function reviewPendingSummary(x){
+  const p=x?.merge_partition||{},segs=Array.isArray(p.pending_segments)?p.pending_segments:[];
+  if(!segs.length)return "Este capítulo está pendente e ainda não possui uma proposta de merge.";
+  const labels=segs.map(s=>{const src=Array.isArray(s.sources)?s.sources:[];if(!src.length)return `Y ${s.global_start??"?"} → ${s.global_end??"?"}`;return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;});
+  return `${Number(p.resolved_source_pages_count||0)} página(s) já foram resolvida(s) automaticamente. ${Number(p.pending_source_pages_count||0)} página(s) permanecem na revisão: ${labels.join("; ")}.`;
+}
+
+function segLabel(s){const src=Array.isArray(s?.sources)?s.sources:[];if(src.length)return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;return `Y ${s?.global_start??"?"} → ${s?.global_end??"?"}`}
+function level2Chapters(){return data.chapters.filter(x=>x.merge_state==="parcial")}
+function level2RegionLabel(x){
+  const p=x?.merge_partition||{},pending=Array.isArray(p.pending_segments)?p.pending_segments:[];
+  if(!pending.length)return "—";
+  return pending.map(segLabel).join("; ");
+}
+function level2ResultModal(j,s){
+  if(j.action!=="merge_level2")return false;
+  let results=s.results||[];
+  let ok=results.filter(x=>["ok","success","done","skipped"].includes(String(x.status||"").toLowerCase()));
+  let errors=results.filter(x=>String(x.status||"").toLowerCase()==="error");
+  let details=results.map(x=>{
+    let row=(data?.chapters||[]).find(c=>String(c.chapter)===String(x.chapter))||{};
+    let region=level2RegionLabel(row);
+    let resolved=Number(x.resolved_segments||0);
+    let pending=Number(x.pending_segments||0);
+    let message=String(x.status||"").toLowerCase()==="error"
+      ? (x.message||"Falha ao validar este capítulo.")
+      : `${resolved} merge(s) automáticos preservados em MERGE_LEVEL2. ${pending} região(ões) seguem para Revisão Merge: ${region}.`;
+    return {title:`Cap. ${x.chapter}`,message};
+  });
+  appModal({
+    title:errors.length?"Nível II concluído com ocorrências":"Nível II validado",
+    message:errors.length?"Alguns capítulos ainda precisam de atenção.":"Os trechos automáticos foram preservados e somente as regiões abaixo foram encaminhadas para revisão.",
+    kind:errors.length?(ok.length?"partial":"error"):"success",
+    chips:[
+      {value:ok.length,label:"validado(s)"},
+      ...(errors.length?[{value:errors.length,label:"com ocorrência"}]:[])
+    ],
+    details,
+    confirmText:"Fechar"
+  }).then(()=>load());
+  return true;
+}
+function mergeLevel2(r){
+ let q=String(window._tableQuery||"").trim().toLowerCase();
+ let all=level2Chapters().filter(x=>String(x.chapter).toLowerCase().includes(q));
+ let pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));tablePage=Math.min(Math.max(1,tablePage),pages);
+ let rows=all.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
+ let pager=`<div class="table-pager"><span>${all.length?((tablePage-1)*PAGE_SIZE+1):0}–${Math.min(tablePage*PAGE_SIZE,all.length)} de ${all.length}</span><div><button class="btn" ${tablePage<=1?"disabled":""} onclick="changeTablePage(-1)">&lt;&lt;</button><span class="page-indicator">${tablePage} / ${pages}</span><button class="btn" ${tablePage>=pages?"disabled":""} onclick="changeTablePage(1)">&gt;&gt;</button></div></div>`;
+ r.innerHTML=head("Auto-Merge Nível II","Validar trechos automáticos e encaminhar somente regiões com falha.")+`<div class="toolbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><button class="btn" onclick="allv()">Selecionar visíveis</button><button class="btn primary" onclick="runSelected('merge_level2')">Validar Nível II</button></div><div class="panel"><table><thead><tr><th></th><th>CAP.</th><th>MERGE NÍVEL II</th><th>REGIÃO PARA REVISÃO</th></tr></thead><tbody>${rows.map(x=>{let p=x.merge_partition||{},resolved=Number(p.resolved_segments_count||0);return `<tr data-n="${esc(x.chapter).toLowerCase()}"><td><input class="ck" type="checkbox" value="${esc(x.chapter)}"></td><td>${esc(x.chapter)}</td><td class="ok">✓ ${resolved}</td><td>${esc(level2RegionLabel(x))}</td></tr>`}).join("")}</tbody></table>${pager}</div>`;
+}
+function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.value)}async function runSelected(a){let ch=chosen();if(!ch.length)return toast("Selecione ao menos um capítulo.");if(await askAppModal("Confirmar",`${ch.length} capítulo(s) selecionado(s).`,"Executar"))job(a,ch)}function goReview(ch){page="review";reviewCh=ch;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page==="review"));render()}function goLevel2(ch){page="merge_level2";reviewCh=ch;document.querySelectorAll("nav button").forEach(b=>b.classList.toggle("active",b.dataset.page==="merge_level2"));render()}function review(r){
+ let list=data.chapters.filter(x=>x.merge_state==="pendente_review"||x.review);
  if(!list.length){r.innerHTML=head("Revisão Merge pendentes","Revise propostas alternativas antes de torná-las oficiais.")+`<div class="empty">Nenhum capítulo aguardando tratamento.</div>`;return}
- let x=list.find(z=>String(z.chapter)===String(reviewCh))||list[0];reviewCh=x.chapter;
+ let x=list.find(z=>String(z.chapter)===String(reviewCh))||list[0];
+ reviewCh=x.chapter;
  if(window.reviewExpandedChapter===undefined)window.reviewExpandedChapter=x.chapter;
  let merges=x.review_merges||[],files=x.review_files||[];
  let proposedLimit=Number(x.review_max_source_images||window.reviewMaxSources||8);
@@ -176,9 +234,9 @@ function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.
  let chapters=list.map(z=>{
    let open=String(z.chapter)===String(window.reviewExpandedChapter);
    let items=z.review_merges||[],count=items.length||z.review_images||0;
-   let mergeButtons=items.map((m,n)=>`<button class="rv-merge-link ${String(z.chapter)===String(x.chapter)&&n===i?"active":""}" onclick="rvSelectMerge('${esc(z.chapter)}',${n})">merge-${String(n+1).padStart(3,"0")}</button>`).join("");
+   let mergeButtons=items.map((m,n)=>`<button class="rv-merge-link ${String(z.chapter)===String(x.chapter)&&n===i?"active":""}" title="${esc(m.file||"")}" onclick="rvSelectMerge('${esc(z.chapter)}',${n})">${esc(segLabel(m))}</button>`).join("");
    return `<div class="rv-chapter-group ${open?"open":""}">
-     <button class="rv-chapter-head" onclick="rvToggleChapter('${esc(z.chapter)}')"><span class="rv-chevron">${open?"▼":"▶"}</span><span><b>${esc(z.chapter)}</b><small>${count?count+" merges estimados":"proposta ainda não gerada"}</small></span></button>
+     <button class="rv-chapter-head" onclick="rvToggleChapter('${esc(z.chapter)}')"><span class="rv-chevron">${open?"▼":"▶"}</span><span><b>${esc(z.chapter)}</b><small>${count?count+" trecho(s) para revisar":"proposta ainda não gerada"}</small></span></button>
      ${open?`<div class="rv-merge-list">${mergeButtons||`<button class="rv-generate-inline" onclick="event.stopPropagation();reviewDecision('review','${esc(z.chapter)}')">Gerar proposta</button>`}</div>`:""}
    </div>`;
  }).join("");
@@ -220,7 +278,7 @@ function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.
    </aside>
  </div>`:`<div class="rv-empty rv-pending-empty">
     <h2>Capítulo ${esc(x.chapter)}</h2>
-    <p>Este capítulo está pendente e ainda não possui uma proposta de merge.</p>
+    <p>${reviewPendingSummary(x)}</p>
     <div class="rv-pending-config">
       <div class="rv-config-copy"><strong>Máximo de originais</strong><span>Limite usado para gerar a proposta</span></div>
       <div class="rv-stepper">
@@ -234,7 +292,7 @@ function chosen(){return [...document.querySelectorAll(".ck:checked")].map(x=>x.
     <aside class="rv-pending-list-empty">
       <span class="eyebrow">PENDENTES DE REVISÃO</span>
       <div class="rv-pending-caps">
-        ${data.chapters.filter(c=>c.merge_state==="pending"||c.merge_failed).map(c=>`
+        ${data.chapters.filter(c=>c.merge_state==="pendente_review"||c.review).map(c=>`
           <button class="rv-pending-cap ${String(c.chapter)===String(x.chapter)?"active":""}"
                   onclick="reviewCh='${esc(c.chapter)}';window.reviewImageIndex=0;render()">
             <span>Capítulo ${esc(c.chapter)}</span><b>›</b>
@@ -606,6 +664,7 @@ function showJobResult(j){
   let s=jobSummary(j);
   toast(s.title);
 
+  if(level2ResultModal(j,s)) return;
   if(reviewResultModal(j,s)) return;
 
   if(s.kind==="error"||s.kind==="partial"){

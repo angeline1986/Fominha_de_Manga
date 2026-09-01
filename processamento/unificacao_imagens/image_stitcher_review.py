@@ -22,6 +22,9 @@ def _official(manga: Path, chapter: str) -> Path:
 def _review(manga: Path, chapter: str) -> Path:
     return manga / SECONDARY / REVIEW / chapter
 
+def _level2(manga: Path, chapter: str) -> Path:
+    return manga / SECONDARY / "MERGE_LEVEL2" / chapter
+
 def _official_valid(manga: Path, chapter: str) -> bool:
     d = _official(manga, chapter)
     m = d / "merge-manifest.json"
@@ -208,7 +211,7 @@ def _natural_page_end_candidates(pages, infos, start, end, allowed_end, max_sour
     first_idx = source_indexes[0]
     max_idx = min(len(infos)-1, first_idx+int(max_source_images)-1)
     candidates = []
-    for idx in range(first_idx, max_idx+1):
+    for idx in range(max_idx, first_idx-1, -1):
         info = infos[idx]
         center = int(info.global_end)
         entry = {
@@ -225,6 +228,10 @@ def _natural_page_end_candidates(pages, infos, start, end, allowed_end, max_sour
             continue
         if center > allowed_end:
             entry["reason"]="ultrapassa o máximo de originais informado"
+            diagnostics.append(entry)
+            continue
+        if end - center < v3.DEFAULT_MIN_CHUNK_HEIGHT:
+            entry["reason"]="bloco seguinte ficaria abaixo da altura mínima"
             diagnostics.append(entry)
             continue
         quality = _sample_tail_quality(pages[idx])
@@ -294,10 +301,213 @@ def _choose_uniform_cut(cands, infos, start, end, allowed_end):
 def _segment_sources(infos, start, end):
     return [info for info in infos if min(end, info.global_end) > max(start, info.global_start)]
 
+def _level2_manifest(manga: Path, chapter: str):
+    mf = _level2(manga, chapter) / "merge-level2-manifest.json"
+    if not mf.is_file():
+        return None
+    try:
+        payload = json.loads(mf.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    pending = payload.get("pending_segments") or []
+    if not pending:
+        return None
+    return payload
+
+def _enforce_source_limit_between(start, end, infos, bands, max_source_images, pages=None):
+    limit = int(max_source_images)
+    if limit < 2:
+        return None, [], "O limite mínimo é 2 imagens de origem por merge."
+
+    segment_start, segment_end = int(start), int(end)
+    centers = {}
+    inserted = []
+    uniform = None
+
+    for _ in range(10000):
+        bounds = [segment_start] + sorted(centers) + [segment_end]
+        violation = None
+        for a, b in zip(bounds, bounds[1:]):
+            sources = _segment_sources(infos, a, b)
+            if len(sources) > limit:
+                violation = (a, b, sources)
+                break
+
+        if violation is None:
+            return [centers[k] for k in sorted(centers)], inserted, None
+
+        a, b, sources = violation
+        allowed_end = sources[limit - 1].global_end
+        target = a + v3.DEFAULT_TARGET_HEIGHT
+        chosen = None
+        natural_end_diagnostics = []
+
+        if pages is not None:
+            natural = _natural_page_end_candidates(
+                pages, infos, a, b, allowed_end, limit, natural_end_diagnostics
+            )
+            if natural:
+                best_count = max(x["uses_source_count"] for x in natural)
+                same_count = [x for x in natural if x["uses_source_count"] == best_count]
+                chosen = sorted(
+                    same_count,
+                    key=lambda x: (
+                        x["tail_quality"]["score"],
+                        abs(x["center"] - target),
+                        x["center"],
+                    )
+                )[0]
+
+        if chosen is None:
+            lower = a + v3.DEFAULT_MIN_CHUNK_HEIGHT
+            upper = min(allowed_end, b - v3.DEFAULT_MIN_CHUNK_HEIGHT)
+            white = []
+            for band in bands:
+                center = (band.start + band.end) // 2
+                if center in centers or not (lower <= center <= upper):
+                    continue
+                if band.height < v3.DEFAULT_MIN_WHITE_BAND:
+                    continue
+                page, local = v3.page_at_y(infos, center)
+                white.append({
+                    "center": center,
+                    "band_height": band.height,
+                    "white_ratio_mean": band.white_ratio_mean,
+                    "page": page,
+                    "local_y": local,
+                    "review_strategy": "source_limit_safe_white_band",
+                })
+            if white:
+                chosen = sorted(
+                    white,
+                    key=lambda x: (
+                        abs(x["center"] - target),
+                        -x["band_height"],
+                        -x["white_ratio_mean"],
+                        x["center"],
+                    )
+                )[0]
+
+        if chosen is None:
+            if pages is None:
+                return None, inserted, "Detector de faixa uniforme sem páginas de origem."
+            if uniform is None:
+                uniform = _uniform_band_candidates(pages, infos)
+            chosen = _choose_uniform_cut(uniform, infos, a, b, allowed_end)
+            if chosen is None:
+                diag=[d for d in natural_end_diagnostics if d.get("uses_source_count",999999) <= limit]
+                diag.sort(key=lambda d:d.get("uses_source_count",0))
+                failed_pairs=[
+                    (i,info) for i,info in enumerate(infos)
+                    if min(allowed_end,info.global_end) > max(a,info.global_start)
+                ]
+                failed_sources=[pages[i].name for i,info in failed_pairs][:limit] if pages is not None else []
+                failed_end=min(segment_end, failed_pairs[-1][1].global_end if failed_pairs else allowed_end)
+                diagnostic={
+                    "resolved_cuts_count": len(inserted),
+                    "failed_start": int(a),
+                    "failed_end": int(failed_end),
+                    "failed_sources": failed_sources,
+                    "evaluated_candidates": diag,
+                    "inserted_cuts": inserted,
+                    "max_source_images": int(limit),
+                }
+                raise ReviewSourceLimitError(
+                    f"Não foi possível concluir a proposta com máximo de {limit} originais.",
+                    diagnostic,
+                )
+
+        chosen_center = int(chosen["center"])
+        centers[chosen_center] = chosen
+        inserted.append(dict(chosen))
+
+    return None, inserted, "Limite interno atingido ao planejar os cortes."
+
+def _render_global_bounds(pages, bounds, dest):
+    dest.mkdir(parents=True, exist_ok=True)
+    for p in dest.glob("merged-*.png"): p.unlink()
+    spans=[]; y=0; width=None
+    for p in pages:
+        with Image.open(p) as im:
+            if width is None: width=im.width
+            if im.width != width: raise ValueError(f"Largura divergente: {p.name}")
+            spans.append((p,y,y+im.height)); y += im.height
+    outputs=[]
+    for i,(start,end) in enumerate(zip(bounds,bounds[1:]),1):
+        canvas=Image.new("RGB",(width,end-start),"white")
+        for p,p0,p1 in spans:
+            lo,hi=max(start,p0),min(end,p1)
+            if hi<=lo: continue
+            with Image.open(p) as im:
+                crop=im.convert("RGB").crop((0,lo-p0,width,hi-p0))
+                canvas.paste(crop,(0,lo-start))
+        target=dest/f"merged-{i:03d}.png"
+        canvas.save(target,"PNG"); outputs.append(target)
+    return outputs
+
+def _generate_level2_pending_candidate(manga, chapter, l2_payload, *, max_source_images=8):
+    pages=v3.list_pages(chapter)
+    infos,bands,total,_=v3.analyze_chapter(
+        pages, sample_width=v3.DEFAULT_SAMPLE_WIDTH,
+        light_threshold=v3.DEFAULT_LIGHT_THRESHOLD,
+        white_ratio_threshold=v3.DEFAULT_WHITE_RATIO,
+    )
+    pending=sorted(
+        [s for s in (l2_payload.get("pending_segments") or []) if s.get("global_start") is not None and s.get("global_end") is not None],
+        key=lambda s:(int(s["global_start"]),int(s["global_end"])),
+    )
+    if not pending:
+        return False,"Nenhum trecho pendente do Nível II encontrado.",None
+
+    all_bounds=[]
+    all_cuts=[]
+    proposal=[]
+    for seg in pending:
+        start,end=int(seg["global_start"]),int(seg["global_end"])
+        cuts,limit_cuts,limit_error=_enforce_source_limit_between(start,end,infos,bands,max_source_images,pages=pages)
+        if limit_error: return False,limit_error,None
+        centers=[int(c["center"]) for c in cuts]
+        bounds=[start]+centers+[end]
+        if all_bounds and all_bounds[-1]==bounds[0]:
+            all_bounds.extend(bounds[1:])
+        elif not all_bounds:
+            all_bounds.extend(bounds)
+        else:
+            all_bounds.extend(bounds)
+        all_cuts.extend(cuts)
+        proposal.extend(limit_cuts)
+
+    dest=_review(manga,chapter.name)
+    outputs=_render_global_bounds(pages,all_bounds,dest)
+    labels=[]
+    for seg in pending:
+        src=seg.get("sources") or []
+        if src:
+            labels.append(src[0] if src[0]==src[-1] else f"{src[0]} → {src[-1]}")
+    manifest={
+        "schema_version":1,"status":"candidate","algorithm":"merge_review_v1",
+        "created_at":datetime.now(timezone.utc).isoformat(),"chapter":chapter.name,
+        "source_pages":[p.name for p in pages],"proposal":proposal,"cuts":all_cuts,
+        "boundaries":all_bounds,"outputs":[p.name for p in outputs],
+        "scope":{"type":"level2_pending_segments","segments":pending,"labels":labels},
+        "policy":{"main_v3_modified":False,"forced_cut":False,
+                  "min_white_band":v3.DEFAULT_MIN_WHITE_BAND,
+                  "normal_max_chunk_height":v3.DEFAULT_MAX_CHUNK_HEIGHT,
+                  "review_max_chunk_height":REVIEW_MAX,"small_extension_limit":EXTRA_LIMIT,
+                  "extended_safe_zone":True,
+                  "extended_safe_zone_rule":"level2_pending_segments_only",
+                  "max_source_images":int(max_source_images),
+                  "source_limit_rule":"natural_page_end_then_white_then_uniform_within_user_limit",
+                  "uniform_color_fallback":"MERGE_REVIEW_ONLY"},
+    }
+    (dest/"merge-review.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
+    max_used=max((len(_segment_sources(infos,a,b)) for a,b in zip(all_bounds,all_bounds[1:])),default=0)
+    label=", ".join(labels) if labels else "região pendente"
+    return True,f"Proposta da região pendente: {label}; {len(outputs)} merges; máximo utilizado: {max_used}/{int(max_source_images)} originais por merge.",dest
+
 
 
 def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, pages=None):
-    natural_end_diagnostics = []
     limit = int(max_source_images)
     if limit < 2:
         return None, [], "O limite mínimo é 2 imagens de origem por merge."
@@ -322,6 +532,7 @@ def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, p
         allowed_end = sources[limit - 1].global_end
         target = start + v3.DEFAULT_TARGET_HEIGHT
         chosen = None
+        natural_end_diagnostics = []
 
         if pages is not None:
             natural = _natural_page_end_candidates(
@@ -399,22 +610,6 @@ def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, p
                 )
 
         chosen_center = int(chosen["center"])
-
-        if chosen.get("review_strategy") == "natural_source_page_end":
-            absorbed = []
-            next_existing = min((c for c in centers if c > chosen_center), default=None)
-            while (
-                next_existing is not None
-                and next_existing - chosen_center < v3.DEFAULT_MIN_CHUNK_HEIGHT
-            ):
-                absorbed.append(next_existing)
-                centers.pop(next_existing, None)
-                next_existing = min((c for c in centers if c > chosen_center), default=None)
-
-            if absorbed:
-                chosen["absorbed_review_cuts"] = absorbed
-                chosen["review_strategy"] = "natural_source_page_end_with_absorption"
-
         centers[chosen_center] = chosen
         inserted.append(dict(chosen))
 
@@ -445,6 +640,10 @@ def _render(pages, cuts, dest):
     return outputs,bounds
 
 def generate_candidate(manga, chapter, *, max_source_images=8):
+    l2_payload=_level2_manifest(manga, chapter.name)
+    if l2_payload:
+        return _generate_level2_pending_candidate(manga, chapter, l2_payload, max_source_images=max_source_images)
+
     pages=v3.list_pages(chapter)
     infos,bands,total,_=v3.analyze_chapter(
         pages, sample_width=v3.DEFAULT_SAMPLE_WIDTH,
@@ -470,7 +669,7 @@ def generate_candidate(manga, chapter, *, max_source_images=8):
                   "extended_safe_zone":True,
                   "extended_safe_zone_rule":"first_strict_white_band_after_review_max",
                   "max_source_images":int(max_source_images),
-                  "source_limit_rule":"natural_page_end_with_absorption_then_white_then_uniform_within_user_limit",
+                  "source_limit_rule":"natural_page_end_then_white_then_uniform_within_user_limit",
                   "uniform_color_fallback":"MERGE_REVIEW_ONLY"},
     }
     (dest/"merge-review.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2),encoding="utf-8")
@@ -507,6 +706,75 @@ def approve(manga, chapter):
     boundaries=payload.get("boundaries") or []
     if len(boundaries) != len(outputs)+1:
         return False,"Manifesto da proposta possui boundaries incompatíveis com as imagens."
+
+    l2_manifest_path=_level2(manga,chapter)/"merge-level2-manifest.json"
+    if l2_manifest_path.is_file():
+        try:
+            l2_payload=json.loads(l2_manifest_path.read_text(encoding="utf-8"))
+        except Exception as exc:
+            return False,f"Manifesto do Nível II ilegível: {exc}"
+        l2_segments=l2_payload.get("segments") or []
+        pending=l2_payload.get("pending_segments") or []
+        if pending and l2_segments:
+            pieces=[]
+            for seg in l2_segments:
+                artifact=(seg.get("artifact") or {}).get("file")
+                if not artifact: return False,f"Segmento Nível II sem artefato físico: {seg.get('id')}"
+                p=_level2(manga,chapter)/artifact
+                if not p.is_file(): return False,f"Artefato Nível II ausente: {artifact}"
+                pieces.append({"source":"level2","path":p,"global_start":int(seg["global_start"]),"global_end":int(seg["global_end"]),"segment":seg})
+            for index,p in enumerate(outputs):
+                start=int(boundaries[index]); end=int(boundaries[index+1])
+                if any(min(end,int(seg["global_end"]))>max(start,int(seg["global_start"])) for seg in pending):
+                    pieces.append({"source":"review","path":p,"global_start":start,"global_end":end,"segment":None})
+            pieces.sort(key=lambda x:(x["global_start"],x["global_end"]))
+            expected=0; official_outputs=[]; width=None
+            for item in pieces:
+                if int(item["global_start"])!=expected:
+                    return False,f"Cobertura final com lacuna/overlap antes de {item['path'].name}: esperado {expected}, obtido {item['global_start']}."
+                with Image.open(item["path"]) as im:
+                    im.load()
+                    if width is None: width=im.width
+                    elif im.width!=width: return False,f"Largura divergente na composição: {item['path'].name}"
+                    if int(item["global_end"])-int(item["global_start"])!=im.height:
+                        return False,f"Altura divergente na composição: {item['path'].name}"
+                    official_outputs.append({"file":"","width":im.width,"height":im.height,"global_start":int(item["global_start"]),"global_end":int(item["global_end"]),"sources":[],"source":item["source"]})
+                expected=int(item["global_end"])
+            total=int(l2_payload.get("total_height") or (boundaries[-1] if boundaries else 0))
+            if expected!=total:
+                return False,f"Cobertura final incompleta: esperado {total}, obtido {expected}."
+            try:
+                dst.mkdir(parents=True)
+                for i,item in enumerate(pieces,1):
+                    name=f"merged-{i:03d}.png"
+                    shutil.copy2(item["path"],dst/name)
+                    official_outputs[i-1]["file"]=name
+                official_manifest={
+                    "schema_version":1,
+                    "algorithm":"merge_level2_review_composed",
+                    "status":"approved",
+                    "approved_at":datetime.now(timezone.utc).isoformat(),
+                    "source_dir":str(chapter_dir),
+                    "output_dir":str(dst),
+                    "source_pages":len(payload.get("source_pages") or []),
+                    "source_width":int(width or 0),
+                    "source_total_height":total,
+                    "merged_images":len(official_outputs),
+                    "parameters":{"target_height":v3.DEFAULT_TARGET_HEIGHT,"search_before":v3.DEFAULT_SEARCH_BEFORE,"search_after":v3.DEFAULT_SEARCH_AFTER,"min_chunk_height":v3.DEFAULT_MIN_CHUNK_HEIGHT,"min_white_band":v3.DEFAULT_MIN_WHITE_BAND,"max_chunk_height":REVIEW_MAX,"white_ratio":v3.DEFAULT_WHITE_RATIO,"light_threshold":v3.DEFAULT_LIGHT_THRESHOLD,"sample_width":v3.DEFAULT_SAMPLE_WIDTH},
+                    "cuts":payload.get("cuts") or [],
+                    "decisions":payload.get("proposal") or [],
+                    "outputs":official_outputs,
+                    "validation":{"ok":True,"errors":[],"coverage_start":0,"coverage_end":total},
+                    "safety":{"source_files_modified":False,"forced_cut_without_white_band":False,"all_source_pixels_preserved_in_order":True,"main_v3_modified":False},
+                    "level2":{"manifest":str(l2_manifest_path),"auto_segments":[x for x in official_outputs if x["source"]=="level2"],"review_segments":[x for x in official_outputs if x["source"]=="review"]},
+                    "review":{"created_at":payload.get("created_at"),"policy":payload.get("policy") or {},"original_manifest":"merge-review.json"},
+                }
+                (dst/"merge-manifest.json").write_text(json.dumps(official_manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+                if not v3.is_chapter_merged(chapter_dir): raise RuntimeError("MERGE promovido, mas manifesto oficial não foi reconhecido.")
+            except Exception as exc:
+                if dst.is_dir(): shutil.rmtree(dst)
+                return False,f"Falha ao compor MERGE final: {exc}"
+            return True,f"Merge composto e validado em {dst}"
 
     official_outputs=[]
     width=None
