@@ -32,6 +32,7 @@ def chapters(manga):
 
 def rdir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_REVIEW"/c
 def l2dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL2"/c
+def l3dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL3"/c
 def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"CLEAN"/c
 def pmdir(m,c): return m/"FLUXO_SECUNDARIO"/"PDF_MERGE"/c
 def merge_status_file(ch): return ch.parent.parent/"FLUXO_SECUNDARIO"/"MERGE_STATUS"/ch.name/"merge-attempt.json"
@@ -438,6 +439,120 @@ def _promote_level2_complete(ch, part):
         f"Level II concluído e promovido para {official_dir}"
     )
 
+
+def _materialize_level3_interval(ch, segment):
+    from PIL import Image
+    spans=segment.get("source_spans") or []
+    if not spans: raise ValueError("Segmento Level III sem source_spans.")
+    start=int(segment["global_start"]); end=int(segment["global_end"])
+    if end<=start: raise ValueError("Intervalo Level III inválido.")
+    width=None; canvas=None
+    for span in spans:
+        src=ch/span["file"]
+        if not src.is_file(): raise FileNotFoundError(f"Fonte ausente: {span['file']}")
+        with Image.open(src) as im:
+            if width is None:
+                width=int(im.width); canvas=Image.new("RGB",(width,end-start),"white")
+            elif int(im.width)!=width:
+                raise ValueError("Larguras incompatíveis no Level III.")
+            sy0=int(span["source_y_start"]); sy1=int(span["source_y_end"])
+            crop=im.convert("RGB").crop((0,sy0,width,sy1))
+            paste_y=int(span["global_start"])-start+sy0
+            canvas.paste(crop,(0,paste_y))
+    if canvas is None: raise ValueError("Falha ao materializar Level III.")
+    return canvas
+
+
+def process_merge_level3_pending(ch, part):
+    # Executa somente sobre FAILED de um Level II já validado.
+    import numpy as np
+    from processamento.unificacao_imagens import image_stitcher as v3
+    from processamento.unificacao_imagens.image_stitcher_level3 import (
+        Level3Config, Level3Decision, Level3PendingRegion,
+        continuous_scene_guard, search_local_safe_candidate,
+    )
+    if not part or not part.get("level2_validated"):
+        return False,"Level III exige Level II validado.",None
+    pending=part.get("pending_segments") or []
+    if not pending:
+        return False,"Level II não possui FAILED para Level III.",None
+
+    manga=ch.parent.parent
+    dest=l3dir(manga,ch.name); dest.mkdir(parents=True,exist_ok=True)
+    for old in dest.glob("safe-*.png"): old.unlink()
+
+    cfg=Level3Config(); artifacts=[]; residual=[]; diagnostics=[]; out_index=1
+    max_h=int(v3.DEFAULT_MAX_CHUNK_HEIGHT)
+
+    for seg in pending:
+        seg_start=int(seg["global_start"]); seg_end=int(seg["global_end"])
+        image=_materialize_level3_interval(ch,seg)
+        gray=np.asarray(image.convert("L"),dtype=np.uint8)
+        region=Level3PendingRegion(seg_start,seg_end)
+        cursor=seg_start; proven=[]
+
+        while seg_end-cursor>max_h:
+            nominal=cursor+max_h
+            result=search_local_safe_candidate(
+                gray,candidate_y=nominal,region=region,
+                image_global_start=seg_start,config=cfg,
+            )
+            chosen=None
+            if result.decision==Level3Decision.SAFE:
+                chosen=int(result.alternative_y if result.alternative_y is not None else result.candidate_y)
+            diagnostics.append({
+                **result.as_dict(),"segment_id":int(seg["id"]),
+                "nominal_candidate_y":nominal,"selected_y":chosen,
+            })
+            if chosen is None or chosen<=cursor or chosen>=seg_end:
+                guard=continuous_scene_guard(
+                    region=Level3PendingRegion(cursor,seg_end),config=cfg
+                )
+                residual.append({
+                    **seg,"global_start":cursor,"global_end":seg_end,
+                    "height":seg_end-cursor,"status":"failed",
+                    "validation":"review_required",
+                    "reason":guard.reason if guard is not None else result.reason,
+                    "level3_decision":result.decision.value,
+                })
+                break
+            proven.append((cursor,chosen,result.reason))
+            cursor=chosen
+        else:
+            if cursor<seg_end:
+                proven.append((cursor,seg_end,"remaining_within_max_height"))
+
+        for start,end,reason in proven:
+            crop=image.crop((0,start-seg_start,image.width,end-seg_start))
+            name=f"safe-{out_index:03d}.png"; path=dest/name
+            crop.save(path,"PNG")
+            artifacts.append({
+                "file":name,"global_start":start,"global_end":end,
+                "height":end-start,"source_stage":"level3",
+                "source_segment_id":int(seg["id"]),"decision_reason":reason,
+            })
+            out_index+=1
+
+    manifest={
+        "schema_version":1,"algorithm":"merge_level3_structural_safe_v1",
+        "chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),
+        "total_height":int(part.get("total_height") or 0),
+        "source_level2_manifest":"merge-level2-manifest.json",
+        "safe_artifacts":artifacts,"residual_pending_segments":residual,
+        "diagnostics":diagnostics,
+        "safety":{"level2_passed_artifacts_modified":False,
+                  "forced_cut":False,
+                  "inconclusive_local_search_allowed":False},
+    }
+    (dest/"merge-level3-manifest.json").write_text(
+        json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8"
+    )
+    return True,(
+        f"Level III materializou {len(artifacts)} trecho(s) SAFE; "
+        f"{len(residual)} residual(is) segue(m) para Review."
+    ),manifest
+
+
 def validate_merge_level2(ch):
     from PIL import Image
     failure=read_merge_failure(ch)
@@ -807,12 +922,17 @@ def do_merge_level2(job,chs):
     for i,ch in enumerate(chs,1):
         job.message=f"Auto-Merge Nível II: capítulo {ch.name}..."
         ok,msg,part=validate_merge_level2(ch)
+        level3=None
+        if ok and part and part.get("level2_validated") and (part.get("pending_segments") or []):
+            l3_ok,l3_msg,l3_manifest=process_merge_level3_pending(ch,part)
+            level3={"status":"ok" if l3_ok else "error","message":l3_msg,"safe_segments":len((l3_manifest or {}).get("safe_artifacts") or []),"residual_pending_segments":len((l3_manifest or {}).get("residual_pending_segments") or [])}
         out.append({
             "chapter":ch.name,
-            "status":"ok" if ok else "error",
-            "message":msg,
+            "status":"ok" if ok and (not level3 or level3["status"]=="ok") else "error",
+            "message":msg if not level3 else f"{msg} {level3['message']}",
             "resolved_segments":len((part or {}).get("resolved_segments") or []),
             "pending_segments":len((part or {}).get("pending_segments") or []),
+            "level3":level3,
         })
         job.progress=i
     return out
