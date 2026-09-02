@@ -57,6 +57,38 @@ class Level3PipelineIntegrationTests(unittest.TestCase):
             self.assertEqual(len(m["residual_pending_segments"]),1)
             self.assertFalse(m["safety"]["inconclusive_local_search_allowed"])
 
+    def test_residual_preserves_trigger_and_guard_diagnostics(self):
+        with tempfile.TemporaryDirectory() as td:
+            _,ch,part=self.make_case(td)
+            r=Level3Result(
+                Level3Decision.UNSAFE,
+                12000,
+                "strong_diagonal_crossing",
+                0,
+                13050,
+                {"diagonal_crossings":4},
+                None,
+            )
+            with patch(
+                "processamento.unificacao_imagens.image_stitcher_level3.search_local_safe_candidate",
+                return_value=r,
+            ):
+                ok,_,m=pw.process_merge_level3_pending(ch,part)
+
+            self.assertTrue(ok)
+            self.assertEqual(len(m["residual_pending_segments"]),1)
+            residual=m["residual_pending_segments"][0]
+
+            self.assertEqual(residual["reason"],"continuous_scene_too_long")
+            self.assertEqual(residual["trigger_reason"],"strong_diagonal_crossing")
+            self.assertEqual(residual["trigger_decision"],"UNSAFE")
+            self.assertEqual(residual["level3_decision"],"UNSAFE")
+            self.assertEqual(residual["guard_metrics"]["region_height"],13050)
+            self.assertEqual(
+                residual["guard_metrics"]["continuous_scene_max_height"],
+                3000,
+            )
+
     def test_level2_artifact_is_immutable(self):
         with tempfile.TemporaryDirectory() as td:
             manga,ch,part=self.make_case(td)

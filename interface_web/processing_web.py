@@ -766,6 +766,12 @@ def process_merge_level3_pending(ch, part):
                     "validation":"review_required",
                     "reason":guard.reason if guard is not None else result.reason,
                     "level3_decision":result.decision.value,
+                    # MIII-4A: preserve both the structural rejection that
+                    # triggered the stop and the independent flow guard that
+                    # ultimately routed the residual to Review.
+                    "trigger_reason":result.reason,
+                    "trigger_decision":result.decision.value,
+                    "guard_metrics":dict(guard.metrics) if guard is not None else {},
                 })
                 break
             proven.append((cursor,chosen,result.reason))
