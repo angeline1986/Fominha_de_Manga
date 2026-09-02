@@ -37,6 +37,7 @@ def amdir(m,c): return m/"FLUXO_SECUNDARIO"/"AUTO_MERGE"/c
 def l2dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL2"/c
 def l3dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL3"/c
 def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"CLEAN"/c
+def tmdir(m,c): return m/"FLUXO_SECUNDARIO"/"TEXT_OFF_MERGED"/c
 def pmdir(m,c): return m/"FLUXO_SECUNDARIO"/"PDF_MERGE"/c
 def merge_status_file(ch): return ch.parent.parent/"FLUXO_SECUNDARIO"/"MERGE_STATUS"/ch.name/"merge-attempt.json"
 
@@ -1008,6 +1009,7 @@ def row_state(manga,ch):
         "review_merges":review_items,
         "review_max_source_images":review_max_source_images(rd),
         "clean":(cdir(manga,ch.name)/"clean-manifest.json").is_file(),
+        "clean_merged":(tmdir(manga,ch.name)/"clean-manifest.json").is_file(),
         "pdf":(manga/"PDF"/ch.name/f"{ch.name}.pdf").is_file(),
         "pdf_merge":(pmdir(manga,ch.name)/f"{ch.name}.pdf").is_file(),
     }
@@ -1023,7 +1025,7 @@ def state(provider,manga_name):
         "merge_failed":sum(x["merge_failed"] for x in rows),
         "review_pending":sum(x["needs_review"] for x in rows),
         "review":sum(x["review"] for x in rows),"pdfs":sum(x["pdf"] for x in rows),"clean":sum(x["clean"] for x in rows),
-        "pdf_merge":sum(x["pdf_merge"] for x in rows)}}
+        "clean_merged":sum(x["clean_merged"] for x in rows),"pdf_merge":sum(x["pdf_merge"] for x in rows)}}
 
 @dataclass
 class Job:
@@ -1055,6 +1057,7 @@ def run_job(job,payload):
             elif job.action=="pdf": job.result=do_pdf(job,chs)
             elif job.action=="pdf_merge": job.result=do_pdf_merge(job,manga,chs)
             elif job.action=="clean": job.result=do_clean(job,manga,chs)
+            elif job.action=="clean_merged": job.result=do_clean_merged(job,manga,chs)
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
@@ -1402,6 +1405,38 @@ def do_clean(job,manga,chs):
         (target/"clean-manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
         out.append({"chapter":ch.name,"status":"ok" if not fails else "error","pages":len(reports),"failures":fails}); job.progress=i
     return out
+def do_clean_merged(job,manga,chs):
+    from processamento.limpeza_baloes.bubble_cleaner import EasyOCRBackend,process_image,resolve_model
+    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged,merge_output_dir
+    model=resolve_model(None); ocr=EasyOCRBackend(["en"]); out=[]
+    for i,ch in enumerate(chs,1):
+        job.message=f"Texto Off — Merged: validando capítulo {ch.name} ({i}/{len(chs)})..."
+        if not is_chapter_merged(ch):
+            out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial inválido ou ausente"}); job.progress=i; continue
+        imgs=v3.merge_artifact_files(merge_output_dir(ch))
+        if not imgs:
+            out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial sem imagens para limpeza"}); job.progress=i; continue
+        target=tmdir(manga,ch.name)
+        if target.is_dir(): shutil.rmtree(target)
+        target.mkdir(parents=True,exist_ok=True)
+        reports=[]; fails=[]
+        for pi,img in enumerate(imgs,1):
+            job.message=f"Texto Off — Merged · Capítulo {ch.name}: imagem {pi}/{len(imgs)}"
+            try: reports.append(process_image(img,target,model,["en"],0.55,ocr_backend=ocr))
+            except Exception as e: fails.append(f"{img.name}: {e}")
+        manifest={
+            "schema_version":1,
+            "algorithm":"bubble_cleaner_v3_5",
+            "source_stage":"MERGE",
+            "source_immutable":True,
+            "source_artifacts":[p.name for p in imgs],
+            "pages_total":len(reports),
+            "integrity_ok":bool(reports) and all(r["summary"]["integrity_ok"] for r in reports) and not fails,
+            "failures":fails,
+        }
+        (target/"clean-manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
+        out.append({"chapter":ch.name,"status":"ok" if not fails else "error","pages":len(reports),"failures":fails,"stage_folder":str(target)}); job.progress=i
+    return out
 
 def reviewmod():
     from processamento.unificacao_imagens import image_stitcher_review
@@ -1606,6 +1641,7 @@ class Handler(BaseHTTPRequestHandler):
                     "auto_merge":"AUTO_MERGE",
                     "merge_level2":"MERGE_LEVEL2",
                     "merge_level3":"MERGE_LEVEL3",
+                    "text_off_merged":"TEXT_OFF_MERGED",
                     "merge":"MERGE",
                 }.get(kind)
                 if not folder_name:
