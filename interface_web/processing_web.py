@@ -950,7 +950,24 @@ def review_merge_items(manga, ch):
 
         failure=read_merge_failure(ch) or {}
         partition=failure.get("partition") or {}
-        pending_intervals=[(int(x["global_start"]),int(x["global_end"])) for x in (partition.get("pending_segments") or []) if x.get("global_start") is not None and x.get("global_end") is not None]
+        pending_segments=partition.get("pending_segments") or []
+
+        if _is_level2_validated(failure):
+            authoritative_pending,pending_error,pending_source=_level3_review_pending(ch,failure)
+            if pending_error:
+                print(
+                    f"[processing-web] Review cap {ch.name} bloqueada: "
+                    f"{pending_error}"
+                )
+                return []
+            if pending_source=="level3":
+                if not authoritative_pending:
+                    return []
+                pending_segments=authoritative_pending
+            elif pending_source=="level2":
+                pending_segments=authoritative_pending or []
+
+        pending_intervals=[(int(x["global_start"]),int(x["global_end"])) for x in pending_segments if x.get("global_start") is not None and x.get("global_end") is not None]
 
         review_centers=set()
         for cut in (payload.get("cuts") or []):
