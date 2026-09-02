@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import unittest
+from unittest.mock import patch
 
 import cv2
 import numpy as np
@@ -10,6 +11,7 @@ from processamento.unificacao_imagens.image_stitcher_level3 import (
     Level3PendingRegion,
     Level3Result,
     analyze_structural_candidate,
+    continuous_scene_guard,
     normalize_pending_segments,
     placeholder_structural_evaluation,
     preprocess_for_structure,
@@ -351,6 +353,110 @@ class Level3LocalSearchTests(unittest.TestCase):
         )
 
         self.assertEqual(first.as_dict(), second.as_dict())
+
+
+class Level3TextFxAndSanityTests(unittest.TestCase):
+
+    def test_inconclusive_original_does_not_start_local_search(self):
+        image = np.full((240, 240), 255, dtype=np.uint8)
+        region = Level3PendingRegion(0, 240)
+        original = Level3Result(
+            decision=Level3Decision.INCONCLUSIVE,
+            candidate_y=120,
+            reason="structural_evidence_inconclusive",
+            region_start=0,
+            region_end=240,
+            metrics={"edge_density": 0.25},
+            alternative_y=None,
+        )
+
+        with patch(
+            "processamento.unificacao_imagens.image_stitcher_level3."
+            "analyze_structural_candidate",
+            return_value=original,
+        ) as mocked:
+            result = search_local_safe_candidate(
+                image,
+                candidate_y=120,
+                region=region,
+            )
+
+        self.assertEqual(mocked.call_count, 1)
+        self.assertEqual(result.decision, Level3Decision.INCONCLUSIVE)
+        self.assertEqual(result.reason, "structural_evidence_inconclusive")
+        self.assertIsNone(result.alternative_y)
+        self.assertFalse(result.metrics["local_search_performed"])
+
+    def test_text_like_clusters_near_cut_are_unsafe(self):
+        img = np.full((240, 240), 245, dtype=np.uint8)
+
+        for x in (70, 100, 130, 160):
+            cv2.rectangle(img, (x, 116), (x + 4, 124), 20, thickness=-1)
+
+        cfg = Level3Config(
+            analysis_half_window=60,
+            cut_band_half_height=4,
+            min_component_area=999999,
+            min_component_height=999999,
+            hough_threshold=999999,
+            text_fx_min_clusters=3,
+            text_fx_uniform_background_std_max=30.0,
+        )
+        region = Level3PendingRegion(0, 240)
+
+        result = analyze_structural_candidate(
+            img,
+            candidate_y=120,
+            region=region,
+            config=cfg,
+        )
+
+        self.assertEqual(result.decision, Level3Decision.UNSAFE)
+        self.assertEqual(result.reason, 'text_like_region')
+        self.assertGreaterEqual(result.metrics['text_fx_clusters'], 3)
+
+    def test_text_fx_signal_does_not_trigger_on_single_tiny_mark(self):
+        img = np.full((240, 240), 245, dtype=np.uint8)
+        cv2.rectangle(img, (120, 116), (124, 124), 20, thickness=-1)
+
+        cfg = Level3Config(
+            analysis_half_window=60,
+            cut_band_half_height=4,
+            min_component_area=999999,
+            min_component_height=999999,
+            hough_threshold=999999,
+            text_fx_min_clusters=3,
+        )
+        region = Level3PendingRegion(0, 240)
+
+        result = analyze_structural_candidate(
+            img,
+            candidate_y=120,
+            region=region,
+            config=cfg,
+        )
+
+        self.assertNotEqual(result.reason, 'text_like_region')
+
+    def test_continuous_scene_guard_returns_inconclusive_above_threshold(self):
+        region = Level3PendingRegion(1000, 4201)
+        result = continuous_scene_guard(
+            region=region,
+            config=Level3Config(continuous_scene_max_height=3000),
+        )
+
+        self.assertIsNotNone(result)
+        self.assertEqual(result.decision, Level3Decision.INCONCLUSIVE)
+        self.assertEqual(result.reason, 'continuous_scene_too_long')
+        self.assertEqual(result.metrics['region_height'], 3201)
+
+    def test_continuous_scene_guard_allows_region_at_threshold(self):
+        region = Level3PendingRegion(1000, 4000)
+        result = continuous_scene_guard(
+            region=region,
+            config=Level3Config(continuous_scene_max_height=3000),
+        )
+        self.assertIsNone(result)
 
 
 if __name__ == "__main__":

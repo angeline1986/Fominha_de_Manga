@@ -75,6 +75,15 @@ class Level3Config:
     local_search_radius: int = 200
     local_search_step: int = 2
 
+    # MIII-3A text/FX heuristic and long-scene sanity guard.
+    text_fx_max_cluster_area: int = 900
+    text_fx_max_cluster_width: int = 90
+    text_fx_max_cluster_height: int = 60
+    text_fx_min_cluster_area: int = 8
+    text_fx_min_clusters: int = 3
+    text_fx_uniform_background_std_max: float = 18.0
+    continuous_scene_max_height: int = 3000
+
 
 @dataclass(frozen=True)
 class Level3Result:
@@ -275,6 +284,107 @@ def _crossing_components(
     return relevant, largest_area
 
 
+def _text_fx_clusters(
+    gray_window: np.ndarray,
+    edges: np.ndarray,
+    *,
+    cut_y: int,
+    config: Level3Config,
+) -> tuple[bool, dict[str, int | float]]:
+    """Heurística conservadora para possível texto/FX próximo ao corte.
+
+    Sem OCR e sem IA: procura pequenos agrupamentos de borda relativamente
+    densos/isolados em fundo local razoavelmente uniforme. É apenas um sinal de
+    proteção; nunca transforma um candidato inseguro em seguro.
+    """
+    binary = (edges > 0).astype(np.uint8)
+    num_labels, _, stats, _ = cv2.connectedComponentsWithStats(
+        binary,
+        connectivity=8,
+    )
+
+    band_half = max(4, int(config.cut_band_half_height) * 2)
+    y0 = max(0, cut_y - band_half)
+    y1 = min(gray_window.shape[0], cut_y + band_half + 1)
+    bg_band = gray_window[y0:y1, :].astype(np.float32, copy=False)
+    flat = bg_band.reshape(-1)
+    if flat.size:
+        lo = float(np.percentile(flat, 10.0))
+        hi = float(np.percentile(flat, 90.0))
+        core = flat[(flat >= lo) & (flat <= hi)]
+        if core.size < max(32, flat.size // 4):
+            core = flat
+        local_bg_std = float(np.std(core))
+    else:
+        local_bg_std = 0.0
+
+    eligible = 0
+    nearest_distance = gray_window.shape[0]
+
+    for label in range(1, num_labels):
+        x, y, w, h, area = map(int, stats[label])
+        del x
+        if area < int(config.text_fx_min_cluster_area):
+            continue
+        if area > int(config.text_fx_max_cluster_area):
+            continue
+        if w > int(config.text_fx_max_cluster_width):
+            continue
+        if h > int(config.text_fx_max_cluster_height):
+            continue
+
+        comp_top = y
+        comp_bottom = y + h - 1
+        if comp_top <= cut_y <= comp_bottom:
+            distance = 0
+        else:
+            distance = min(abs(cut_y - comp_top), abs(cut_y - comp_bottom))
+
+        if distance <= band_half:
+            eligible += 1
+            nearest_distance = min(nearest_distance, distance)
+
+    suspected = bool(
+        eligible >= int(config.text_fx_min_clusters)
+        and local_bg_std <= float(config.text_fx_uniform_background_std_max)
+    )
+    return suspected, {
+        'text_fx_clusters': int(eligible),
+        'text_fx_nearest_distance': int(nearest_distance) if eligible else -1,
+        'text_fx_background_std': round(local_bg_std, 6),
+    }
+
+
+def continuous_scene_guard(
+    *,
+    region: Level3PendingRegion,
+    config: Level3Config | None = None,
+) -> Level3Result | None:
+    """Fail closed when a pending continuous region is too long.
+
+    This guard is independent from the merge chunk-height policy. A very long
+    unresolved region goes to Review instead of encouraging speculative cuts.
+    """
+    cfg = config or Level3Config()
+    threshold = max(1, int(cfg.continuous_scene_max_height))
+
+    if region.height <= threshold:
+        return None
+
+    return Level3Result(
+        decision=Level3Decision.INCONCLUSIVE,
+        candidate_y=int(region.global_start),
+        reason='continuous_scene_too_long',
+        region_start=region.global_start,
+        region_end=region.global_end,
+        metrics={
+            'region_height': int(region.height),
+            'continuous_scene_max_height': int(threshold),
+        },
+        alternative_y=None,
+    )
+
+
 def analyze_structural_candidate(
     image: np.ndarray,
     *,
@@ -338,6 +448,13 @@ def analyze_structural_candidate(
         config=cfg,
     )
 
+    text_fx, text_fx_metrics = _text_fx_clusters(
+        blurred,
+        edges,
+        cut_y=cut_y,
+        config=cfg,
+    )
+
     metrics = {
         "band_std": round(band_std, 6),
         "edge_density": round(edge_density, 6),
@@ -346,6 +463,7 @@ def analyze_structural_candidate(
         "diagonal_crossings": int(diagonal_count),
         "window_top_global": int(image_global_start + top),
         "window_bottom_global": int(image_global_start + bottom),
+        **text_fx_metrics,
     }
 
     if diagonal:
@@ -363,6 +481,16 @@ def analyze_structural_candidate(
             decision=Level3Decision.UNSAFE,
             candidate_y=global_y,
             reason="connected_component_crossing",
+            region_start=region.global_start,
+            region_end=region.global_end,
+            metrics=metrics,
+        )
+
+    if text_fx:
+        return Level3Result(
+            decision=Level3Decision.UNSAFE,
+            candidate_y=global_y,
+            reason="text_like_region",
             region_start=region.global_start,
             region_end=region.global_end,
             metrics=metrics,
@@ -469,7 +597,7 @@ def search_local_safe_candidate(
         image_global_start=int(image_global_start),
         config=cfg,
     )
-    if original.decision == Level3Decision.SAFE:
+    if original.decision != Level3Decision.UNSAFE:
         metrics = dict(original.metrics)
         metrics.update(
             {
