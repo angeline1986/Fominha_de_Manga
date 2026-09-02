@@ -59,5 +59,38 @@ class Level3PipelineIntegrationTests(unittest.TestCase):
             self.assertEqual(json.loads(mf.read_text())["algorithm"],
                              "merge_level3_structural_safe_v1")
 
+    def test_materialization_preserves_exact_global_offsets_across_sources(self):
+        with tempfile.TemporaryDirectory() as td:
+            manga=Path(td)/"manga"; ch=manga/"IMG"/"6"; ch.mkdir(parents=True)
+            Image.new("RGB",(8,100),(255,0,0)).save(ch/"page-001.png")
+            Image.new("RGB",(8,100),(0,0,255)).save(ch/"page-002.png")
+            segment={
+                "id":1,
+                "global_start":50,
+                "global_end":150,
+                "source_spans":[
+                    {
+                        "file":"page-001.png",
+                        "global_start":50,
+                        "global_end":100,
+                        "source_y_start":50,
+                        "source_y_end":100,
+                    },
+                    {
+                        "file":"page-002.png",
+                        "global_start":100,
+                        "global_end":150,
+                        "source_y_start":0,
+                        "source_y_end":50,
+                    },
+                ],
+            }
+            image=pw._materialize_level3_interval(ch,segment)
+            self.assertEqual(image.size,(8,100))
+            self.assertEqual(image.getpixel((0,0)),(255,0,0))
+            self.assertEqual(image.getpixel((0,49)),(255,0,0))
+            self.assertEqual(image.getpixel((0,50)),(0,0,255))
+            self.assertEqual(image.getpixel((0,99)),(0,0,255))
+
 if __name__=="__main__":
     unittest.main()

@@ -457,7 +457,7 @@ def _materialize_level3_interval(ch, segment):
                 raise ValueError("Larguras incompatíveis no Level III.")
             sy0=int(span["source_y_start"]); sy1=int(span["source_y_end"])
             crop=im.convert("RGB").crop((0,sy0,width,sy1))
-            paste_y=int(span["global_start"])-start+sy0
+            paste_y=int(span["global_start"])-start
             canvas.paste(crop,(0,paste_y))
     if canvas is None: raise ValueError("Falha ao materializar Level III.")
     return canvas
