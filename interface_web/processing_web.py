@@ -974,6 +974,9 @@ def state(provider,manga_name):
 @dataclass
 class Job:
     id:int; action:str; status:str="queued"; progress:int=0; total:int=0; message:str=""; error:str|None=None; result:Any=None
+    progress_value:float=0.0
+    progress_max:float=0.0
+    progress_detail:str=""
 
 JOBS={}; COUNTER=0; LOCK=threading.Lock(); OPLOCK=threading.Lock()
 
@@ -1011,16 +1014,51 @@ def run_job(job,payload):
 def do_merge(job,chs):
     from concurrent.futures import ThreadPoolExecutor, as_completed
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_chapter
+    progress_lock=threading.Lock()
+    per_chapter={ch.name:0.0 for ch in chs}
+
+    def report(ch_name,event):
+        stage=str((event or {}).get("stage") or "")
+        current=max(0,int((event or {}).get("current") or 0))
+        total=max(1,int((event or {}).get("total") or 1))
+        ratio=max(0.0,min(1.0,current/total))
+        if stage=="prepare":
+            chapter_ratio=0.01
+        elif stage=="analyze_pages":
+            chapter_ratio=0.05 + (0.70*ratio)
+        elif stage=="choose_cuts":
+            chapter_ratio=0.78
+        elif stage=="render":
+            chapter_ratio=0.82
+        elif stage=="validate":
+            chapter_ratio=0.97
+        elif stage=="done":
+            chapter_ratio=1.0
+        else:
+            chapter_ratio=per_chapter.get(ch_name,0.0)
+        with progress_lock:
+            per_chapter[ch_name]=max(per_chapter.get(ch_name,0.0),chapter_ratio)
+            job.progress_value=sum(per_chapter.values())
+            job.progress_max=float(max(1,len(chs)))
+            pct=round((job.progress_value/job.progress_max)*100)
+            detail=str((event or {}).get("message") or "")
+            job.progress_detail=f"Cap. {ch_name}: {detail}" if detail else f"Cap. {ch_name}"
+            job.message=f"Auto-Merge: {pct}% · {job.progress_detail}"
 
     def process_one(ch):
         try:
             if is_chapter_merged(ch):
                 clear_merge_failure(ch)
+                report(ch.name,{"stage":"done","current":1,"total":1,"message":"MERGE já existente"})
                 return {"chapter":ch.name,"status":"skipped","message":"MERGE já existente"}
             auto_dir=amdir(ch.parent.parent,ch.name)
             if auto_dir.exists():
                 shutil.rmtree(auto_dir)
-            r=merge_chapter(ch,output_dir_override=auto_dir)
+            r=merge_chapter(
+                ch,
+                output_dir_override=auto_dir,
+                progress_callback=lambda event: report(ch.name,event),
+            )
             raw=json.loads((auto_dir/"merge-manifest.json").read_text(encoding="utf-8"))
             auto_manifest={"schema_version":1,"algorithm":"auto_merge_level1_complete","chapter":ch.name,"source_dir":str(ch),"output_dir":str(auto_dir),"total_height":int(raw.get("source_total_height") or 0),"artifacts":raw.get("outputs") or [],"pending_segments":[],"coverage":{"auto_segments":[[int(x["global_start"]),int(x["global_end"])] for x in (raw.get("outputs") or [])]},"v3_manifest":raw}
             (auto_dir/"auto-merge-manifest.json").write_text(json.dumps(auto_manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
@@ -1028,9 +1066,11 @@ def do_merge(job,chs):
             promoted,promote_msg=_promote_level1_complete(ch)
             if not promoted: raise RuntimeError(promote_msg)
             clear_merge_failure(ch)
+            report(ch.name,{"stage":"done","current":1,"total":1,"message":"capítulo concluído"})
             return {"chapter":ch.name,"status":"ok","merged_images":r.merged_images,"auto_merge_saved":r.merged_images,"auto_merge_folder":str(auto_dir),"message":promote_msg}
         except Exception as e:
             set_merge_failure(ch,e)
+            report(ch.name,{"stage":"done","current":1,"total":1,"message":"capítulo finalizado"})
             failure=read_merge_failure(ch) or {}
             level1=failure.get("auto_merge_level1") or {}
             saved=int(level1.get("artifacts_count") or 0)
@@ -1052,13 +1092,14 @@ def do_merge(job,chs):
             job.progress=i
             remaining=max(0,total-i)
             active=min(3,remaining)
-            job.message=f"Unificação: {i}/{total} concluído(s)"
-            if active:
-                job.message+=f" · até {active} em processamento"
-
+            if not job.progress_detail:
+                job.message=f"Unificação: {i}/{total} concluído(s)"
+                if active:
+                    job.message+=f" · até {active} em processamento"
     order={ch.name:i for i,ch in enumerate(chs)}
     out.sort(key=lambda item:order.get(item.get("chapter"),999999))
     return out
+
 
 def do_merge_level2(job,chs):
     out=[]
@@ -1134,9 +1175,19 @@ def do_merge_level3(job,chs):
 
 def do_pdf(job,chs):
     from orquestracao.menu import run_pdf_batch
-    job.message="Validando imagens e gerando PDFs..."
-    r=run_pdf_batch(chs,regenerate_existing=False); job.progress=len(chs)
-    return {"selected":r["selected"],"generated":[x.name for x in r["generated"]],"skipped":[x.name for x in r["skipped"]],"problems":[{"chapter":c.name,"message":m} for c,m in r["problems"]]}
+    generated=[]
+    skipped=[]
+    problems=[]
+    total=len(chs)
+    for i,ch in enumerate(chs,1):
+        job.message=f"Gerar PDF: processando capítulo {ch.name} ({i}/{total})..."
+        r=run_pdf_batch([ch],regenerate_existing=False)
+        generated.extend(x.name for x in r["generated"])
+        skipped.extend(x.name for x in r["skipped"])
+        problems.extend({"chapter":c.name,"message":m} for c,m in r["problems"])
+        job.progress=i
+        job.message=f"Gerar PDF: {i}/{total} concluído(s)"
+    return {"selected":total,"generated":generated,"skipped":skipped,"problems":problems}
 
 def pdf_generator():
     d=ROOT/"download"/"mangago_downloader"

@@ -581,7 +581,44 @@ async function reviewDecision(kind,ch){
   return job("review_generate",[ch],{max_source_images:maxSources});
 }
 async function ract(a){if(a==="review_approve")return reviewDecision("approve",reviewCh);if(a==="review_reject")return reviewDecision("reject",reviewCh);if(a==="review_generate")return reviewDecision("review",reviewCh);return job(a,[reviewCh])}
-async function job(a,ch,extra={}){let j=await api("/api/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:a,provider:data.provider,manga:data.manga,chapters:ch,...extra})});poll(j.job_id)}function jobSummary(j){
+const JOB_LABELS={
+  merge:"Auto-Merge",
+  pdf:"Gerar PDF",
+  pdf_merge:"PDF do Merge",
+  clean:"Limpar balões",
+  merge_level2:"Auto-Merge Nível II",
+  merge_level3:"Auto-Merge Nível III",
+  review_generate:"Gerar proposta de revisão",
+  review_approve:"Aprovar revisão",
+  review_reject:"Rejeitar revisão"
+};
+function beginJobProgress(action,total){
+  const b=$("#job");
+  const expected=Math.max(0,Number(total)||0);
+  b.hidden=false;
+  b.dataset.action=action||"";
+  $("#jobtitle").textContent=JOB_LABELS[action]||"Processando";
+  $("#jobcount").textContent=expected?`0 de ${expected} concluído(s) · 0%`:"Preparando...";
+  $("#jobmsg").textContent=expected?`Aguardando início do processamento de ${expected} capítulo(s)...`:"Preparando processamento...";
+  const p=$("#progress");
+  p.max=Math.max(1,expected||1);
+  p.value=0;
+  p.setAttribute("aria-valuemin","0");
+  p.setAttribute("aria-valuemax",String(Math.max(1,expected||1)));
+  p.setAttribute("aria-valuenow","0");
+}
+async function job(a,ch,extra={}){
+  const chapters=Array.isArray(ch)?ch:[];
+  beginJobProgress(a,chapters.length);
+  try{
+    let j=await api("/api/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:a,provider:data.provider,manga:data.manga,chapters:chapters,...extra})});
+    poll(j.job_id,a,chapters.length);
+  }catch(e){
+    $("#job").hidden=true;
+    throw e;
+  }
+}
+function jobSummary(j){
   let results=Array.isArray(j.result)?j.result:[];
   let ok=results.filter(x=>["ok","success","done","skipped"].includes(String(x.status||"").toLowerCase()));
   let errors=results.filter(x=>String(x.status||"").toLowerCase()==="error");
@@ -893,20 +930,43 @@ function showJobResult(j){
     }
   }
 }
-function poll(id){
+function poll(id,action="",expectedTotal=0){
   let b=$("#job");
   b.hidden=false;
   let busy=false;
   let lastStateRefresh=0;
-
+  const updateProgress=j=>{
+    const total=Math.max(0,Number(j.total)||Number(expectedTotal)||0);
+    const completed=Math.max(0,Math.min(total||Number.MAX_SAFE_INTEGER,Number(j.progress)||0));
+    const granularMax=Math.max(0,Number(j.progress_max)||0);
+    const granularValue=Math.max(0,Math.min(granularMax||Number.MAX_SAFE_INTEGER,Number(j.progress_value)||0));
+    const hasGranular=granularMax>0;
+    const percent=hasGranular
+      ? Math.max(0,Math.min(100,Math.round((granularValue/granularMax)*100)))
+      : (total?Math.max(0,Math.min(100,Math.round((completed/total)*100))):0);
+    $("#jobtitle").textContent=JOB_LABELS[action]||$("#jobtitle").textContent||"Processando";
+    $("#jobcount").textContent=total
+      ? `${completed} de ${total} concluído(s) · ${percent}%`
+      : "Preparando...";
+    $("#jobmsg").textContent=j.progress_detail||j.message||(
+      total
+        ? `${completed} de ${total} capítulo(s) concluído(s).`
+        : "Preparando processamento..."
+    );
+    const p=$("#progress");
+    p.max=hasGranular?granularMax:Math.max(1,total||1);
+    p.value=hasGranular?granularValue:completed;
+    p.setAttribute("aria-valuemax",String(hasGranular?granularMax:Math.max(1,total||1)));
+    p.setAttribute("aria-valuenow",String(hasGranular?granularValue:completed));
+    p.setAttribute("aria-valuetext",total?`${completed} de ${total} concluídos, ${percent}%`:"Preparando");
+    b.dataset.percent=String(percent);
+  };
   let t=setInterval(async()=>{
     if(busy)return;
     busy=true;
     try{
       let j=await api("/api/job/"+id);
-      $("#jobmsg").textContent=j.message||"";
-      $("#progress").max=Math.max(1,j.total||1);
-      $("#progress").value=j.progress||0;
+      updateProgress(j);
 
       let now=Date.now();
       if(!["done","error"].includes(j.status) && now-lastStateRefresh>=1200){
@@ -914,11 +974,14 @@ function poll(id){
         catch(e){ console.warn("Falha ao atualizar status parcial:",e); }
         lastStateRefresh=now;
       }
-
       if(["done","error"].includes(j.status)){
         clearInterval(t);
+        if(j.status==="done" && Number(j.total)>0){
+          j.progress=Number(j.total);
+          updateProgress(j);
+        }
         await load();
-        setTimeout(()=>b.hidden=true,800);
+        setTimeout(()=>b.hidden=true,1200);
         showJobResult(j);
       }
     }catch(e){
@@ -926,7 +989,7 @@ function poll(id){
     }finally{
       busy=false;
     }
-  },700);
+  },500);
 }init().catch(e=>toast(e.message));
 async function shutdownServer(){
   if(!(await askAppModal("Finalizar servidor","Finalizar a Central de Processamento e voltar ao menu do terminal?","Finalizar"))) return;

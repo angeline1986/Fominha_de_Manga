@@ -358,17 +358,17 @@ def analyze_chapter(
     sample_width: int = DEFAULT_SAMPLE_WIDTH,
     light_threshold: int = DEFAULT_LIGHT_THRESHOLD,
     white_ratio_threshold: float = DEFAULT_WHITE_RATIO,
+    progress_callback=None,
 ) -> tuple[list[PageInfo], list[WhiteBand], int, int]:
     infos: list[PageInfo] = []
     all_scores: list[np.ndarray] = []
     global_y = 0
     expected_width: int | None = None
-
-    for path in pages:
+    total_pages = len(pages)
+    for page_index, path in enumerate(pages, start=1):
         with Image.open(path) as image:
             image.load()
             width, height = image.size
-
             if expected_width is None:
                 expected_width = width
             elif width != expected_width:
@@ -376,7 +376,6 @@ def analyze_chapter(
                     f"Largura divergente: {path.name} tem {width}px; "
                     f"esperado {expected_width}px."
                 )
-
             infos.append(PageInfo(path, width, height, global_y, global_y + height))
             all_scores.append(
                 row_whiteness(
@@ -386,10 +385,15 @@ def analyze_chapter(
                 )
             )
             global_y += height
-
+        if progress_callback is not None:
+            progress_callback({
+                "stage": "analyze_pages",
+                "current": page_index,
+                "total": total_pages,
+                "message": f"Analisando imagem {page_index}/{total_pages}",
+            })
     scores = np.concatenate(all_scores) if all_scores else np.array([], dtype=float)
     is_white = scores >= white_ratio_threshold
-
     bands: list[WhiteBand] = []
     start: int | None = None
     for idx, value in enumerate(is_white):
@@ -406,7 +410,6 @@ def analyze_chapter(
                     )
                 )
             start = None
-
     if start is not None and len(is_white) > start:
         bands.append(
             WhiteBand(
@@ -416,8 +419,8 @@ def analyze_chapter(
                 white_ratio_mean=float(scores[start:].mean()),
             )
         )
-
     return infos, bands, global_y, int(expected_width or 0)
+
 
 
 def page_at_y(infos: list[PageInfo], y: int) -> tuple[str, int]:
@@ -645,21 +648,14 @@ def merge_chapter(
     light_threshold: int = DEFAULT_LIGHT_THRESHOLD,
     sample_width: int = DEFAULT_SAMPLE_WIDTH,
     output_dir_override: Path | None = None,
+    progress_callback=None,
 ) -> MergeResult:
-    """Generate a V3 merge without touching source files.
-
-    By default the output remains the official MERGE path. Internal staged
-    workflows may provide output_dir_override so Level I can persist first in
-    AUTO_MERGE before the final consolidation is created.
-    """
     chapter = Path(chapter_dir).expanduser().resolve()
     if not chapter.is_dir():
         raise ValueError(f"Pasta do capítulo não encontrada: {chapter}")
-
     pages = list_pages(chapter)
     if not pages:
         raise ValueError("Nenhuma imagem page-NNN encontrada.")
-
     output_dir = (
         Path(output_dir_override).expanduser().resolve()
         if output_dir_override is not None
@@ -669,13 +665,27 @@ def merge_chapter(
         raise FileExistsError(
             f"Merge já existente ou pasta de saída ocupada: {output_dir}"
         )
-
+    if progress_callback is not None:
+        progress_callback({
+            "stage": "prepare",
+            "current": 0,
+            "total": len(pages),
+            "message": f"Preparando {len(pages)} imagem(ns)",
+        })
     infos, bands, total_height, width = analyze_chapter(
         pages,
         sample_width=sample_width,
         light_threshold=light_threshold,
         white_ratio_threshold=white_ratio,
+        progress_callback=progress_callback,
     )
+    if progress_callback is not None:
+        progress_callback({
+            "stage": "choose_cuts",
+            "current": 1,
+            "total": 1,
+            "message": "Análise concluída; calculando cortes seguros",
+        })
     cuts, decisions = choose_cuts(
         total_height,
         bands,
@@ -686,9 +696,6 @@ def merge_chapter(
         min_white_band=min_white_band,
         max_chunk_height=max_chunk_height,
     )
-    # Safety barrier: V3 never forces a cut. If the selected safe
-    # boundaries would leave any chunk above the operational maximum,
-    # abort before allocating/rendering an oversized Pillow canvas.
     boundaries = [0] + [cut["center"] for cut in cuts] + [total_height]
     oversized_chunks = [
         (start_y, end_y, end_y - start_y)
@@ -704,8 +711,21 @@ def merge_chapter(
             f"(intervalo global {start_y:,}–{end_y:,}). "
             "Nenhum corte foi forçado e nenhuma imagem gigante foi criada."
         )
-
+    if progress_callback is not None:
+        progress_callback({
+            "stage": "render",
+            "current": 0,
+            "total": 1,
+            "message": f"Gerando {len(cuts) + 1} imagem(ns) unificada(s)",
+        })
     outputs = render_chunks(infos, cuts, total_height, width, output_dir)
+    if progress_callback is not None:
+        progress_callback({
+            "stage": "validate",
+            "current": 1,
+            "total": 1,
+            "message": "Imagens geradas; validando resultado",
+        })
     validation_errors = validate_merge_outputs(
         outputs=outputs,
         output_dir=output_dir,
@@ -716,7 +736,6 @@ def merge_chapter(
     )
     if validation_errors:
         raise RuntimeError("; ".join(validation_errors))
-
     cut_payload: list[dict] = []
     for cut in cuts:
         page, local_y = page_at_y(infos, cut["center"])
@@ -724,7 +743,6 @@ def merge_chapter(
         item["source_page"] = page
         item["source_y"] = local_y
         cut_payload.append(item)
-
     decision_payload: list[dict] = []
     for item in decisions:
         page, local_y = page_at_y(infos, item["center"])
@@ -732,7 +750,6 @@ def merge_chapter(
         payload["source_page"] = page
         payload["source_y"] = local_y
         decision_payload.append(payload)
-
     manifest = {
         "schema_version": 1,
         "algorithm": "whitespace_v3",
@@ -775,7 +792,6 @@ def merge_chapter(
         json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-
     return MergeResult(
         chapter_dir=chapter,
         output_dir=output_dir,
@@ -784,6 +800,7 @@ def merge_chapter(
         cuts=len(cuts),
         manifest_path=manifest_path,
     )
+
 
 
 def _natural_name_key(path: Path) -> list[object]:
