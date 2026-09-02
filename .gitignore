@@ -17,3 +17,10 @@ original_hashes.json
 
 # Bubble Cleaner generated outputs
 bubble_cleaner_output/
+
+# Local development reports and patch backups
+reports/
+
+# Local source snapshots
+interface_web.zip
+processamento.zip
