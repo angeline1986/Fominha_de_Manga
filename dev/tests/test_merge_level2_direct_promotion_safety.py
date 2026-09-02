@@ -183,19 +183,19 @@ class MergeLevel2DirectPromotionSafetyTests(unittest.TestCase):
 
             self.assertEqual(
                 self._sha256(
-                    level2_dir / "passed-001.png"
+                    level2_dir / "page-001.png"
                 ),
                 self._sha256(
-                    merge_dir / "merged-001.png"
+                    merge_dir / "page-001.png"
                 ),
             )
 
             self.assertEqual(
                 self._sha256(
-                    level2_dir / "passed-002.png"
+                    level2_dir / "page-002.png"
                 ),
                 self._sha256(
-                    merge_dir / "merged-002.png"
+                    merge_dir / "page-002.png"
                 ),
             )
 
@@ -352,7 +352,7 @@ class MergeLevel2DirectPromotionSafetyTests(unittest.TestCase):
 
                 missing = (
                     level2_dir
-                    / "passed-002.png"
+                    / "page-002.png"
                 )
 
                 self.assertTrue(

@@ -11,6 +11,8 @@ ROOT=Path(__file__).resolve().parents[1]
 OUTPUT=ROOT/"download"/"mangago_downloader"/"output"
 STATIC=Path(__file__).resolve().parent
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
+
+from processamento.unificacao_imagens import image_stitcher as v3
 HOST="127.0.0.1"
 PORT=int(os.environ.get("FOMINHA_PROCESSING_PORT","8766"))
 IMAGE_EXTS={".png",".jpg",".jpeg",".webp"}
@@ -31,6 +33,7 @@ def chapters(manga):
     return sorted([p for p in root.iterdir() if p.is_dir() and any(f.is_file() and f.suffix.lower() in IMAGE_EXTS for f in p.iterdir())],key=nkey)
 
 def rdir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_REVIEW"/c
+def amdir(m,c): return m/"FLUXO_SECUNDARIO"/"AUTO_MERGE"/c
 def l2dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL2"/c
 def l3dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL3"/c
 def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"CLEAN"/c
@@ -188,11 +191,105 @@ def read_merge_failure(ch):
             except Exception as exc: print(f"[processing-web] Não foi possível persistir partição do cap {ch.name}: {exc}")
     return payload
 
+def _materialize_level1_resolved(ch, part):
+    # Persiste imediatamente os segmentos PASSED produzidos pelo Auto-Merge Nível I.
+    from PIL import Image
+    from processamento.unificacao_imagens import image_stitcher as v3
+
+    resolved = part.get("resolved_segments") or []
+    if not resolved:
+        return []
+
+    manga = ch.parent.parent
+    dest = amdir(manga, ch.name)
+    dest.mkdir(parents=True, exist_ok=True)
+
+    for old in dest.glob("*.png"):
+        if (
+            v3.PAGE_RANGE_OUTPUT_RE.match(old.name)
+            or re.match(r"^auto-\d+\.png$", old.name, re.IGNORECASE)
+        ):
+            old.unlink()
+
+    artifacts = []
+    by_id = {int(seg["id"]): seg for seg in part.get("segments") or []}
+    for seg in resolved:
+        out_name = v3.page_range_output_name_from_spans(
+            seg.get("source_spans") or [],
+            int(seg["global_start"]),
+            int(seg["global_end"]),
+        )
+        out_path = v3.ensure_unique_output_path(dest, out_name)
+        width = None
+        canvas = Image.new("RGB", (1, 1), "white")
+        for span in seg.get("source_spans") or []:
+            src = ch / span["file"]
+            with Image.open(src) as im:
+                if width is None:
+                    width = im.width
+                    canvas = Image.new("RGB", (width, int(seg["height"])), "white")
+                crop = im.convert("RGB").crop(
+                    (0, int(span["source_y_start"]), width, int(span["source_y_end"]))
+                )
+                canvas.paste(
+                    crop,
+                    (
+                        0,
+                        int(span["global_start"])
+                        - int(seg["global_start"])
+                        + int(span["source_y_start"]),
+                    ),
+                )
+        canvas.save(out_path, "PNG")
+        artifact = {"file": out_name, "path": str(out_path), "storage": "AUTO_MERGE"}
+        seg["artifact"] = artifact
+        if int(seg["id"]) in by_id:
+            by_id[int(seg["id"])]["artifact"] = dict(artifact)
+        artifacts.append({
+            "segment_id": int(seg["id"]),
+            "file": out_name,
+            "global_start": int(seg["global_start"]),
+            "global_end": int(seg["global_end"]),
+            "sources": seg.get("sources") or [],
+            "validation": "auto",
+            "validated_ok": True,
+        })
+
+    manifest = {
+        "schema_version": 1,
+        "algorithm": "auto_merge_level1_resolved_segments",
+        "chapter": ch.name,
+        "source_dir": str(ch),
+        "output_dir": str(dest),
+        "total_height": int(part.get("total_height") or 0),
+        "artifacts": artifacts,
+        "pending_segments": part.get("pending_segments") or [],
+        "coverage": {
+            "auto_segments": [
+                [int(s["global_start"]), int(s["global_end"])]
+                for s in resolved
+            ]
+        },
+    }
+    (dest / "auto-merge-manifest.json").write_text(
+        json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+    )
+    return artifacts
+
+
 def set_merge_failure(ch,message):
     p=merge_status_file(ch); p.parent.mkdir(parents=True,exist_ok=True)
     payload={"schema_version":2,"chapter":ch.name,"status":"error","message":str(message)}
     part=_analyze_merge_partition(ch)
-    if part: payload["partition"]=part
+    if part:
+        artifacts=_materialize_level1_resolved(ch,part)
+        payload["partition"]=part
+        payload["auto_merge_level1"]={
+            "storage":"AUTO_MERGE",
+            "artifacts_count":len(artifacts),
+            "output_dir":str(amdir(ch.parent.parent,ch.name)),
+        }
     p.write_text(json.dumps(payload,ensure_ascii=False,indent=2),encoding="utf-8")
 
 def clear_merge_failure(ch):
@@ -351,8 +448,8 @@ def _promote_level2_complete(ch, part):
 
     try:
         for index, piece in enumerate(pieces, 1):
-            filename = f"merged-{index:03d}.png"
-            destination = official_dir / filename
+            filename = piece["source"].name
+            destination = v3.ensure_unique_output_path(official_dir, filename)
 
             # Preserva exatamente o artefato validado do Level II.
             shutil.copy2(
@@ -626,8 +723,8 @@ def _promote_level3_complete(ch, part=None):
     outputs = []
     try:
         for index, piece in enumerate(pieces, 1):
-            filename = f"merged-{index:03d}.png"
-            destination = official_dir / filename
+            filename = piece["source"].name
+            destination = v3.ensure_unique_output_path(official_dir, filename)
             shutil.copy2(piece["source"], destination)
             outputs.append({
                 "file": filename,
@@ -731,7 +828,12 @@ def process_merge_level3_pending(ch, part):
 
     manga=ch.parent.parent
     dest=l3dir(manga,ch.name); dest.mkdir(parents=True,exist_ok=True)
-    for old in dest.glob("safe-*.png"): old.unlink()
+    for old in dest.glob("*.png"):
+        if (
+            v3.PAGE_RANGE_OUTPUT_RE.match(old.name)
+            or re.match(r"^safe-\d+\.png$", old.name, re.IGNORECASE)
+        ):
+            old.unlink()
 
     cfg=Level3Config(); artifacts=[]; residual=[]; diagnostics=[]; out_index=1
     max_h=int(v3.DEFAULT_MAX_CHUNK_HEIGHT)
@@ -782,7 +884,10 @@ def process_merge_level3_pending(ch, part):
 
         for start,end,reason in proven:
             crop=image.crop((0,start-seg_start,image.width,end-seg_start))
-            name=f"safe-{out_index:03d}.png"; path=dest/name
+            name=v3.page_range_output_name_from_spans(
+                seg.get("source_spans") or [], start, end
+            )
+            path=v3.ensure_unique_output_path(dest,name)
             crop.save(path,"PNG")
             artifacts.append({
                 "file":name,"global_start":start,"global_end":end,
@@ -820,6 +925,7 @@ def process_merge_level3_pending(ch, part):
 
 def validate_merge_level2(ch):
     from PIL import Image
+    from processamento.unificacao_imagens import image_stitcher as v3
     failure=read_merge_failure(ch)
     if not failure: return False,"Nenhuma falha do Auto-Merge Nível I encontrada.",None
     part=failure.get("partition") or _analyze_merge_partition(ch)
@@ -829,7 +935,12 @@ def validate_merge_level2(ch):
     if not resolved: return False,"Nenhum trecho automático aproveitável foi encontrado.",part
     manga=ch.parent.parent
     dest=l2dir(manga,ch.name); dest.mkdir(parents=True,exist_ok=True)
-    for old in dest.glob("passed-*.png"): old.unlink()
+    for old in dest.glob("*.png"):
+        if (
+            v3.PAGE_RANGE_OUTPUT_RE.match(old.name)
+            or re.match(r"^passed-\d+\.png$", old.name, re.IGNORECASE)
+        ):
+            old.unlink()
     part["level2_validated"]=True
     part["status"]="partial" if pending else "validated"
     by_id={int(seg["id"]):seg for seg in part.get("segments") or []}
@@ -838,8 +949,12 @@ def validate_merge_level2(ch):
         seg["status"]="passed"; seg["validation"]="auto"; seg["validated_ok"]=True
         if int(seg["id"]) in by_id:
             by_id[int(seg["id"])].update({"status":"passed","validation":"auto","validated_ok":True})
-        out_name=f"passed-{int(seg['id']):03d}.png"
-        out_path=dest/out_name
+        out_name=v3.page_range_output_name_from_spans(
+            seg.get("source_spans") or [],
+            int(seg["global_start"]),
+            int(seg["global_end"]),
+        )
+        out_path=v3.ensure_unique_output_path(dest,out_name)
         width=None
         canvas=Image.new("RGB",(1,1),"white")
         for span in seg.get("source_spans") or []:
@@ -918,7 +1033,7 @@ def validate_merge_level2(ch):
                 f"{promote_msg}"
             ), part
 
-    return True,f"Nível II validou {len(resolved)} trecho(s) automático(s); {len(pending)} segue(m) para revisão.",part
+    return True,f"Nível II validou {len(resolved)} trecho(s) automático(s); {len(pending)} segue(m) para o Auto-Merge Nível III.",part
 
 def catalog():
     out={}
@@ -936,7 +1051,7 @@ def review_merge_items(manga, ch):
     try:
         payload=json.loads(mf.read_text(encoding="utf-8"))
         boundaries=[int(x) for x in (payload.get("boundaries") or [])]
-        outputs=sorted(rd.glob("merged-*.png"),key=nkey)
+        outputs=v3.merge_artifact_files(rd)
         policy=payload.get("policy") or {}
         try: max_sources=int(policy.get("max_source_images") or 8)
         except (TypeError,ValueError): max_sources=8
@@ -972,6 +1087,8 @@ def review_merge_items(manga, ch):
                 pending_segments=authoritative_pending
             elif pending_source=="level2":
                 pending_segments=authoritative_pending or []
+            elif pending_source=="level3_pending":
+                return []
 
         pending_intervals=[(int(x["global_start"]),int(x["global_end"])) for x in pending_segments if x.get("global_start") is not None and x.get("global_end") is not None]
 
@@ -1064,6 +1181,46 @@ def _is_level2_validated(failure):
     )
 
 
+def _level3_ui_detail(manga,ch,failure):
+    """Expõe ao frontend somente dados de Level III validados contra o Level II atual."""
+    manifest_path=l3dir(manga,ch.name)/"merge-level3-manifest.json"
+    if not manifest_path.is_file():
+        return None
+    authoritative_pending,pending_error,pending_source=_level3_review_pending(ch,failure or {})
+    if pending_source!="level3":
+        return None
+    if pending_error:
+        return {
+            "available":True,
+            "valid":False,
+            "error":pending_error,
+        }
+    try:
+        payload=json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError,ValueError,TypeError,json.JSONDecodeError) as exc:
+        return {
+            "available":True,
+            "valid":False,
+            "error":f"Manifesto Level III inválido: {exc}",
+        }
+    safe=payload.get("safe_artifacts") or []
+    residual=payload.get("residual_pending_segments") or []
+    diagnostics=payload.get("diagnostics") or []
+    return {
+        "available":True,
+        "valid":True,
+        "error":None,
+        "algorithm":payload.get("algorithm"),
+        "total_height":int(payload.get("total_height") or 0),
+        "safe_artifacts_count":len(safe),
+        "residual_pending_segments_count":len(residual),
+        "safe_artifacts":safe,
+        "residual_pending_segments":residual,
+        "diagnostics":diagnostics,
+        "review_pending_segments":authoritative_pending or [],
+        "safety":payload.get("safety") or {},
+    }
+
 def row_state(manga,ch):
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
     md=merge_output_dir(ch); rd=rdir(manga,ch.name)
@@ -1087,13 +1244,35 @@ def row_state(manga,ch):
         and level2_validated
         and not (partition.get("pending_segments") or [])
     )
+    level3_detail=_level3_ui_detail(manga,ch,failure)
+    level3_valid=bool(
+        level3_detail
+        and level3_detail.get("available")
+        and level3_detail.get("valid")
+    )
+    level3_has_residual=bool(
+        level3_valid
+        and (
+            level3_detail.get("review_pending_segments")
+            or level3_detail.get("residual_pending_segments")
+        )
+    )
+    level3_pending=bool(
+        merge_failed
+        and has_level2
+        and level2_validated
+        and not level3_valid
+    )
     needs_review=bool(
         merge_failed
         and not validated_without_pending
-        and (not has_level2 or level2_validated)
+        and (
+            (not has_level2)
+            or (level2_validated and level3_has_residual)
+        )
     )
     review_items=review_merge_items(manga,ch)
-    all_review_files=[p.name for p in sorted(rd.glob("merged-*.png"),key=nkey)] if rd.is_dir() else []
+    all_review_files=[p.name for p in v3.merge_artifact_files(rd)] if rd.is_dir() else []
     visible=[x.get("file") for x in review_items if x.get("file")]
     review_exists=(rd/"merge-review.json").is_file()
     return {
@@ -1102,9 +1281,11 @@ def row_state(manga,ch):
         "merge":merge_ok,"merge_error":merge_error,"merge_failed":merge_failed,
         "merge_failure":failure,"merge_partition":partition,
         "merge_level2":has_level2,"merge_level2_validated":level2_validated,
+        "merge_level3_pending":level3_pending,
+        "merge_level3_detail":level3_detail,
         "needs_review":needs_review,
-        "merge_state":"concluido" if merge_ok else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("pendente_review" if merge_failed else "novo"))),
-        "merged_images":len(list(md.glob("merged-*.png"))) if md.is_dir() else 0,
+        "merge_state":"concluido" if merge_ok else ("pendente_level3" if level3_pending else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("pendente_review" if merge_failed else "novo")))),
+        "merged_images":len(v3.merge_artifact_files(md)) if md.is_dir() else 0,
         "review":review_exists,
         "review_images":len(review_items) if review_exists else 0,
         "review_total_images":len(all_review_files),
@@ -1124,6 +1305,7 @@ def state(provider,manga_name):
         "pending":sum(x["merge_state"]=="pendente_review" for x in rows),
         "new":sum(x["merge_state"]=="novo" for x in rows),
         "partial":sum(x["merge_state"]=="parcial" for x in rows),
+        "level3_pending":sum(x.get("merge_level3_pending",False) for x in rows),
         "merge_failed":sum(x["merge_failed"] for x in rows),
         "review_pending":sum(x["needs_review"] for x in rows),
         "review":sum(x["review"] for x in rows),"pdfs":sum(x["pdf"] for x in rows),"clean":sum(x["clean"] for x in rows),
@@ -1157,6 +1339,7 @@ def run_job(job,payload):
             elif job.action=="pdf_merge": job.result=do_pdf_merge(job,manga,chs)
             elif job.action=="clean": job.result=do_clean(job,manga,chs)
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
+            elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
             elif job.action=="review_approve": job.result=do_review_approve(job,manga,chs)
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
@@ -1179,7 +1362,16 @@ def do_merge(job,chs):
             return {"chapter":ch.name,"status":"ok","merged_images":r.merged_images}
         except Exception as e:
             set_merge_failure(ch,e)
-            return {"chapter":ch.name,"status":"error","message":str(e)}
+            failure=read_merge_failure(ch) or {}
+            level1=failure.get("auto_merge_level1") or {}
+            saved=int(level1.get("artifacts_count") or 0)
+            return {
+                "chapter":ch.name,
+                "status":"partial" if saved else "error",
+                "message":str(e),
+                "auto_merge_saved":saved,
+                "auto_merge_folder":level1.get("output_dir"),
+            }
 
     out=[]
     total=len(chs)
@@ -1204,25 +1396,70 @@ def do_merge_level2(job,chs):
     for i,ch in enumerate(chs,1):
         job.message=f"Auto-Merge Nível II: capítulo {ch.name}..."
         ok,msg,part=validate_merge_level2(ch)
-        level3=None
-        if ok and part and part.get("level2_validated") and (part.get("pending_segments") or []):
-            l3_ok,l3_msg,l3_manifest=process_merge_level3_pending(ch,part)
-            level3={"status":"ok" if l3_ok else "error","message":l3_msg,"safe_segments":len((l3_manifest or {}).get("safe_artifacts") or []),"residual_pending_segments":len((l3_manifest or {}).get("residual_pending_segments") or []),"promoted":False}
-            if l3_ok and l3_manifest is not None and not (l3_manifest.get("residual_pending_segments") or []):
-                promoted,promote_msg=_promote_level3_complete(ch,part)
-                level3["promoted"]=bool(promoted)
-                level3["status"]="ok" if promoted else "error"
-                level3["message"]=f"{l3_msg} {promote_msg}"
-                if promoted:
-                    clear_merge_failure(ch)
         out.append({
             "chapter":ch.name,
-            "status":"ok" if ok and (not level3 or level3["status"]=="ok") else "error",
-            "message":msg if not level3 else f"{msg} {level3['message']}",
+            "status":"ok" if ok else "error",
+            "message":msg,
             "resolved_segments":len((part or {}).get("resolved_segments") or []),
             "pending_segments":len((part or {}).get("pending_segments") or []),
-            "level3":level3,
         })
+        job.progress=i
+    return out
+
+def do_merge_level3(job,chs):
+    out=[]
+    for i,ch in enumerate(chs,1):
+        job.message=f"Auto-Merge Nível III: capítulo {ch.name}..."
+        try:
+            failure=read_merge_failure(ch)
+            part=(failure or {}).get("partition") or {}
+            if not failure:
+                out.append({"chapter":ch.name,"status":"error","message":"Falha/partição do Auto-Merge ausente."})
+            elif not _is_level2_validated(failure):
+                out.append({"chapter":ch.name,"status":"error","message":"Nível II ainda não foi validado."})
+            elif not (part.get("pending_segments") or []):
+                out.append({"chapter":ch.name,"status":"skip","message":"Nível II não possui residual pendente para o Nível III."})
+            else:
+                l3_ok,l3_msg,l3_manifest=process_merge_level3_pending(ch,part)
+                if not l3_ok:
+                    out.append({"chapter":ch.name,"status":"error","message":l3_msg or "Falha no Auto-Merge Nível III."})
+                else:
+                    residual=(l3_manifest or {}).get("residual_pending_segments") or []
+                    safe=(l3_manifest or {}).get("safe_artifacts") or []
+                    promoted=False
+                    promote_msg=None
+                    if not residual:
+                        promoted,promote_msg=_promote_level3_complete(ch,part)
+                        if promoted:
+                            clear_merge_failure(ch)
+                    status="ok" if (residual or promoted) else "error"
+                    if residual:
+                        if safe:
+                            message=(
+                                f"Auto-Merge Nível III analisado: {len(safe)} região(ões) SAFE "
+                                f"e {len(residual)} região(ões) residual(is) ainda sem solução automática segura."
+                            )
+                        else:
+                            message=(
+                                f"Auto-Merge Nível III analisado: nenhum trecho pôde ser comprovado como SAFE; "
+                                f"{len(residual)} região(ões) residual(is) permanecem pendentes."
+                            )
+                    elif promoted:
+                        message="Auto-Merge Nível III analisado e resolvido automaticamente."
+                    else:
+                        message=l3_msg or "Auto-Merge Nível III analisado sem resultado promovível."
+                    if promote_msg:
+                        message=f"{message} {promote_msg}"
+                    out.append({
+                        "chapter":ch.name,
+                        "status":status,
+                        "message":message,
+                        "safe_segments":len(safe),
+                        "residual_pending_segments":len(residual),
+                        "promoted":bool(promoted),
+                    })
+        except Exception as exc:
+            out.append({"chapter":ch.name,"status":"error","message":str(exc)})
         job.progress=i
     return out
 
@@ -1244,7 +1481,7 @@ def do_pdf_merge(job,manga,chs):
     for i,ch in enumerate(chs,1):
         job.message=f"Gerando PDF do Merge: {ch.name}..."
         if not is_chapter_merged(ch): out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial inválido ou ausente"}); job.progress=i; continue
-        imgs=sorted(merge_output_dir(ch).glob("merged-*.png"),key=nkey); destdir=pmdir(manga,ch.name); destdir.mkdir(parents=True,exist_ok=True); dest=destdir/f"{ch.name}.pdf"
+        imgs=v3.merge_artifact_files(merge_output_dir(ch)); destdir=pmdir(manga,ch.name); destdir.mkdir(parents=True,exist_ok=True); dest=destdir/f"{ch.name}.pdf"
         if dest.is_file(): out.append({"chapter":ch.name,"status":"skipped","message":"PDF do Merge já existente"})
         else:
             gen([str(p) for p in imgs],str(dest)); out.append({"chapter":ch.name,"status":"ok","pages":len(imgs),"path":str(dest)})
@@ -1282,7 +1519,11 @@ def _level3_review_pending(ch,failure):
     manga=ch.parent.parent
     manifest_path=l3dir(manga,ch.name)/"merge-level3-manifest.json"
     if not manifest_path.is_file():
-        return (level2_pending or None),None,"level2"
+        if level2_pending:
+            return None,(
+                "Auto-Merge Nível III ainda não foi validado para este capítulo."
+            ),"level3_pending"
+        return None,None,"level2"
 
     try:
         payload=json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -1459,7 +1700,13 @@ class Handler(BaseHTTPRequestHandler):
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
                 chapter=str(q.get("chapter",[""])[0])
                 kind=str(q.get("kind",["merge"])[0]).lower()
-                folder_name="PDF_MERGE" if kind=="pdf_merge" else "MERGE"
+                folder_name={
+                    "pdf_merge":"PDF_MERGE",
+                    "auto_merge":"AUTO_MERGE",
+                    "merge":"MERGE",
+                }.get(kind)
+                if not folder_name:
+                    raise ValueError("Tipo de pasta inválido.")
                 base=(manga/"FLUXO_SECUNDARIO"/folder_name).resolve()
                 target=base if (kind=="pdf_merge" and not chapter) else (base/chapter).resolve()
                 if not target.is_relative_to(base) or not target.is_dir():

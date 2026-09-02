@@ -25,7 +25,7 @@ def _review(manga: Path, chapter: str) -> Path:
 def _official_valid(manga: Path, chapter: str) -> bool:
     d = _official(manga, chapter)
     m = d / "merge-manifest.json"
-    if not m.is_file() or not list(d.glob("merged-*.png")):
+    if not m.is_file() or not v3.merge_artifact_files(d):
         return False
     try:
         json.loads(m.read_text(encoding="utf-8"))
@@ -245,7 +245,7 @@ def _enforce_source_limit(cuts, infos, bands, total_height, max_source_images, p
 
 def _render(pages, cuts, dest):
     dest.mkdir(parents=True, exist_ok=True)
-    for p in dest.glob("merged-*.png"): p.unlink()
+    for p in v3.merge_artifact_files(dest): p.unlink()
     spans=[]; y=0; width=None
     for p in pages:
         with Image.open(p) as im:
@@ -256,13 +256,16 @@ def _render(pages, cuts, dest):
     outputs=[]
     for i,(start,end) in enumerate(zip(bounds,bounds[1:]),1):
         canvas=Image.new("RGB",(width,end-start),"white")
+        used_sources=[]
         for p,p0,p1 in spans:
             lo,hi=max(start,p0),min(end,p1)
             if hi<=lo: continue
+            used_sources.append(p.name)
             with Image.open(p) as im:
                 crop=im.convert("RGB").crop((0,lo-p0,width,hi-p0))
                 canvas.paste(crop,(0,lo-start))
-        target=dest/f"merged-{i:03d}.png"
+        out_name=v3.page_range_output_name_from_sources(used_sources)
+        target=v3.ensure_unique_output_path(dest,out_name)
         canvas.save(target,"PNG"); outputs.append(target)
     return outputs,bounds
 
@@ -434,7 +437,13 @@ def _render_scoped_bounds(
                     ),
                 )
 
-        target = dest / f"merged-{output_index:03d}.png"
+        used_sources = [
+            info.path.name
+            for info in infos
+            if min(end, int(info.global_end)) > max(start, int(info.global_start))
+        ]
+        out_name = v3.page_range_output_name_from_sources(used_sources)
+        target = v3.ensure_unique_output_path(dest, out_name)
         canvas.save(target, "PNG")
 
         outputs.append(target)
@@ -627,7 +636,7 @@ def _generate_pending_candidate(
     dest = _review(manga, chapter.name)
     dest.mkdir(parents=True, exist_ok=True)
 
-    for old in dest.glob("merged-*.png"):
+    for old in v3.merge_artifact_files(dest):
         old.unlink()
 
     output_index = 1
@@ -1380,9 +1389,9 @@ def _approve_scoped_level2_review(
             pieces,
             1,
         ):
-            filename = f"merged-{index:03d}.png"
-            destination = (
-                official_dir / filename
+            filename = piece["source"].name
+            destination = v3.ensure_unique_output_path(
+                official_dir, filename
             )
 
             # Preserva exatamente os bytes do artefato.
@@ -1558,7 +1567,7 @@ def approve(manga, chapter):
             f"({scope_type!r}); regenere a proposta antes de aprovar."
         )
 
-    outputs=sorted(src.glob("merged-*.png"),key=_key)
+    outputs=v3.merge_artifact_files(src)
     if not outputs: return False,"Proposta sem imagens."
 
     boundaries=payload.get("boundaries") or []

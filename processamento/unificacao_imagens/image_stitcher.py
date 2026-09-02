@@ -32,6 +32,90 @@ IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".webp"}
 PAGE_RE = re.compile(r"^page-(\d+)\.[^.]+$", re.IGNORECASE)
 MERGED_RE = re.compile(r"^merged-(\d+)\.png$", re.IGNORECASE)
 
+PAGE_RANGE_OUTPUT_RE = re.compile(
+    r"^page-(\d+)(?:-(\d+))?\.png$",
+    re.IGNORECASE,
+)
+SOURCE_PAGE_RE = re.compile(
+    r"^page-(\d+)(?:\.[^.]+)?$",
+    re.IGNORECASE,
+)
+
+
+def _source_page_number(value) -> int:
+    name = Path(str(value)).name
+    match = SOURCE_PAGE_RE.match(name)
+    if not match:
+        raise ValueError(
+            f"Nome de página-fonte não reconhecido para nomenclatura do merge: {name}"
+        )
+    return int(match.group(1))
+
+
+def page_range_output_name(first_page, last_page) -> str:
+    first = _source_page_number(first_page)
+    last = _source_page_number(last_page)
+    if last < first:
+        raise ValueError(f"Intervalo de páginas inválido: {first}..{last}")
+    width = max(3, len(str(first)), len(str(last)))
+    if first == last:
+        return f"page-{first:0{width}d}.png"
+    return f"page-{first:0{width}d}-{last:0{width}d}.png"
+
+
+def page_range_output_name_from_sources(sources) -> str:
+    items = list(sources or [])
+    if not items:
+        raise ValueError("Não há páginas-fonte para nomear o artefato.")
+    def source_name(item):
+        if isinstance(item, dict):
+            return item.get("file")
+        return item
+    return page_range_output_name(
+        source_name(items[0]),
+        source_name(items[-1]),
+    )
+
+
+def page_range_output_name_from_spans(spans, start_y=None, end_y=None) -> str:
+    selected = []
+    for span in spans or []:
+        if start_y is not None and end_y is not None:
+            lo = int(span.get("global_start", 0))
+            hi = int(span.get("global_end", 0))
+            if max(int(start_y), lo) >= min(int(end_y), hi):
+                continue
+        selected.append(span)
+    return page_range_output_name_from_sources(selected)
+
+
+def merge_artifact_files(directory: Path) -> list[Path]:
+    directory = Path(directory)
+    files = []
+    for candidate in directory.glob("*.png"):
+        if PAGE_RANGE_OUTPUT_RE.match(candidate.name) or MERGED_RE.match(candidate.name):
+            files.append(candidate)
+
+    def key(path):
+        m = PAGE_RANGE_OUTPUT_RE.match(path.name)
+        if m:
+            return (0, int(m.group(1)), int(m.group(2) or m.group(1)), path.name)
+        m = MERGED_RE.match(path.name)
+        return (1, int(m.group(1)) if m else 10**12, 0, path.name)
+
+    return sorted(files, key=key)
+
+
+def ensure_unique_output_path(directory: Path, filename: str) -> Path:
+    path = Path(directory) / filename
+    if path.exists():
+        raise ValueError(
+            f"Colisão de nomenclatura do merge: {filename}. "
+            "Dois artefatos distintos não podem representar o mesmo intervalo de páginas."
+        )
+    return path
+
+
 DEFAULT_TARGET_HEIGHT = 7000
 DEFAULT_SEARCH_BEFORE = 1800
 DEFAULT_SEARCH_AFTER = 2500
@@ -476,8 +560,8 @@ def render_chunks(
                 }
             )
 
-        out_name = f"merged-{index:03d}.png"
-        out_path = output_dir / out_name
+        out_name = page_range_output_name_from_sources(sources)
+        out_path = ensure_unique_output_path(output_dir, out_name)
         canvas.save(out_path, "PNG", optimize=False)
 
         start_page, start_local = page_at_y(infos, start_y)

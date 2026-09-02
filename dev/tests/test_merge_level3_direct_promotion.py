@@ -137,9 +137,11 @@ class Level3DirectPromotionTests(unittest.TestCase):
             )
             self.assertIsNone(manifest["composition"]["review_manifest"])
             self.assertEqual(manifest["composition"]["scope"], "level3_all_safe")
-            self.assertEqual((official / "merged-001.png").read_bytes(), l2_bytes)
-            self.assertEqual((official / "merged-002.png").read_bytes(), l3a_bytes)
-            self.assertEqual((official / "merged-003.png").read_bytes(), l3b_bytes)
+            output_files = [x["file"] for x in manifest["outputs"]]
+            self.assertEqual(len(output_files), 3)
+            self.assertEqual((official / output_files[0]).read_bytes(), l2_bytes)
+            self.assertEqual((official / output_files[1]).read_bytes(), l3a_bytes)
+            self.assertEqual((official / output_files[2]).read_bytes(), l3b_bytes)
             self.assertTrue(v3.is_chapter_merged(ch))
 
     def test_refuses_direct_promotion_when_residual_exists(self):

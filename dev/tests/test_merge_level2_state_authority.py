@@ -51,9 +51,13 @@ class MergeLevel2StateAuthorityTests(unittest.TestCase):
             )
 
             self.assertTrue(
-                state["needs_review"],
+                state["merge_level3_pending"],
                 "Level II validado com pending "
-                "deve seguir para Review.",
+                "deve seguir para o Auto-Merge Nível III.",
+            )
+            self.assertFalse(
+                state["needs_review"],
+                "Review não deve ser liberado antes da validação do Nível III.",
             )
 
     def test_review_generate_and_row_state_use_same_validation_rule(self):
