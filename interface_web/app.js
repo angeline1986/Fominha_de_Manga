@@ -904,7 +904,7 @@ function mergeOperationResultModal(j,s){
   const rawItems=Array.isArray(payload)?payload:(Array.isArray(payload?.items)?payload.items:[]);
   if(!rawItems.length) return false;
 
-  const items=rawItems.map(raw=>{
+  const items=rawItems.map((raw,index)=>{
     const saved=action==="merge"
       ? (Array.isArray(raw.auto_merge_files)?raw.auto_merge_files:[])
       : (Array.isArray(raw.stage_files)?raw.stage_files:[]);
@@ -919,62 +919,91 @@ function mergeOperationResultModal(j,s){
         ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":"Revisão Merge V2")
         : "—"
     );
-    return {...raw,_saved:saved,_pending:pending,_pendingSegments:pendingSegments,_next:next};
+    const statusRaw=String(raw.status||"").toLowerCase();
+    const isError=["error","failed"].includes(statusRaw);
+    const isPartial=!isError && pendingSegments>0;
+    const statusLabel=isError
+      ? "Requer atenção"
+      : isPartial
+        ? "Concluído parcialmente"
+        : statusRaw==="skip"||statusRaw==="skipped"
+          ? "Já concluído"
+          : "Concluído";
+    const savedCount=action==="merge"
+      ? Number(raw.auto_merge_saved||saved.length||0)
+      : action==="merge_level2"
+        ? Number(raw.resolved_segments||saved.length||0)
+        : Number(raw.safe_segments||saved.length||0);
+    const pendingValue=pending.length
+      ? `${pending.length} ${pending.length===1?"imagem":"imagens"}`
+      : (pendingSegments?`${pendingSegments} ${pendingSegments===1?"segmento residual":"segmentos residuais"}`:"0");
+    const friendlyReason=x=>{
+      const rawReason=String(x||"").trim();
+      const normalized=rawReason.toLowerCase().replaceAll("_"," ").replaceAll("-"," ");
+      if(normalized==="auto merge oversized chunk") return "Faixa branca não encontrada";
+      return typeof l3ReasonLabel==="function" ? l3ReasonLabel(x) : rawReason.replaceAll("_"," ");
+    };
+    const reason=raw.reason_codes?.length
+      ? raw.reason_codes.map(friendlyReason).join("; ")
+      : (isPartial
+          ? (action==="merge"?"Faixa branca não encontrada":raw.message||"Não foi encontrada solução automática segura")
+          : isError
+            ? raw.message||"Falha no processamento"
+            : "—");
+    return {
+      ...raw,
+      _index:index,
+      _saved:saved,
+      _pending:pending,
+      _pendingSegments:pendingSegments,
+      _next:next,
+      _statusLabel:statusLabel,
+      _savedCount:savedCount,
+      _pendingValue:pendingValue,
+      _reason:reason,
+      _residual:mergeResidualLabel(raw),
+      _needsAttention:isError||isPartial
+    };
   });
 
+  const partialCount=items.filter(x=>x._statusLabel==="Concluído parcialmente").length;
+  const attentionCount=items.filter(x=>x._needsAttention && x._statusLabel!=="Concluído parcialmente").length;
+  const concludedCount=items.length-partialCount-attentionCount;
+  const chapterWord=items.length===1?"capítulo processado":"capítulos processados";
+  const resultParts=[];
+  if(concludedCount) resultParts.push(`${concludedCount} ${concludedCount===1?"concluído":"concluídos"}`);
+  if(partialCount) resultParts.push(`${partialCount} ${partialCount===1?"parcial":"parciais"}`);
+  if(attentionCount) resultParts.push(`${attentionCount} ${attentionCount===1?"pendente":"pendentes"}`);
+
   document.querySelector("#appModal")?.remove();
-  let current=0;
   let overlay=document.createElement("div");
   overlay.id="appModal";
   overlay.className="app-modal-overlay";
 
-  const render=()=>{
-    if(!items.length){closeAppModal(true);load();return;}
-    current=Math.max(0,Math.min(current,items.length-1));
-    const item=items[current]||{};
-    const saved=item._saved||[];
-    const pending=item._pending||[];
-    const pendingCount=Number(item._pendingSegments||0);
-    const statusRaw=String(item.status||"").toLowerCase();
-    const isError=["error","failed"].includes(statusRaw);
-    const isPartial=!isError && pendingCount>0;
-    const statusLabel=isError?"Requer atenção":isPartial?"Concluído parcialmente":statusRaw==="skip"||statusRaw==="skipped"?"Já concluído":"Concluído";
-    const savedCount=action==="merge"
-      ? Number(item.auto_merge_saved||saved.length||0)
-      : action==="merge_level2"
-        ? Number(item.resolved_segments||saved.length||0)
-        : Number(item.safe_segments||saved.length||0);
-    const pendingValue=pending.length
-      ? `${pending.length} ${pending.length===1?"imagem":"imagens"}`
-      : (pendingCount?`${pendingCount} ${pendingCount===1?"segmento residual":"segmentos residuais"}`:"0");
-    const reason=item.reason_codes?.length
-      ? item.reason_codes.map(x=>typeof l3ReasonLabel==="function"?l3ReasonLabel(x):String(x).replaceAll("_"," ")).join("; ")
-      : (isPartial ? (action==="merge"?"Faixa branca não encontrada":item.message||"Não foi encontrada solução automática segura") : isError ? item.message||"Falha no processamento" : "—");
-    const residual=mergeResidualLabel(item);
-    overlay.innerHTML=`<div class="app-modal merge-summary-modal" role="dialog" aria-modal="true" aria-label="Resumo da Operação">
-      <div class="app-modal-head merge-summary-head">
-        <div><div class="caption">PROCESSAMENTO</div><h2>Resumo da Operação</h2></div>
-        <button class="app-modal-x" aria-label="Fechar">&times;</button>
-      </div>
-      <div class="merge-summary-tabs">
-        ${items.map((x,i)=>`<button type="button" class="merge-summary-tab ${i===current?"active":""}" data-summary-tab="${i}">Cap. ${esc(x.chapter)}</button>`).join("")}
-      </div>
-      <div class="merge-summary-body">
+  const chapterHtml=items.map(item=>`
+    <section class="merge-chapter-item" data-merge-chapter="${item._index}">
+      <button class="merge-chapter-head" type="button" data-chapter-toggle="${item._index}" aria-expanded="false">
+        <span class="merge-chapter-name">Cap. ${esc(item.chapter)}</span>
+        <strong class="merge-chapter-status ${item._needsAttention?"warning":""}">${esc(item._statusLabel)}</strong>
+        <span class="merge-chapter-count">${esc(item._savedCount)} ${item._savedCount===1?"merge":"merges"}</span>
+        <span class="merge-chapter-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div class="merge-chapter-body" data-chapter-panel="${item._index}" hidden>
         <div class="merge-summary-row">
           <span class="merge-summary-label">Status</span>
-          <strong class="merge-summary-value ${isPartial?"warning":""}">${esc(statusLabel)}</strong>
+          <strong class="merge-summary-value ${item._needsAttention?"warning":""}">${esc(item._statusLabel)}</strong>
           <span class="merge-summary-toggle-spacer"></span>
         </div>
-        ${mergeExpandableRow("Merges salvos",String(savedCount),saved,"saved")}
-        ${mergeExpandableRow("Pendente",pendingValue,pending,"pending")}
+        ${mergeExpandableRow("Merges salvos",String(item._savedCount),item._saved,`saved-${item._index}`)}
+        ${mergeExpandableRow("Pendente",item._pendingValue,item._pending,`pending-${item._index}`)}
         <div class="merge-summary-row">
           <span class="merge-summary-label">Motivo</span>
-          <strong class="merge-summary-value">${esc(reason)}</strong>
+          <strong class="merge-summary-value">${esc(item._reason)}</strong>
           <span class="merge-summary-toggle-spacer"></span>
         </div>
         <div class="merge-summary-row">
           <span class="merge-summary-label">Residual</span>
-          <strong class="merge-summary-value">${esc(residual)}</strong>
+          <strong class="merge-summary-value">${esc(item._residual)}</strong>
           <span class="merge-summary-toggle-spacer"></span>
         </div>
         <div class="merge-summary-row">
@@ -982,48 +1011,74 @@ function mergeOperationResultModal(j,s){
           <strong class="merge-summary-value">${esc(item._next||"—")}</strong>
           <span class="merge-summary-toggle-spacer"></span>
         </div>
+        <div class="merge-chapter-actions">
+          <button class="btn" type="button" data-open-merge-folder="${item._index}">Abrir pasta</button>
+        </div>
       </div>
-      <div class="app-modal-actions merge-summary-actions">
-        <button class="btn primary" data-summary-finish>Concluir e Abrir Pasta</button>
-      </div>
-    </div>`;
+    </section>
+  `).join("");
 
-    overlay.querySelector(".app-modal-x").onclick=()=>closeAppModal(false);
-    overlay.querySelectorAll("[data-summary-tab]").forEach(btn=>{
-      btn.onclick=()=>{current=Number(btn.dataset.summaryTab)||0;render();};
-    });
-    overlay.querySelectorAll("[data-expand]").forEach(btn=>{
-      btn.onclick=()=>{
-        const key=btn.dataset.expand;
-        const panel=overlay.querySelector(`[data-expand-panel="${key}"]`);
-        if(!panel)return;
-        const open=panel.hidden;
-        panel.hidden=!open;
-        btn.classList.toggle("open",open);
-        btn.setAttribute("aria-expanded",String(open));
-      };
-    });
-    overlay.querySelector("[data-summary-finish]").onclick=async()=>{
+  overlay.innerHTML=`<div class="app-modal merge-summary-modal" role="dialog" aria-modal="true" aria-label="Resumo da Operação">
+    <div class="app-modal-head merge-summary-head">
+      <div><div class="caption">PROCESSAMENTO</div><h2>Resumo da Operação</h2></div>
+      <button class="app-modal-x" aria-label="Fechar">&times;</button>
+    </div>
+    <div class="merge-batch-summary">
+      <strong>${items.length} ${chapterWord}</strong>
+      ${resultParts.length?`<span>${esc(resultParts.join(" · "))}</span>`:""}
+    </div>
+    <div class="merge-chapter-list">${chapterHtml}</div>
+    <div class="app-modal-actions merge-summary-actions">
+      <button class="btn primary" type="button" data-summary-close>Fechar</button>
+    </div>
+  </div>`;
+
+  const close=()=>{closeAppModal(false);};
+  overlay.querySelector(".app-modal-x").onclick=close;
+  overlay.querySelector("[data-summary-close]").onclick=close;
+  overlay.onclick=e=>{if(e.target===overlay)close();};
+
+  overlay.querySelectorAll("[data-chapter-toggle]").forEach(btn=>{
+    btn.onclick=()=>{
+      const key=btn.dataset.chapterToggle;
+      const panel=overlay.querySelector(`[data-chapter-panel="${key}"]`);
+      const item=overlay.querySelector(`[data-merge-chapter="${key}"]`);
+      if(!panel||!item)return;
+      const open=panel.hidden;
+      panel.hidden=!open;
+      item.classList.toggle("open",open);
+      btn.setAttribute("aria-expanded",String(open));
+    };
+  });
+
+  overlay.querySelectorAll("[data-expand]").forEach(btn=>{
+    btn.onclick=e=>{
+      e.stopPropagation();
+      const key=btn.dataset.expand;
+      const panel=overlay.querySelector(`[data-expand-panel="${key}"]`);
+      if(!panel)return;
+      const open=panel.hidden;
+      panel.hidden=!open;
+      btn.classList.toggle("open",open);
+      btn.setAttribute("aria-expanded",String(open));
+    };
+  });
+
+  overlay.querySelectorAll("[data-open-merge-folder]").forEach(btn=>{
+    btn.onclick=async e=>{
+      e.stopPropagation();
+      const item=items[Number(btn.dataset.openMergeFolder)];
+      if(!item)return;
       try{
         await openMergeStageFolder(action,item.chapter);
-      }catch(e){
-        toast(e.message||"Não foi possível abrir a pasta.");
-        return;
-      }
-      items.splice(current,1);
-      if(current>=items.length) current=Math.max(0,items.length-1);
-      if(items.length) render();
-      else{
-        closeAppModal(true);
-        load();
+      }catch(err){
+        toast(err.message||"Não foi possível abrir a pasta.");
       }
     };
-  };
+  });
 
-  overlay.onclick=e=>{if(e.target===overlay)closeAppModal(false)};
   document.body.appendChild(overlay);
   document.addEventListener("keydown",appModalKey);
-  render();
   return true;
 }
 
