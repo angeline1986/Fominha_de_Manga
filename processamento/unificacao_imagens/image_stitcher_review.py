@@ -923,7 +923,7 @@ def _approve_scoped_level2_review(
         )
     except Exception as exc:
         return False, f"Manifesto Level II inválido: {exc}"
-    if level2_payload.get("algorithm") != "merge_level2_residual_v2":
+    if level2_payload.get("algorithm") != "merge_level2_bounded_safe_path_v1":
         return False, "Manifesto Level II possui algoritmo não suportado para Review scoped."
 
     try:

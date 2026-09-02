@@ -64,7 +64,7 @@ class MergeLevel2DirectPromotionSafetyTests(unittest.TestCase):
 
         l2_manifest = {
             "schema_version": 2,
-            "algorithm": "merge_level2_residual_v2",
+            "algorithm": "merge_level2_bounded_safe_path_v1",
             "chapter": chapter.name,
             "source_dir": str(chapter),
             "output_dir": str(l2_dir),

@@ -15,9 +15,10 @@ class Mauto2StageAuthorityContract(unittest.TestCase):
 
     def test_level2_does_not_duplicate_level1(self):
         body=PW.split('def validate_merge_level2(ch):',1)[1].split('\ndef catalog():',1)[0]
-        self.assertIn('merge_level2_residual_v2', body)
-        self.assertIn('"artifacts":[]', body)
+        self.assertIn('merge_level2_bounded_safe_path_v1', body)
+        self.assertIn('solve_pending_region', body)
         self.assertIn('"level1_artifacts_duplicated":False', body)
+        self.assertIn('"v3_thresholds_relaxed":False', body)
         self.assertNotIn('storage":"MERGE_LEVEL2"', body)
 
     def test_final_composition_includes_auto_merge(self):

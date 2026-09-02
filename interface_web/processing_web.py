@@ -378,7 +378,7 @@ def _promote_level2_complete(ch, part):
     manga=ch.parent.parent; auto_dir=amdir(manga,ch.name); level2_dir=l2dir(manga,ch.name)
     auto,err=_load_stage_manifest(auto_dir/"auto-merge-manifest.json","auto_merge_level1_resolved_segments","Auto-Merge")
     if err: return False,err
-    l2,err=_load_stage_manifest(level2_dir/"merge-level2-manifest.json","merge_level2_residual_v2","Level II")
+    l2,err=_load_stage_manifest(level2_dir/"merge-level2-manifest.json","merge_level2_bounded_safe_path_v1","Level II")
     if err: return False,err
     if l2.get("pending_segments"): return False,"Level II ainda possui segmentos pendentes; promoção direta cancelada."
     pieces=_stage_artifact_pieces(auto_dir,auto,"artifacts","auto_merge")+_stage_artifact_pieces(level2_dir,l2,"artifacts","level2")
@@ -389,7 +389,7 @@ def _promote_level3_complete(ch, part=None):
     manga=ch.parent.parent; auto_dir=amdir(manga,ch.name); level2_dir=l2dir(manga,ch.name); level3_dir=l3dir(manga,ch.name)
     auto,err=_load_stage_manifest(auto_dir/"auto-merge-manifest.json","auto_merge_level1_resolved_segments","Auto-Merge")
     if err: return False,err
-    l2_path=level2_dir/"merge-level2-manifest.json"; l2,err=_load_stage_manifest(l2_path,"merge_level2_residual_v2","Level II")
+    l2_path=level2_dir/"merge-level2-manifest.json"; l2,err=_load_stage_manifest(l2_path,"merge_level2_bounded_safe_path_v1","Level II")
     if err: return False,err
     l3,err=_load_stage_manifest(level3_dir/"merge-level3-manifest.json","merge_level3_structural_safe_v1","Level III")
     if err: return False,err
@@ -533,13 +533,58 @@ def process_merge_level3_pending(ch, part):
     ),manifest
 
 
-def validate_merge_level2(ch):
-    """Registra o handoff residual do Level I sem duplicar artefatos AUTO_MERGE.
+def _materialize_level2_piece(ch, infos, start, end, dest, source_segment_id, reason):
+    from PIL import Image
+    spans=_segment_bounds(infos,start,end)
+    if not spans: raise ValueError("Intervalo Level II sem source_spans.")
+    width=None; canvas=None
+    for span in spans:
+        src=ch/span["file"]
+        if not src.is_file(): raise FileNotFoundError(f"Fonte ausente no Level II: {span['file']}")
+        with Image.open(src) as im:
+            if width is None:
+                width=int(im.width); canvas=Image.new("RGB",(width,end-start),"white")
+            elif int(im.width)!=width:
+                raise ValueError("Larguras incompatíveis no Level II.")
+            sy0=int(span["source_y_start"]); sy1=int(span["source_y_end"])
+            crop=im.convert("RGB").crop((0,sy0,width,sy1))
+            paste_y=int(span["global_start"])-int(start)+sy0
+            canvas.paste(crop,(0,paste_y))
+    if canvas is None: raise ValueError("Falha ao materializar trecho Level II.")
+    name=v3.page_range_output_name_from_spans(spans,start,end)
+    path=v3.ensure_unique_output_path(dest,name)
+    canvas.save(path,"PNG")
+    return {
+        "file":name,"global_start":int(start),"global_end":int(end),
+        "height":int(end-start),"sources":[x["file"] for x in spans],
+        "source_spans":spans,"source_stage":"level2",
+        "source_segment_id":int(source_segment_id),"decision_reason":reason,
+        "validation":"auto","validated_ok":True,
+    }
 
-    A estratégia própria de Level II deve materializar somente novos trechos
-    resolvidos dentro de pending_segments. Até lá, o residual é preservado
-    integralmente e segue autoritativamente para o Level III.
+
+def _level2_residual_segment(parent,start,end,infos):
+    item=dict(parent); spans=_segment_bounds(infos,start,end)
+    item.update({
+        "global_start":int(start),"global_end":int(end),"height":int(end-start),
+        "sources":[x["file"] for x in spans],"source_spans":spans,
+        "label":_page_range_label(spans),"status":"failed",
+        "validation":"review_required","reason":"level2_no_complete_safe_path",
+    })
+    item.pop("artifact",None)
+    return item
+
+
+def validate_merge_level2(ch):
+    """Executa busca segura própria do Level II somente sobre o residual do Level I.
+
+    Mantém os thresholds de faixa branca do V3 e nunca força cortes. A capacidade
+    adicional vem de procurar um caminho seguro em toda a janela viável do
+    residual, em vez de limitar a busca à janela-alvo usada pelo Level I.
     """
+    from processamento.unificacao_imagens.image_stitcher_level2 import (
+        Level2Config, analyze_uniform_color_bands, solve_pending_region,
+    )
     failure=read_merge_failure(ch)
     if not failure: return False,"Nenhuma falha do Auto-Merge Nível I encontrada.",None
     part=failure.get("partition") or _analyze_merge_partition(ch)
@@ -548,20 +593,107 @@ def validate_merge_level2(ch):
     auto,err=_load_stage_manifest(auto_path,"auto_merge_level1_resolved_segments","Auto-Merge")
     if err: return False,err,part
     pending=[dict(x) for x in (auto.get("pending_segments") or [])]
+    pages=v3.list_pages(ch)
+    if not pages: return False,"Nenhuma imagem-fonte encontrada para o Nível II.",part
+    infos,bands,total_height,_=v3.analyze_chapter(
+        pages,sample_width=v3.DEFAULT_SAMPLE_WIDTH,
+        light_threshold=v3.DEFAULT_LIGHT_THRESHOLD,
+        white_ratio_threshold=v3.DEFAULT_WHITE_RATIO,
+    )
+    expected_total=int(auto.get("total_height") or part.get("total_height") or 0)
+    if int(total_height)!=expected_total or expected_total<=0:
+        return False,"Total do capítulo diverge do manifesto Auto-Merge; Nível II cancelado.",part
     dest=l2dir(manga,ch.name); dest.mkdir(parents=True,exist_ok=True)
     for old in dest.glob("*.png"):
-        if v3.PAGE_RANGE_OUTPUT_RE.match(old.name) or re.match(r"^passed-\d+\.png$",old.name,re.IGNORECASE): old.unlink()
-    manifest={"schema_version":2,"algorithm":"merge_level2_residual_v2","chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),"total_height":int(auto.get("total_height") or part.get("total_height") or 0),"source_auto_merge_manifest":"auto-merge-manifest.json","artifacts":[],"pending_segments":pending,"coverage":{"level2_segments":[]},"safety":{"level1_artifacts_duplicated":False,"level1_artifacts_modified":False}}
+        if v3.PAGE_RANGE_OUTPUT_RE.match(old.name) or re.match(r"^(?:passed|level2)-\d+\.png$",old.name,re.IGNORECASE): old.unlink()
+    cfg=Level2Config(); artifacts=[]; residual=[]; diagnostics=[]
+    uniform_bands=analyze_uniform_color_bands(
+        pages,
+        sample_width=v3.DEFAULT_SAMPLE_WIDTH,
+        max_channel_std=cfg.uniform_max_channel_std,
+        max_row_delta=cfg.uniform_max_row_delta,
+    )
+    level2_candidates=list(bands)+list(uniform_bands)
+    source_intervals=[(int(info.global_start),int(info.global_end)) for info in infos]
+    for seg in pending:
+        start=int(seg["global_start"]); end=int(seg["global_end"])
+        plan=solve_pending_region(
+            start,end,level2_candidates,cfg,source_intervals=source_intervals
+        )
+        diagnostics.append({"segment_id":int(seg.get("id") or seg.get("index") or 0),"global_start":start,"global_end":end,**plan})
+        selected_types={str(x.get("candidate_type") or "white_band") for x in (plan.get("selected_cuts") or [])}
+        if plan.get("edge_chunk_relaxation_used"):
+            decision_reason="level2_safe_edge_chunk_last_fallback"
+        elif "uniform_color_band" in selected_types:
+            decision_reason="level2_safe_uniform_color_balanced_path"
+        else:
+            decision_reason="level2_safe_white_balanced_path"
+        for a,b in plan.get("resolved_intervals") or []:
+            artifacts.append(_materialize_level2_piece(
+                ch,infos,int(a),int(b),dest,
+                int(seg.get("id") or seg.get("index") or 0),
+                decision_reason,
+            ))
+        residual_interval=plan.get("residual_interval")
+        if residual_interval:
+            residual.append(_level2_residual_segment(seg,int(residual_interval[0]),int(residual_interval[1]),infos))
+    manifest={
+        "schema_version":3,"algorithm":"merge_level2_bounded_safe_path_v1",
+        "chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),
+        "total_height":expected_total,"source_auto_merge_manifest":"auto-merge-manifest.json",
+        "artifacts":artifacts,"pending_segments":residual,
+        "coverage":{"level2_segments":[[int(x["global_start"]),int(x["global_end"])] for x in artifacts]},
+        "diagnostics":diagnostics,
+        "policy":{
+            "target_height":int(cfg.target_height),
+            "min_chunk_height":int(cfg.min_chunk_height),
+            "min_chunk_height_semantics":"preferred_for_internal_chunks",
+            "edge_chunk_below_min_allowed":True,
+            "edge_chunk_scope":"residual_start_or_end_only",
+            "max_chunk_height":int(cfg.max_chunk_height),
+            "min_white_band":int(cfg.min_white_band),
+            "white_ratio_threshold":float(v3.DEFAULT_WHITE_RATIO),
+            "light_threshold":int(v3.DEFAULT_LIGHT_THRESHOLD),
+            "uniform_color_enabled":True,
+            "uniform_color_is_color_agnostic":True,
+            "min_uniform_band":int(cfg.min_uniform_band),
+            "uniform_max_channel_std":float(cfg.uniform_max_channel_std),
+            "uniform_max_row_delta":float(cfg.uniform_max_row_delta),
+            "preferred_source_files_per_merge":int(cfg.preferred_source_files),
+            "preferred_source_files_is_safety_rule":False,
+            "balance_scoring_enabled":True,
+            "edge_chunk_is_last_fallback":True,
+            "strategy":"safe_white_or_uniform_color_balanced_path_with_edge_last_fallback",
+        },
+        "safety":{
+            "level1_artifacts_duplicated":False,
+            "level1_artifacts_modified":False,
+            "v3_thresholds_relaxed":False,
+            "edge_chunk_visual_thresholds_relaxed":False,
+            "uniform_color_does_not_require_white":True,
+            "uniform_color_requires_low_spatial_variation":True,
+            "balance_score_never_authorizes_unsafe_candidate":True,
+            "preferred_source_file_count_never_authorizes_unsafe_candidate":True,
+            "forced_cut":False,
+        },
+    }
     (dest/"merge-level2-manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    part["level2_validated"]=True; part["pending_segments"]=pending
-    failure["partition"]=part; failure["level2_status"]="validated"; failure["status"]="partial" if pending else "validated"
+    part["level2_validated"]=True
+    part["level2_resolved_segments"]=[dict(x) for x in artifacts]
+    part["level2_resolved_segments_count"]=len(artifacts)
+    part["pending_segments"]=residual
+    part["pending_segments_count"]=len(residual)
+    failure["partition"]=part; failure["level2_status"]="validated"; failure["status"]="partial" if residual else "validated"
     merge_status_file(ch).write_text(json.dumps(failure,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    if not pending:
+    if not residual:
         promoted,msg=_promote_level2_complete(ch,part)
         if promoted: clear_merge_failure(ch)
         return promoted,msg,part
-    return True,f"Nível II recebeu {len(pending)} residual(is) do Auto-Merge sem duplicar os artefatos do Nível I; o residual segue para o Auto-Merge Nível III.",part
-
+    if artifacts:
+        edge_regions=sum(1 for item in diagnostics if item.get("edge_chunk_relaxation_used"))
+        edge_note=(f" {edge_regions} região(ões) usou(aram) edge chunk seguro na borda do residual." if edge_regions else "")
+        return True,f"Nível II resolveu {len(artifacts)} trecho(s) novo(s) com busca segura.{edge_note} {len(residual)} residual(is) permanece(m) pendente(s).",part
+    return True,f"Nível II analisou {len(pending)} residual(is), mas não encontrou caminho adicional de cortes seguros; {len(residual)} residual(is) permanece(m) pendente(s).",part
 
 def catalog():
     out={}
@@ -937,7 +1069,7 @@ def do_merge_level2(job,chs):
             "chapter":ch.name,
             "status":"ok" if ok else "error",
             "message":msg,
-            "resolved_segments":len((part or {}).get("resolved_segments") or []),
+            "resolved_segments":len((part or {}).get("level2_resolved_segments") or []),
             "pending_segments":len((part or {}).get("pending_segments") or []),
         })
         job.progress=i

@@ -182,17 +182,17 @@ function level2ResultModal(j,s){
     let message=String(x.status||"").toLowerCase()==="error"
       ? (x.message||"Falha ao validar este capítulo.")
       : pending>0
-        ? `${resolved} merge(s) automáticos preservados em MERGE_LEVEL2. ${pending} região(ões) seguem para o Auto-Merge Nível III: ${region}.`
-        : `${resolved} merge(s) automáticos validados. Nenhuma região permaneceu pendente para o Auto-Merge Nível III.`;
+        ? `${resolved} novo(s) merge(s) seguro(s) gerado(s) pelo Nível II em MERGE_LEVEL2. ${pending} região(ões) seguem para o Auto-Merge Nível III: ${region}.`
+        : `${resolved} novo(s) merge(s) seguro(s) gerado(s) pelo Nível II. Nenhuma região permaneceu pendente para o Auto-Merge Nível III.`;
     return {title:`Cap. ${x.chapter}`,message};
   });
   appModal({
-    title:errors.length?"Nível II concluído com ocorrências":"Nível II validado",
+    title:errors.length?"Nível II concluído com ocorrências":"Auto-Merge Nível II concluído",
     message:errors.length
       ?"Alguns capítulos ainda precisam de atenção."
       :results.some(x=>Number(x.pending_segments||0)>0)
-        ?"Os trechos automáticos foram preservados e somente as regiões pendentes foram encaminhadas para o Auto-Merge Nível III."
-        :"O Nível II foi concluído sem regiões pendentes para o Auto-Merge Nível III.",
+        ?"O Nível II executou uma nova busca segura somente sobre o residual. Apenas o que ainda não pôde ser resolvido seguirá para o Auto-Merge Nível III."
+        :"O Nível II resolveu automaticamente todo o residual recebido e o capítulo pôde seguir para a composição final.",
     kind:errors.length?(ok.length?"partial":"error"):"success",
     chips:[
       {value:ok.length,label:"validado(s)"},
@@ -209,7 +209,7 @@ function mergeLevel2(r){
  let pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));tablePage=Math.min(Math.max(1,tablePage),pages);
  let rows=all.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
  let pager=`<div class="table-pager"><span>${all.length?((tablePage-1)*PAGE_SIZE+1):0}–${Math.min(tablePage*PAGE_SIZE,all.length)} de ${all.length}</span><div><button class="btn" ${tablePage<=1?"disabled":""} onclick="changeTablePage(-1)">&lt;&lt;</button><span class="page-indicator">${tablePage} / ${pages}</span><button class="btn" ${tablePage>=pages?"disabled":""} onclick="changeTablePage(1)">&gt;&gt;</button></div></div>`;
- r.innerHTML=head("Auto-Merge Nível II","Validar trechos automáticos e encaminhar somente regiões com falha.")+`<div class="toolbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><button class="btn" onclick="allv()">Selecionar visíveis</button><button class="btn primary" onclick="runSelected('merge_level2')">Validar Nível II</button></div><div class="panel"><table><thead><tr><th></th><th>CAP.</th><th>MERGE NÍVEL II</th><th>REGIÃO PARA REVISÃO</th></tr></thead><tbody>${rows.map(x=>{let p=x.merge_partition||{},resolved=Number(p.resolved_segments_count||0);return `<tr data-n="${esc(x.chapter).toLowerCase()}"><td><input class="ck" type="checkbox" value="${esc(x.chapter)}"></td><td>${esc(x.chapter)}</td><td class="ok">✓ ${resolved}</td><td>${esc(level2RegionLabel(x))}</td></tr>`}).join("")}</tbody></table>${pager}</div>`;
+ r.innerHTML=head("Auto-Merge Nível II","Buscar novos cortes seguros somente nas regiões que o Auto-Merge inicial não resolveu.")+`<div class="toolbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><button class="btn" onclick="allv()">Selecionar visíveis</button><button class="btn primary" onclick="runSelected('merge_level2')">Executar Nível II</button></div><div class="panel"><table><thead><tr><th></th><th>CAP.</th><th>RESIDUAL RECEBIDO</th><th>REGIÃO DO RESIDUAL</th></tr></thead><tbody>${rows.map(x=>{let p=x.merge_partition||{},pending=Array.isArray(p.pending_segments)?p.pending_segments.length:0;return `<tr data-n="${esc(x.chapter).toLowerCase()}"><td><input class="ck" type="checkbox" value="${esc(x.chapter)}"></td><td>${esc(x.chapter)}</td><td>${pending}</td><td>${esc(level2RegionLabel(x))}</td></tr>`}).join("")}</tbody></table>${pager}</div>`;
 }
 
 function l3IntervalLabel(seg){

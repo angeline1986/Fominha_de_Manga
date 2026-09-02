@@ -47,7 +47,7 @@ class Level3DirectPromotionTests(unittest.TestCase):
         pending = [{"id": 3, "global_start": 100, "global_end": 220, "height": 120}]
         l2_manifest = {
             "schema_version": 2,
-            "algorithm": "merge_level2_residual_v2",
+            "algorithm": "merge_level2_bounded_safe_path_v1",
             "chapter": ch.name,
             "source_dir": str(ch),
             "output_dir": str(l2),
