@@ -531,3 +531,288 @@ body.sidebar-collapsed #job{left:20px}
   .merge-summary-actions .btn.primary{width:100%}
 }
 
+/* THEME PALETTE — 2026-09-02 — #A94D6B
+   Escopo: somente esquema de cores.
+   Não altera geometria, estrutura, espaçamento, tipografia, conteúdo ou comportamento.
+*/
+:root{
+  --color-primary:#A94D6B;
+  --color-primary-hover:#853951;
+  --color-primary-soft:#FDF5F7;
+  --color-primary-soft-strong:#F7EAEE;
+
+  --color-background:#FBFAFB;
+  --color-surface:#FFFFFF;
+  --color-surface-soft:#FDF5F7;
+
+  --color-text:#43383B;
+  --color-text-secondary:#A94D6B;
+  --color-text-muted:#A94D6B;
+
+  --color-border:#ECE5E7;
+  --color-border-primary:#E7CBD3;
+
+  /* Compatibilidade com os tokens legados já consumidos pelo sistema. */
+  --bg:var(--color-background);
+  --s:var(--color-surface);
+  --s2:var(--color-surface-soft);
+  --line:var(--color-border);
+  --text:var(--color-text);
+  --muted:var(--color-text-muted);
+  --a:var(--color-primary);
+}
+
+/* Base */
+body{background:var(--color-background);color:var(--color-text)}
+header,footer{border-color:var(--color-border)}
+header{background:var(--color-surface)}
+aside{background:var(--color-primary-soft);border-color:var(--color-border)}
+.caption,.online,.muted,.updated-at,
+.header-context label,.context label{color:var(--color-text-muted)}
+.brand>b{background:var(--color-primary);color:#fff}
+
+/* Navegação */
+nav button{color:var(--color-text-secondary);background:transparent}
+nav button:hover{background:var(--color-surface-soft);color:var(--color-text)}
+nav button.active{
+  background:var(--color-surface);
+  color:var(--color-primary);
+  box-shadow:inset 3px 0 var(--color-primary);
+}
+nav i{color:var(--color-text-muted)}
+.context{border-color:var(--color-border)}
+
+/* Campos */
+.context select,.header-context select,.search,
+.rv-limit input{
+  background:var(--color-surface);
+  border-color:var(--color-border);
+  color:var(--color-text);
+}
+.context select:focus,.header-context select:focus,.search:focus,
+.rv-limit input:focus{
+  border-color:var(--color-primary);
+  outline:none;
+  box-shadow:0 0 0 2px rgba(169,77,107,.10);
+}
+input::placeholder,textarea::placeholder{color:var(--color-text-muted)}
+
+/* Superfícies compartilhadas */
+.kpi,.panel,.card,.split,.notice{
+  background:var(--color-surface);
+  border-color:var(--color-border);
+  color:var(--color-text);
+}
+.kpi span{color:var(--color-text-muted)}
+.work{border-color:var(--color-border)}
+.item{color:var(--color-text)}
+.item:hover{
+  background:var(--color-primary-soft);
+  box-shadow:inset 0 0 0 1px var(--color-border-primary);
+}
+.item.active{
+  background:var(--color-primary-soft-strong);
+  color:var(--color-text);
+  box-shadow:inset 3px 0 var(--color-primary);
+}
+.detail{color:var(--color-text)}
+.preview{border-color:var(--color-border)}
+
+/* Botões */
+.btn,.tab,.sidebar-toggle{
+  background:var(--color-surface);
+  color:var(--color-text-secondary);
+  border-color:var(--color-border-primary);
+}
+.btn:hover,.tab:hover,.sidebar-toggle:hover{
+  background:var(--color-primary-soft);
+  color:var(--color-primary);
+  border-color:var(--color-border-primary);
+}
+.btn.primary,.primary{
+  background:var(--color-primary);
+  color:#fff;
+  border-color:var(--color-primary);
+}
+.btn.primary:hover,.primary:hover{
+  background:var(--color-primary-hover);
+  border-color:var(--color-primary-hover);
+}
+.btn:disabled,.tab:disabled{opacity:.42}
+.status-filter .tab.active{
+  background:var(--color-primary-soft-strong);
+  border-color:var(--color-primary);
+  color:var(--color-primary);
+  box-shadow:inset 0 0 0 1px rgba(169,77,107,.08);
+}
+
+/* Tabelas */
+.panel table{background:var(--color-surface)}
+th{
+  background:var(--color-surface-soft);
+  color:var(--color-text-muted);
+  border-color:var(--color-border);
+}
+td{background:var(--color-surface);color:var(--color-text);border-color:var(--color-border)}
+tbody tr:hover td{background:var(--color-primary-soft)}
+.table-pager{border-color:var(--color-border);color:var(--color-text-muted)}
+.page-indicator{color:var(--color-primary)}
+
+/* Toast e progresso */
+#toast,#job{
+  background:var(--color-surface);
+  border-color:var(--color-border);
+  color:var(--color-text);
+}
+#job span,#job .job-message{color:var(--color-text-muted)}
+#job #jobcount{color:var(--color-text)}
+#job progress{accent-color:var(--color-primary)}
+
+/* Modal compartilhado */
+.app-modal-overlay{background:rgba(67,56,59,.28)}
+.app-modal{
+  background:var(--color-surface);
+  border-color:var(--color-border);
+  color:var(--color-text);
+  box-shadow:0 20px 55px rgba(67,56,59,.14);
+}
+.app-modal-head h2{color:var(--color-text)}
+.app-modal-x{color:var(--color-text-muted)}
+.app-modal-x:hover{color:var(--color-primary)}
+.app-modal-message{color:var(--color-text-secondary)}
+.app-modal-chip{
+  border-color:var(--color-border);
+  background:var(--color-surface-soft);
+  color:var(--color-text-secondary);
+}
+.app-modal-chip b{color:var(--color-text)}
+.app-modal-details{
+  border-color:var(--color-border);
+  background:var(--color-surface-soft);
+}
+.app-modal-detail{border-color:var(--color-border)}
+.app-modal-detail b{color:var(--color-primary)}
+.app-modal-detail span{color:var(--color-text-secondary)}
+
+/* Resumo de operação I / II / III */
+.merge-summary-tabs{border-color:var(--color-border)}
+.merge-summary-tab{
+  border-color:var(--color-border);
+  background:var(--color-surface);
+  color:var(--color-text-secondary);
+}
+.merge-summary-tab:hover{
+  border-color:var(--color-border-primary);
+  background:var(--color-primary-soft);
+  color:var(--color-primary);
+}
+.merge-summary-tab.active{
+  border-color:var(--color-primary);
+  background:var(--color-primary-soft-strong);
+  color:var(--color-primary);
+  box-shadow:inset 0 -2px 0 var(--color-primary);
+}
+.merge-summary-body,.merge-summary-row{border-color:var(--color-border)}
+.merge-summary-label{color:var(--color-text-secondary)}
+.merge-summary-value{color:var(--color-text)}
+.merge-summary-toggle{color:var(--color-text-muted)}
+.merge-summary-toggle:hover{background:var(--color-primary-soft);color:var(--color-primary)}
+.merge-summary-files span{color:var(--color-text-secondary)}
+.merge-summary-files span::before{background:var(--color-text-muted)}
+
+/* Review principal — apenas identidade cromática */
+.rv{
+  background:var(--color-surface);
+  color:var(--color-text);
+  border-color:var(--color-border);
+}
+.rv-head,.rv-side section,.rv-source-strip,.rv-empty,
+.rv-pend,.rv-source,.rv-chapter-group,.rv-pending-config,
+.rv-pending-list-empty{
+  border-color:var(--color-border);
+}
+.rv-head h1,.rv-source-strip-head b,.rv-chapter-head,
+.rv-pending-cap,.rv-pending-config .rv-config-copy strong{color:var(--color-text)}
+.rv-head p,.rv-side p,.rv-source-strip-head>span,
+.rv-source small,.rv-source-empty,.rv-chapter-head small,
+.rv-pending-config .rv-config-copy span{color:var(--color-text-secondary)}
+.eyebrow,.rv-limit span{color:var(--color-primary)}
+.rv-stage,.rv-context-zone{background:var(--color-background)}
+.rv-source-summary,.rv-current-source-bar,.rv-pending-config,
+.rv-pending-list-empty{background:var(--color-surface-soft);color:var(--color-text)}
+.rv-mini,.rv-source{background:var(--color-surface)}
+.rv-mini.active,.rv-chapter-group.open,.rv-source.included{
+  border-color:var(--color-primary);
+}
+.rv-pend.active,.rv-chapter-group.open>.rv-chapter-head,
+.rv-merge-link.active,.rv-pending-cap:hover,.rv-pending-cap.active{
+  background:var(--color-primary-soft-strong);
+  border-color:var(--color-border-primary);
+  color:var(--color-primary);
+}
+.rv .btn{background:var(--color-surface);color:var(--color-text);border-color:var(--color-border-primary)}
+.rv .btn.primary{background:var(--color-primary);color:#fff;border-color:var(--color-primary)}
+.rv .btn.primary:hover{background:var(--color-primary-hover);border-color:var(--color-primary-hover)}
+.rv-config-technical{
+  background:var(--color-surface-soft);
+  border-color:var(--color-border-primary);
+}
+.rv-review-badge{
+  background:var(--color-primary-soft-strong);
+  color:var(--color-primary);
+}
+.rv-config-copy strong{color:var(--color-text)}
+.rv-config-copy span{color:var(--color-text-secondary)}
+.rv-config-separator{background:var(--color-border)}
+.rv-stepper button,.rv-stepper-value{
+  background:var(--color-surface);
+  color:var(--color-text);
+  border-color:var(--color-border);
+}
+.rv-source.included em{color:var(--color-primary)}
+.rv-thumb-cut:before{background:var(--color-primary)}
+.rv-thumb-cut span{background:var(--color-surface);color:var(--color-primary)}
+.rv-cut-marker{
+  border-color:var(--color-primary);
+  background:var(--color-primary-soft);
+  color:var(--color-primary-hover);
+}
+.rv-cut-marker small{color:var(--color-text-secondary)}
+.rv-current-source-band{
+  background:rgba(169,77,107,.08);
+  border-color:rgba(169,77,107,.55);
+}
+
+/* Review V2 */
+.rv2{background:var(--color-surface);color:var(--color-text);border-color:var(--color-border)}
+.rv2-head,.rv2-flow,.rv2-main,.rv2-card,.rv2-summary,
+.rv2-kpis div,.rv2-preview,.rv2-preview>header,.rv2-metric,
+.rv2-queue-item{border-color:var(--color-border)}
+.rv2-head p,.rv2-summary>div:first-child span,.rv2-kpis span,
+.rv2-preview>header span,.rv2-placeholder,.rv2-diagnosis p,
+.rv2-config small,.rv2-queue-item span{color:var(--color-text-secondary)}
+.rv2-flow,.rv2-layout{background:var(--color-background)}
+.rv2-main,.rv2-card,.rv2-preview>header,.rv2-queue-item{background:var(--color-surface)}
+.rv2-node.current i{background:var(--color-primary);border-color:var(--color-primary)}
+.rv2-node span,.rv2-metric span{color:var(--color-text-muted)}
+.rv2-proposal-piece.active{border-color:var(--color-primary)}
+.rv2-queue-item.active{
+  border-color:var(--color-border-primary);
+  background:var(--color-primary-soft-strong);
+  color:var(--color-primary);
+}
+
+/* Auto-Merge Nível III — painel de detalhe */
+.l3-table .l3-result-link{color:var(--color-primary)}
+.l3-detail-row td,
+.l3-detail-panel,
+.l3-detail-summary>div,
+.l3-mini-seg,
+.l3-inline-diag,
+.l3-inline-diag pre{
+  background:var(--color-surface-soft);
+  border-color:var(--color-border);
+}
+.l3-detail-summary span,.l3-mini-seg span{color:var(--color-text-muted)}
+.l3-detail-summary b,.l3-mini-seg b,.l3-inline-diag summary,
+.l3-inline-diag pre{color:var(--color-text)}
