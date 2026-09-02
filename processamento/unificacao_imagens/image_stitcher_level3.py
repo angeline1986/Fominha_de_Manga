@@ -1,19 +1,18 @@
 #!/usr/bin/env python3
-"""Auto-Merge Level III structural validator — MIII-1.
+"""Auto-Merge Level III structural validator — MIII-2.
 
 This module remains isolated from the productive merge pipeline.
 
-MIII-1 responsibilities:
-- preprocess a local image window with light Gaussian blur;
-- evaluate structural continuity around a proposed cut;
-- detect relevant connected edge masses crossing the cut;
-- detect strong diagonal edges crossing the cut;
-- treat uniform dark/light regions equally through variance/uniformity;
-- return SAFE / UNSAFE / INCONCLUSIVE with auditable metrics.
+MIII-2 responsibilities:
+- keep MIII-1 structural validation intact;
+- search a bounded deterministic neighborhood around an UNSAFE/INCONCLUSIVE cut;
+- never force a cut;
+- rank only SAFE candidates by structural quality, distance and light upward bias;
+- return the original evaluation plus an auditable alternative when one exists.
 
 It intentionally does NOT:
-- move the cut (MIII-2);
 - detect text/FX (MIII-3);
+- integrate with Level II/Review (MIII-3);
 - write merge artifacts;
 - modify Level I, Level II, Review, or final composition.
 """
@@ -48,7 +47,7 @@ class Level3PendingRegion:
 
 @dataclass(frozen=True)
 class Level3Config:
-    """Conservative structural thresholds for MIII-1."""
+    """Conservative structural thresholds for Level III."""
 
     analysis_half_window: int = 120
     cut_band_half_height: int = 8
@@ -71,6 +70,10 @@ class Level3Config:
     hough_max_line_gap: int = 6
     diagonal_min_angle_deg: float = 18.0
     diagonal_max_angle_deg: float = 72.0
+
+    # MIII-2 bounded local search.
+    local_search_radius: int = 200
+    local_search_step: int = 2
 
 
 @dataclass(frozen=True)
@@ -285,7 +288,7 @@ def analyze_structural_candidate(
     `candidate_y` is global chapter Y.
     `image_global_start` is the global Y represented by image row 0.
 
-    MIII-1 is deliberately conservative:
+    MIII-1/MIII-2 conservative decision order:
     1. strong diagonal crossing -> UNSAFE;
     2. relevant connected edge mass crossing -> UNSAFE;
     3. uniform low-edge band -> SAFE;
@@ -385,6 +388,200 @@ def analyze_structural_candidate(
         region_start=region.global_start,
         region_end=region.global_end,
         metrics=metrics,
+    )
+
+
+def _candidate_search_bounds(
+    *,
+    candidate_y: int,
+    region: Level3PendingRegion,
+    image_global_start: int,
+    image_height: int,
+    config: Level3Config,
+) -> tuple[int, int]:
+    radius = max(0, int(config.local_search_radius))
+    image_end_exclusive = int(image_global_start) + int(image_height)
+
+    lower = max(
+        int(region.global_start),
+        int(image_global_start),
+        int(candidate_y) - radius,
+    )
+    upper = min(
+        int(region.global_end) - 1,
+        image_end_exclusive - 1,
+        int(candidate_y) + radius,
+    )
+    return lower, upper
+
+
+def _safe_candidate_rank(
+    result: Level3Result,
+    *,
+    original_y: int,
+) -> tuple[float, int, int, int]:
+    """Lower tuple is better.
+
+    Ranking contract:
+    1. lower edge density;
+    2. fewer crossing components;
+    3. shorter displacement from original;
+    4. on a true tie, prefer the slightly earlier/higher cut.
+
+    SAFE candidates normally have zero crossing components already; the field
+    remains explicit so the ranking contract stays auditable and extensible.
+    """
+    edge_density = float(result.metrics.get("edge_density", 1.0))
+    components = int(result.metrics.get("crossing_components", 999999))
+    delta = int(result.candidate_y) - int(original_y)
+    distance = abs(delta)
+    upward_tiebreak = 0 if delta < 0 else 1
+    return (edge_density, components, distance, upward_tiebreak)
+
+
+def search_local_safe_candidate(
+    image: np.ndarray,
+    *,
+    candidate_y: int,
+    region: Level3PendingRegion,
+    image_global_start: int = 0,
+    config: Level3Config | None = None,
+) -> Level3Result:
+    """Evaluate candidate and, if needed, search a bounded SAFE alternative.
+
+    The function never changes a candidate already classified SAFE.
+    It never returns an alternative that was not independently classified SAFE.
+    It never searches outside:
+    - the configured ±radius;
+    - the pending Level III region;
+    - the supplied image coverage.
+
+    When no SAFE alternative exists, the original decision is preserved and
+    alternative_y remains None.
+    """
+    cfg = config or Level3Config()
+    gray = _ensure_grayscale_uint8(image)
+
+    original = analyze_structural_candidate(
+        gray,
+        candidate_y=int(candidate_y),
+        region=region,
+        image_global_start=int(image_global_start),
+        config=cfg,
+    )
+    if original.decision == Level3Decision.SAFE:
+        metrics = dict(original.metrics)
+        metrics.update(
+            {
+                "local_search_performed": False,
+                "local_search_radius": int(cfg.local_search_radius),
+                "local_search_step": int(cfg.local_search_step),
+                "safe_alternatives_found": 0,
+            }
+        )
+        return Level3Result(
+            decision=original.decision,
+            candidate_y=original.candidate_y,
+            reason=original.reason,
+            region_start=original.region_start,
+            region_end=original.region_end,
+            metrics=metrics,
+            alternative_y=None,
+        )
+
+    lower, upper = _candidate_search_bounds(
+        candidate_y=int(candidate_y),
+        region=region,
+        image_global_start=int(image_global_start),
+        image_height=gray.shape[0],
+        config=cfg,
+    )
+
+    step = max(1, int(cfg.local_search_step))
+    safe_results: list[Level3Result] = []
+    evaluated = 0
+
+    # Deterministic complete scan. Ranking, not iteration order, chooses winner.
+    for y in range(lower, upper + 1, step):
+        if y == int(candidate_y):
+            continue
+        evaluated += 1
+        result = analyze_structural_candidate(
+            gray,
+            candidate_y=y,
+            region=region,
+            image_global_start=int(image_global_start),
+            config=cfg,
+        )
+        if result.decision == Level3Decision.SAFE:
+            safe_results.append(result)
+
+    if not safe_results:
+        metrics = dict(original.metrics)
+        metrics.update(
+            {
+                "local_search_performed": True,
+                "local_search_lower": int(lower),
+                "local_search_upper": int(upper),
+                "local_search_radius": int(cfg.local_search_radius),
+                "local_search_step": int(step),
+                "local_candidates_evaluated": int(evaluated),
+                "safe_alternatives_found": 0,
+            }
+        )
+        return Level3Result(
+            decision=original.decision,
+            candidate_y=original.candidate_y,
+            reason=original.reason,
+            region_start=original.region_start,
+            region_end=original.region_end,
+            metrics=metrics,
+            alternative_y=None,
+        )
+
+    best = min(
+        safe_results,
+        key=lambda item: _safe_candidate_rank(
+            item,
+            original_y=int(candidate_y),
+        ),
+    )
+
+    metrics = dict(original.metrics)
+    metrics.update(
+        {
+            "local_search_performed": True,
+            "local_search_lower": int(lower),
+            "local_search_upper": int(upper),
+            "local_search_radius": int(cfg.local_search_radius),
+            "local_search_step": int(step),
+            "local_candidates_evaluated": int(evaluated),
+            "safe_alternatives_found": int(len(safe_results)),
+            "selected_edge_density": float(
+                best.metrics.get("edge_density", 0.0)
+            ),
+            "selected_crossing_components": int(
+                best.metrics.get("crossing_components", 0)
+            ),
+            "selected_distance": abs(
+                int(best.candidate_y) - int(candidate_y)
+            ),
+            "selected_direction": (
+                "up"
+                if int(best.candidate_y) < int(candidate_y)
+                else "down"
+            ),
+        }
+    )
+
+    return Level3Result(
+        decision=Level3Decision.SAFE,
+        candidate_y=int(candidate_y),
+        reason="local_candidate_safe",
+        region_start=region.global_start,
+        region_end=region.global_end,
+        metrics=metrics,
+        alternative_y=int(best.candidate_y),
     )
 
 
