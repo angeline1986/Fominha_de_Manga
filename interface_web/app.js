@@ -122,7 +122,7 @@ function installPdfMergeUiNormalizer(){
   requestAnimationFrame(run);
 }
 
-function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||x.merge_state==="parcial").slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+function render(){let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="review")return review(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><h1>${esc(data.manga)}</h1><div class="muted">${esc(data.provider)} · pós-processamento</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Atualizar status</button></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
   if(x.merge_state==="parcial")return {cls:"warn",text:"Parcial"};
@@ -163,7 +163,7 @@ function reviewPendingSummary(x){
 }
 
 function segLabel(s){const src=Array.isArray(s?.sources)?s.sources:[];if(src.length)return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;return `Y ${s?.global_start??"?"} → ${s?.global_end??"?"}`}
-function level2Chapters(){return data.chapters.filter(x=>x.merge_state==="parcial")}
+function level2Chapters(){return data.chapters.filter(x=>x.merge_state==="parcial"&&!x.merge_level2_validated)}
 function level2RegionLabel(x){
   const p=x?.merge_partition||{},pending=Array.isArray(p.pending_segments)?p.pending_segments:[];
   if(!pending.length)return "—";
@@ -181,12 +181,18 @@ function level2ResultModal(j,s){
     let pending=Number(x.pending_segments||0);
     let message=String(x.status||"").toLowerCase()==="error"
       ? (x.message||"Falha ao validar este capítulo.")
-      : `${resolved} merge(s) automáticos preservados em MERGE_LEVEL2. ${pending} região(ões) seguem para Revisão Merge: ${region}.`;
+      : pending>0
+        ? `${resolved} merge(s) automáticos preservados em MERGE_LEVEL2. ${pending} região(ões) seguem para Revisão Merge: ${region}.`
+        : `${resolved} merge(s) automáticos validados. Nenhuma região permaneceu pendente para Revisão Merge.`;
     return {title:`Cap. ${x.chapter}`,message};
   });
   appModal({
     title:errors.length?"Nível II concluído com ocorrências":"Nível II validado",
-    message:errors.length?"Alguns capítulos ainda precisam de atenção.":"Os trechos automáticos foram preservados e somente as regiões abaixo foram encaminhadas para revisão.",
+    message:errors.length
+      ?"Alguns capítulos ainda precisam de atenção."
+      :results.some(x=>Number(x.pending_segments||0)>0)
+        ?"Os trechos automáticos foram preservados e somente as regiões pendentes foram encaminhadas para revisão."
+        :"O Nível II foi concluído sem regiões pendentes para revisão.",
     kind:errors.length?(ok.length?"partial":"error"):"success",
     chips:[
       {value:ok.length,label:"validado(s)"},
@@ -687,10 +693,10 @@ function showJobResult(j){
   }
 
   if(page==="merge" && s.errors){
-    let reviewBtn=document.querySelector('nav button[data-page="review"]');
-    if(reviewBtn){
-      reviewBtn.classList.add("attention");
-      reviewBtn.title=`${s.errors} capítulo(s) precisam de revisão`;
+    let level2Btn=document.querySelector('nav button[data-page="merge_level2"]');
+    if(level2Btn){
+      level2Btn.classList.add("attention");
+      level2Btn.title=`${s.errors} capítulo(s) precisam de tratamento no Nível II`;
     }
   }
 }
