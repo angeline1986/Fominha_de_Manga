@@ -533,11 +533,18 @@ def process_merge_level3_pending(ch, part):
             })
             out_index+=1
 
+    level2_manifest_path=l2dir(manga,ch.name)/"merge-level2-manifest.json"
+    if not level2_manifest_path.is_file():
+        return False,"Manifesto Level II ausente ao finalizar Level III.",None
+    import hashlib
+    level2_sha256=hashlib.sha256(level2_manifest_path.read_bytes()).hexdigest()
+
     manifest={
         "schema_version":1,"algorithm":"merge_level3_structural_safe_v1",
         "chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),
         "total_height":int(part.get("total_height") or 0),
         "source_level2_manifest":"merge-level2-manifest.json",
+        "source_level2_sha256":level2_sha256,
         "safe_artifacts":artifacts,"residual_pending_segments":residual,
         "diagnostics":diagnostics,
         "safety":{"level2_passed_artifacts_modified":False,
@@ -980,6 +987,81 @@ def reviewmod():
     from processamento.unificacao_imagens import image_stitcher_review
     return image_stitcher_review
 
+def _level3_review_pending(ch,failure):
+    # Retorna a fila autoritativa de Review. Com Level III válido,
+    # somente residual_pending_segments pode seguir para revisão.
+    import hashlib
+
+    partition=failure.get("partition") or {}
+    if not _is_level2_validated(failure):
+        return None,None,"historical"
+
+    level2_pending=partition.get("pending_segments") or []
+    manga=ch.parent.parent
+    manifest_path=l3dir(manga,ch.name)/"merge-level3-manifest.json"
+    if not manifest_path.is_file():
+        return (level2_pending or None),None,"level2"
+
+    try:
+        payload=json.loads(manifest_path.read_text(encoding="utf-8"))
+        if payload.get("algorithm")!="merge_level3_structural_safe_v1":
+            return None,"Manifesto Level III possui algoritmo não suportado.","level3"
+
+        total=int(partition.get("total_height") or 0)
+        if int(payload.get("total_height") or 0)!=total or total<=0:
+            return None,"Manifesto Level III não corresponde ao total_height atual do Level II.","level3"
+
+        level2_manifest_path=l2dir(manga,ch.name)/"merge-level2-manifest.json"
+        if not level2_manifest_path.is_file():
+            return None,"Manifesto Level II ausente para validar o Level III.","level3"
+        expected_hash=hashlib.sha256(level2_manifest_path.read_bytes()).hexdigest()
+        if str(payload.get("source_level2_sha256") or "")!=expected_hash:
+            return None,(
+                "Manifesto Level III está desatualizado em relação ao Level II; "
+                "revalide o Level II para regenerar o Level III."
+            ),"level3"
+
+        parents=sorted(
+            (int(x["global_start"]),int(x["global_end"]))
+            for x in level2_pending
+        )
+        safe=payload.get("safe_artifacts") or []
+        residual=payload.get("residual_pending_segments") or []
+        children=sorted(
+            [(int(x["global_start"]),int(x["global_end"])) for x in safe]
+            + [(int(x["global_start"]),int(x["global_end"])) for x in residual]
+        )
+
+        if not parents:
+            return None,"Level III existe, mas o Level II atual não possui pending_segments.","level3"
+
+        ci=0
+        for pstart,pend in parents:
+            if pend<=pstart:
+                return None,"Level II possui intervalo pending inválido.","level3"
+            cursor=pstart
+            while ci<len(children) and children[ci][0] < pend:
+                cstart,cend=children[ci]
+                if cstart!=cursor or cend<=cstart or cend>pend:
+                    return None,(
+                        "Level III não recompõe exatamente os pending_segments do Level II "
+                        "(GAP/OVERLAP ou intervalo fora do pai)."
+                    ),"level3"
+                cursor=cend
+                ci+=1
+            if cursor!=pend:
+                return None,(
+                    "Level III não recompõe exatamente os pending_segments do Level II "
+                    "(cobertura incompleta)."
+                ),"level3"
+        if ci!=len(children):
+            return None,"Level III possui intervalo fora dos pending_segments do Level II.","level3"
+
+        return (residual or None),None,"level3"
+    except (OSError,ValueError,TypeError,KeyError,IndexError,json.JSONDecodeError) as exc:
+        return None,f"Manifesto Level III inválido: {exc}","level3"
+
+
 def do_review_generate(job,manga,chs,max_source_images=None):
     rv=reviewmod(); out=[]
     try:
@@ -991,29 +1073,37 @@ def do_review_generate(job,manga,chs,max_source_images=None):
     for i,ch in enumerate(chs,1):
         job.message=f"Gerando proposta para capítulo {ch.name} · máximo {limit} originais/merge..."
         failure=read_merge_failure(ch) or {}
-        partition=failure.get("partition") or {}
-        level2_validated=_is_level2_validated(
-            failure
-        )
-        pending_segments=(
-            partition.get("pending_segments") or None
-            if level2_validated
-            else None
-        )
-
-        if level2_validated and not pending_segments:
-            out.append({
-                "chapter": ch.name,
-                "status": "error",
-                "message": (
-                    "Level II validado sem segmentos pendentes; "
-                    "Review não será gerado para o capítulo inteiro."
-                ),
-                "path": None,
-                "max_source_images": limit,
-            })
-            job.progress=i
-            continue
+        level2_validated=_is_level2_validated(failure)
+        pending_segments=None
+        pending_source="historical"
+        if level2_validated:
+            pending_segments,pending_error,pending_source=_level3_review_pending(ch,failure)
+            if pending_error:
+                out.append({
+                    "chapter":ch.name,
+                    "status":"error",
+                    "message":pending_error,
+                    "path":None,
+                    "max_source_images":limit,
+                })
+                job.progress=i
+                continue
+            if not pending_segments:
+                out.append({
+                    "chapter":ch.name,
+                    "status":"error",
+                    "message":(
+                        "Level III não possui residual pendente para Review."
+                        if pending_source=="level3"
+                        else
+                        "Level II validado sem segmentos pendentes; "
+                        "Review não será gerado para o capítulo inteiro."
+                    ),
+                    "path":None,
+                    "max_source_images":limit,
+                })
+                job.progress=i
+                continue
 
         try:
             ok,msg,dest=rv.generate_candidate(

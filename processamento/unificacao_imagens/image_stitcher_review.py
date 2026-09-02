@@ -918,13 +918,56 @@ def _approve_scoped_level2_review(
             "total_height do Level II deve ser positivo."
         )
 
-    # O Review scoped só é promovível se ainda representar
-    # exatamente os segmentos pendentes do Level II atual.
-    #
-    # Isso impede promover uma proposta gerada para um estado
-    # anterior do capítulo após nova validação/regeneração.
-    scope = review_payload.get("scope") or {}
+    level3_dir = (
+        manga
+        / SECONDARY
+        / "MERGE_LEVEL3"
+        / chapter_name
+    )
+    level3_manifest_path = (
+        level3_dir / "merge-level3-manifest.json"
+    )
+    level3_payload = None
+    if level3_manifest_path.is_file():
+        try:
+            level3_payload = json.loads(
+                level3_manifest_path.read_text(encoding="utf-8")
+            )
+        except Exception as exc:
+            return False, f"Manifesto Level III inválido: {exc}"
 
+        if (
+            level3_payload.get("algorithm")
+            != "merge_level3_structural_safe_v1"
+        ):
+            return False, (
+                "Manifesto Level III possui algoritmo não suportado."
+            )
+        try:
+            level3_total = int(level3_payload["total_height"])
+        except (KeyError, TypeError, ValueError):
+            return False, "Manifesto Level III sem total_height válido."
+        if level3_total != total_height:
+            return False, (
+                "Manifesto Level III não corresponde ao total_height "
+                "do Level II atual."
+            )
+
+        import hashlib
+        expected_level2_sha256 = hashlib.sha256(
+            level2_manifest_path.read_bytes()
+        ).hexdigest()
+        if (
+            str(level3_payload.get("source_level2_sha256") or "")
+            != expected_level2_sha256
+        ):
+            return False, (
+                "Manifesto Level III está desatualizado em relação "
+                "ao manifesto Level II atual."
+            )
+
+    # O Review scoped deve representar a autoridade pendente atual.
+    scope = review_payload.get("scope") or {}
     if scope.get("type") != "pending_segments":
         return False, (
             "Review scoped possui tipo de scope inválido."
@@ -940,7 +983,6 @@ def _approve_scoped_level2_review(
                 level2_payload.get("pending_segments") or []
             )
         )
-
         review_scope_intervals = sorted(
             (
                 int(item[0]),
@@ -950,7 +992,6 @@ def _approve_scoped_level2_review(
                 scope.get("intervals") or []
             )
         )
-
         review_region_intervals = sorted(
             (
                 int(item["global_start"]),
@@ -967,8 +1008,7 @@ def _approve_scoped_level2_review(
         IndexError,
     ):
         return False, (
-            "Review/Level II possuem intervalos "
-            "scoped inválidos."
+            "Review/Level II possuem intervalos scoped inválidos."
         )
 
     if not level2_pending_intervals:
@@ -977,26 +1017,84 @@ def _approve_scoped_level2_review(
             "para composição scoped."
         )
 
-    if (
-        review_scope_intervals
-        != level2_pending_intervals
-    ):
+    authoritative_pending = level2_pending_intervals
+
+    if level3_payload is not None:
+        try:
+            level3_safe_intervals = sorted(
+                (
+                    int(item["global_start"]),
+                    int(item["global_end"]),
+                )
+                for item in (
+                    level3_payload.get("safe_artifacts") or []
+                )
+            )
+            level3_residual_intervals = sorted(
+                (
+                    int(item["global_start"]),
+                    int(item["global_end"]),
+                )
+                for item in (
+                    level3_payload.get("residual_pending_segments") or []
+                )
+            )
+        except (KeyError, TypeError, ValueError):
+            return False, "Level III possui intervalos inválidos."
+
+        children = sorted(
+            level3_safe_intervals + level3_residual_intervals
+        )
+        child_index = 0
+        for parent_start, parent_end in level2_pending_intervals:
+            if parent_end <= parent_start:
+                return False, "Level II possui pending interval inválido."
+            cursor = parent_start
+            while (
+                child_index < len(children)
+                and children[child_index][0] < parent_end
+            ):
+                child_start, child_end = children[child_index]
+                if (
+                    child_start != cursor
+                    or child_end <= child_start
+                    or child_end > parent_end
+                ):
+                    return False, (
+                        "Level III não recompõe exatamente o pending "
+                        "do Level II (GAP/OVERLAP)."
+                    )
+                cursor = child_end
+                child_index += 1
+            if cursor != parent_end:
+                return False, (
+                    "Level III não recompõe exatamente o pending "
+                    "do Level II (cobertura incompleta)."
+                )
+        if child_index != len(children):
+            return False, (
+                "Level III possui intervalo fora do pending do Level II."
+            )
+
+        authoritative_pending = level3_residual_intervals
+        if not authoritative_pending:
+            return False, (
+                "Level III não possui residual pendente; "
+                "Review scoped não deve ser aprovado."
+            )
+
+    if review_scope_intervals != authoritative_pending:
         return False, (
-            "Review scoped está desatualizado: "
-            "scope.intervals não corresponde aos "
-            "pending_segments atuais do Level II."
+            "Review scoped está desatualizado: scope.intervals não "
+            "corresponde ao pending autoritativo atual."
+        )
+    if review_region_intervals != authoritative_pending:
+        return False, (
+            "Review scoped está inconsistente: regions não corresponde "
+            "ao pending autoritativo atual."
         )
 
-    if (
-        review_region_intervals
-        != level2_pending_intervals
-    ):
-        return False, (
-            "Review scoped está inconsistente: "
-            "regions não corresponde aos "
-            "pending_segments atuais do Level II."
-        )
-
+    pieces = []
     pieces = []
 
     # Level II: artefatos PASSED já materializados.
@@ -1052,6 +1150,31 @@ def _approve_scoped_level2_review(
                 "global_end": end,
             }
         )
+
+    # Level III: artefatos SAFE materializados sobre o pending do Level II.
+    if level3_payload is not None:
+        for artifact in level3_payload.get("safe_artifacts") or []:
+            try:
+                start = int(artifact["global_start"])
+                end = int(artifact["global_end"])
+            except (KeyError, TypeError, ValueError):
+                return False, (
+                    "Artefato SAFE do Level III possui intervalo inválido."
+                )
+            filename = str(artifact.get("file") or "").strip()
+            if not filename:
+                return False, (
+                    "Artefato SAFE do Level III não possui arquivo."
+                )
+            pieces.append(
+                {
+                    "kind": "level3",
+                    "source": level3_dir / filename,
+                    "source_file": filename,
+                    "global_start": start,
+                    "global_end": end,
+                }
+            )
 
     # Review scoped: regions é a fonte de verdade.
     regions = review_payload.get("regions") or []
@@ -1293,7 +1416,9 @@ def _approve_scoped_level2_review(
         manifest = {
             "schema_version": 1,
             "algorithm": (
-                "merge_level2_review_composition_v1"
+                "merge_level2_level3_review_composition_v1"
+                if level3_payload is not None
+                else "merge_level2_review_composition_v1"
             ),
             "status": "approved",
             "approved_at": datetime.now(
@@ -1324,11 +1449,17 @@ def _approve_scoped_level2_review(
                 "forced_cut_without_white_band": False,
                 "all_source_pixels_preserved_in_order": True,
                 "level2_passed_artifacts_rerendered": False,
+                "level3_safe_artifacts_rerendered": False,
                 "review_artifacts_rerendered": False,
             },
             "composition": {
                 "level2_manifest": (
                     "merge-level2-manifest.json"
+                ),
+                "level3_manifest": (
+                    "merge-level3-manifest.json"
+                    if level3_payload is not None
+                    else None
                 ),
                 "review_manifest": (
                     "merge-review.json"

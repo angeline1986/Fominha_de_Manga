@@ -18,6 +18,26 @@ class Level3PipelineIntegrationTests(unittest.TestCase):
              "global_end":height,"source_y_start":0,"source_y_end":height}]}
         part={"level2_validated":True,"total_height":height,
               "pending_segments":[seg],"resolved_segments":[]}
+
+        l2=pw.l2dir(manga,ch.name)
+        l2.mkdir(parents=True,exist_ok=True)
+        manifest={
+            "schema_version":1,
+            "algorithm":"merge_level2_auto_segments",
+            "chapter":ch.name,
+            "source_dir":str(ch),
+            "output_dir":str(l2),
+            "total_height":height,
+            "segments":[],
+            "artifacts":[],
+            "pending_segments":[seg],
+            "coverage":{"auto_segments":[]},
+        }
+        (l2/"merge-level2-manifest.json").write_text(
+            json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",
+            encoding="utf-8",
+        )
+
         return manga,ch,part
 
     def test_requires_validated_level2(self):
@@ -40,7 +60,7 @@ class Level3PipelineIntegrationTests(unittest.TestCase):
     def test_level2_artifact_is_immutable(self):
         with tempfile.TemporaryDirectory() as td:
             manga,ch,part=self.make_case(td)
-            d=pw.l2dir(manga,ch.name); d.mkdir(parents=True)
+            d=pw.l2dir(manga,ch.name); d.mkdir(parents=True,exist_ok=True)
             sentinel=d/"passed-001.png"; sentinel.write_bytes(b"immutable")
             before=sentinel.read_bytes()
             r=Level3Result(Level3Decision.UNSAFE,12000,
