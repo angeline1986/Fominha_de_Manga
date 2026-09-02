@@ -175,7 +175,7 @@ def _analyze_merge_partition(ch):
         print(f"[processing-web] Falha ao classificar trechos do merge cap {ch.name}: {exc}")
         return None
 
-def read_merge_failure(ch):
+def read_merge_failure(ch, analyze_missing=True):
     p=merge_status_file(ch)
     if not p.is_file(): return None
     try:
@@ -183,7 +183,7 @@ def read_merge_failure(ch):
     except Exception:
         return {"schema_version":1,"chapter":ch.name,"status":"error","message":"Falha de merge não legível."}
     part_payload=payload.get("partition") or {}
-    if not payload.get("partition") or int(part_payload.get("schema_version") or 0)<2:
+    if analyze_missing and (not payload.get("partition") or int(part_payload.get("schema_version") or 0)<2):
         part=_analyze_merge_partition(ch)
         if part:
             payload["partition"]=part
@@ -830,6 +830,61 @@ def latest_pdf_merge_batch(manga):
     return batch
 
 
+def _merge_manifest_state(ch):
+    """Lê somente metadados do MERGE oficial para compor /api/state.
+
+    Não abre pixels, não recalcula merge e não executa validação profunda.
+    """
+    md=v3.merge_output_dir(ch)
+    manifest_path=md/"merge-manifest.json"
+    result={"ok":False,"merged_images":0,"error":None}
+    if not manifest_path.is_file():
+        return result
+    try:
+        payload=json.loads(manifest_path.read_text(encoding="utf-8"))
+        validation=payload.get("validation") or {}
+        outputs=payload.get("outputs")
+        total_height=int(payload.get("source_total_height") or 0)
+        merged_images=int(payload.get("merged_images") or 0)
+        coverage_start=int(validation.get("coverage_start"))
+        coverage_end=int(validation.get("coverage_end"))
+    except Exception as exc:
+        result["error"]=f"Manifesto MERGE inválido: {exc}"
+        return result
+    if validation.get("ok") is not True:
+        return result
+    if total_height<=0 or coverage_start!=0 or coverage_end!=total_height:
+        return result
+    if not isinstance(outputs,list) or not outputs or merged_images!=len(outputs):
+        return result
+    expected_start=0
+    md_resolved=md.resolve()
+    seen_files=set()
+    try:
+        for item in outputs:
+            if not isinstance(item,dict):
+                return result
+            name=str(item.get("file") or "").strip()
+            if not name or Path(name).name!=name or name in seen_files:
+                return result
+            start=int(item.get("global_start"))
+            end=int(item.get("global_end"))
+            if start!=expected_start or end<=start:
+                return result
+            output_path=(md/name).resolve()
+            if not output_path.is_relative_to(md_resolved) or not output_path.is_file():
+                return result
+            seen_files.add(name)
+            expected_start=end
+    except Exception as exc:
+        result["error"]=f"Metadados MERGE inválidos: {exc}"
+        return result
+    if expected_start!=total_height:
+        return result
+    result["ok"]=True
+    result["merged_images"]=merged_images
+    return result
+
 def _is_level2_validated(failure):
     """Interpreta de forma única o estado persistido do Level II."""
     failure = failure or {}
@@ -882,12 +937,11 @@ def _level3_ui_detail(manga,ch,failure):
     }
 
 def row_state(manga,ch):
-    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_output_dir
+    from processamento.unificacao_imagens.image_stitcher import merge_output_dir
     md=merge_output_dir(ch); rd=rdir(manga,ch.name)
-    merge_ok=False; merge_error=None
-    try: merge_ok=bool(is_chapter_merged(ch))
-    except Exception as exc: merge_error=str(exc)
-    failure=read_merge_failure(ch); merge_failed=bool(failure)
+    merge_meta=_merge_manifest_state(ch)
+    merge_ok=bool(merge_meta.get("ok")); merge_error=merge_meta.get("error")
+    failure=read_merge_failure(ch,analyze_missing=False); merge_failed=bool(failure)
     partition=(failure or {}).get("partition")
     has_level2_data=bool(
         partition
@@ -945,7 +999,7 @@ def row_state(manga,ch):
         "merge_level3_detail":level3_detail,
         "needs_review":needs_review,
         "merge_state":"concluido" if merge_ok else ("pendente_level3" if level3_pending else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("pendente_review" if merge_failed else "novo")))),
-        "merged_images":len(v3.merge_artifact_files(md)) if md.is_dir() else 0,
+        "merged_images":int(merge_meta.get("merged_images") or 0) if merge_ok else 0,
         "review":review_exists,
         "review_images":len(review_items) if review_exists else 0,
         "review_total_images":len(all_review_files),
