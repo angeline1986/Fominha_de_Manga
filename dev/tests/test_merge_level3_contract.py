@@ -272,6 +272,20 @@ class Level3LocalSearchTests(unittest.TestCase):
         self.assertNotEqual(result.decision, Level3Decision.SAFE)
         self.assertIsNone(result.alternative_y)
         self.assertEqual(result.metrics["safe_alternatives_found"], 0)
+        self.assertEqual(
+            sum(result.metrics["local_decision_counts"].values()),
+            result.metrics["local_candidates_evaluated"],
+        )
+        self.assertEqual(
+            sum(result.metrics["local_reason_counts"].values()),
+            result.metrics["local_candidates_evaluated"],
+        )
+        self.assertNotIn("SAFE", result.metrics["local_decision_counts"])
+        self.assertIn("edge_density", result.metrics["local_metric_ranges"])
+        self.assertLessEqual(
+            result.metrics["local_metric_ranges"]["edge_density"]["min"],
+            result.metrics["local_metric_ranges"]["edge_density"]["max"],
+        )
 
     def test_upward_bias_breaks_true_tie(self):
         # The original cut crosses a real structural mass. Outside that mass,
@@ -334,6 +348,19 @@ class Level3LocalSearchTests(unittest.TestCase):
         self.assertEqual(result.decision, Level3Decision.SAFE)
         self.assertEqual(result.alternative_y, 181)
         self.assertEqual(result.metrics["selected_direction"], "up")
+        self.assertEqual(
+            sum(result.metrics["local_decision_counts"].values()),
+            result.metrics["local_candidates_evaluated"],
+        )
+        self.assertEqual(
+            sum(result.metrics["local_reason_counts"].values()),
+            result.metrics["local_candidates_evaluated"],
+        )
+        self.assertEqual(
+            result.metrics["local_decision_counts"]["SAFE"],
+            result.metrics["safe_alternatives_found"],
+        )
+        self.assertIn("edge_density", result.metrics["local_metric_ranges"])
 
     def test_search_is_deterministic(self):
         img = np.full((400, 240), 255, dtype=np.uint8)

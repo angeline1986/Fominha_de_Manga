@@ -628,6 +628,19 @@ def search_local_safe_candidate(
     step = max(1, int(cfg.local_search_step))
     safe_results: list[Level3Result] = []
     evaluated = 0
+    local_decision_counts: dict[str, int] = {}
+    local_reason_counts: dict[str, int] = {}
+    local_metric_ranges: dict[str, dict[str, float]] = {}
+    tracked_metric_names = (
+        "diagonal_crossings",
+        "crossing_components",
+        "largest_crossing_component_area",
+        "edge_density",
+        "band_std",
+        "text_fx_clusters",
+        "text_fx_nearest_distance",
+        "text_fx_background_std",
+    )
 
     # Deterministic complete scan. Ranking, not iteration order, chooses winner.
     for y in range(lower, upper + 1, step):
@@ -641,6 +654,32 @@ def search_local_safe_candidate(
             image_global_start=int(image_global_start),
             config=cfg,
         )
+
+        decision_key = result.decision.value
+        local_decision_counts[decision_key] = (
+            local_decision_counts.get(decision_key, 0) + 1
+        )
+        local_reason_counts[result.reason] = (
+            local_reason_counts.get(result.reason, 0) + 1
+        )
+        for metric_name in tracked_metric_names:
+            raw_value = result.metrics.get(metric_name)
+            if raw_value is None:
+                continue
+            try:
+                value = float(raw_value)
+            except (TypeError, ValueError):
+                continue
+            current = local_metric_ranges.get(metric_name)
+            if current is None:
+                local_metric_ranges[metric_name] = {
+                    "min": value,
+                    "max": value,
+                }
+            else:
+                current["min"] = min(current["min"], value)
+                current["max"] = max(current["max"], value)
+
         if result.decision == Level3Decision.SAFE:
             safe_results.append(result)
 
@@ -655,6 +694,9 @@ def search_local_safe_candidate(
                 "local_search_step": int(step),
                 "local_candidates_evaluated": int(evaluated),
                 "safe_alternatives_found": 0,
+                "local_decision_counts": dict(local_decision_counts),
+                "local_reason_counts": dict(local_reason_counts),
+                "local_metric_ranges": dict(local_metric_ranges),
             }
         )
         return Level3Result(
@@ -685,6 +727,9 @@ def search_local_safe_candidate(
             "local_search_step": int(step),
             "local_candidates_evaluated": int(evaluated),
             "safe_alternatives_found": int(len(safe_results)),
+            "local_decision_counts": dict(local_decision_counts),
+            "local_reason_counts": dict(local_reason_counts),
+            "local_metric_ranges": dict(local_metric_ranges),
             "selected_edge_density": float(
                 best.metrics.get("edge_density", 0.0)
             ),
