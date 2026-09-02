@@ -70,8 +70,10 @@ class Level3PipelineIntegrationTests(unittest.TestCase):
                 "global_end":150,
                 "source_spans":[
                     {
+                        # source_spans preserva o global_start da fonte inteira;
+                        # o recorte efetivo começa em source_y_start.
                         "file":"page-001.png",
-                        "global_start":50,
+                        "global_start":0,
                         "global_end":100,
                         "source_y_start":50,
                         "source_y_end":100,
