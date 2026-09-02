@@ -1409,21 +1409,38 @@ def do_clean_merged(job,manga,chs):
     from processamento.limpeza_baloes.bubble_cleaner import EasyOCRBackend,process_image,resolve_model
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged,merge_output_dir
     model=resolve_model(None); ocr=EasyOCRBackend(["en"]); out=[]
+    total_chapters=max(1,len(chs))
+    job.progress_value=0.0
+    job.progress_max=float(total_chapters)
     for i,ch in enumerate(chs,1):
+        chapter_base=float(i-1)
+        job.progress_detail=f"Cap. {ch.name}: validando MERGE..."
         job.message=f"Texto Off — Merged: validando capítulo {ch.name} ({i}/{len(chs)})..."
         if not is_chapter_merged(ch):
-            out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial inválido ou ausente"}); job.progress=i; continue
+            out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial inválido ou ausente"})
+            job.progress=i
+            job.progress_value=float(i)
+            job.progress_detail=f"Cap. {ch.name}: MERGE oficial inválido ou ausente"
+            continue
         imgs=v3.merge_artifact_files(merge_output_dir(ch))
         if not imgs:
-            out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial sem imagens para limpeza"}); job.progress=i; continue
+            out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial sem imagens para limpeza"})
+            job.progress=i
+            job.progress_value=float(i)
+            job.progress_detail=f"Cap. {ch.name}: MERGE oficial sem imagens para limpeza"
+            continue
         target=tmdir(manga,ch.name)
         if target.is_dir(): shutil.rmtree(target)
         target.mkdir(parents=True,exist_ok=True)
         reports=[]; fails=[]
+        total_images=max(1,len(imgs))
         for pi,img in enumerate(imgs,1):
+            job.progress_value=chapter_base+(float(pi-1)/float(total_images))
+            job.progress_detail=f"Cap. {ch.name}: imagem {pi}/{len(imgs)}"
             job.message=f"Texto Off — Merged · Capítulo {ch.name}: imagem {pi}/{len(imgs)}"
             try: reports.append(process_image(img,target,model,["en"],0.55,ocr_backend=ocr))
             except Exception as e: fails.append(f"{img.name}: {e}")
+            job.progress_value=chapter_base+(float(pi)/float(total_images))
         manifest={
             "schema_version":1,
             "algorithm":"bubble_cleaner_v3_5",
@@ -1435,7 +1452,10 @@ def do_clean_merged(job,manga,chs):
             "failures":fails,
         }
         (target/"clean-manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
-        out.append({"chapter":ch.name,"status":"ok" if not fails else "error","pages":len(reports),"failures":fails,"stage_folder":str(target)}); job.progress=i
+        out.append({"chapter":ch.name,"status":"ok" if not fails else "error","pages":len(reports),"failures":fails,"stage_folder":str(target)})
+        job.progress=i
+        job.progress_value=float(i)
+        job.progress_detail=f"Cap. {ch.name}: concluído"
     return out
 
 def reviewmod():
