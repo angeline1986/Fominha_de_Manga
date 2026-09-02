@@ -185,6 +185,22 @@ class MergeReviewFinalCompositionScopeTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temp:
             manga = Path(temp) / "Manga"
 
+            # Em produção, a composição oficial sempre possui
+            # as páginas-fonte do capítulo. O fixture antigo
+            # criava apenas Level II + Review e, portanto, não
+            # representava completamente o cenário real.
+            chapter_dir = manga / "IMG" / "6"
+            self._png(
+                chapter_dir / "page-001.png",
+                6000,
+                "white",
+            )
+            self._png(
+                chapter_dir / "page-002.png",
+                6000,
+                "white",
+            )
+
             self._prepare_level2(
                 manga,
                 total_height=12000,

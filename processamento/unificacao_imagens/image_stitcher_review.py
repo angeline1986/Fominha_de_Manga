@@ -1405,12 +1405,26 @@ def approve(manga, chapter):
 
     payload=json.loads(mf.read_text(encoding="utf-8"))
     scope=payload.get("scope") or {}
-    if scope.get("type")=="pending_segments":
+    scope_type=scope.get("type")
+
+    if scope_type=="pending_segments":
         return _approve_scoped_level2_review(
             manga,
             chapter,
             src,
             payload,
+        )
+
+    # Reviews históricos não possuem scope.
+    #
+    # Se houver scope, mas ele não for o contrato scoped atual,
+    # não podemos tratá-lo silenciosamente como Review histórico.
+    # Isso inclui propostas legadas geradas antes da formalização
+    # de pending_segments/regions.
+    if scope:
+        return False,(
+            "Proposta Review utiliza scope não suportado "
+            f"({scope_type!r}); regenere a proposta antes de aprovar."
         )
 
     outputs=sorted(src.glob("merged-*.png"),key=_key)

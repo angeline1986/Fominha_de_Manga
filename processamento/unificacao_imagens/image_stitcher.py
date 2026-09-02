@@ -105,19 +105,153 @@ def merge_manifest_path(chapter_dir: Path) -> Path:
 
 
 def is_chapter_merged(chapter_dir: Path) -> bool:
+    chapter_dir = Path(chapter_dir)
     manifest = merge_manifest_path(chapter_dir)
+
     if not manifest.is_file():
         return False
+
     try:
-        payload = json.loads(manifest.read_text(encoding="utf-8"))
+        payload = json.loads(
+            manifest.read_text(encoding="utf-8")
+        )
         outputs = payload.get("outputs") or []
-        expected = int(payload.get("merged_images") or len(outputs))
-    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        expected = int(
+            payload.get("merged_images") or len(outputs)
+        )
+    except (
+        OSError,
+        ValueError,
+        TypeError,
+        json.JSONDecodeError,
+    ):
         return False
+
     if expected <= 0 or len(outputs) != expected:
         return False
+
+    pages = list_pages(chapter_dir)
+
+    if not pages:
+        return False
+
+    source_width = None
+    source_total_height = 0
+
+    try:
+        for page in pages:
+            with Image.open(page) as image:
+                image.load()
+                width, height = image.size
+
+            if width <= 0 or height <= 0:
+                return False
+
+            if source_width is None:
+                source_width = int(width)
+            elif int(width) != source_width:
+                return False
+
+            source_total_height += int(height)
+    except (OSError, UnidentifiedImageError):
+        return False
+
+    if source_width is None or source_total_height <= 0:
+        return False
+
+    try:
+        manifest_total = int(
+            payload.get("source_total_height")
+        )
+    except (TypeError, ValueError):
+        return False
+
+    if manifest_total != source_total_height:
+        return False
+
     output_dir = manifest.parent
-    return all((output_dir / item.get("file", "")).is_file() for item in outputs)
+    expected_start = 0
+
+    for item in outputs:
+        try:
+            filename = str(item["file"]).strip()
+            start = int(item["global_start"])
+            end = int(item["global_end"])
+            declared_width = int(
+                item.get("width", source_width)
+            )
+            declared_height = int(
+                item.get("height", end - start)
+            )
+        except (
+            KeyError,
+            TypeError,
+            ValueError,
+        ):
+            return False
+
+        if not filename:
+            return False
+
+        if start != expected_start:
+            return False
+
+        if end <= start:
+            return False
+
+        interval_height = end - start
+
+        if declared_width != source_width:
+            return False
+
+        if declared_height != interval_height:
+            return False
+
+        output_path = output_dir / filename
+
+        if not output_path.is_file():
+            return False
+
+        try:
+            with Image.open(output_path) as image:
+                image.load()
+
+                if image.size != (
+                    source_width,
+                    interval_height,
+                ):
+                    return False
+        except (OSError, UnidentifiedImageError):
+            return False
+
+        expected_start = end
+
+    if expected_start != source_total_height:
+        return False
+
+    validation = payload.get("validation")
+
+    if isinstance(validation, dict):
+        try:
+            coverage_start = int(
+                validation.get("coverage_start", 0)
+            )
+            coverage_end = int(
+                validation.get(
+                    "coverage_end",
+                    source_total_height,
+                )
+            )
+        except (TypeError, ValueError):
+            return False
+
+        if coverage_start != 0:
+            return False
+
+        if coverage_end != source_total_height:
+            return False
+
+    return True
 
 
 def row_whiteness(
