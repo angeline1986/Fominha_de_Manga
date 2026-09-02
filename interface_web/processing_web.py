@@ -1011,6 +1011,55 @@ def run_job(job,payload):
     except Exception as e:
         job.status="error"; job.error=str(e); job.message=str(e); traceback.print_exc()
 
+
+def _auto_merge_summary_payload(ch, failure=None):
+    """Retorna somente metadados reais já persistidos pelo Auto-Merge para a UI."""
+    auto_dir=amdir(ch.parent.parent,ch.name)
+    manifest_path=auto_dir/"auto-merge-manifest.json"
+    manifest={}
+    if manifest_path.is_file():
+        try:
+            manifest=json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            manifest={}
+    artifacts=manifest.get("artifacts") or []
+    files=[
+        str(item.get("file"))
+        for item in artifacts
+        if isinstance(item,dict) and item.get("file")
+    ]
+    failure=failure or {}
+    part=failure.get("partition") or {}
+    pending_segments=part.get("pending_segments") or manifest.get("pending_segments") or []
+    pending_files=list(part.get("pending_source_pages") or [])
+    if not pending_files:
+        seen=set()
+        for seg in pending_segments:
+            for name in (seg.get("sources") or []):
+                name=str(name)
+                if name and name not in seen:
+                    seen.add(name)
+                    pending_files.append(name)
+    residuals=[]
+    reasons=[]
+    for seg in pending_segments:
+        try:
+            start=int(seg.get("global_start"))
+            end=int(seg.get("global_end"))
+        except Exception:
+            continue
+        residuals.append({"global_start":start,"global_end":end})
+        reason=str(seg.get("reason") or "")
+        if reason and reason not in reasons:
+            reasons.append(reason)
+    return {
+        "auto_merge_files":files,
+        "pending_files":pending_files,
+        "pending_segments_count":len(pending_segments),
+        "residuals":residuals,
+        "reason_codes":reasons,
+    }
+
 def do_merge(job,chs):
     from concurrent.futures import ThreadPoolExecutor, as_completed
     from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_chapter
@@ -1050,7 +1099,20 @@ def do_merge(job,chs):
             if is_chapter_merged(ch):
                 clear_merge_failure(ch)
                 report(ch.name,{"stage":"done","current":1,"total":1,"message":"MERGE já existente"})
-                return {"chapter":ch.name,"status":"skipped","message":"MERGE já existente"}
+                summary=_auto_merge_summary_payload(ch)
+                return {
+                    "chapter":ch.name,
+                    "status":"skipped",
+                    "message":"MERGE já existente",
+                    "auto_merge_saved":len(summary["auto_merge_files"]),
+                    "auto_merge_folder":str(amdir(ch.parent.parent,ch.name)),
+                    "auto_merge_files":summary["auto_merge_files"],
+                    "pending_files":[],
+                    "pending_segments_count":0,
+                    "residuals":[],
+                    "reason_codes":[],
+                    "next_stage":"—",
+                }
             auto_dir=amdir(ch.parent.parent,ch.name)
             if auto_dir.exists():
                 shutil.rmtree(auto_dir)
@@ -1067,19 +1129,40 @@ def do_merge(job,chs):
             if not promoted: raise RuntimeError(promote_msg)
             clear_merge_failure(ch)
             report(ch.name,{"stage":"done","current":1,"total":1,"message":"capítulo concluído"})
-            return {"chapter":ch.name,"status":"ok","merged_images":r.merged_images,"auto_merge_saved":r.merged_images,"auto_merge_folder":str(auto_dir),"message":promote_msg}
+            summary=_auto_merge_summary_payload(ch)
+            return {
+                "chapter":ch.name,
+                "status":"ok",
+                "merged_images":r.merged_images,
+                "auto_merge_saved":r.merged_images,
+                "auto_merge_folder":str(auto_dir),
+                "auto_merge_files":summary["auto_merge_files"],
+                "pending_files":[],
+                "pending_segments_count":0,
+                "residuals":[],
+                "reason_codes":[],
+                "next_stage":"—",
+                "message":promote_msg,
+            }
         except Exception as e:
             set_merge_failure(ch,e)
             report(ch.name,{"stage":"done","current":1,"total":1,"message":"capítulo finalizado"})
             failure=read_merge_failure(ch) or {}
             level1=failure.get("auto_merge_level1") or {}
             saved=int(level1.get("artifacts_count") or 0)
+            summary=_auto_merge_summary_payload(ch,failure)
             return {
                 "chapter":ch.name,
                 "status":"partial" if saved else "error",
                 "message":str(e),
                 "auto_merge_saved":saved,
                 "auto_merge_folder":level1.get("output_dir"),
+                "auto_merge_files":summary["auto_merge_files"],
+                "pending_files":summary["pending_files"],
+                "pending_segments_count":summary["pending_segments_count"],
+                "residuals":summary["residuals"],
+                "reason_codes":summary["reason_codes"],
+                "next_stage":"Auto-Merge Nível II" if summary["pending_segments_count"] else "Verificar ocorrência",
             }
 
     out=[]
@@ -1106,12 +1189,35 @@ def do_merge_level2(job,chs):
     for i,ch in enumerate(chs,1):
         job.message=f"Auto-Merge Nível II: capítulo {ch.name}..."
         ok,msg,part=validate_merge_level2(ch)
+        resolved=(part or {}).get("level2_resolved_segments") or []
+        pending=(part or {}).get("pending_segments") or []
+        pending_files=[]
+        seen_pending=set()
+        for seg in pending:
+            for name in (seg.get("sources") or []):
+                name=str(name)
+                if name and name not in seen_pending:
+                    seen_pending.add(name); pending_files.append(name)
         out.append({
             "chapter":ch.name,
             "status":"ok" if ok else "error",
             "message":msg,
-            "resolved_segments":len((part or {}).get("level2_resolved_segments") or []),
-            "pending_segments":len((part or {}).get("pending_segments") or []),
+            "resolved_segments":len(resolved),
+            "pending_segments":len(pending),
+            "stage_files":[str(x.get("file")) for x in resolved if isinstance(x,dict) and x.get("file")],
+            "pending_files":pending_files,
+            "residuals":[
+                {"global_start":int(x["global_start"]),"global_end":int(x["global_end"])}
+                for x in pending
+                if x.get("global_start") is not None and x.get("global_end") is not None
+            ],
+            "reason_codes":[
+                str(x.get("reason"))
+                for x in pending
+                if isinstance(x,dict) and x.get("reason")
+            ],
+            "stage_folder":str(l2dir(ch.parent.parent,ch.name)),
+            "next_stage":"Auto-Merge Nível III" if pending else "—",
         })
         job.progress=i
     return out
@@ -1160,6 +1266,13 @@ def do_merge_level3(job,chs):
                         message=l3_msg or "Auto-Merge Nível III analisado sem resultado promovível."
                     if promote_msg:
                         message=f"{message} {promote_msg}"
+                    pending_files=[]
+                    seen_pending=set()
+                    for seg in residual:
+                        for name in (seg.get("sources") or []):
+                            name=str(name)
+                            if name and name not in seen_pending:
+                                seen_pending.add(name); pending_files.append(name)
                     out.append({
                         "chapter":ch.name,
                         "status":status,
@@ -1167,6 +1280,20 @@ def do_merge_level3(job,chs):
                         "safe_segments":len(safe),
                         "residual_pending_segments":len(residual),
                         "promoted":bool(promoted),
+                        "stage_files":[str(x.get("file")) for x in safe if isinstance(x,dict) and x.get("file")],
+                        "pending_files":pending_files,
+                        "residuals":[
+                            {"global_start":int(x["global_start"]),"global_end":int(x["global_end"])}
+                            for x in residual
+                            if x.get("global_start") is not None and x.get("global_end") is not None
+                        ],
+                        "reason_codes":[
+                            str(x.get("reason") or x.get("trigger_reason"))
+                            for x in residual
+                            if isinstance(x,dict) and (x.get("reason") or x.get("trigger_reason"))
+                        ],
+                        "stage_folder":str(l3dir(ch.parent.parent,ch.name)),
+                        "next_stage":"Revisão Merge V2" if residual else "—",
                     })
         except Exception as exc:
             out.append({"chapter":ch.name,"status":"error","message":str(exc)})
@@ -1423,6 +1550,8 @@ class Handler(BaseHTTPRequestHandler):
                 folder_name={
                     "pdf_merge":"PDF_MERGE",
                     "auto_merge":"AUTO_MERGE",
+                    "merge_level2":"MERGE_LEVEL2",
+                    "merge_level3":"MERGE_LEVEL3",
                     "merge":"MERGE",
                 }.get(kind)
                 if not folder_name:

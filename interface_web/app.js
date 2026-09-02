@@ -846,63 +846,187 @@ function reviewResultModal(j,s){
   return true;
 }
 
+
+function mergeReasonLabel(item){
+  const codes=Array.isArray(item?.reason_codes)?item.reason_codes:[];
+  const map={
+    auto_merge_oversized_chunk:"Faixa branca não encontrada"
+  };
+  if(codes.length) return codes.map(x=>map[String(x)]||String(x).replaceAll("_"," ")).join("; ");
+  const status=String(item?.status||"").toLowerCase();
+  if(status==="partial") return "Faixa branca não encontrada";
+  if(status==="error") return item?.message||"Falha no processamento";
+  return "—";
+}
+function mergeResidualLabel(item){
+  const residuals=Array.isArray(item?.residuals)?item.residuals:[];
+  if(!residuals.length) return "—";
+  const fmt=n=>Number(n).toLocaleString("pt-BR");
+  return residuals.map(x=>`${fmt(x.global_start)} – ${fmt(x.global_end)} px`).join("; ");
+}
+function mergeStatusLabel(item){
+  const status=String(item?.status||"").toLowerCase();
+  if(status==="partial") return "Concluído parcialmente";
+  if(status==="error") return "Requer atenção";
+  if(status==="skipped") return "Já concluído";
+  return "Concluído";
+}
+function mergeExpandableRow(label,value,files,key){
+  const names=Array.isArray(files)?files.filter(Boolean):[];
+  const enabled=names.length>0;
+  return `<div class="merge-summary-row ${enabled?"is-expandable":""}" data-expand-row="${esc(key)}">
+    <span class="merge-summary-label">${esc(label)}</span>
+    <strong class="merge-summary-value">${esc(value)}</strong>
+    ${enabled?`<button class="merge-summary-toggle" type="button" aria-expanded="false" aria-label="Expandir ${esc(label)}" data-expand="${esc(key)}">⌄</button>`:`<span class="merge-summary-toggle-spacer"></span>`}
+    ${enabled?`<div class="merge-summary-files" data-expand-panel="${esc(key)}" hidden>${names.map(name=>`<span>${esc(name)}</span>`).join("")}</div>`:""}
+  </div>`;
+}
+function openMergeStageFolder(action,chapter){
+  const kind={
+    merge:"auto_merge",
+    merge_level2:"merge_level2",
+    merge_level3:"merge_level3"
+  }[String(action||"")];
+  if(!kind) return Promise.reject(new Error("Etapa de merge inválida."));
+  return api(`/api/open-folder?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&chapter=${encodeURIComponent(chapter)}&kind=${encodeURIComponent(kind)}`);
+}
+function mergeOperationResultModal(j,s){
+  const action=String(j?.action||"").toLowerCase();
+  if(!["merge","merge_level2","merge_level3"].includes(action)) return false;
+  const payload=j?.result ?? j?.response ?? j;
+  const rawItems=Array.isArray(payload)?payload:(Array.isArray(payload?.items)?payload.items:[]);
+  if(!rawItems.length) return false;
+
+  const items=rawItems.map(raw=>{
+    const saved=action==="merge"
+      ? (Array.isArray(raw.auto_merge_files)?raw.auto_merge_files:[])
+      : (Array.isArray(raw.stage_files)?raw.stage_files:[]);
+    const pending=Array.isArray(raw.pending_files)?raw.pending_files:[];
+    const pendingSegments=action==="merge"
+      ? Number(raw.pending_segments_count||0)
+      : action==="merge_level2"
+        ? Number(raw.pending_segments||0)
+        : Number(raw.residual_pending_segments||0);
+    const next=raw.next_stage || (
+      pendingSegments
+        ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":"Revisão Merge V2")
+        : "—"
+    );
+    return {...raw,_saved:saved,_pending:pending,_pendingSegments:pendingSegments,_next:next};
+  });
+
+  document.querySelector("#appModal")?.remove();
+  let current=0;
+  let overlay=document.createElement("div");
+  overlay.id="appModal";
+  overlay.className="app-modal-overlay";
+
+  const render=()=>{
+    if(!items.length){closeAppModal(true);load();return;}
+    current=Math.max(0,Math.min(current,items.length-1));
+    const item=items[current]||{};
+    const saved=item._saved||[];
+    const pending=item._pending||[];
+    const pendingCount=Number(item._pendingSegments||0);
+    const statusRaw=String(item.status||"").toLowerCase();
+    const isError=["error","failed"].includes(statusRaw);
+    const isPartial=!isError && pendingCount>0;
+    const statusLabel=isError?"Requer atenção":isPartial?"Concluído parcialmente":statusRaw==="skip"||statusRaw==="skipped"?"Já concluído":"Concluído";
+    const savedCount=action==="merge"
+      ? Number(item.auto_merge_saved||saved.length||0)
+      : action==="merge_level2"
+        ? Number(item.resolved_segments||saved.length||0)
+        : Number(item.safe_segments||saved.length||0);
+    const pendingValue=pending.length
+      ? `${pending.length} ${pending.length===1?"imagem":"imagens"}`
+      : (pendingCount?`${pendingCount} ${pendingCount===1?"segmento residual":"segmentos residuais"}`:"0");
+    const reason=item.reason_codes?.length
+      ? item.reason_codes.map(x=>typeof l3ReasonLabel==="function"?l3ReasonLabel(x):String(x).replaceAll("_"," ")).join("; ")
+      : (isPartial ? (action==="merge"?"Faixa branca não encontrada":item.message||"Não foi encontrada solução automática segura") : isError ? item.message||"Falha no processamento" : "—");
+    const residual=mergeResidualLabel(item);
+    overlay.innerHTML=`<div class="app-modal merge-summary-modal" role="dialog" aria-modal="true" aria-label="Resumo da Operação">
+      <div class="app-modal-head merge-summary-head">
+        <div><div class="caption">PROCESSAMENTO</div><h2>Resumo da Operação</h2></div>
+        <button class="app-modal-x" aria-label="Fechar">&times;</button>
+      </div>
+      <div class="merge-summary-tabs">
+        ${items.map((x,i)=>`<button type="button" class="merge-summary-tab ${i===current?"active":""}" data-summary-tab="${i}">Cap. ${esc(x.chapter)}</button>`).join("")}
+      </div>
+      <div class="merge-summary-body">
+        <div class="merge-summary-row">
+          <span class="merge-summary-label">Status</span>
+          <strong class="merge-summary-value ${isPartial?"warning":""}">${esc(statusLabel)}</strong>
+          <span class="merge-summary-toggle-spacer"></span>
+        </div>
+        ${mergeExpandableRow("Merges salvos",String(savedCount),saved,"saved")}
+        ${mergeExpandableRow("Pendente",pendingValue,pending,"pending")}
+        <div class="merge-summary-row">
+          <span class="merge-summary-label">Motivo</span>
+          <strong class="merge-summary-value">${esc(reason)}</strong>
+          <span class="merge-summary-toggle-spacer"></span>
+        </div>
+        <div class="merge-summary-row">
+          <span class="merge-summary-label">Residual</span>
+          <strong class="merge-summary-value">${esc(residual)}</strong>
+          <span class="merge-summary-toggle-spacer"></span>
+        </div>
+        <div class="merge-summary-row">
+          <span class="merge-summary-label">Próxima etapa</span>
+          <strong class="merge-summary-value">${esc(item._next||"—")}</strong>
+          <span class="merge-summary-toggle-spacer"></span>
+        </div>
+      </div>
+      <div class="app-modal-actions merge-summary-actions">
+        <button class="btn primary" data-summary-finish>Concluir e Abrir Pasta</button>
+      </div>
+    </div>`;
+
+    overlay.querySelector(".app-modal-x").onclick=()=>closeAppModal(false);
+    overlay.querySelectorAll("[data-summary-tab]").forEach(btn=>{
+      btn.onclick=()=>{current=Number(btn.dataset.summaryTab)||0;render();};
+    });
+    overlay.querySelectorAll("[data-expand]").forEach(btn=>{
+      btn.onclick=()=>{
+        const key=btn.dataset.expand;
+        const panel=overlay.querySelector(`[data-expand-panel="${key}"]`);
+        if(!panel)return;
+        const open=panel.hidden;
+        panel.hidden=!open;
+        btn.classList.toggle("open",open);
+        btn.setAttribute("aria-expanded",String(open));
+      };
+    });
+    overlay.querySelector("[data-summary-finish]").onclick=async()=>{
+      try{
+        await openMergeStageFolder(action,item.chapter);
+      }catch(e){
+        toast(e.message||"Não foi possível abrir a pasta.");
+        return;
+      }
+      items.splice(current,1);
+      if(current>=items.length) current=Math.max(0,items.length-1);
+      if(items.length) render();
+      else{
+        closeAppModal(true);
+        load();
+      }
+    };
+  };
+
+  overlay.onclick=e=>{if(e.target===overlay)closeAppModal(false)};
+  document.body.appendChild(overlay);
+  document.addEventListener("keydown",appModalKey);
+  render();
+  return true;
+}
+
 function showJobResult(j){
   let s=jobSummary(j);
   toast(s.title);
 
+  if(mergeOperationResultModal(j,s)) return;
   if(level2ResultModal(j,s)) return;
   if(reviewResultModal(j,s)) return;
-  if(page==="merge"){
-    const payload=j?.result ?? j?.response ?? j;
-    const items=Array.isArray(payload)
-      ? payload
-      : (Array.isArray(payload?.items) ? payload.items : []);
-    const savedItems=items.filter(x=>Number(x?.auto_merge_saved||0)>0);
-
-    if(savedItems.length){
-      const totalSaved=savedItems.reduce(
-        (acc,x)=>acc+Number(x.auto_merge_saved||0),
-        0
-      );
-      const residualCount=savedItems.filter(x=>x?.status==="partial").length;
-      const hasResidual=residualCount>0;
-
-      const modalPromise=appModal({
-        title:hasResidual?"Auto-Merge concluído parcialmente":"Auto-Merge concluído",
-        message:hasResidual
-          ? "Os trechos resolvidos pelo Auto-Merge foram salvos. Somente o residual seguirá para o Nível II."
-          : "Todos os trechos resolvidos pelo Auto-Merge foram salvos em AUTO_MERGE e consolidados no MERGE final.",
-        kind:"partial",
-        chips:[
-          {value:totalSaved,label:"merge(s) salvo(s)"},
-          {value:residualCount,label:"capítulo(s) com residual"}
-        ],
-        details:savedItems.map(x=>({
-          title:`Cap. ${x.chapter} · Auto-Merge`,
-          message:`${Number(x.auto_merge_saved||0)} merge(s) seguro(s) foram gerados e salvos em AUTO_MERGE. ${x.message||""}`.trim()
-        })),
-        confirmText:"Fechar"
-      });
-
-      requestAnimationFrame(()=>{
-        const actions=document.querySelector("#appModal .app-modal-actions");
-        const closeBtn=actions?.querySelector("[data-modal-ok]");
-        if(actions && closeBtn && savedItems.length===1){
-          const openBtn=document.createElement("button");
-          openBtn.className="btn";
-          openBtn.textContent="Abrir pasta";
-          openBtn.onclick=()=>openAutoMergeFolder(savedItems[0].chapter);
-          actions.insertBefore(openBtn,closeBtn);
-        }
-      });
-
-      modalPromise.then(()=>load());
-      return;
-    }
-  }
-
-
-
   if(s.kind==="error"||s.kind==="partial"){
     let occurrences=(s.details||[]).map(line=>{
       let m=String(line).match(/^Cap\.\s*([^:]+):\s*(.*)$/s);
