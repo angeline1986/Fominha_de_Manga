@@ -888,6 +888,17 @@ def _approve_scoped_level2_review(
     manga = Path(manga)
     chapter_name = str(chapter)
 
+    auto_dir = manga / SECONDARY / "AUTO_MERGE" / chapter_name
+    auto_manifest_path = auto_dir / "auto-merge-manifest.json"
+    if not auto_manifest_path.is_file():
+        return False, f"Manifesto Auto-Merge não encontrado: {auto_manifest_path}"
+    try:
+        auto_payload = json.loads(auto_manifest_path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return False, f"Manifesto Auto-Merge inválido: {exc}"
+    if auto_payload.get("algorithm") != "auto_merge_level1_resolved_segments":
+        return False, "Manifesto Auto-Merge possui algoritmo não suportado para Review scoped."
+
     level2_dir = (
         manga
         / SECONDARY
@@ -912,6 +923,8 @@ def _approve_scoped_level2_review(
         )
     except Exception as exc:
         return False, f"Manifesto Level II inválido: {exc}"
+    if level2_payload.get("algorithm") != "merge_level2_residual_v2":
+        return False, "Manifesto Level II possui algoritmo não suportado para Review scoped."
 
     try:
         total_height = int(
@@ -1104,61 +1117,26 @@ def _approve_scoped_level2_review(
         )
 
     pieces = []
-    pieces = []
 
-    # Level II: artefatos PASSED já materializados.
-    for segment in level2_payload.get("segments") or []:
-        if (
-            str(segment.get("status") or "").lower()
-            != "passed"
-        ):
-            continue
-
+    # Auto-Merge Level I: artefatos resolvidos e persistidos na origem.
+    for artifact in auto_payload.get("artifacts") or []:
         try:
-            start = int(segment["global_start"])
-            end = int(segment["global_end"])
-        except (KeyError, TypeError, ValueError):
-            return False, (
-                "Segmento PASSED do Level II "
-                "possui intervalo inválido."
-            )
+            start=int(artifact["global_start"]); end=int(artifact["global_end"])
+        except (KeyError,TypeError,ValueError):
+            return False,"Artefato Auto-Merge possui intervalo inválido."
+        filename=str(artifact.get("file") or "").strip()
+        if not filename: return False,"Artefato Auto-Merge não possui arquivo."
+        pieces.append({"kind":"auto_merge","source":auto_dir/filename,"source_file":filename,"global_start":start,"global_end":end})
 
-        artifact = segment.get("artifact") or {}
-        filename = str(
-            artifact.get("file") or ""
-        ).strip()
-
-        # Compatibilidade defensiva com o array
-        # artifacts do manifesto Level II.
-        if not filename:
-            segment_id = segment.get("id")
-            for candidate in (
-                level2_payload.get("artifacts") or []
-            ):
-                if (
-                    candidate.get("segment_id")
-                    == segment_id
-                ):
-                    filename = str(
-                        candidate.get("file") or ""
-                    ).strip()
-                    break
-
-        if not filename:
-            return False, (
-                "Segmento PASSED do Level II não "
-                "possui artefato materializado."
-            )
-
-        pieces.append(
-            {
-                "kind": "level2",
-                "source": level2_dir / filename,
-                "source_file": filename,
-                "global_start": start,
-                "global_end": end,
-            }
-        )
+    # Level II: somente artefatos realmente resolvidos pelo próprio Level II.
+    for artifact in level2_payload.get("artifacts") or []:
+        try:
+            start=int(artifact["global_start"]); end=int(artifact["global_end"])
+        except (KeyError,TypeError,ValueError):
+            return False,"Artefato Level II possui intervalo inválido."
+        filename=str(artifact.get("file") or "").strip()
+        if not filename: return False,"Artefato Level II não possui arquivo."
+        pieces.append({"kind":"level2","source":level2_dir/filename,"source_file":filename,"global_start":start,"global_end":end})
 
     # Level III: artefatos SAFE materializados sobre o pending do Level II.
     if level3_payload is not None:
@@ -1425,9 +1403,9 @@ def _approve_scoped_level2_review(
         manifest = {
             "schema_version": 1,
             "algorithm": (
-                "merge_level2_level3_review_composition_v1"
+                "merge_auto_level2_level3_review_composition_v2"
                 if level3_payload is not None
-                else "merge_level2_review_composition_v1"
+                else "merge_auto_level2_review_composition_v2"
             ),
             "status": "approved",
             "approved_at": datetime.now(
@@ -1462,6 +1440,7 @@ def _approve_scoped_level2_review(
                 "review_artifacts_rerendered": False,
             },
             "composition": {
+                "auto_merge_manifest": "auto-merge-manifest.json",
                 "level2_manifest": (
                     "merge-level2-manifest.json"
                 ),

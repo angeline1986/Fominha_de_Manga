@@ -828,10 +828,13 @@ function showJobResult(j){
         0
       );
       const residualCount=savedItems.filter(x=>x?.status==="partial").length;
+      const hasResidual=residualCount>0;
 
       const modalPromise=appModal({
-        title:"Auto-Merge concluído parcialmente",
-        message:"Os trechos resolvidos pelo Auto-Merge foram salvos. Somente o residual seguirá para o Nível II.",
+        title:hasResidual?"Auto-Merge concluído parcialmente":"Auto-Merge concluído",
+        message:hasResidual
+          ? "Os trechos resolvidos pelo Auto-Merge foram salvos. Somente o residual seguirá para o Nível II."
+          : "Todos os trechos resolvidos pelo Auto-Merge foram salvos em AUTO_MERGE e consolidados no MERGE final.",
         kind:"partial",
         chips:[
           {value:totalSaved,label:"merge(s) salvo(s)"},
@@ -845,7 +848,7 @@ function showJobResult(j){
       });
 
       requestAnimationFrame(()=>{
-        const actions=document.querySelector(".app-modal .modal-actions, .modal .modal-actions");
+        const actions=document.querySelector("#appModal .app-modal-actions");
         const closeBtn=actions?.querySelector("[data-modal-ok]");
         if(actions && closeBtn && savedItems.length===1){
           const openBtn=document.createElement("button");

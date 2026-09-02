@@ -298,495 +298,105 @@ def clear_merge_failure(ch):
     if p.parent.is_dir() and not any(p.parent.iterdir()): p.parent.rmdir()
 
 
-def _promote_level2_complete(ch, part):
-    """Promove Level II 100% PASSED para o MERGE oficial."""
+def _load_stage_manifest(path, algorithm, label):
+    if not path.is_file():
+        return None, f"Manifesto {label} não encontrado: {path}"
+    try:
+        payload=json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return None, f"Manifesto {label} inválido: {exc}"
+    if payload.get("algorithm") != algorithm:
+        return None, f"Manifesto {label} possui algoritmo não suportado."
+    return payload, None
+
+def _stage_artifact_pieces(directory, payload, key, stage):
+    pieces=[]
+    for artifact in payload.get(key) or []:
+        pieces.append({
+            "global_start":int(artifact["global_start"]),
+            "global_end":int(artifact["global_end"]),
+            "source":directory/str(artifact["file"]),
+            "source_file":str(artifact["file"]),
+            "source_stage":stage,
+        })
+    return pieces
+
+def _promote_stage_composition(ch, pieces, total_height, algorithm, composition):
     from datetime import datetime, timezone
     from PIL import Image
     from processamento.unificacao_imagens import image_stitcher as v3
-
-    manga = ch.parent.parent
-    level2_dir = l2dir(manga, ch.name)
-    manifest_path = level2_dir / "merge-level2-manifest.json"
-
-    if not manifest_path.is_file():
-        return False, "Manifesto Level II não encontrado."
-
-    try:
-        level2_payload = json.loads(
-            manifest_path.read_text(encoding="utf-8")
-        )
-    except Exception as exc:
-        return False, f"Manifesto Level II inválido: {exc}"
-
-    pending = level2_payload.get("pending_segments") or []
-    if pending:
-        return False, (
-            "Level II ainda possui segmentos pendentes; "
-            "promoção direta cancelada."
-        )
-
-    artifacts = level2_payload.get("artifacts") or []
-    if not artifacts:
-        return False, "Level II não possui artefatos PASSED."
-
-    total_height = int(
-        level2_payload.get("total_height")
-        or part.get("total_height")
-        or 0
-    )
-    if total_height <= 0:
-        return False, "Altura total do Level II inválida."
-
-    pieces = []
-
-    try:
-        for artifact in artifacts:
-            start = int(artifact["global_start"])
-            end = int(artifact["global_end"])
-            filename = str(artifact["file"])
-
-            if start < 0 or end <= start:
-                return False, (
-                    f"Intervalo Level II inválido: "
-                    f"{start}..{end}."
-                )
-
-            source = level2_dir / filename
-            if not source.is_file():
-                return False, (
-                    f"Artefato Level II ausente: {filename}."
-                )
-
-            pieces.append(
-                {
-                    "global_start": start,
-                    "global_end": end,
-                    "source": source,
-                    "source_file": filename,
-                }
-            )
-    except (KeyError, TypeError, ValueError) as exc:
-        return False, (
-            f"Metadados de artefato Level II inválidos: {exc}"
-        )
-
-    pieces.sort(
-        key=lambda item: (
-            item["global_start"],
-            item["global_end"],
-            item["source_file"],
-        )
-    )
-
-    expected_start = 0
-    expected_width = None
-
+    if total_height <= 0 or not pieces:
+        return False, "Composição final sem cobertura válida."
+    pieces=sorted(pieces,key=lambda x:(x["global_start"],x["global_end"],x["source_stage"],x["source_file"]))
+    expected=0; expected_width=None
     for piece in pieces:
-        start = piece["global_start"]
-        end = piece["global_end"]
-        source = piece["source"]
-
-        if start != expected_start:
-            relation = "lacuna" if start > expected_start else "sobreposição"
-            return False, (
-                f"Cobertura Level II inválida ({relation}): "
-                f"esperado {expected_start}, encontrado {start}."
-            )
-
+        start=int(piece["global_start"]); end=int(piece["global_end"]); source=piece["source"]
+        if start != expected:
+            relation="lacuna" if start>expected else "sobreposição"
+            return False,f"Cobertura final inválida ({relation}): esperado {expected}, encontrado {start}."
+        if end<=start or not source.is_file():
+            return False,f"Artefato inválido/ausente na composição: {source}."
         try:
             with Image.open(source) as im:
-                width = int(im.width)
-                height = int(im.height)
+                width=int(im.width); height=int(im.height)
         except Exception as exc:
-            return False, (
-                f"Artefato Level II ilegível "
-                f"{source.name}: {exc}"
-            )
-
-        expected_height = end - start
-        if height != expected_height:
-            return False, (
-                f"Altura incompatível em {source.name}: "
-                f"{height} != {expected_height}."
-            )
-
-        if expected_width is None:
-            expected_width = width
-        elif width != expected_width:
-            return False, (
-                f"Largura incompatível em {source.name}: "
-                f"{width} != {expected_width}."
-            )
-
-        expected_start = end
-
-    if expected_start != total_height:
-        return False, (
-            "Cobertura Level II incompleta: "
-            f"{expected_start} != {total_height}."
-        )
-
-    official_dir = v3.merge_output_dir(ch)
-
-    if official_dir.exists():
-        if v3.is_chapter_merged(ch):
-            return False, (
-                "Já existe MERGE oficial válido para este capítulo."
-            )
-
-        return False, (
-            "Já existe MERGE oficial não reconhecido; "
-            "promoção cancelada por segurança."
-        )
-
-    official_dir.mkdir(
-        parents=True,
-        exist_ok=False,
-    )
-
-    outputs = []
-
+            return False,f"Artefato ilegível {source.name}: {exc}"
+        if height != end-start:
+            return False,f"Altura incompatível em {source.name}: {height} != {end-start}."
+        if expected_width is None: expected_width=width
+        elif width != expected_width: return False,f"Largura incompatível em {source.name}: {width} != {expected_width}."
+        expected=end
+    if expected != int(total_height):
+        return False,f"Cobertura final incompleta: {expected} != {total_height}."
+    official=v3.merge_output_dir(ch)
+    if official.exists():
+        if v3.is_chapter_merged(ch): return False,"Já existe MERGE oficial válido para este capítulo."
+        return False,"Já existe MERGE oficial não reconhecido; promoção cancelada por segurança."
+    official.mkdir(parents=True,exist_ok=False)
+    outputs=[]
     try:
-        for index, piece in enumerate(pieces, 1):
-            filename = piece["source"].name
-            destination = v3.ensure_unique_output_path(official_dir, filename)
-
-            # Preserva exatamente o artefato validado do Level II.
-            shutil.copy2(
-                piece["source"],
-                destination,
-            )
-
-            outputs.append(
-                {
-                    "file": filename,
-                    "global_start": piece["global_start"],
-                    "global_end": piece["global_end"],
-                    "width": expected_width,
-                    "height": (
-                        piece["global_end"]
-                        - piece["global_start"]
-                    ),
-                    "sources": [],
-                    "source_stage": "level2",
-                    "source_file": piece["source_file"],
-                }
-            )
-
-        manifest = {
-            "schema_version": 1,
-            "algorithm": "merge_level2_composition_v1",
-            "status": "approved",
-            "approved_at": datetime.now(
-                timezone.utc
-            ).isoformat(),
-            "source_dir": str(ch),
-            "output_dir": str(official_dir),
-            "source_width": int(expected_width or 0),
-            "source_total_height": total_height,
-            "merged_images": len(outputs),
-            "outputs": outputs,
-            "validation": {
-                "ok": True,
-                "errors": [],
-                "coverage_start": 0,
-                "coverage_end": total_height,
-            },
-            "safety": {
-                "source_files_modified": False,
-                "forced_cut_without_white_band": False,
-                "all_source_pixels_preserved_in_order": True,
-                "level2_passed_artifacts_rerendered": False,
-            },
-            "composition": {
-                "level2_manifest": (
-                    "merge-level2-manifest.json"
-                ),
-                "review_manifest": None,
-                "scope": "level2_all_passed",
-            },
-        }
-
-        (
-            official_dir / "merge-manifest.json"
-        ).write_text(
-            json.dumps(
-                manifest,
-                ensure_ascii=False,
-                indent=2,
-            ) + "\n",
-            encoding="utf-8",
-        )
-
-        if not v3.is_chapter_merged(ch):
-            raise RuntimeError(
-                "MERGE Level II promovido, mas manifesto "
-                "oficial não foi reconhecido."
-            )
-
+        for piece in pieces:
+            dest=v3.ensure_unique_output_path(official,piece["source"].name)
+            shutil.copy2(piece["source"],dest)
+            outputs.append({"file":dest.name,"global_start":piece["global_start"],"global_end":piece["global_end"],"width":expected_width,"height":piece["global_end"]-piece["global_start"],"sources":[],"source_stage":piece["source_stage"],"source_file":piece["source_file"]})
+        manifest={"schema_version":1,"algorithm":algorithm,"status":"approved","approved_at":datetime.now(timezone.utc).isoformat(),"source_dir":str(ch),"output_dir":str(official),"source_width":int(expected_width or 0),"source_total_height":int(total_height),"merged_images":len(outputs),"outputs":outputs,"validation":{"ok":True,"errors":[],"coverage_start":0,"coverage_end":int(total_height)},"safety":{"source_files_modified":False,"forced_cut_without_white_band":False,"all_source_pixels_preserved_in_order":True,"stage_artifacts_rerendered":False},"composition":composition}
+        (official/"merge-manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        if not v3.is_chapter_merged(ch): raise RuntimeError("MERGE consolidado não foi reconhecido após a promoção.")
     except Exception as exc:
-        if official_dir.is_dir():
-            shutil.rmtree(official_dir)
+        if official.is_dir(): shutil.rmtree(official)
+        return False,f"Falha ao consolidar MERGE: {exc}"
+    return True,f"Composição final promovida para {official}"
 
-        return False, (
-            f"Falha ao promover Level II completo: {exc}"
-        )
+def _promote_level1_complete(ch):
+    manga=ch.parent.parent; auto_dir=amdir(manga,ch.name); mp=auto_dir/"auto-merge-manifest.json"
+    payload,err=_load_stage_manifest(mp,"auto_merge_level1_complete","Auto-Merge")
+    if err: return False,err
+    pieces=_stage_artifact_pieces(auto_dir,payload,"artifacts","auto_merge")
+    return _promote_stage_composition(ch,pieces,int(payload.get("total_height") or 0),"merge_auto_level1_composition_v1",{"auto_merge_manifest":"auto-merge-manifest.json","level2_manifest":None,"level3_manifest":None,"review_manifest":None,"scope":"level1_complete"})
 
-    return True, (
-        f"Level II concluído e promovido para {official_dir}"
-    )
-
+def _promote_level2_complete(ch, part):
+    manga=ch.parent.parent; auto_dir=amdir(manga,ch.name); level2_dir=l2dir(manga,ch.name)
+    auto,err=_load_stage_manifest(auto_dir/"auto-merge-manifest.json","auto_merge_level1_resolved_segments","Auto-Merge")
+    if err: return False,err
+    l2,err=_load_stage_manifest(level2_dir/"merge-level2-manifest.json","merge_level2_residual_v2","Level II")
+    if err: return False,err
+    if l2.get("pending_segments"): return False,"Level II ainda possui segmentos pendentes; promoção direta cancelada."
+    pieces=_stage_artifact_pieces(auto_dir,auto,"artifacts","auto_merge")+_stage_artifact_pieces(level2_dir,l2,"artifacts","level2")
+    return _promote_stage_composition(ch,pieces,int(l2.get("total_height") or auto.get("total_height") or 0),"merge_auto_level2_composition_v2",{"auto_merge_manifest":"auto-merge-manifest.json","level2_manifest":"merge-level2-manifest.json","level3_manifest":None,"review_manifest":None,"scope":"level2_complete"})
 
 def _promote_level3_complete(ch, part=None):
-    """Promove Level II PASSED + Level III 100% SAFE para o MERGE oficial."""
     import hashlib
-    from datetime import datetime, timezone
-    from PIL import Image
-    from processamento.unificacao_imagens import image_stitcher as v3
-
-    manga = ch.parent.parent
-    level2_dir = l2dir(manga, ch.name)
-    level3_dir = l3dir(manga, ch.name)
-    level2_manifest_path = level2_dir / "merge-level2-manifest.json"
-    level3_manifest_path = level3_dir / "merge-level3-manifest.json"
-
-    if not level2_manifest_path.is_file():
-        return False, "Manifesto Level II não encontrado."
-    if not level3_manifest_path.is_file():
-        return False, "Manifesto Level III não encontrado."
-
-    try:
-        level2_payload = json.loads(level2_manifest_path.read_text(encoding="utf-8"))
-        level3_payload = json.loads(level3_manifest_path.read_text(encoding="utf-8"))
-    except Exception as exc:
-        return False, f"Manifesto Level II/III inválido: {exc}"
-
-    if level2_payload.get("algorithm") != "merge_level2_auto_segments":
-        return False, "Manifesto Level II possui algoritmo não suportado."
-    if level3_payload.get("algorithm") != "merge_level3_structural_safe_v1":
-        return False, "Manifesto Level III possui algoritmo não suportado."
-
-    total_height = int(
-        level2_payload.get("total_height")
-        or (part or {}).get("total_height")
-        or 0
-    )
-    if total_height <= 0:
-        return False, "Altura total inválida para composição Level II + III."
-    if int(level3_payload.get("total_height") or 0) != total_height:
-        return False, "Level III não corresponde ao total_height atual do Level II."
-
-    expected_hash = hashlib.sha256(level2_manifest_path.read_bytes()).hexdigest()
-    if str(level3_payload.get("source_level2_sha256") or "") != expected_hash:
-        return False, (
-            "Manifesto Level III está desatualizado em relação ao Level II; "
-            "promoção direta cancelada."
-        )
-
-    level2_pending = level2_payload.get("pending_segments") or []
-    level3_safe = level3_payload.get("safe_artifacts") or []
-    level3_residual = level3_payload.get("residual_pending_segments") or []
-
-    if not level2_pending:
-        return False, "Level II não possui pending_segments para o Level III."
-    if level3_residual:
-        return False, (
-            "Level III ainda possui residual pendente; "
-            "promoção direta cancelada."
-        )
-    if not level3_safe:
-        return False, "Level III não possui artefatos SAFE para promover."
-
-    try:
-        parents = sorted(
-            (int(x["global_start"]), int(x["global_end"]))
-            for x in level2_pending
-        )
-        children = sorted(
-            (int(x["global_start"]), int(x["global_end"]))
-            for x in level3_safe
-        )
-    except (KeyError, TypeError, ValueError) as exc:
-        return False, f"Intervalos Level II/III inválidos: {exc}"
-
-    ci = 0
-    for pstart, pend in parents:
-        if pstart < 0 or pend <= pstart:
-            return False, "Level II possui pending_segment inválido."
-        cursor = pstart
-        while ci < len(children) and children[ci][0] < pend:
-            cstart, cend = children[ci]
-            if cstart != cursor or cend <= cstart or cend > pend:
-                return False, (
-                    "Level III SAFE não recompõe exatamente os pending_segments "
-                    "do Level II (GAP/OVERLAP ou intervalo fora do pai)."
-                )
-            cursor = cend
-            ci += 1
-        if cursor != pend:
-            return False, (
-                "Level III SAFE não recompõe exatamente os pending_segments "
-                "do Level II (cobertura incompleta)."
-            )
-    if ci != len(children):
-        return False, (
-            "Level III SAFE possui intervalo fora dos pending_segments do Level II."
-        )
-
-    pieces = []
-    try:
-        for artifact in level2_payload.get("artifacts") or []:
-            pieces.append({
-                "global_start": int(artifact["global_start"]),
-                "global_end": int(artifact["global_end"]),
-                "source": level2_dir / str(artifact["file"]),
-                "source_file": str(artifact["file"]),
-                "source_stage": "level2",
-            })
-        for artifact in level3_safe:
-            pieces.append({
-                "global_start": int(artifact["global_start"]),
-                "global_end": int(artifact["global_end"]),
-                "source": level3_dir / str(artifact["file"]),
-                "source_file": str(artifact["file"]),
-                "source_stage": "level3",
-            })
-    except (KeyError, TypeError, ValueError) as exc:
-        return False, f"Metadados de composição Level II/III inválidos: {exc}"
-
-    if not pieces:
-        return False, "Composição Level II + III não possui artefatos."
-
-    pieces.sort(
-        key=lambda item: (
-            item["global_start"],
-            item["global_end"],
-            item["source_stage"],
-            item["source_file"],
-        )
-    )
-
-    expected_start = 0
-    expected_width = None
-    for piece in pieces:
-        start = piece["global_start"]
-        end = piece["global_end"]
-        source = piece["source"]
-        if start != expected_start:
-            relation = "lacuna" if start > expected_start else "sobreposição"
-            return False, (
-                f"Cobertura Level II + III inválida ({relation}): "
-                f"esperado {expected_start}, encontrado {start}."
-            )
-        if end <= start:
-            return False, f"Intervalo inválido em {piece['source_file']}: {start}..{end}."
-        if not source.is_file():
-            return False, f"Artefato ausente: {source}."
-        try:
-            with Image.open(source) as im:
-                width = int(im.width)
-                height = int(im.height)
-        except Exception as exc:
-            return False, f"Artefato ilegível {source.name}: {exc}"
-
-        expected_height = end - start
-        if height != expected_height:
-            return False, (
-                f"Altura incompatível em {source.name}: "
-                f"{height} != {expected_height}."
-            )
-        if expected_width is None:
-            expected_width = width
-        elif width != expected_width:
-            return False, (
-                f"Largura incompatível em {source.name}: "
-                f"{width} != {expected_width}."
-            )
-        expected_start = end
-
-    if expected_start != total_height:
-        return False, (
-            "Cobertura Level II + III incompleta: "
-            f"{expected_start} != {total_height}."
-        )
-
-    official_dir = v3.merge_output_dir(ch)
-    if official_dir.exists():
-        if v3.is_chapter_merged(ch):
-            return False, "Já existe MERGE oficial válido para este capítulo."
-        return False, (
-            "Já existe MERGE oficial não reconhecido; "
-            "promoção cancelada por segurança."
-        )
-
-    official_dir.mkdir(parents=True, exist_ok=False)
-    outputs = []
-    try:
-        for index, piece in enumerate(pieces, 1):
-            filename = piece["source"].name
-            destination = v3.ensure_unique_output_path(official_dir, filename)
-            shutil.copy2(piece["source"], destination)
-            outputs.append({
-                "file": filename,
-                "global_start": piece["global_start"],
-                "global_end": piece["global_end"],
-                "width": expected_width,
-                "height": piece["global_end"] - piece["global_start"],
-                "sources": [],
-                "source_stage": piece["source_stage"],
-                "source_file": piece["source_file"],
-            })
-
-        manifest = {
-            "schema_version": 1,
-            "algorithm": "merge_level2_level3_composition_v1",
-            "status": "approved",
-            "approved_at": datetime.now(timezone.utc).isoformat(),
-            "source_dir": str(ch),
-            "output_dir": str(official_dir),
-            "source_width": int(expected_width or 0),
-            "source_total_height": total_height,
-            "merged_images": len(outputs),
-            "outputs": outputs,
-            "validation": {
-                "ok": True,
-                "errors": [],
-                "coverage_start": 0,
-                "coverage_end": total_height,
-            },
-            "safety": {
-                "source_files_modified": False,
-                "forced_cut_without_white_band": False,
-                "all_source_pixels_preserved_in_order": True,
-                "level2_passed_artifacts_rerendered": False,
-                "level3_safe_artifacts_rerendered": False,
-            },
-            "composition": {
-                "level2_manifest": "merge-level2-manifest.json",
-                "level3_manifest": "merge-level3-manifest.json",
-                "review_manifest": None,
-                "scope": "level3_all_safe",
-            },
-        }
-        (official_dir / "merge-manifest.json").write_text(
-            json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-
-        if not v3.is_chapter_merged(ch):
-            raise RuntimeError(
-                "MERGE Level II + III promovido, mas manifesto oficial "
-                "não foi reconhecido."
-            )
-    except Exception as exc:
-        if official_dir.is_dir():
-            shutil.rmtree(official_dir)
-        return False, f"Falha ao promover Level III completo: {exc}"
-
-    return True, (
-        f"Level III resolveu todos os pendentes e a composição "
-        f"Level II + III foi promovida para {official_dir}"
-    )
+    manga=ch.parent.parent; auto_dir=amdir(manga,ch.name); level2_dir=l2dir(manga,ch.name); level3_dir=l3dir(manga,ch.name)
+    auto,err=_load_stage_manifest(auto_dir/"auto-merge-manifest.json","auto_merge_level1_resolved_segments","Auto-Merge")
+    if err: return False,err
+    l2_path=level2_dir/"merge-level2-manifest.json"; l2,err=_load_stage_manifest(l2_path,"merge_level2_residual_v2","Level II")
+    if err: return False,err
+    l3,err=_load_stage_manifest(level3_dir/"merge-level3-manifest.json","merge_level3_structural_safe_v1","Level III")
+    if err: return False,err
+    if str(l3.get("source_level2_sha256") or "") != hashlib.sha256(l2_path.read_bytes()).hexdigest(): return False,"Manifesto Level III está desatualizado em relação ao Level II; promoção direta cancelada."
+    if l3.get("residual_pending_segments"): return False,"Level III ainda possui residual pendente; promoção direta cancelada."
+    pieces=_stage_artifact_pieces(auto_dir,auto,"artifacts","auto_merge")+_stage_artifact_pieces(level2_dir,l2,"artifacts","level2")+_stage_artifact_pieces(level3_dir,l3,"safe_artifacts","level3")
+    return _promote_stage_composition(ch,pieces,int(l2.get("total_height") or 0),"merge_auto_level2_level3_composition_v2",{"auto_merge_manifest":"auto-merge-manifest.json","level2_manifest":"merge-level2-manifest.json","level3_manifest":"merge-level3-manifest.json","review_manifest":None,"scope":"level3_all_safe"})
 
 
 def _materialize_level3_interval(ch, segment):
@@ -924,116 +534,34 @@ def process_merge_level3_pending(ch, part):
 
 
 def validate_merge_level2(ch):
-    from PIL import Image
-    from processamento.unificacao_imagens import image_stitcher as v3
+    """Registra o handoff residual do Level I sem duplicar artefatos AUTO_MERGE.
+
+    A estratégia própria de Level II deve materializar somente novos trechos
+    resolvidos dentro de pending_segments. Até lá, o residual é preservado
+    integralmente e segue autoritativamente para o Level III.
+    """
     failure=read_merge_failure(ch)
     if not failure: return False,"Nenhuma falha do Auto-Merge Nível I encontrada.",None
     part=failure.get("partition") or _analyze_merge_partition(ch)
-    if not part: return False,"Não há resultado misto para validar no Nível II.",None
-    resolved=part.get("resolved_segments") or []
-    pending=part.get("pending_segments") or []
-    if not resolved: return False,"Nenhum trecho automático aproveitável foi encontrado.",part
-    manga=ch.parent.parent
+    if not part: return False,"Não há residual do Auto-Merge Nível I para o Nível II.",None
+    manga=ch.parent.parent; auto_path=amdir(manga,ch.name)/"auto-merge-manifest.json"
+    auto,err=_load_stage_manifest(auto_path,"auto_merge_level1_resolved_segments","Auto-Merge")
+    if err: return False,err,part
+    pending=[dict(x) for x in (auto.get("pending_segments") or [])]
     dest=l2dir(manga,ch.name); dest.mkdir(parents=True,exist_ok=True)
     for old in dest.glob("*.png"):
-        if (
-            v3.PAGE_RANGE_OUTPUT_RE.match(old.name)
-            or re.match(r"^passed-\d+\.png$", old.name, re.IGNORECASE)
-        ):
-            old.unlink()
-    part["level2_validated"]=True
-    part["status"]="partial" if pending else "validated"
-    by_id={int(seg["id"]):seg for seg in part.get("segments") or []}
-    artifacts=[]
-    for seg in resolved:
-        seg["status"]="passed"; seg["validation"]="auto"; seg["validated_ok"]=True
-        if int(seg["id"]) in by_id:
-            by_id[int(seg["id"])].update({"status":"passed","validation":"auto","validated_ok":True})
-        out_name=v3.page_range_output_name_from_spans(
-            seg.get("source_spans") or [],
-            int(seg["global_start"]),
-            int(seg["global_end"]),
-        )
-        out_path=v3.ensure_unique_output_path(dest,out_name)
-        width=None
-        canvas=Image.new("RGB",(1,1),"white")
-        for span in seg.get("source_spans") or []:
-            src=ch/span["file"]
-            with Image.open(src) as im:
-                if width is None:
-                    width=im.width
-                    canvas=Image.new("RGB",(width,int(seg["height"])),"white")
-                crop=im.convert("RGB").crop((0,int(span["source_y_start"]),width,int(span["source_y_end"])))
-                canvas.paste(crop,(0,int(span["global_start"])-int(seg["global_start"])+int(span["source_y_start"])))
-        canvas.save(out_path,"PNG")
-        seg["artifact"]={"file":out_name,"path":str(out_path),"storage":"MERGE_LEVEL2"}
-        if int(seg["id"]) in by_id: by_id[int(seg["id"])]["artifact"]=dict(seg["artifact"])
-        artifacts.append({"segment_id":int(seg["id"]),"file":out_name,"global_start":int(seg["global_start"]),"global_end":int(seg["global_end"]),"sources":seg.get("sources") or [],"validation":"auto","validated_ok":True})
-    for seg in pending:
-        seg["status"]="failed"; seg["validation"]="review_required"
-        if int(seg["id"]) in by_id:
-            by_id[int(seg["id"])].update({"status":"failed","validation":"review_required"})
-    part["segments"]=[by_id[int(seg["id"])] for seg in part.get("segments") or []]
-    part["resolved_segments"]=[seg for seg in part["segments"] if seg.get("status")=="passed"]
-    part["pending_segments"]=[seg for seg in part["segments"] if seg.get("status")=="failed"]
-    manifest={"schema_version":1,"algorithm":"merge_level2_auto_segments","chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),"total_height":int(part.get("total_height") or 0),"segments":part["resolved_segments"],"artifacts":artifacts,"pending_segments":part["pending_segments"],"coverage":{"auto_segments":[[int(s["global_start"]),int(s["global_end"])] for s in part["resolved_segments"]]}}
+        if v3.PAGE_RANGE_OUTPUT_RE.match(old.name) or re.match(r"^passed-\d+\.png$",old.name,re.IGNORECASE): old.unlink()
+    manifest={"schema_version":2,"algorithm":"merge_level2_residual_v2","chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),"total_height":int(auto.get("total_height") or part.get("total_height") or 0),"source_auto_merge_manifest":"auto-merge-manifest.json","artifacts":[],"pending_segments":pending,"coverage":{"level2_segments":[]},"safety":{"level1_artifacts_duplicated":False,"level1_artifacts_modified":False}}
     (dest/"merge-level2-manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    failure["partition"]=part
-    failure["level2_status"]="validated"
-    failure["status"]="partial" if pending else "validated"
-    p=merge_status_file(ch); p.parent.mkdir(parents=True,exist_ok=True)
-    p.write_text(json.dumps(failure,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-
+    part["level2_validated"]=True; part["pending_segments"]=pending
+    failure["partition"]=part; failure["level2_status"]="validated"; failure["status"]="partial" if pending else "validated"
+    merge_status_file(ch).write_text(json.dumps(failure,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     if not pending:
-        total_height = int(
-            part.get("total_height") or 0
-        )
+        promoted,msg=_promote_level2_complete(ch,part)
+        if promoted: clear_merge_failure(ch)
+        return promoted,msg,part
+    return True,f"Nível II recebeu {len(pending)} residual(is) do Auto-Merge sem duplicar os artefatos do Nível I; o residual segue para o Auto-Merge Nível III.",part
 
-        intervals = sorted(
-            (
-                int(seg["global_start"]),
-                int(seg["global_end"]),
-            )
-            for seg in (
-                part.get("resolved_segments") or []
-            )
-        )
-
-        complete_coverage = bool(
-            total_height > 0
-            and intervals
-            and intervals[0][0] == 0
-            and intervals[-1][1] == total_height
-            and all(
-                current_end == next_start
-                for (
-                    (_, current_end),
-                    (next_start, _),
-                )
-                in zip(
-                    intervals,
-                    intervals[1:],
-                )
-            )
-        )
-
-        if complete_coverage:
-            promoted, promote_msg = _promote_level2_complete(
-                ch,
-                part,
-            )
-            if not promoted:
-                return False, promote_msg, part
-
-            clear_merge_failure(ch)
-
-            return True, (
-                f"Nível II validou {len(resolved)} trecho(s) "
-                "automático(s); nenhum trecho requer revisão. "
-                f"{promote_msg}"
-            ), part
-
-    return True,f"Nível II validou {len(resolved)} trecho(s) automático(s); {len(pending)} segue(m) para o Auto-Merge Nível III.",part
 
 def catalog():
     out={}
@@ -1357,9 +885,18 @@ def do_merge(job,chs):
             if is_chapter_merged(ch):
                 clear_merge_failure(ch)
                 return {"chapter":ch.name,"status":"skipped","message":"MERGE já existente"}
-            r=merge_chapter(ch)
+            auto_dir=amdir(ch.parent.parent,ch.name)
+            if auto_dir.exists():
+                shutil.rmtree(auto_dir)
+            r=merge_chapter(ch,output_dir_override=auto_dir)
+            raw=json.loads((auto_dir/"merge-manifest.json").read_text(encoding="utf-8"))
+            auto_manifest={"schema_version":1,"algorithm":"auto_merge_level1_complete","chapter":ch.name,"source_dir":str(ch),"output_dir":str(auto_dir),"total_height":int(raw.get("source_total_height") or 0),"artifacts":raw.get("outputs") or [],"pending_segments":[],"coverage":{"auto_segments":[[int(x["global_start"]),int(x["global_end"])] for x in (raw.get("outputs") or [])]},"v3_manifest":raw}
+            (auto_dir/"auto-merge-manifest.json").write_text(json.dumps(auto_manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+            (auto_dir/"merge-manifest.json").unlink()
+            promoted,promote_msg=_promote_level1_complete(ch)
+            if not promoted: raise RuntimeError(promote_msg)
             clear_merge_failure(ch)
-            return {"chapter":ch.name,"status":"ok","merged_images":r.merged_images}
+            return {"chapter":ch.name,"status":"ok","merged_images":r.merged_images,"auto_merge_saved":r.merged_images,"auto_merge_folder":str(auto_dir),"message":promote_msg}
         except Exception as e:
             set_merge_failure(ch,e)
             failure=read_merge_failure(ch) or {}

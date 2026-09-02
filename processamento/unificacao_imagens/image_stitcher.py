@@ -644,8 +644,14 @@ def merge_chapter(
     white_ratio: float = DEFAULT_WHITE_RATIO,
     light_threshold: int = DEFAULT_LIGHT_THRESHOLD,
     sample_width: int = DEFAULT_SAMPLE_WIDTH,
+    output_dir_override: Path | None = None,
 ) -> MergeResult:
-    """Generate official merge for one chapter without touching source files."""
+    """Generate a V3 merge without touching source files.
+
+    By default the output remains the official MERGE path. Internal staged
+    workflows may provide output_dir_override so Level I can persist first in
+    AUTO_MERGE before the final consolidation is created.
+    """
     chapter = Path(chapter_dir).expanduser().resolve()
     if not chapter.is_dir():
         raise ValueError(f"Pasta do capítulo não encontrada: {chapter}")
@@ -654,7 +660,11 @@ def merge_chapter(
     if not pages:
         raise ValueError("Nenhuma imagem page-NNN encontrada.")
 
-    output_dir = merge_output_dir(chapter)
+    output_dir = (
+        Path(output_dir_override).expanduser().resolve()
+        if output_dir_override is not None
+        else merge_output_dir(chapter)
+    )
     if output_dir.exists() and any(output_dir.iterdir()):
         raise FileExistsError(
             f"Merge já existente ou pasta de saída ocupada: {output_dir}"
