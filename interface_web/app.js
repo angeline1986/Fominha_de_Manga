@@ -703,52 +703,53 @@ function pdfMergeResultModal(job,state){
   const status=String(job?.status||"").toLowerCase();
   if(!["done","success","completed","error","failed"].includes(status)) return false;
   const payload=job?.result ?? job?.response ?? job;
-  const success=["done","success","completed"].includes(status) && payload?.ok!==false;
-  const chapter=String(payload?.chapter ?? job?.chapter ?? job?.request?.chapter ?? "");
-  let files=pdfMergeFileNames(payload);
-
-  const modalPromise=appModal({
-    title:success?"PDF do Merge gerado":"Não foi possível gerar o PDF do Merge",
-    message:success?"O PDF do Merge foi gerado com sucesso.":(payload?.message||payload?.error||"A geração não foi concluída."),
-    kind:success?"success":"error",
-    chips:[],
-    details:success
-      ? [{title:chapter?`Cap. ${chapter}`:"Resultado",message:files.length?files.join("\n"):"Consultando arquivo gerado..."}]
-      : [{title:chapter?`Cap. ${chapter}`:"Erro",message:payload?.message||payload?.error||"Erro não detalhado pelo processamento."}],
-    confirmText:"Fechar"
+  const rawItems=Array.isArray(payload)?payload:(Array.isArray(payload?.items)?payload.items:[payload]);
+  const items=rawItems.filter(Boolean).map((raw,index)=>{
+    const rawStatus=String(raw?.status||"").toLowerCase();
+    const isError=["error","failed"].includes(rawStatus);
+    const isSkipped=["skip","skipped"].includes(rawStatus);
+    const path=String(raw?.path||"");
+    const file=path?path.split("/").pop():"";
+    return {...raw,_index:index,_error:isError,_statusLabel:isError?"Requer atenção":isSkipped?"Já existente":"Concluído",_file:file,_pdfCount:isError?0:1};
   });
-
-  const finalizeSuccessUi=(resolvedFiles)=>{
-    const modal=document.querySelector("#appModal");
-    if(!modal) return;
-    const detail=modal.querySelector(".app-modal-detail");
-    if(detail && resolvedFiles.length){
-      detail.innerHTML=`<strong>${chapter?`Cap. ${esc(chapter)}`:"Resultado"}</strong>`+
-        resolvedFiles.map(f=>`<span>${esc(f)}</span>`).join("");
-    }
-    const actions=modal.querySelector(".app-modal-actions");
-    const closeBtn=actions?.querySelector("[data-modal-ok]") || actions?.querySelector("button:last-child");
-    if(actions && closeBtn && !actions.querySelector(".pdf-merge-open-folder")){
-      const openBtn=document.createElement("button");
-      openBtn.className="btn pdf-merge-open-folder";
-      openBtn.textContent="Abrir pasta";
-      openBtn.onclick=()=>openPdfMergeFolder(chapter);
-      actions.insertBefore(openBtn,closeBtn);
-    }
-  };
-
-  if(success){
-    if(files.length){
-      requestAnimationFrame(()=>finalizeSuccessUi(files));
-    }else if(chapter){
-      fetchPdfMergeFiles(chapter).then(resolved=>{
-        files=resolved||[];
-        finalizeSuccessUi(files);
-      });
-    }
-  }
-
-  modalPromise.then(()=>load());
+  if(!items.length) return false;
+  const concluded=items.filter(x=>!x._error).length;
+  const errors=items.filter(x=>x._error).length;
+  const chapterWord=items.length===1?"capítulo processado":"capítulos processados";
+  const resultParts=[];
+  if(concluded) resultParts.push(`${concluded} ${concluded===1?"concluído":"concluídos"}`);
+  if(errors) resultParts.push(`${errors} ${errors===1?"pendente":"pendentes"}`);
+  document.querySelector("#appModal")?.remove();
+  let overlay=document.createElement("div");
+  overlay.id="appModal"; overlay.className="app-modal-overlay";
+  const chapterHtml=items.map(item=>`
+    <section class="merge-chapter-item" data-pdf-chapter="${item._index}">
+      <button class="merge-chapter-head" type="button" data-pdf-chapter-toggle="${item._index}" aria-expanded="false">
+        <span class="merge-chapter-name">Cap. ${esc(item.chapter||"—")}</span>
+        <strong class="merge-chapter-status ${item._error?"warning":""}">${esc(item._statusLabel)}</strong>
+        <span class="merge-chapter-count">${item._pdfCount} ${item._pdfCount===1?"PDF":"PDFs"}</span>
+        <span class="merge-chapter-chevron" aria-hidden="true">⌄</span>
+      </button>
+      <div class="merge-chapter-body" data-pdf-chapter-panel="${item._index}" hidden>
+        <div class="merge-summary-row"><span class="merge-summary-label">Status</span><strong class="merge-summary-value ${item._error?"warning":""}">${esc(item._statusLabel)}</strong><span class="merge-summary-toggle-spacer"></span></div>
+        <div class="merge-summary-row"><span class="merge-summary-label">${item._error?"Motivo":"PDF gerado"}</span><strong class="merge-summary-value">${esc(item._error?(item.message||"Falha na geração do PDF"):(item._file||`${item.chapter}.pdf`))}</strong><span class="merge-summary-toggle-spacer"></span></div>
+        <div class="merge-chapter-actions">${item._error?"":`<button class="btn" type="button" data-open-pdf-folder="${item._index}">Abrir pasta</button>`}</div>
+      </div>
+    </section>`).join("");
+  overlay.innerHTML=`<div class="app-modal merge-summary-modal" role="dialog" aria-modal="true" aria-label="Resumo da Operação">
+    <div class="app-modal-head merge-summary-head"><div><div class="caption">PROCESSAMENTO</div><h2>Resumo da Operação</h2></div><button class="app-modal-x" aria-label="Fechar">&times;</button></div>
+    <div class="merge-batch-summary"><strong>${items.length} ${chapterWord}</strong>${resultParts.length?`<span>${esc(resultParts.join(" · "))}</span>`:""}</div>
+    <div class="merge-chapter-list">${chapterHtml}</div>
+    <div class="app-modal-actions merge-summary-actions"><button class="btn primary" type="button" data-pdf-summary-close>Fechar</button></div>
+  </div>`;
+  const close=()=>{closeAppModal(false);};
+  overlay.querySelector(".app-modal-x").onclick=close;
+  overlay.querySelector("[data-pdf-summary-close]").onclick=close;
+  overlay.onclick=e=>{if(e.target===overlay)close();};
+  overlay.querySelectorAll("[data-pdf-chapter-toggle]").forEach(btn=>{btn.onclick=()=>{const key=btn.dataset.pdfChapterToggle;const panel=overlay.querySelector(`[data-pdf-chapter-panel="${key}"]`);const item=overlay.querySelector(`[data-pdf-chapter="${key}"]`);if(!panel||!item)return;const open=panel.hidden;panel.hidden=!open;item.classList.toggle("open",open);btn.setAttribute("aria-expanded",String(open));};});
+  overlay.querySelectorAll("[data-open-pdf-folder]").forEach(btn=>{btn.onclick=async e=>{e.stopPropagation();const item=items[Number(btn.dataset.openPdfFolder)];if(!item)return;await openPdfMergeFolder(String(item.chapter||""));};});
+  document.body.appendChild(overlay);
+  document.addEventListener("keydown",appModalKey);
   return true;
 }
 
