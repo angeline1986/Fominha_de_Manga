@@ -6,6 +6,7 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
+from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
 OUTPUT=ROOT/"download"/"mangago_downloader"/"output"
@@ -696,6 +697,126 @@ def validate_merge_level2(ch):
         return True,f"Nível II resolveu {len(artifacts)} trecho(s) novo(s) com busca segura.{edge_note} {len(residual)} residual(is) permanece(m) pendente(s).",part
     return True,f"Nível II analisou {len(pending)} residual(is), mas não encontrou caminho adicional de cortes seguros; {len(residual)} residual(is) permanece(m) pendente(s).",part
 
+def dimension_root(manga):
+    return manga/"FLUXO_SECUNDARIO"/"ANALISE_DIMENSOES"
+
+def _dimension_module():
+    from processamento.validacao_imagens import analisador_dimensoes as mod
+    return mod
+
+def _dimension_payload(manga, selected_chapters=None, tolerance=3.0, persist=False):
+    mod=_dimension_module(); img_root=manga/"IMG"
+    selected={str(x) for x in (selected_chapters or [])}
+    dirs=[p for p in chapters(manga) if not selected or p.name in selected]
+    results=[mod.analyze_chapter(ch,float(tolerance)) for ch in dirs]
+    payload={
+        "schema_version":1,"generated_at":__import__("datetime").datetime.now().isoformat(timespec="seconds"),
+        "source":str(img_root),"tolerance_percent":float(tolerance),
+        "summary":{"chapters_analyzed":len(results),"chapters_ok":sum(x.status=="OK" for x in results),"chapters_requiring_analysis":sum(x.status=="REQUER_ANALISE" for x in results)},
+        "chapters":[{**__import__("dataclasses").asdict(x),"images":[__import__("dataclasses").asdict(i) for i in x.images]} for x in results],
+    }
+    if persist:
+        root=dimension_root(manga); root.mkdir(parents=True,exist_ok=True)
+        current_file=root/"analise_dimensoes_atual.json"
+        merged=dict(payload)
+        if current_file.is_file():
+            try:
+                previous=json.loads(current_file.read_text(encoding="utf-8"))
+                by_ch={str(x.get("chapter")):x for x in (previous.get("chapters") or []) if x.get("chapter") is not None}
+                for item in payload["chapters"]: by_ch[str(item.get("chapter"))]=item
+                merged["chapters"]=sorted(by_ch.values(),key=lambda x:nkey(str(x.get("chapter",""))))
+                merged["summary"]={
+                    "chapters_analyzed":len(merged["chapters"]),
+                    "chapters_ok":sum(x.get("status")=="OK" for x in merged["chapters"]),
+                    "chapters_requiring_analysis":sum(x.get("status")=="REQUER_ANALISE" for x in merged["chapters"]),
+                }
+            except Exception:
+                merged=dict(payload)
+        current_file.write_text(json.dumps(merged,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        # O TXT desta execução continua registrando somente o escopo efetivamente analisado.
+        (root/"analise_dimensoes_atual.txt").write_text(mod.render_text(img_root,results,float(tolerance)),encoding="utf-8")
+        payload=merged
+    return payload
+
+def _dimension_correction_state(manga,item):
+    chapter=str(item.get("chapter") or "")
+    manifest_file=dimension_root(manga)/"COMPOSICAO_FINAL"/chapter/"dimension-correction-manifest.json"
+    if not chapter or not manifest_file.is_file(): return None
+    try:
+        manifest=json.loads(manifest_file.read_text(encoding="utf-8"))
+        if int(manifest.get("dominant_width") or 0)!=int(item.get("dominant_width") or 0): return None
+        if abs(float(manifest.get("tolerance_percent",-1))-float(item.get("tolerance_percent",-2)))>1e-9: return None
+        corrected=manifest.get("corrected") or []
+        final_dir=manifest_file.parent
+        if not corrected or any(not (final_dir/str(x.get("file",""))).is_file() for x in corrected): return None
+        return manifest
+    except Exception:
+        return None
+
+def dimension_state(manga):
+    current=dimension_root(manga)/"analise_dimensoes_atual.json"
+    if not current.is_file(): return {"available":False,"tolerance_percent":3.0,"summary":{"chapters_analyzed":0,"chapters_ok":0,"chapters_requiring_analysis":0,"chapters_corrected":0},"chapters":[]}
+    try:
+        payload=json.loads(current.read_text(encoding="utf-8"))
+        chapters_out=[]
+        for raw in payload.get("chapters") or []:
+            item=dict(raw); manifest=_dimension_correction_state(manga,item)
+            item["source_exceptions"]=int(item.get("exceptions") or 0)
+            item["correction_applied"]=bool(manifest)
+            item["corrected_count"]=len((manifest or {}).get("corrected") or [])
+            if manifest:
+                item["status"]="CORRIGIDO"
+                item["exceptions"]=0
+            chapters_out.append(item)
+        payload["chapters"]=chapters_out
+        payload["summary"]={
+            "chapters_analyzed":len(chapters_out),
+            "chapters_ok":sum(x.get("status")=="OK" for x in chapters_out),
+            "chapters_requiring_analysis":sum(x.get("status")=="REQUER_ANALISE" for x in chapters_out),
+            "chapters_corrected":sum(x.get("status")=="CORRIGIDO" for x in chapters_out),
+        }
+        payload["available"]=True; return payload
+    except Exception as exc:
+        return {"available":False,"error":str(exc),"tolerance_percent":3.0,"summary":{"chapters_analyzed":0,"chapters_ok":0,"chapters_requiring_analysis":0,"chapters_corrected":0},"chapters":[]}
+
+def do_dimension_analyze(job,manga,chs,tolerance):
+    job.progress_detail="Analisando dimensões das imagens..."; job.progress_max=max(1,len(chs)); job.progress_value=0
+    payload=_dimension_payload(manga,[x.name for x in chs],tolerance,persist=True)
+    out=[]
+    for i,item in enumerate(payload["chapters"],1):
+        out.append({"chapter":item["chapter"],"status":"ok" if item["status"]=="OK" else "attention","message":f"{item['exceptions']} exceção(ões); largura dominante {item['dominant_width']}px."})
+        job.progress=i; job.progress_value=i
+    return out
+
+def do_dimension_correct(job,manga,chs,tolerance):
+    payload=_dimension_payload(manga,[x.name for x in chs],tolerance,persist=True); by_ch={x["chapter"]:x for x in payload["chapters"]}; out=[]
+    root=dimension_root(manga); corrected_root=root/"CORRIGIDAS"; final_root=root/"COMPOSICAO_FINAL"
+    job.progress_max=max(1,len(chs)); job.progress_value=0
+    for idx,ch in enumerate(chs,1):
+        item=by_ch.get(ch.name) or {}; dominant=int(item.get("dominant_width") or 0); exceptions=[x for x in item.get("images",[]) if x.get("classification")=="EXCECAO_DIMENSAO"]
+        if not dominant or not exceptions:
+            out.append({"chapter":ch.name,"status":"skipped","message":"Nenhuma correção necessária."}); job.progress=idx; job.progress_value=idx; continue
+        corr=corrected_root/ch.name; final=final_root/ch.name
+        if corr.is_dir(): shutil.rmtree(corr)
+        if final.is_dir(): shutil.rmtree(final)
+        corr.mkdir(parents=True); final.mkdir(parents=True)
+        exception_names={x["file"] for x in exceptions}
+        corrected=[]
+        for source in sorted([x for x in ch.iterdir() if x.is_file() and x.suffix.lower() in IMAGE_EXTS],key=nkey):
+            if source.name not in exception_names:
+                shutil.copy2(source,final/source.name); continue
+            with Image.open(source) as im:
+                new_h=max(1,round(im.height*(dominant/im.width)))
+                resized=im.resize((dominant,new_h),Image.Resampling.LANCZOS)
+                resized.save(corr/source.name)
+                resized.save(final/source.name)
+                corrected.append({"file":source.name,"from":[im.width,im.height],"to":[dominant,new_h]})
+        manifest={"schema_version":1,"chapter":ch.name,"tolerance_percent":float(tolerance),"dominant_width":dominant,"original_dir":str(ch),"corrected_dir":str(corr),"composition_dir":str(final),"originals_modified":False,"corrected":corrected}
+        (final/"dimension-correction-manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        out.append({"chapter":ch.name,"status":"ok","message":f"{len(corrected)} imagem(ns) corrigida(s) proporcionalmente para {dominant}px; IMG preservado.","corrected":corrected})
+        job.progress=idx; job.progress_value=idx; job.progress_detail=f"Cap. {ch.name}: composição final concluída."
+    return out
+
 def catalog():
     out={}
     for provider in ("comix","mangago"):
@@ -1060,6 +1181,8 @@ def run_job(job,payload):
             elif job.action=="clean_merged": job.result=do_clean_merged(job,manga,chs)
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
+            elif job.action=="dimension_analyze": job.result=do_dimension_analyze(job,manga,chs,payload.get("tolerance",3.0))
+            elif job.action=="dimension_correct": job.result=do_dimension_correct(job,manga,chs,payload.get("tolerance",3.0))
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
             elif job.action=="review_approve": job.result=do_review_approve(job,manga,chs)
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
@@ -1644,6 +1767,8 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if u.path=="/api/catalog": return self.send_json(catalog())
             if u.path=="/api/state": return self.send_json(state(q.get("provider",[""])[0],q.get("manga",[""])[0]))
+            if u.path=="/api/dimension-analysis":
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(dimension_state(manga))
             if u.path=="/api/pdf-merge-latest":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
                 files=latest_pdf_merge_batch(manga)
@@ -1662,6 +1787,7 @@ class Handler(BaseHTTPRequestHandler):
                     "merge_level2":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL2"),
                     "merge_level3":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL3"),
                     "text_off_merged":("04_TEXTO_OFF","MERGED"),
+                    "dimension_analysis":("ANALISE_DIMENSOES",),
                     "merge":("02_MERGE",),
                 }.get(kind)
                 if not folder_name:
