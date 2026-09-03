@@ -17,9 +17,9 @@ class Level3ReviewCompositionTests(unittest.TestCase):
         chapter="6"
         (manga/"IMG"/chapter).mkdir(parents=True)
 
-        l2=manga/"FLUXO_SECUNDARIO"/"MERGE_LEVEL2"/chapter
-        l3=manga/"FLUXO_SECUNDARIO"/"MERGE_LEVEL3"/chapter
-        review=manga/"FLUXO_SECUNDARIO"/"MERGE_REVIEW"/chapter
+        l2=manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL2"/chapter
+        l3=manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL3"/chapter
+        review=manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_REVIEW"/chapter
         l2.mkdir(parents=True); l3.mkdir(parents=True); review.mkdir(parents=True)
 
         Image.new("RGB",(8,100),(10,10,10)).save(l2/"passed-001.png")
@@ -87,7 +87,7 @@ class Level3ReviewCompositionTests(unittest.TestCase):
                 manga,chapter,review,payload
             )
         self.assertTrue(ok,msg)
-        official=manga/"FLUXO_SECUNDARIO"/"MERGE"/chapter
+        official=manga/"FLUXO_SECUNDARIO"/"02_MERGE"/chapter
         manifest=json.loads(
             (official/"merge-manifest.json").read_text(encoding="utf-8")
         )
@@ -116,7 +116,7 @@ class Level3ReviewCompositionTests(unittest.TestCase):
             )
         self.assertFalse(ok)
         self.assertIn("pending autoritativo",msg)
-        self.assertFalse((manga/"FLUXO_SECUNDARIO"/"MERGE"/chapter).exists())
+        self.assertFalse((manga/"FLUXO_SECUNDARIO"/"02_MERGE"/chapter).exists())
 
     def test_rejects_stale_level3_snapshot(self):
         td,manga,chapter,review,payload,l2_path=self._fixture()
@@ -130,7 +130,7 @@ class Level3ReviewCompositionTests(unittest.TestCase):
             )
         self.assertFalse(ok)
         self.assertIn("desatualizado",msg)
-        self.assertFalse((manga/"FLUXO_SECUNDARIO"/"MERGE"/chapter).exists())
+        self.assertFalse((manga/"FLUXO_SECUNDARIO"/"02_MERGE"/chapter).exists())
 
 
 if __name__=="__main__":

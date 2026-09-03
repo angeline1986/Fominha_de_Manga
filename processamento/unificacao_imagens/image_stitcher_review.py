@@ -17,10 +17,10 @@ def _key(p: Path):
     return [int(x) if x.isdigit() else x.lower() for x in re.split(r"(\d+)", p.name)]
 
 def _official(manga: Path, chapter: str) -> Path:
-    return manga / SECONDARY / "MERGE" / chapter
+    return manga / SECONDARY / "02_MERGE" / chapter
 
 def _review(manga: Path, chapter: str) -> Path:
-    return manga / SECONDARY / REVIEW / chapter
+    return manga / SECONDARY / "01_MERGE_PROCESSAMENTO" / REVIEW / chapter
 
 def _official_valid(manga: Path, chapter: str) -> bool:
     d = _official(manga, chapter)
@@ -888,7 +888,7 @@ def _approve_scoped_level2_review(
     manga = Path(manga)
     chapter_name = str(chapter)
 
-    auto_dir = manga / SECONDARY / "AUTO_MERGE" / chapter_name
+    auto_dir = manga / SECONDARY / "01_MERGE_PROCESSAMENTO" / "AUTO_MERGE" / chapter_name
     auto_manifest_path = auto_dir / "auto-merge-manifest.json"
     if not auto_manifest_path.is_file():
         return False, f"Manifesto Auto-Merge não encontrado: {auto_manifest_path}"
@@ -902,6 +902,7 @@ def _approve_scoped_level2_review(
     level2_dir = (
         manga
         / SECONDARY
+        / "01_MERGE_PROCESSAMENTO"
         / "MERGE_LEVEL2"
         / chapter_name
     )
@@ -943,6 +944,7 @@ def _approve_scoped_level2_review(
     level3_dir = (
         manga
         / SECONDARY
+        / "01_MERGE_PROCESSAMENTO"
         / "MERGE_LEVEL3"
         / chapter_name
     )

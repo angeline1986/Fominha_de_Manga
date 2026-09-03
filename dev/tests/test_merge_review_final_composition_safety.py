@@ -51,8 +51,8 @@ class MergeReviewFinalCompositionSafetyTests(unittest.TestCase):
         )
 
         secondary = manga / "FLUXO_SECUNDARIO"
-        level2 = secondary / "MERGE_LEVEL2" / "6"
-        review = secondary / "MERGE_REVIEW" / "6"
+        level2 = secondary / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL2" / "6"
+        review = secondary / "01_MERGE_PROCESSAMENTO" / "MERGE_REVIEW" / "6"
 
         left_start, left_end = map(int, left)
         right_start, right_end = map(int, right)

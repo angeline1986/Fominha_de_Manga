@@ -536,7 +536,7 @@ class MergeReviewPendingScopeTests(unittest.TestCase):
                         "ok",
                         manga_arg
                         / "FLUXO_SECUNDARIO"
-                        / "MERGE_REVIEW"
+                        / "01_MERGE_PROCESSAMENTO" / "MERGE_REVIEW"
                         / chapter_arg.name,
                     )
 
@@ -649,7 +649,7 @@ class MergeReviewPendingScopeTests(unittest.TestCase):
                         "ok",
                         manga_arg
                         / "FLUXO_SECUNDARIO"
-                        / "MERGE_REVIEW"
+                        / "01_MERGE_PROCESSAMENTO" / "MERGE_REVIEW"
                         / chapter_arg.name,
                     )
 

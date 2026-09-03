@@ -181,7 +181,7 @@ def merge_output_dir(chapter_dir: Path) -> Path:
     if chapter.parent.name != "IMG":
         raise ValueError(f"Capítulo fora da estrutura IMG esperada: {chapter}")
     manga_dir = chapter.parent.parent
-    return manga_dir / "FLUXO_SECUNDARIO" / "MERGE" / chapter.name
+    return manga_dir / "FLUXO_SECUNDARIO" / "02_MERGE" / chapter.name
 
 
 def merge_manifest_path(chapter_dir: Path) -> Path:

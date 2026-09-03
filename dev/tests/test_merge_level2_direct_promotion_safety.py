@@ -102,7 +102,7 @@ class MergeLevel2DirectPromotionSafetyTests(unittest.TestCase):
             self.assertTrue(ok, msg)
             self.assertTrue(is_chapter_merged(chapter))
 
-            merge_dir = manga / "FLUXO_SECUNDARIO" / "MERGE" / "6"
+            merge_dir = manga / "FLUXO_SECUNDARIO" / "02_MERGE" / "6"
             manifest = json.loads((merge_dir / "merge-manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(manifest["algorithm"], "merge_auto_level2_composition_v2")
             self.assertEqual(
@@ -121,7 +121,7 @@ class MergeLevel2DirectPromotionSafetyTests(unittest.TestCase):
             self.assertFalse(ok)
             self.assertIn("lacuna", msg.lower())
             self.assertFalse(is_chapter_merged(chapter))
-            self.assertFalse((manga / "FLUXO_SECUNDARIO" / "MERGE" / "6").exists())
+            self.assertFalse((manga / "FLUXO_SECUNDARIO" / "02_MERGE" / "6").exists())
 
     def test_direct_promotion_rejects_overlap(self):
         with tempfile.TemporaryDirectory() as td:
@@ -131,7 +131,7 @@ class MergeLevel2DirectPromotionSafetyTests(unittest.TestCase):
             self.assertFalse(ok)
             self.assertIn("sobreposição", msg.lower())
             self.assertFalse(is_chapter_merged(chapter))
-            self.assertFalse((manga / "FLUXO_SECUNDARIO" / "MERGE" / "6").exists())
+            self.assertFalse((manga / "FLUXO_SECUNDARIO" / "02_MERGE" / "6").exists())
 
     def test_direct_promotion_rejects_missing_level2_artifact(self):
         with tempfile.TemporaryDirectory() as td:
@@ -142,7 +142,7 @@ class MergeLevel2DirectPromotionSafetyTests(unittest.TestCase):
             self.assertFalse(ok)
             self.assertIn("ausente", msg.lower())
             self.assertFalse(is_chapter_merged(chapter))
-            self.assertFalse((manga / "FLUXO_SECUNDARIO" / "MERGE" / "6").exists())
+            self.assertFalse((manga / "FLUXO_SECUNDARIO" / "02_MERGE" / "6").exists())
 
 
 if __name__ == "__main__":

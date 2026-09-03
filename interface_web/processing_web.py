@@ -32,14 +32,14 @@ def chapters(manga):
     if not root.is_dir(): return []
     return sorted([p for p in root.iterdir() if p.is_dir() and any(f.is_file() and f.suffix.lower() in IMAGE_EXTS for f in p.iterdir())],key=nkey)
 
-def rdir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_REVIEW"/c
-def amdir(m,c): return m/"FLUXO_SECUNDARIO"/"AUTO_MERGE"/c
-def l2dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL2"/c
-def l3dir(m,c): return m/"FLUXO_SECUNDARIO"/"MERGE_LEVEL3"/c
-def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"CLEAN"/c
-def tmdir(m,c): return m/"FLUXO_SECUNDARIO"/"TEXT_OFF_MERGED"/c
-def pmdir(m,c): return m/"FLUXO_SECUNDARIO"/"PDF_MERGE"/c
-def merge_status_file(ch): return ch.parent.parent/"FLUXO_SECUNDARIO"/"MERGE_STATUS"/ch.name/"merge-attempt.json"
+def rdir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_REVIEW"/c
+def amdir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"AUTO_MERGE"/c
+def l2dir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL2"/c
+def l3dir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL3"/c
+def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"04_TEXTO_OFF"/"ORIGINAL"/c
+def tmdir(m,c): return m/"FLUXO_SECUNDARIO"/"04_TEXTO_OFF"/"MERGED"/c
+def pmdir(m,c): return m/"FLUXO_SECUNDARIO"/"03_PDF_MERGE"/c
+def merge_status_file(ch): return ch.parent.parent/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_STATUS"/ch.name/"merge-attempt.json"
 
 
 def _segment_source_names(infos,start,end):
@@ -798,7 +798,7 @@ def review_max_source_images(rd):
 
 def pdf_merge_files(manga, chapter):
     try:
-        folder=manga/"FLUXO_SECUNDARIO"/"PDF_MERGE"/str(chapter)
+        folder=manga/"FLUXO_SECUNDARIO"/"03_PDF_MERGE"/str(chapter)
         if not folder.is_dir():
             return []
         return [p.name for p in sorted(folder.glob("*.pdf"), key=nkey) if p.is_file()]
@@ -807,7 +807,7 @@ def pdf_merge_files(manga, chapter):
 
 
 def latest_pdf_merge_batch(manga):
-    root = manga / "FLUXO_SECUNDARIO" / "PDF_MERGE"
+    root = manga / "FLUXO_SECUNDARIO" / "03_PDF_MERGE"
     if not root.is_dir():
         return []
     items = []
@@ -1657,19 +1657,19 @@ class Handler(BaseHTTPRequestHandler):
                 chapter=str(q.get("chapter",[""])[0])
                 kind=str(q.get("kind",["merge"])[0]).lower()
                 folder_name={
-                    "pdf_merge":"PDF_MERGE",
-                    "auto_merge":"AUTO_MERGE",
-                    "merge_level2":"MERGE_LEVEL2",
-                    "merge_level3":"MERGE_LEVEL3",
-                    "text_off_merged":"TEXT_OFF_MERGED",
-                    "merge":"MERGE",
+                    "pdf_merge":("03_PDF_MERGE",),
+                    "auto_merge":("01_MERGE_PROCESSAMENTO","AUTO_MERGE"),
+                    "merge_level2":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL2"),
+                    "merge_level3":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL3"),
+                    "text_off_merged":("04_TEXTO_OFF","MERGED"),
+                    "merge":("02_MERGE",),
                 }.get(kind)
                 if not folder_name:
                     raise ValueError("Tipo de pasta inválido.")
-                base=(manga/"FLUXO_SECUNDARIO"/folder_name).resolve()
+                base=(manga/"FLUXO_SECUNDARIO").joinpath(*folder_name).resolve()
                 target=base if (kind=="pdf_merge" and not chapter) else (base/chapter).resolve()
                 if not target.is_relative_to(base) or not target.is_dir():
-                    raise ValueError(f"Pasta {folder_name} não encontrada.")
+                    raise ValueError(f"Pasta {'/'.join(folder_name)} não encontrada.")
                 subprocess.Popen(["open",str(target)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
                 return self.send_json({"ok":True,"message":"Pasta aberta."})
             if u.path=="/api/shutdown":

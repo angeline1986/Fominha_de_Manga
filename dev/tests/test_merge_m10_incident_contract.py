@@ -16,7 +16,7 @@ class MergeM10IncidentContractTests(unittest.TestCase):
         return (
             Path(manga)
             / rv.SECONDARY
-            / "MERGE_REVIEW"
+            / "01_MERGE_PROCESSAMENTO" / "MERGE_REVIEW"
             / chapter
         )
 
@@ -79,7 +79,7 @@ class MergeM10IncidentContractTests(unittest.TestCase):
             official = (
                 manga
                 / rv.SECONDARY
-                / "MERGE"
+                / "02_MERGE"
                 / "6"
             )
 

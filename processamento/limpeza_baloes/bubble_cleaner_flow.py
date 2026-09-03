@@ -36,7 +36,7 @@ def run_clean_flow(output_dir, *, ask_number, print_header, print_option, c):
         nums=sorted(n for n in s if 1<=n<=len(chapters))
     model=resolve_model(None); ocr_backend=EasyOCRBackend(["en"]); ok=fail=0
     for n in nums:
-        ch=chapters[n-1]; target=manga/"FLUXO_SECUNDARIO"/"CLEAN"/ch.name; target.mkdir(parents=True,exist_ok=True)
+        ch=chapters[n-1]; target=manga/"FLUXO_SECUNDARIO"/"04_TEXTO_OFF"/"ORIGINAL"/ch.name; target.mkdir(parents=True,exist_ok=True)
         reports=[]
         images=sorted([p for p in ch.iterdir() if p.is_file() and p.suffix.lower() in EXT],key=key)
         chapter_start=time.perf_counter()

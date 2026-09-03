@@ -29,7 +29,7 @@ class MergeReviewFinalCompositionScopeTests(unittest.TestCase):
         level2 = (
             manga
             / "FLUXO_SECUNDARIO"
-            / "MERGE_LEVEL2"
+            / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL2"
             / "6"
         )
         level2.mkdir(parents=True, exist_ok=True)
@@ -121,7 +121,7 @@ class MergeReviewFinalCompositionScopeTests(unittest.TestCase):
         review = (
             manga
             / "FLUXO_SECUNDARIO"
-            / "MERGE_REVIEW"
+            / "01_MERGE_PROCESSAMENTO" / "MERGE_REVIEW"
             / "6"
         )
         review.mkdir(parents=True, exist_ok=True)
@@ -298,7 +298,7 @@ class MergeReviewFinalCompositionScopeTests(unittest.TestCase):
             official = (
                 manga
                 / "FLUXO_SECUNDARIO"
-                / "MERGE"
+                / "02_MERGE"
                 / "6"
             )
 

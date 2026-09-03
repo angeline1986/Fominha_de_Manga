@@ -31,8 +31,8 @@ class MergeReviewFinalCompositionTests(unittest.TestCase):
 
             secondary = manga / "FLUXO_SECUNDARIO"
 
-            level2 = secondary / "MERGE_LEVEL2" / "6"
-            review = secondary / "MERGE_REVIEW" / "6"
+            level2 = secondary / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL2" / "6"
+            review = secondary / "01_MERGE_PROCESSAMENTO" / "MERGE_REVIEW" / "6"
 
             # Level II preserva as regiões PASSED.
             self._save(
@@ -162,7 +162,7 @@ class MergeReviewFinalCompositionTests(unittest.TestCase):
 
             self.assertTrue(ok, msg)
 
-            official = secondary / "MERGE" / "6"
+            official = secondary / "02_MERGE" / "6"
             outputs = sorted(
                 official.glob("merged-*.png")
             )

@@ -63,7 +63,7 @@ class ImageStitcherTests(unittest.TestCase):
                 max_chunk_height=10000,
             )
 
-            expected_dir = root / "output" / "comix" / "Obra" / "FLUXO_SECUNDARIO" / "MERGE" / "28"
+            expected_dir = root / "output" / "comix" / "Obra" / "FLUXO_SECUNDARIO" / "02_MERGE" / "28"
             self.assertEqual(result.output_dir.resolve(), expected_dir.resolve())
             self.assertTrue(result.manifest_path.is_file())
             self.assertTrue(is_chapter_merged(chapter))
