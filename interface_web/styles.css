@@ -1214,3 +1214,208 @@ tbody tr:hover td{background:var(--color-primary-soft)}
   width:100%;
   text-align:left;
 }
+
+/* MILESTONE UI - SIDEBAR REFINADA - 2026-09-04 */
+
+/* Grupos operacionais */
+.texto-off-nav,
+.pdf-nav{
+  margin:6px 10px;
+  padding:5px 5px 7px;
+  border-radius:10px;
+  background:var(--color-primary-soft);
+}
+
+.texto-off-toggle,
+.pdf-toggle{
+  border-radius:8px;
+  font-weight:600;
+}
+
+.texto-off-children,
+.pdf-children{
+  padding-left:8px;
+}
+
+.texto-off-children button,
+.pdf-children button{
+  margin-top:2px;
+  border-radius:7px;
+}
+
+/* Sincronização logo após a navegação */
+.sidebar-actions{
+  margin:10px 14px 0;
+  padding:12px 12px 10px;
+  border-top:1px solid var(--color-border);
+}
+
+.sidebar-updated-at{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  margin-bottom:9px;
+  font-size:11px;
+  line-height:1.35;
+  color:var(--color-text-muted);
+}
+
+.sidebar-updated-at::before{
+  content:"↻";
+  font-size:15px;
+  line-height:1;
+  color:var(--color-primary);
+}
+
+.sidebar-sync{
+  width:100%;
+  justify-content:center;
+  gap:7px;
+}
+
+.sidebar-sync::before{
+  content:"↻";
+  font-size:15px;
+  line-height:1;
+}
+
+/* Ação destrutiva próxima, mas visualmente separada */
+.server-stop-wrap{
+  margin:10px 14px 0;
+  padding-top:10px;
+  border-top:1px solid var(--color-border);
+}
+
+.server-stop{
+  width:100%;
+  justify-content:center;
+}
+
+.server-stop::before{
+  content:"⏻";
+  margin-right:7px;
+  font-size:15px;
+  line-height:1;
+}
+
+
+
+/* MILESTONE UI - SIDEBAR MODELO HTML - 2026-09-04 */
+
+.pdf-nav,
+.texto-off-nav{
+  margin:8px 10px;
+  padding:7px 7px 9px;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--color-primary-soft) 0%,rgba(255,255,255,.34) 100%);
+}
+
+.pdf-nav + .texto-off-nav{
+  margin-top:10px;
+}
+
+.pdf-toggle,
+.texto-off-toggle{
+  min-height:36px;
+  padding:7px 9px;
+  border-radius:9px;
+  font-weight:700;
+}
+
+.pdf-children,
+.texto-off-children{
+  padding-left:8px;
+}
+
+.pdf-children button,
+.texto-off-children button{
+  min-height:34px;
+  margin-top:2px;
+  padding-left:12px;
+  border-radius:8px;
+}
+
+.sidebar-actions{
+  margin:12px 14px 0;
+  padding:12px 10px 10px;
+  border-top:1px solid var(--color-border);
+}
+
+.sidebar-updated-at{
+  display:flex;
+  align-items:center;
+  gap:9px;
+  margin-bottom:10px;
+  font-size:11px;
+  line-height:1.35;
+  color:var(--color-primary);
+}
+
+.sidebar-updated-at::before,
+.sidebar-sync::before,
+.server-stop::before{
+  content:none !important;
+}
+
+.sidebar-updated-at svg{
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.sidebar-sync{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+}
+
+.sidebar-sync svg{
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}
+
+.server-stop-wrap{
+  margin:10px 14px 0;
+  padding-top:10px;
+  border-top:1px solid var(--color-border);
+}
+
+.server-stop{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:9px;
+  background:var(--color-primary);
+  border-color:var(--color-primary);
+  color:#fff;
+}
+
+.server-stop:hover{
+  background:var(--color-primary-hover);
+  border-color:var(--color-primary-hover);
+}
+
+.server-stop svg{
+  width:16px;
+  height:16px;
+  flex:0 0 16px;
+  stroke:currentColor;
+  fill:none;
+  stroke-width:2;
+  stroke-linecap:round;
+  stroke-linejoin:round;
+}

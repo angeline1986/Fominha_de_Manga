@@ -39,6 +39,12 @@ function togglePdfNav(button){
   button.setAttribute("aria-expanded",open?"true":"false");
   localStorage.setItem("fominha_pdf_nav_open",open?"1":"0");
 }
+function updateSidebarSyncState(){
+  const el=document.querySelector("#sidebarUpdatedAt .sidebar-updated-label");
+  if(!el)return;
+  el.textContent=lastUpdated?`Atualizado às ${lastUpdated}`:"Ainda não sincronizado";
+}
+
 
 function applyTextoOffNavState(){
   const group=document.querySelector("[data-texto-off-nav]");
@@ -57,7 +63,7 @@ function toggleTextoOffNav(button){
   button.setAttribute("aria-expanded",String(open));
   localStorage.setItem("fominha.textoOff.expanded",open?"1":"0");
 }
-async function init(){applySidebarState();applyTextoOffNavState();applyPdfNavState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button[data-page]").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");$("#badge").textContent=data.summary.review_pending??data.summary.pending??0;let b2=$("#badgeLevel2");if(b2)b2.textContent=data.summary.partial||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div><div class="updated-at">${lastUpdated?`Atualizado às ${lastUpdated}`:""}</div></div><button class="btn" onclick="refreshStatus()">Sincronizar</button></div>`}
+async function init(){applySidebarState();applyTextoOffNavState();applyPdfNavState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button[data-page]").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");updateSidebarSyncState();$("#badge").textContent=data.summary.review_pending??data.summary.pending??0;let b2=$("#badgeLevel2");if(b2)b2.textContent=data.summary.partial||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div><h1>${esc(t)}</h1><div class="muted">${esc(d)}</div></div></div>`}
 function normalizePdfMergeTable(){
   const tables=[...document.querySelectorAll("table")];
   const table=tables.find(t=>{
