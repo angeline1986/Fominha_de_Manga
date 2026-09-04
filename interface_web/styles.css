@@ -1156,3 +1156,43 @@ tbody tr:hover td{background:var(--color-primary-soft)}
 @media(max-width:1180px){
   .standard-filterbar.dim-toolbar{flex-wrap:wrap}
 }
+
+
+/* MILESTONE UI — VALIDAR IMAGENS EM TABELA + PAGINAÇÃO — 2026-09-04 */
+.dim-table-panel{margin-top:0}
+.dim-table{width:100%;table-layout:auto}
+.dim-table th:nth-child(2),.dim-table td:nth-child(2){width:82px}
+.dim-table th:nth-child(3),.dim-table td:nth-child(3){width:120px}
+.dim-table th:nth-child(4),.dim-table td:nth-child(4){width:235px}
+.dim-table th:nth-child(5),.dim-table td:nth-child(5){width:130px}
+.dim-table th:nth-child(6),.dim-table td:nth-child(6){width:130px}
+.dim-table th:nth-child(7),.dim-table td:nth-child(7){width:155px}
+.dim-table td{vertical-align:middle}
+.dim-table tbody tr.dim-table-active td{background:var(--color-primary-soft)}
+.dim-chapter-link{
+  border:0;
+  padding:0;
+  background:transparent;
+  color:var(--color-text);
+  font:inherit;
+  font-weight:700;
+  cursor:pointer;
+}
+.dim-chapter-link:hover{color:var(--color-primary);text-decoration:underline}
+.dim-table-status{
+  display:inline-flex;
+  align-items:center;
+  min-height:24px;
+  padding:4px 10px;
+  border-radius:999px;
+  font-size:11px;
+  font-weight:700;
+  line-height:1;
+  white-space:nowrap;
+}
+.dim-table-status.ok{background:#eaf7f1;color:#18775d}
+.dim-table-status.attention{background:#fff5dc;color:#9a6500}
+.dim-table-status.muted{background:var(--color-surface-soft);color:var(--color-text-muted)}
+.dim-table-empty{text-align:center!important;color:var(--color-text-muted);padding:24px!important}
+.dim-detail-wrap{margin-top:12px}
+.dim-detail-wrap>.dim-detail{width:100%}
