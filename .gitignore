@@ -24,3 +24,5 @@ reports/
 # Local source snapshots
 interface_web.zip
 processamento.zip
+
+gui_config.json
