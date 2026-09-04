@@ -159,7 +159,7 @@ function installPdfMergeUiNormalizer(){
   requestAnimationFrame(run);
 }
 
-function render(){let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+function render(){let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let b4=$("#badgeLevel4");if(b4&&data)b4.textContent=data.chapters.filter(x=>x.merge_level4_pending).length;let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="merge_level4")return mergeLevel4(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
   if(x.merge_state==="parcial")return {cls:"warn",text:"Parcial"};
@@ -397,7 +397,7 @@ function mergeLevel3(r){
     let d=x.merge_level3_detail||{},pending=!!x.merge_level3_pending,safe=Number(d.safe_artifacts_count||(d.safe_artifacts||[]).length||0),res=Number(d.residual_pending_segments_count||(d.residual_pending_segments||[]).length||0);
     let state=pending?`<span class="warn">Pendente</span>`:(!d.valid?`<span class="bad">⚠ Inválido</span>`:`<span class="ok">✓ Analisado</span>`);
     let outcome=!d.valid?"":(res?(safe?"Parcialmente resolvido":"Não resolvido"):"Resolvido automaticamente");
-    let result=pending?`<span class="muted">Aguardando análise estrutural</span>`:(!d.valid?esc(d.error||"Manifesto inválido"):res?`<span class="bad">${esc(outcome)}</span> · <button class="l3-result-link" onclick="reviewCh='${esc(x.chapter)}';page='review_v2';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page==='review_v2'));render()">Revisão Merge V2</button>`:(x.merge?`<span class="ok">${esc(outcome)}</span>`:`<span class="muted">Analisado sem residual</span>`));
+    let result=pending?`<span class="muted">Aguardando análise estrutural</span>`:(!d.valid?esc(d.error||"Manifesto inválido"):res?`<span class="bad">${esc(outcome)}</span> · <button class="l3-result-link" onclick="reviewCh='${esc(x.chapter)}';page='merge_level4';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page==='merge_level4'));render()">Auto-Merge Nível IV</button>`:(x.merge?`<span class="ok">${esc(outcome)}</span>`:`<span class="muted">Analisado sem residual</span>`));
     return `<tr data-n="${esc(String(x.chapter)).toLowerCase()}">
       <td>${pending?`<input class="ck" type="checkbox" value="${esc(x.chapter)}" onchange="syncVisibleMaster(document.querySelector('.visible-master'),'.ck')">`:""}</td>
       <td>${esc(x.chapter)}</td>
@@ -413,6 +413,38 @@ function mergeLevel3(r){
     `<div class="toolbar standard-filterbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><div class="status-filter" role="group" aria-label="Filtrar Nível III"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="pending"?"active":""}" onclick="setTableStatus('pending')">Pendentes</button><button class="tab ${tableStatus==="done"?"active":""}" onclick="setTableStatus('done')">Analisados</button></div><button class="btn primary filter-primary-action" onclick="runSelected('merge_level3')">Analisar Nível III</button></div>
      <div class="panel"><table class="l3-table"><thead><tr><th>${visibleMaster()}</th><th>CAP.</th><th>NÍVEL III</th><th>SAFE</th><th>RESIDUAL</th><th>RESULTADO</th><th></th></tr></thead><tbody>${body||`<tr><td colspan="7" class="muted">Nenhum capítulo encontrado.</td></tr>`}</tbody></table>${pager}</div>`;
 }
+
+function mergeLevel4(r){
+  let list=data.chapters.filter(x=>x.merge_level4_pending||x.merge_level4_detail?.available);
+  let filtered=list.filter(x=>!window._tableQuery||String(x.chapter).toLowerCase().includes(String(window._tableQuery).toLowerCase()));
+  if(tableStatus==="pending")filtered=filtered.filter(x=>!!x.merge_level4_pending);
+  if(tableStatus==="done")filtered=filtered.filter(x=>!x.merge_level4_pending&&x.merge_level4_detail?.available);
+  if(!list.length){
+    r.innerHTML=head("Auto-Merge Nível IV","Busca globalmente uma composição completa usando somente cortes estruturais SAFE no residual do Nível III.")+`<div class="empty">Nenhum capítulo aguardando Auto-Merge Nível IV.</div>`;
+    return;
+  }
+  let pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));tablePage=Math.min(tablePage,pages);
+  let rows=filtered.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
+  let pager=`<div class="table-pager"><span>${filtered.length?((tablePage-1)*PAGE_SIZE+1):0}-${Math.min(tablePage*PAGE_SIZE,filtered.length)} de ${filtered.length}</span><div><button class="btn" ${tablePage<=1?"disabled":""} onclick="changeTablePage(-1)">&lt;&lt;</button><span class="page-indicator">${tablePage} / ${pages}</span><button class="btn" ${tablePage>=pages?"disabled":""} onclick="changeTablePage(1)">&gt;&gt;</button></div></div>`;
+  let body=rows.map(x=>{
+    let d=x.merge_level4_detail||{},pending=!!x.merge_level4_pending;
+    let safe=Number(d.safe_artifacts_count||(d.safe_artifacts||[]).length||0);
+    let res=Number(d.residual_pending_segments_count||(d.residual_pending_segments||[]).length||0);
+    let state=pending?`<span class="warn">Pendente</span>`:(!d.valid?`<span class="bad">⚠ Inválido</span>`:`<span class="ok">✓ Analisado</span>`);
+    let result=pending
+      ?`<span class="muted">Aguardando busca global SAFE</span>`
+      :(!d.valid
+        ?esc(d.error||"Manifesto inválido")
+        :(res
+          ?`<span class="bad">Sem composição completa SAFE</span> · <button class="l3-result-link" onclick="reviewCh='${esc(x.chapter)}';page='review_v2';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page==='review_v2'));render()">Revisão Merge V2</button>`
+          :`<span class="ok">Resolvido automaticamente</span>`));
+    return `<tr data-n="${esc(String(x.chapter)).toLowerCase()}"><td>${pending?`<input class="ck" type="checkbox" value="${esc(x.chapter)}" onchange="syncVisibleMaster(document.querySelector('.visible-master'),'.ck')">`:""}</td><td>${esc(x.chapter)}</td><td>${state}</td><td>${pending?"—":safe}</td><td>${pending?"—":res}</td><td>${result}</td></tr>`;
+  }).join("");
+  r.innerHTML=head("Auto-Merge Nível IV","Busca globalmente uma composição completa usando somente cortes estruturais SAFE no residual do Nível III.")+
+    `<div class="toolbar standard-filterbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><div class="status-filter" role="group" aria-label="Filtrar Nível IV"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="pending"?"active":""}" onclick="setTableStatus('pending')">Pendentes</button><button class="tab ${tableStatus==="done"?"active":""}" onclick="setTableStatus('done')">Analisados</button></div><button class="btn primary filter-primary-action" onclick="runSelected('merge_level4')">Analisar Nível IV</button></div><div class="panel"><table class="l3-table"><thead><tr><th>${visibleMaster()}</th><th>CAP.</th><th>NÍVEL IV</th><th>SAFE</th><th>RESIDUAL</th><th>RESULTADO</th></tr></thead><tbody>${body||`<tr><td colspan="6" class="muted">Nenhum capítulo encontrado.</td></tr>`}</tbody></table>${pager}</div>`;
+}
+
+
 function toggleLevel3Detail(ch){
   let row=document.getElementById(`l3-detail-${ch}`);
   if(row)row.hidden=!row.hidden;
@@ -747,6 +779,7 @@ const JOB_LABELS={
   clean_merged:"Texto Off — Merged",
   merge_level2:"Auto-Merge Nível II",
   merge_level3:"Auto-Merge Nível III",
+  merge_level4:"Auto-Merge Nível IV",
   dimension_analyze:"Validar imagens",
   dimension_correct:"Efetuar correção",
   review_generate:"Gerar proposta de revisão",
@@ -1047,14 +1080,15 @@ function openMergeStageFolder(action,chapter){
   const kind={
     merge:"auto_merge",
     merge_level2:"merge_level2",
-    merge_level3:"merge_level3"
+    merge_level3:"merge_level3",
+    merge_level4:"merge_level4"
   }[String(action||"")];
   if(!kind) return Promise.reject(new Error("Etapa de merge inválida."));
   return api(`/api/open-folder?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&chapter=${encodeURIComponent(chapter)}&kind=${encodeURIComponent(kind)}`);
 }
 function mergeOperationResultModal(j,s){
   const action=String(j?.action||"").toLowerCase();
-  if(!["merge","merge_level2","merge_level3"].includes(action)) return false;
+  if(!["merge","merge_level2","merge_level3","merge_level4"].includes(action)) return false;
   const payload=j?.result ?? j?.response ?? j;
   const rawItems=Array.isArray(payload)?payload:(Array.isArray(payload?.items)?payload.items:[]);
   if(!rawItems.length) return false;
@@ -1071,7 +1105,7 @@ function mergeOperationResultModal(j,s){
         : Number(raw.residual_pending_segments||0);
     const next=raw.next_stage || (
       pendingSegments
-        ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":"Revisão Merge V2")
+        ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":action==="merge_level3"?"Auto-Merge Nível IV":"Revisão Merge V2")
         : "—"
     );
     const statusRaw=String(raw.status||"").toLowerCase();
