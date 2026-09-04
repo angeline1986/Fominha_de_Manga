@@ -892,3 +892,267 @@ tbody tr:hover td{background:var(--color-primary-soft)}
 .dim-preview-arrow{text-align:center;color:var(--color-primary);font-size:18px;font-weight:800}
 .dim-compare .dim-fix{margin-top:10px;background:var(--color-primary-soft)}
 @media(max-width:1100px){.dim-toolbar .search{min-width:180px}.dim-before-after{grid-template-columns:1fr}.dim-preview-arrow{transform:rotate(90deg)}.dim-preview-stage{height:220px}}
+
+
+/* FILTER TOOLBAR STANDARDIZATION — 2026-09-03 */
+.standard-filterbar{
+  display:grid;
+  grid-template-columns:minmax(260px,1fr) auto auto auto;
+  gap:8px;
+  align-items:center;
+  margin:12px 0;
+}
+.standard-filterbar .search{min-width:0;height:38px}
+.standard-filterbar .status-filter{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:3px;
+  border:1px solid var(--color-border-primary);
+  border-radius:10px;
+  background:var(--color-primary-soft);
+  white-space:nowrap;
+}
+.standard-filterbar .status-filter .tab{
+  height:32px;
+  padding:0 11px;
+  border-radius:7px;
+  background:transparent;
+  border-color:transparent;
+}
+.standard-filterbar .status-filter .tab.active{
+  background:var(--color-surface);
+  color:var(--color-primary);
+  border-color:var(--color-border-primary);
+  box-shadow:0 1px 4px rgba(67,56,59,.08);
+}
+.standard-filterbar .filter-select-visible,
+.standard-filterbar .filter-primary-action{height:38px;white-space:nowrap}
+.review-standard-filterbar{
+  margin:12px 0 14px;
+  grid-template-columns:minmax(240px,1fr) auto;
+}
+.rv .review-standard-filterbar{padding:0}
+.rv2 .review-standard-filterbar{margin:12px 0 14px}
+.dim-toolbar{
+  display:grid;
+  grid-template-columns:minmax(240px,1fr) auto auto auto auto;
+  gap:8px;
+  align-items:center;
+}
+.dim-toolbar .dim-filter-tabs{
+  padding:3px;
+  border:1px solid var(--color-border-primary);
+  border-radius:10px;
+  background:var(--color-primary-soft);
+}
+.dim-toolbar .dim-filter-tabs button{height:32px;padding:0 10px}
+@media(max-width:1180px){
+  .standard-filterbar{grid-template-columns:minmax(220px,1fr) auto auto}
+  .standard-filterbar .status-filter{grid-column:1 / -1;grid-row:2;justify-self:start}
+  .review-standard-filterbar{grid-template-columns:1fr}
+  .review-standard-filterbar .status-filter{grid-row:auto;grid-column:auto}
+  .dim-toolbar{display:flex;flex-wrap:wrap}
+  .dim-toolbar .search{flex:1 1 260px}
+}
+@media(max-width:720px){
+  .standard-filterbar{display:flex;flex-wrap:wrap}
+  .standard-filterbar .search{flex:1 1 100%}
+  .standard-filterbar .status-filter{max-width:100%;overflow-x:auto}
+  .standard-filterbar .filter-select-visible,
+  .standard-filterbar .filter-primary-action{flex:1 1 auto}
+}
+
+
+/* FILTER TOOLBAR REFINEMENT - 2026-09-04 */
+.standard-filterbar,
+.review-standard-filterbar,
+.dim-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+}
+.standard-filterbar .search,
+.review-standard-filterbar .search,
+.dim-toolbar .search{
+  flex:0 0 280px;
+  width:280px;
+  min-width:280px;
+  max-width:280px;
+  height:38px;
+}
+.standard-filterbar .status-filter,
+.dim-toolbar .dim-filter-tabs{flex:0 0 auto}
+.standard-filterbar .filter-primary-action,
+.dim-toolbar > .btn.primary{
+  margin-left:auto;
+  height:38px;
+  white-space:nowrap;
+}
+.review-standard-filterbar{grid-template-columns:none}
+.dim-tolerance{
+  display:flex;
+  align-items:center;
+  gap:5px;
+  white-space:nowrap;
+}
+.dim-tolerance input{
+  width:52px !important;
+  min-width:52px !important;
+  max-width:52px !important;
+  height:38px;
+  padding:0 4px 0 7px;
+  text-align:center;
+}
+.visible-master,.dim-visible-master{
+  width:14px;
+  height:14px;
+  margin:0;
+  cursor:pointer;
+  vertical-align:middle;
+}
+.dim-list-head{
+  display:grid;
+  grid-template-columns:28px 1fr auto;
+  align-items:center;
+  min-height:34px;
+  padding:0 12px;
+  border-bottom:1px solid var(--color-border);
+  color:var(--color-primary);
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.04em;
+}
+.dim-list-head > span:first-child{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.dim-list-head > span:last-child{text-align:right}
+@media(max-width:1180px){
+  .standard-filterbar,.review-standard-filterbar,.dim-toolbar{flex-wrap:wrap}
+}
+@media(max-width:720px){
+  .standard-filterbar .search,
+  .review-standard-filterbar .search,
+  .dim-toolbar .search{
+    flex:1 1 220px;
+    width:auto;
+    min-width:180px;
+    max-width:280px;
+  }
+}
+
+
+/* FILTER / VALIDATE POLISH - 2026-09-04 */
+.panel table > thead > tr > th:first-child,
+.panel table > tbody > tr > td:first-child{
+  width:42px;
+  min-width:42px;
+  max-width:42px;
+  padding-left:14px;
+  padding-right:14px;
+  text-align:center;
+}
+.panel table > thead > tr > th:first-child input,
+.panel table > tbody > tr > td:first-child input{
+  display:block;
+  margin:0 auto;
+}
+
+.dim-list-head{
+  grid-template-columns:14px minmax(0,1fr) auto;
+  gap:7px;
+  padding:0 4px;
+  min-height:32px;
+}
+.dim-list-head > span:first-child{
+  width:14px;
+  justify-content:flex-start;
+}
+.dim-list-head > b{padding-left:9px}
+.dim-list-head > span:last-child{padding-right:9px}
+
+.standard-filterbar.dim-toolbar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:nowrap;
+}
+.standard-filterbar.dim-toolbar .dim-filter-tabs.status-filter{
+  display:flex;
+  align-items:center;
+  gap:4px;
+  padding:3px;
+  border:1px solid var(--color-border-primary);
+  border-radius:10px;
+  background:var(--color-primary-soft);
+  white-space:nowrap;
+}
+.standard-filterbar.dim-toolbar .dim-filter-tabs.status-filter .tab{
+  height:32px;
+  padding:0 11px;
+  border:1px solid transparent;
+  border-radius:7px;
+  background:transparent;
+  color:var(--color-text-secondary);
+  box-shadow:none;
+}
+.standard-filterbar.dim-toolbar .dim-filter-tabs.status-filter .tab.active{
+  background:var(--color-surface);
+  color:var(--color-primary);
+  border-color:var(--color-border-primary);
+  box-shadow:0 1px 4px rgba(67,56,59,.08);
+}
+.standard-filterbar.dim-toolbar .dim-filter-tabs.status-filter .tab span{
+  display:inline-flex;
+  min-width:18px;
+  height:18px;
+  align-items:center;
+  justify-content:center;
+  margin-left:4px;
+  border-radius:999px;
+  background:var(--color-primary-soft-strong);
+  font-size:10px;
+}
+
+.standard-filterbar.dim-toolbar .dim-tolerance input{
+  width:46px !important;
+  min-width:46px !important;
+  max-width:46px !important;
+  height:34px;
+}
+
+.dim-flow{
+  align-items:center;
+  padding:9px 18px;
+  margin:0 0 10px;
+  border-radius:10px;
+}
+.dim-node{min-width:150px}
+.dim-node i{
+  width:18px;
+  height:18px;
+  margin:0 auto 4px;
+  border-width:1.5px;
+}
+.dim-node:after{
+  top:9px;
+  height:1px;
+}
+.dim-node span{
+  font-size:10px;
+  font-weight:700;
+}
+
+.standard-filterbar.dim-toolbar .search{
+  flex:0 0 280px;
+  width:280px;
+  min-width:280px;
+  max-width:280px;
+}
+
+@media(max-width:1180px){
+  .standard-filterbar.dim-toolbar{flex-wrap:wrap}
+}
