@@ -64,7 +64,9 @@ def list_supported_images(chapter_dir: Path) -> list[Path]:
         (
             path
             for path in chapter_dir.iterdir()
-            if path.is_file() and path.suffix.lower() in IMAGE_EXTENSIONS
+            if path.is_file()
+            and path.suffix.lower() in IMAGE_EXTENSIONS
+            and not path.stem.lower().endswith("_old")
         ),
         key=natural_key,
     )

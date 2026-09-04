@@ -22,6 +22,13 @@ def nkey(v):
     n=v.name if isinstance(v,Path) else str(v)
     return [int(x) if x.isdigit() else x.lower() for x in re.split(r"(\d+)",n)]
 
+def is_active_image(path):
+    return (
+        path.is_file()
+        and path.suffix.lower() in IMAGE_EXTS
+        and not path.stem.lower().endswith("_old")
+    )
+
 def manga_path(provider,manga):
     if provider not in {"comix","mangago"}: raise ValueError("Provider inválido.")
     base=(OUTPUT/provider).resolve(); target=(base/manga).resolve()
@@ -31,7 +38,7 @@ def manga_path(provider,manga):
 def chapters(manga):
     root=manga/"IMG"
     if not root.is_dir(): return []
-    return sorted([p for p in root.iterdir() if p.is_dir() and any(f.is_file() and f.suffix.lower() in IMAGE_EXTS for f in p.iterdir())],key=nkey)
+    return sorted([p for p in root.iterdir() if p.is_dir() and any(is_active_image(f) for f in p.iterdir())],key=nkey)
 
 def rdir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_REVIEW"/c
 def amdir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"AUTO_MERGE"/c
@@ -738,46 +745,42 @@ def _dimension_payload(manga, selected_chapters=None, tolerance=3.0, persist=Fal
         payload=merged
     return payload
 
-def _dimension_correction_state(manga,item):
-    chapter=str(item.get("chapter") or "")
-    manifest_file=dimension_root(manga)/"COMPOSICAO_FINAL"/chapter/"dimension-correction-manifest.json"
-    if not chapter or not manifest_file.is_file(): return None
-    try:
-        manifest=json.loads(manifest_file.read_text(encoding="utf-8"))
-        if int(manifest.get("dominant_width") or 0)!=int(item.get("dominant_width") or 0): return None
-        if abs(float(manifest.get("tolerance_percent",-1))-float(item.get("tolerance_percent",-2)))>1e-9: return None
-        corrected=manifest.get("corrected") or []
-        final_dir=manifest_file.parent
-        if not corrected or any(not (final_dir/str(x.get("file",""))).is_file() for x in corrected): return None
-        return manifest
-    except Exception:
-        return None
-
 def dimension_state(manga):
     current=dimension_root(manga)/"analise_dimensoes_atual.json"
-    if not current.is_file(): return {"available":False,"tolerance_percent":3.0,"summary":{"chapters_analyzed":0,"chapters_ok":0,"chapters_requiring_analysis":0,"chapters_corrected":0},"chapters":[]}
+    if not current.is_file():
+        return {
+            "available":False,
+            "tolerance_percent":3.0,
+            "summary":{
+                "chapters_analyzed":0,
+                "chapters_ok":0,
+                "chapters_requiring_analysis":0,
+            },
+            "chapters":[],
+        }
     try:
         payload=json.loads(current.read_text(encoding="utf-8"))
-        chapters_out=[]
-        for raw in payload.get("chapters") or []:
-            item=dict(raw); manifest=_dimension_correction_state(manga,item)
-            item["source_exceptions"]=int(item.get("exceptions") or 0)
-            item["correction_applied"]=bool(manifest)
-            item["corrected_count"]=len((manifest or {}).get("corrected") or [])
-            if manifest:
-                item["status"]="CORRIGIDO"
-                item["exceptions"]=0
-            chapters_out.append(item)
+        chapters_out=[dict(raw) for raw in payload.get("chapters") or []]
         payload["chapters"]=chapters_out
         payload["summary"]={
             "chapters_analyzed":len(chapters_out),
             "chapters_ok":sum(x.get("status")=="OK" for x in chapters_out),
             "chapters_requiring_analysis":sum(x.get("status")=="REQUER_ANALISE" for x in chapters_out),
-            "chapters_corrected":sum(x.get("status")=="CORRIGIDO" for x in chapters_out),
         }
-        payload["available"]=True; return payload
+        payload["available"]=True
+        return payload
     except Exception as exc:
-        return {"available":False,"error":str(exc),"tolerance_percent":3.0,"summary":{"chapters_analyzed":0,"chapters_ok":0,"chapters_requiring_analysis":0,"chapters_corrected":0},"chapters":[]}
+        return {
+            "available":False,
+            "error":str(exc),
+            "tolerance_percent":3.0,
+            "summary":{
+                "chapters_analyzed":0,
+                "chapters_ok":0,
+                "chapters_requiring_analysis":0,
+            },
+            "chapters":[],
+        }
 
 def do_dimension_analyze(job,manga,chs,tolerance):
     job.progress_detail="Analisando dimensões das imagens..."; job.progress_max=max(1,len(chs)); job.progress_value=0
@@ -790,31 +793,95 @@ def do_dimension_analyze(job,manga,chs,tolerance):
 
 def do_dimension_correct(job,manga,chs,tolerance):
     payload=_dimension_payload(manga,[x.name for x in chs],tolerance,persist=True); by_ch={x["chapter"]:x for x in payload["chapters"]}; out=[]
-    root=dimension_root(manga); corrected_root=root/"CORRIGIDAS"; final_root=root/"COMPOSICAO_FINAL"
     job.progress_max=max(1,len(chs)); job.progress_value=0
+
     for idx,ch in enumerate(chs,1):
-        item=by_ch.get(ch.name) or {}; dominant=int(item.get("dominant_width") or 0); exceptions=[x for x in item.get("images",[]) if x.get("classification")=="EXCECAO_DIMENSAO"]
+        item=by_ch.get(ch.name) or {}
+        dominant=int(item.get("dominant_width") or 0)
+        exceptions=[x for x in item.get("images",[]) if x.get("classification")=="EXCECAO_DIMENSAO"]
+
         if not dominant or not exceptions:
-            out.append({"chapter":ch.name,"status":"skipped","message":"Nenhuma correção necessária."}); job.progress=idx; job.progress_value=idx; continue
-        corr=corrected_root/ch.name; final=final_root/ch.name
-        if corr.is_dir(): shutil.rmtree(corr)
-        if final.is_dir(): shutil.rmtree(final)
-        corr.mkdir(parents=True); final.mkdir(parents=True)
-        exception_names={x["file"] for x in exceptions}
+            out.append({"chapter":ch.name,"status":"skipped","message":"Nenhuma correção necessária."})
+            job.progress=idx; job.progress_value=idx
+            continue
+
         corrected=[]
-        for source in sorted([x for x in ch.iterdir() if x.is_file() and x.suffix.lower() in IMAGE_EXTS],key=nkey):
-            if source.name not in exception_names:
-                shutil.copy2(source,final/source.name); continue
+        blocked=[]
+        prepared=[]
+
+        for info in exceptions:
+            source=ch/str(info.get("file") or "")
+            if not source.is_file() or not is_active_image(source):
+                blocked.append({"file":source.name,"reason":"Imagem ativa não encontrada."})
+                continue
+
+            backup=source.with_name(f"{source.stem}_old{source.suffix}")
+            if backup.exists():
+                blocked.append({"file":source.name,"reason":f"Backup já existe: {backup.name}"})
+                continue
+
+            prepared.append((source,backup))
+
+        if blocked:
+            out.append({
+                "chapter":ch.name,
+                "status":"error",
+                "message":f"Correção não iniciada: {len(blocked)} bloqueio(s) de segurança.",
+                "corrected":[],
+                "blocked":blocked,
+            })
+            job.progress=idx
+            job.progress_value=idx
+            job.progress_detail=f"Cap. {ch.name}: correção bloqueada por segurança."
+            continue
+
+        for source,backup in prepared:
             with Image.open(source) as im:
+                original_size=[im.width,im.height]
                 new_h=max(1,round(im.height*(dominant/im.width)))
                 resized=im.resize((dominant,new_h),Image.Resampling.LANCZOS)
-                resized.save(corr/source.name)
-                resized.save(final/source.name)
-                corrected.append({"file":source.name,"from":[im.width,im.height],"to":[dominant,new_h]})
-        manifest={"schema_version":1,"chapter":ch.name,"tolerance_percent":float(tolerance),"dominant_width":dominant,"original_dir":str(ch),"corrected_dir":str(corr),"composition_dir":str(final),"originals_modified":False,"corrected":corrected}
-        (final/"dimension-correction-manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-        out.append({"chapter":ch.name,"status":"ok","message":f"{len(corrected)} imagem(ns) corrigida(s) proporcionalmente para {dominant}px; IMG preservado.","corrected":corrected})
-        job.progress=idx; job.progress_value=idx; job.progress_detail=f"Cap. {ch.name}: composição final concluída."
+
+                temp=source.with_name(f".{source.name}.dimension-correction.tmp")
+                fmt=im.format
+
+                try:
+                    resized.save(temp,format=fmt)
+                    source.rename(backup)
+                    temp.replace(source)
+                except Exception:
+                    if temp.exists():
+                        temp.unlink()
+                    if not source.exists() and backup.exists():
+                        backup.rename(source)
+                    raise
+
+                corrected.append({
+                    "file":source.name,
+                    "backup":backup.name,
+                    "from":original_size,
+                    "to":[dominant,new_h],
+                })
+
+        if corrected:
+            _dimension_payload(manga,[ch.name],tolerance,persist=True)
+
+        status="ok" if corrected and not blocked else ("partial" if corrected else "error")
+        message=f"{len(corrected)} imagem(ns) corrigida(s) em IMG com backup _old."
+        if blocked:
+            message+=f" {len(blocked)} imagem(ns) não corrigida(s) por segurança."
+
+        out.append({
+            "chapter":ch.name,
+            "status":status,
+            "message":message,
+            "corrected":corrected,
+            "blocked":blocked,
+        })
+
+        job.progress=idx
+        job.progress_value=idx
+        job.progress_detail=f"Cap. {ch.name}: correção em IMG concluída."
+
     return out
 
 def catalog():
@@ -1113,7 +1180,7 @@ def row_state(manga,ch):
     review_exists=(rd/"merge-review.json").is_file()
     return {
         "chapter":ch.name,
-        "pages":sum(1 for p in ch.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS and p.name.lower().startswith("page-")),
+        "pages":sum(1 for p in ch.iterdir() if is_active_image(p) and p.name.lower().startswith("page-")),
         "merge":merge_ok,"merge_error":merge_error,"merge_failed":merge_failed,
         "merge_failure":failure,"merge_partition":partition,
         "merge_level2":has_level2,"merge_level2_validated":level2_validated,
@@ -1519,7 +1586,7 @@ def do_clean(job,manga,chs):
     from processamento.limpeza_baloes.bubble_cleaner import EasyOCRBackend,process_image,resolve_model
     model=resolve_model(None); ocr=EasyOCRBackend(["en"]); out=[]
     for i,ch in enumerate(chs,1):
-        target=cdir(manga,ch.name); target.mkdir(parents=True,exist_ok=True); imgs=sorted([p for p in ch.iterdir() if p.is_file() and p.suffix.lower() in IMAGE_EXTS],key=nkey); reports=[]; fails=[]
+        target=cdir(manga,ch.name); target.mkdir(parents=True,exist_ok=True); imgs=sorted([p for p in ch.iterdir() if is_active_image(p)],key=nkey); reports=[]; fails=[]
         for pi,img in enumerate(imgs,1):
             job.message=f"Capítulo {ch.name}: página {pi}/{len(imgs)}"
             try: reports.append(process_image(img,target,model,["en"],0.55,ocr_backend=ocr))

@@ -20,7 +20,7 @@ def run_clean_flow(output_dir, *, ask_number, print_header, print_option, c):
     x=ask_number("\nSelecione uma opção › ",range(len(mangas)+1))
     if not x:return
     manga=mangas[x-1]
-    chapters=sorted([p for p in (manga/"IMG").iterdir() if p.is_dir() and any(q.suffix.lower() in EXT for q in p.iterdir() if q.is_file())],key=key)
+    chapters=sorted([p for p in (manga/"IMG").iterdir() if p.is_dir() and any(q.suffix.lower() in EXT and not q.stem.lower().endswith("_old") for q in p.iterdir() if q.is_file())],key=key)
     print_header(manga.name.upper())
     for i,p in enumerate(chapters,1): print_option(i,p.name); print()
     raw=input(c("prompt","\nCapítulos (1,2,5 ou 1-5 ou todos) › ",bold=True)).strip().lower()
@@ -38,7 +38,7 @@ def run_clean_flow(output_dir, *, ask_number, print_header, print_option, c):
     for n in nums:
         ch=chapters[n-1]; target=manga/"FLUXO_SECUNDARIO"/"04_TEXTO_OFF"/"ORIGINAL"/ch.name; target.mkdir(parents=True,exist_ok=True)
         reports=[]
-        images=sorted([p for p in ch.iterdir() if p.is_file() and p.suffix.lower() in EXT],key=key)
+        images=sorted([p for p in ch.iterdir() if p.is_file() and p.suffix.lower() in EXT and not p.stem.lower().endswith("_old")],key=key)
         chapter_start=time.perf_counter()
         print(c("prompt",f"Processando {ch.name}: {len(images)} página(s)"))
         for page_no,img in enumerate(images,1):

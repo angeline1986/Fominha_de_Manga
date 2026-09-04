@@ -63,6 +63,7 @@ def iter_images(chapter_dir: Path):
             if p.is_file()
             and p.suffix.lower() in IMAGE_EXTENSIONS
             and p.name.lower().startswith("page-")
+            and not p.stem.lower().endswith("_old")
         ),
         key=lambda p: natural_key(p.name),
     )
