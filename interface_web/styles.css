@@ -1196,3 +1196,21 @@ tbody tr:hover td{background:var(--color-primary-soft)}
 .dim-table-empty{text-align:center!important;color:var(--color-text-muted);padding:24px!important}
 .dim-detail-wrap{margin-top:12px}
 .dim-detail-wrap>.dim-detail{width:100%}
+
+
+/* MILESTONE UI — GERAR PDF COMO GRUPO EXPANSÍVEL — 2026-09-04 */
+.pdf-nav{display:block}
+.pdf-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.pdf-toggle i{transition:transform .18s ease}
+.pdf-nav.open .pdf-toggle i{transform:rotate(180deg)}
+.pdf-children{display:none;padding-left:12px}
+.pdf-nav.open .pdf-children{display:block}
+.pdf-children button{
+  width:100%;
+  text-align:left;
+}
