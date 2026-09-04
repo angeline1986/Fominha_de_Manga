@@ -864,6 +864,7 @@ def do_dimension_correct(job,manga,chs,tolerance):
 
         if corrected:
             _dimension_payload(manga,[ch.name],tolerance,persist=True)
+            clear_merge_failure(ch)
 
         status="ok" if corrected and not blocked else ("partial" if corrected else "error")
         message=f"{len(corrected)} imagem(ns) corrigida(s) em IMG com backup _old."
