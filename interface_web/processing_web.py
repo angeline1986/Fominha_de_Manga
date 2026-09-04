@@ -1521,10 +1521,8 @@ def row_state(manga,ch):
     needs_review=bool(
         merge_failed
         and not validated_without_pending
-        and (
-            (not has_level2)
-            or (level2_validated and level4_has_residual)
-        )
+        and level2_validated
+        and level4_has_residual
     )
     review_items=review_merge_items(manga,ch)
     all_review_files=[p.name for p in v3.merge_artifact_files(rd)] if rd.is_dir() else []
@@ -1541,7 +1539,7 @@ def row_state(manga,ch):
         "merge_level4_pending":level4_pending,
         "merge_level4_detail":level4_detail,
         "needs_review":needs_review,
-        "merge_state":"concluido" if merge_ok else ("pendente_level3" if level3_pending else ("pendente_level4" if level4_pending else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("pendente_review" if merge_failed else "novo"))))),
+        "merge_state":"concluido" if merge_ok else ("pendente_level3" if level3_pending else ("pendente_level4" if level4_pending else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("novo" if merge_failed else "novo"))))),
         "merged_images":int(merge_meta.get("merged_images") or 0) if merge_ok else 0,
         "review":review_exists,
         "review_images":len(review_items) if review_exists else 0,
