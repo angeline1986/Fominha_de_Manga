@@ -1607,10 +1607,86 @@ def run_job(job,payload):
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
             elif job.action=="review_approve": job.result=do_review_approve(job,manga,chs)
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
+            elif job.action=="balance_prepare": job.result=do_balance_prepare(job,manga,chs,payload.get("merges") or [])
+            elif job.action=="balance_execute": job.result=do_balance_execute(job,manga,chs,payload.get("merges") or [],payload.get("cuts") or [])
+            elif job.action=="balance_generate": job.result=do_balance_generate(job,manga,chs,payload.get("merges") or [])
             else: raise ValueError("Ação inválida.")
             job.status="done"; job.message="Processamento concluído."
     except Exception as e:
         job.status="error"; job.error=str(e); job.message=str(e); traceback.print_exc()
+
+
+
+
+def do_balance_prepare(job,manga,chs,selected_merges):
+    from processamento.balanceamento.balanceador import prepare_manual_balance
+    if len(chs) != 1: raise ValueError("Executar balanceamento processa um capítulo por vez.")
+    names=[str(x) for x in (selected_merges or []) if str(x).strip()]
+    if len(names) < 2: raise ValueError("Selecione pelo menos 2 merges contíguos.")
+    ch=chs[0]
+    def _progress(step,total,detail):
+        job.progress_value=step; job.progress_max=total
+        job.progress_detail=f"Cap. {ch.name}: {detail}"; job.message=job.progress_detail
+    proposal=prepare_manual_balance(manga,ch.name,names,progress_callback=_progress)
+    return [{"chapter":ch.name,"status":"ok","proposal_id":proposal.get("proposal_id"),
+             "proposal_status":proposal.get("status"),"message":proposal.get("message")}]
+
+
+def do_balance_execute(job,manga,chs,selected_merges,cuts):
+    from processamento.balanceamento.balanceador import generate_manual_balance
+    if len(chs) != 1: raise ValueError("Executar balanceamento processa um capítulo por vez.")
+    names=[str(x) for x in (selected_merges or []) if str(x).strip()]
+    if len(names) < 2: raise ValueError("Seleção de merges inválida.")
+    ch=chs[0]
+    def _progress(step,total,detail):
+        job.progress_value=step; job.progress_max=total
+        job.progress_detail=f"Cap. {ch.name}: {detail}"; job.message=job.progress_detail
+    proposal=generate_manual_balance(manga,ch.name,names,cuts,progress_callback=_progress)
+    return [{"chapter":ch.name,"status":"ok","proposal_id":proposal.get("proposal_id"),
+             "proposal_status":proposal.get("status"),"message":proposal.get("message")}]
+
+
+def do_balance_generate(job,manga,chs,selected_merges):
+    from processamento.balanceamento.balanceador import generate_balance_proposal
+
+    if len(chs) != 1:
+        raise ValueError("Efetuar balanceamento processa um capítulo por vez.")
+
+    names=[str(x) for x in (selected_merges or []) if str(x).strip()]
+    if len(names) < 2:
+        raise ValueError("Selecione pelo menos 2 merges para efetuar o balanceamento.")
+
+    ch=chs[0]
+    job.progress_value=0
+    job.progress_max=1
+    job.progress_detail=f"Cap. {ch.name}: analisando cortes SAFE..."
+    job.message=job.progress_detail
+
+    def _progress(step,total,detail):
+        job.progress_value=step
+        job.progress_max=total
+        job.progress_detail=f"Cap. {ch.name}: {detail}"
+        job.message=job.progress_detail
+
+    proposal=generate_balance_proposal(
+        manga,
+        ch.name,
+        names,
+        progress_callback=_progress,
+    )
+
+    job.progress_value=1
+    job.progress_max=1
+    job.progress_detail=f"Cap. {ch.name}: {proposal.get('message') or proposal.get('status')}"
+    job.message=job.progress_detail
+
+    return [{
+        "chapter":ch.name,
+        "status":"ok",
+        "message":proposal.get("message") or proposal.get("status"),
+        "proposal_id":proposal.get("proposal_id"),
+        "proposal_status":proposal.get("status"),
+    }]
 
 
 def _auto_merge_summary_payload(ch, failure=None):
@@ -2261,6 +2337,9 @@ class Handler(BaseHTTPRequestHandler):
             if u.path=="/api/state": return self.send_json(state(q.get("provider",[""])[0],q.get("manga",[""])[0]))
             if u.path=="/api/dimension-analysis":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(dimension_state(manga))
+            if u.path=="/api/balance-analysis":
+                from processamento.balanceamento.balanceamento import balance_state
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(balance_state(manga))
             if u.path=="/api/pdf-merge-latest":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
                 files=latest_pdf_merge_batch(manga)
@@ -2317,6 +2396,11 @@ class Handler(BaseHTTPRequestHandler):
             base=rdir(manga,chapter).resolve()
         elif kind=="source":
             base=(manga/"IMG"/chapter).resolve()
+        elif kind=="balance":
+            base=(manga/"FLUXO_SECUNDARIO"/"02_MERGE"/chapter).resolve()
+        elif kind=="balance_proposal":
+            proposal_id=q.get("proposal",[""])[0]
+            base=(manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"BALANCE_PROPOSALS"/chapter/proposal_id).resolve()
         else:
             self.send_error(404); return
         target=(base/q.get("file",[""])[0]).resolve()

@@ -1480,3 +1480,46 @@ tbody tr:hover td{background:var(--color-primary-soft)}
   visibility:visible;
   transform:translateY(0);
 }
+
+/* BALANCEAMENTO NAV EXPANSÍVEL - PATCH V12B */
+.balance-nav{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  margin:8px 10px;
+  padding:7px 7px 9px;
+  border-radius:12px;
+  background:linear-gradient(135deg,var(--color-primary-soft) 0%,rgba(255,255,255,.34) 100%);
+}
+.balance-toggle{
+  width:100%;
+  min-height:36px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:7px 9px!important;
+  border-radius:9px;
+  color:var(--color-primary)!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.balance-toggle i{
+  font-style:normal;
+  font-size:14px;
+  line-height:1;
+  transition:transform .18s ease;
+}
+.balance-nav.open .balance-toggle i{transform:rotate(180deg)}
+.balance-children{display:none;padding-left:12px}
+.balance-nav.open .balance-children{display:block}
+.balance-children>button{
+  width:100%;
+  text-align:left;
+  padding-left:24px;
+}
+.balance-children>button::before{content:none!important}

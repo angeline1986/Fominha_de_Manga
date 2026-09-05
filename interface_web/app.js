@@ -159,7 +159,7 @@ function installPdfMergeUiNormalizer(){
   requestAnimationFrame(run);
 }
 
-function render(){let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let b4=$("#badgeLevel4");if(b4&&data)b4.textContent=data.chapters.filter(x=>x.merge_level4_pending).length;let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="merge_level4")return mergeLevel4(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+function render(){let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let b4=$("#badgeLevel4");if(b4&&data)b4.textContent=data.chapters.filter(x=>x.merge_level4_pending).length;let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="merge_level4")return mergeLevel4(root);if(page==="balance")return BalanceamentoUI.renderValidation(root);if(page==="balance_execute")return BalanceamentoUI.renderExecution(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
   if(x.merge_state==="parcial")return {cls:"warn",text:"Parcial"};
@@ -1382,4 +1382,30 @@ if(document.readyState==="loading"){
   document.addEventListener("DOMContentLoaded",installPdfMergeUiNormalizer,{once:true});
 }else{
   installPdfMergeUiNormalizer();
+}
+
+/* BALANCEAMENTO NAV - PATCH V12B */
+function applyBalanceNavState(){
+  const group=document.querySelector("[data-balance-nav]");
+  if(!group)return;
+  const saved=localStorage.getItem("fominha.balance.expanded");
+  const open=saved!=="0";
+  group.classList.toggle("open",open);
+  const toggle=group.querySelector(".balance-toggle");
+  if(toggle)toggle.setAttribute("aria-expanded",String(open));
+}
+
+function toggleBalanceNav(button){
+  const group=button?.closest("[data-balance-nav]");
+  if(!group)return;
+  const open=!group.classList.contains("open");
+  group.classList.toggle("open",open);
+  button.setAttribute("aria-expanded",String(open));
+  localStorage.setItem("fominha.balance.expanded",open?"1":"0");
+}
+
+if(document.readyState==="loading"){
+  document.addEventListener("DOMContentLoaded",applyBalanceNavState,{once:true});
+}else{
+  applyBalanceNavState();
 }
