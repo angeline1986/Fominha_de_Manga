@@ -256,7 +256,7 @@
     submittedChapter = String(chapter);
     submittedMerges = [...merges];
 
-    activeView = "rebalance";
+    activeView = "validate";
     renderBody();
 
     const button = document.querySelector("#balSubmitSelected");
@@ -294,7 +294,7 @@
       }
 
       openSections.proposal = true;
-      activeView = "rebalance";
+      activeView = "validate";
       await load();
 
       const current = (state?.chapters || []).find(x => String(x.chapter) === String(chapter));
