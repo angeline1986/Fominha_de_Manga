@@ -640,9 +640,40 @@
       let count = Math.trunc(Number(value));
       if (!Number.isFinite(count)) count = Array.isArray(window.__balManualCuts) ? window.__balManualCuts.length : 1;
       count = Math.max(1, Math.min(20, count));
-      window.__balManualCuts = Array.from({length: count}, (_, idx) =>
-        Math.round(start + (total * (idx + 1) / (count + 1)))
-      );
+      const existingCuts = Array.isArray(window.__balManualCuts)
+        ? window.__balManualCuts.map(Number).filter(Number.isFinite)
+        : [];
+
+      let nextCuts = [...existingCuts];
+
+      if (count < nextCuts.length) {
+        nextCuts = nextCuts.slice(0, count);
+      } else {
+        while (nextCuts.length < count) {
+          const ordered = [...nextCuts].sort((a, b) => a - b);
+          const boundaries = [start, ...ordered, end];
+
+          let bestStart = boundaries[0];
+          let bestEnd = boundaries[1];
+          let bestSize = bestEnd - bestStart;
+
+          for (let idx = 1; idx < boundaries.length - 1; idx += 1) {
+            const gapStart = boundaries[idx];
+            const gapEnd = boundaries[idx + 1];
+            const gapSize = gapEnd - gapStart;
+            if (gapSize > bestSize) {
+              bestStart = gapStart;
+              bestEnd = gapEnd;
+              bestSize = gapSize;
+            }
+          }
+
+          const newCut = Math.round(bestStart + ((bestEnd - bestStart) / 2));
+          nextCuts.push(newCut);
+        }
+      }
+
+      window.__balManualCuts = nextCuts.sort((a, b) => a - b);
       window.__balManualProposalId = proposal.proposal_id;
       renderBody();
     },
