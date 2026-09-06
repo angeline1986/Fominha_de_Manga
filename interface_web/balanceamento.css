@@ -16,3 +16,15 @@
 .bal-section-head-right{display:inline-flex;align-items:center;justify-content:flex-end;gap:10px;margin-left:auto}
 .bal-section-head-right .bal-chevron{display:inline-block;width:12px;margin:0;font-style:normal;font-size:10px;line-height:1;color:var(--color-text-secondary)}
 .bal-section-head:hover .bal-section-head-right .bal-chevron{color:var(--color-primary)}
+
+/* Ações persistentes das telas de balanceamento. */
+.bal-sticky-submit{position:fixed;left:270px;right:20px;bottom:45px;z-index:12;display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0;padding:12px 18px;background:color-mix(in srgb,var(--color-surface) 96%,transparent);border:1px solid var(--color-border);border-radius:10px;box-shadow:0 -8px 18px rgba(76,39,51,.07);backdrop-filter:blur(8px);transition:left .18s ease}
+.bal-sticky-submit-count{font-size:11px;font-weight:800;color:var(--color-text-secondary)}
+.bal-validate-sticky-section{overflow:visible}
+.bal-manual-editor-section{overflow:visible}
+.bal-manual-sticky-toolbar{position:sticky;top:0;z-index:14;background:color-mix(in srgb,var(--color-surface) 96%,transparent);box-shadow:0 6px 16px rgba(76,39,51,.06);backdrop-filter:blur(8px);cursor:default}
+.bal-manual-toolbar-controls{flex-wrap:wrap}
+.bal-manual-toolbar-divider{width:1px;height:24px;background:var(--color-border);margin:0 2px}
+.bal-manual-zoom-value{min-width:42px;text-align:center;font-size:12px;font-weight:800}
+body.sidebar-collapsed .bal-sticky-submit{left:20px}
+@media(max-width:900px){.bal-sticky-submit{left:230px;align-items:stretch;flex-direction:column}.bal-sticky-submit .btn{width:100%}body.sidebar-collapsed .bal-sticky-submit{left:20px}.bal-manual-sticky-toolbar{align-items:flex-start;flex-direction:column}.bal-manual-toolbar-controls{width:100%;margin-left:0;justify-content:flex-start}.bal-manual-toolbar-divider{display:none}}

@@ -141,6 +141,8 @@
     if (!host || !chapter) return;
     const chosen = chapter.merges.filter(x => selectedMerges.has(x.file));
     if (count) count.textContent = `${chosen.length} selecionado(s)`;
+    const stickyCount = document.querySelector("#balStickySelectedCount");
+    if (stickyCount) stickyCount.textContent = `${chosen.length} merge(s) selecionado(s)`;
     host.innerHTML = chosen.length
       ? chosen.map(x => `<article class="bal-preview-card">
           <div class="bal-preview-stage" style="overflow:auto"><img src="${imageUrl(chapter.chapter,x.file)}" alt="${escLocal(x.file)}" style="width:${selectedPreviewZoom}%;max-width:none;height:auto;display:block;margin:0 auto"></div>
@@ -167,14 +169,17 @@
       ? `<div class="bal-notice"><b>Desbalanceamento localizado.</b> ${chapter.issues_count} merge(s) interno(s) abaixo de 50% da média dos vizinhos.</div>`
       : `<div class="bal-okbox"><b>Capítulo balanceado.</b> Nenhum merge interno violou a regra de balanceamento.</div>`;
 
-    return `<section class="bal-section">
+    return `<section class="bal-section bal-validate-sticky-section">
       <button class="bal-section-head" onclick="BalanceamentoUI.toggleSection('chapter')" aria-expanded="${openSections.chapter}">
         <span>Cap. ${escLocal(chapter.chapter)}</span>
         <span class="bal-section-head-right">${statusBadge(chapter)}<i class="bal-chevron">${openSections.chapter ? "▼" : "▶"}</i></span>
       </button>
       ${openSections.chapter ? `<div class="bal-section-body">${notice}
         <table class="bal-merge-table"><thead><tr><th></th><th>MERGE</th><th>ALTURA</th><th>DISTRIBUIÇÃO</th></tr></thead><tbody>${rows}</tbody></table>
-        <div class="bal-actions"><button id="balSubmitSelected" class="btn primary" ${selectedMerges.size >= 2 ? "" : "disabled"} onclick="BalanceamentoUI.submitSelected()" title="Gera uma proposta SAFE sem alterar o MERGE final">Submeter selecionados a novo balanceamento</button></div>
+        <div class="bal-sticky-submit">
+          <span id="balStickySelectedCount" class="bal-sticky-submit-count">${selectedMerges.size} merge(s) selecionado(s)</span>
+          <button id="balSubmitSelected" class="btn primary" ${selectedMerges.size >= 2 ? "" : "disabled"} onclick="BalanceamentoUI.submitSelected()" title="Gera uma proposta SAFE sem alterar o MERGE final">Submeter a Novos Cortes</button>
+        </div>
       </div>` : ""}
     </section>`;
   }
@@ -433,23 +438,23 @@
         </div>`
       : "";
     return `<div class="bal-detail-stack">
-      <section class="bal-section">
-        <div class="bal-section-head">
+      <section class="bal-section bal-manual-editor-section">
+        <div class="bal-section-head bal-manual-sticky-toolbar">
           <span>Cap. ${escLocal(chapter.chapter)}</span>
-          <span class="bal-section-head-right" style="display:flex;align-items:center;gap:8px">
+          <span class="bal-section-head-right bal-manual-toolbar-controls">
             <small>Réguas de corte</small>
             <input id="balManualCutCount" type="number" min="1" max="20" step="1" value="${window.__balManualCuts.length}" onchange="BalanceamentoUI.setManualCutCount(this.value)" style="width:58px;text-align:center;padding:5px 6px">
             <button type="button" class="btn" style="min-width:32px;padding:4px 8px" onclick="BalanceamentoUI.changeManualCutCount(-1)">−</button>
             <button type="button" class="btn" style="min-width:32px;padding:4px 8px" onclick="BalanceamentoUI.changeManualCutCount(1)">+</button>
+            <span class="bal-manual-toolbar-divider" aria-hidden="true"></span>
+            <small>Zoom</small>
+            <button type="button" class="btn" style="min-width:34px;padding:5px 9px" onclick="BalanceamentoUI.changeManualZoom(-10)">−</button>
+            <span class="bal-manual-zoom-value">${Number(window.__balManualZoom || 50)}%</span>
+            <button type="button" class="btn" style="min-width:34px;padding:5px 9px" onclick="BalanceamentoUI.changeManualZoom(10)">+</button>
+            <button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button>
           </span>
         </div>
         <div class="bal-section-body">
-          <div class="bal-manual-toolbar" style="display:flex;align-items:center;justify-content:flex-end;gap:8px;margin-bottom:12px">
-            <span style="font-size:12px;font-weight:700">Zoom</span>
-            <button type="button" class="btn" style="min-width:34px;padding:5px 9px" onclick="BalanceamentoUI.changeManualZoom(-10)">−</button>
-            <span style="min-width:42px;text-align:center;font-size:12px;font-weight:800">${Number(window.__balManualZoom || 50)}%</span>
-            <button type="button" class="btn" style="min-width:34px;padding:5px 9px" onclick="BalanceamentoUI.changeManualZoom(10)">+</button>
-          </div>
           <div id="balManualViewport" style="overflow:auto">
             <div id="balManualWrap" style="position:relative;width:${Number(window.__balManualZoom || 50)}%;margin:0 auto;padding-right:118px;box-sizing:border-box">
               <div id="balManualCanvas" style="position:relative;width:100%;line-height:0;user-select:none;touch-action:none">
@@ -471,7 +476,6 @@
             #balManualWrap .bal-manual-slice-label.is-tinted{background:rgba(193,220,145,.20)}
             #balManualWrap .bal-manual-slice-label b{white-space:nowrap}
           </style>
-          <div class="bal-actions" style="margin-top:14px"><button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button></div>
         </div>
       </section>
       ${result ? `<section class="bal-section"><div class="bal-section-head"><span>Resultado</span></div><div class="bal-section-body">${resultZoomControls}${result}${canApplyFinal ? `<div class="bal-actions" style="margin-top:14px"><button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button></div>` : ""}</div></section>` : ""}
