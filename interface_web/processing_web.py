@@ -1620,7 +1620,7 @@ def run_job(job,payload):
 
 def do_balance_prepare(job,manga,chs,selected_merges):
     from processamento.balanceamento.balanceador import prepare_manual_balance
-    if len(chs) != 1: raise ValueError("Executar balanceamento processa um capítulo por vez.")
+    if len(chs) != 1: raise ValueError("Novos Cortes processa um capítulo por vez.")
     names=[str(x) for x in (selected_merges or []) if str(x).strip()]
     if len(names) < 2: raise ValueError("Selecione pelo menos 2 merges contíguos.")
     ch=chs[0]
@@ -1634,7 +1634,7 @@ def do_balance_prepare(job,manga,chs,selected_merges):
 
 def do_balance_execute(job,manga,chs,selected_merges,cuts):
     from processamento.balanceamento.balanceador import generate_manual_balance
-    if len(chs) != 1: raise ValueError("Executar balanceamento processa um capítulo por vez.")
+    if len(chs) != 1: raise ValueError("Novos Cortes processa um capítulo por vez.")
     names=[str(x) for x in (selected_merges or []) if str(x).strip()]
     if len(names) < 2: raise ValueError("Seleção de merges inválida.")
     ch=chs[0]

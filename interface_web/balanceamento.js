@@ -450,7 +450,7 @@
             #balManualWrap .bal-manual-slice-label.is-tinted{background:rgba(193,220,145,.20)}
             #balManualWrap .bal-manual-slice-label b{white-space:nowrap}
           </style>
-          <div class="bal-actions" style="margin-top:14px"><button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Executar balanceamento</button></div>
+          <div class="bal-actions" style="margin-top:14px"><button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button></div>
         </div>
       </section>
       ${result ? `<section class="bal-section"><div class="bal-section-head"><span>Resultado</span></div><div class="bal-section-body">${result}</div></section>` : ""}
@@ -503,7 +503,7 @@
       toast("Balanceamento gerado nos cortes definidos.");
     } catch (e) {
       toast(e.message || "Não foi possível executar o balanceamento.");
-      if (button) { button.disabled = false; button.textContent = "Executar balanceamento"; }
+      if (button) { button.disabled = false; button.textContent = "Novos Cortes"; }
     }
   }
 
@@ -614,7 +614,7 @@
 
   function renderExecution(root) {
     root.innerHTML = head(
-      "Executar balanceamento",
+      "Novos Cortes",
       "Execute o balanceamento somente nos capítulos já classificados como desbalanceados e inspecione a proposta SAFE gerada."
     )+`<div id="balanceBody"></div>`;
     state = null;
