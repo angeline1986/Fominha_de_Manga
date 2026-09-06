@@ -27,7 +27,11 @@
   }
 
   function proposalImageUrl(chapter, proposalId, file) {
-    return `/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=balance_proposal&chapter=${encodeURIComponent(chapter)}&proposal=${encodeURIComponent(proposalId)}&file=${encodeURIComponent(file)}`;
+    return `/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=balance_proposal&chapter=${encodeURIComponent(chapter)}&proposal=${encodeURIComponent(proposalId || "")}&file=${encodeURIComponent(file)}`;
+  }
+
+  function editorImageUrl(chapter, file) {
+    return `/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=balance_editor&chapter=${encodeURIComponent(chapter)}&file=${encodeURIComponent(file)}`;
   }
 
   function flow(chapter) {
@@ -364,7 +368,7 @@
   }
 
   function sourcePreviewUrl(chapter, proposal) {
-    return proposalImageUrl(chapter.chapter, proposal.proposal_id, proposal.source_preview || "manual-source.png");
+    return editorImageUrl(chapter.chapter, proposal.source_preview || "manual-source.png");
   }
 
   function manualEditorSection(chapter) {

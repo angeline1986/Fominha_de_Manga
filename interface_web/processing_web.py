@@ -2398,9 +2398,13 @@ class Handler(BaseHTTPRequestHandler):
             base=(manga/"IMG"/chapter).resolve()
         elif kind=="balance":
             base=(manga/"FLUXO_SECUNDARIO"/"02_MERGE"/chapter).resolve()
+        elif kind=="balance_editor":
+            base=(manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"BALANCE_EDITOR"/chapter).resolve()
         elif kind=="balance_proposal":
             proposal_id=q.get("proposal",[""])[0]
-            base=(manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"BALANCE_PROPOSALS"/chapter/proposal_id).resolve()
+            chapter_root=(manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"BALANCE_PROPOSALS"/chapter).resolve()
+            legacy=(chapter_root/proposal_id).resolve() if proposal_id else None
+            base=legacy if legacy is not None and legacy.is_relative_to(chapter_root) and legacy.is_dir() else chapter_root
         else:
             self.send_error(404); return
         target=(base/q.get("file",[""])[0]).resolve()

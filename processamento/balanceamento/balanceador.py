@@ -1,4 +1,5 @@
 from __future__ import annotations
+import shutil
 
 import json
 import re
@@ -33,6 +34,10 @@ def _merge_root(manga: Path) -> Path:
 
 def _proposal_root(manga: Path) -> Path:
     return _secondary(manga) / "01_MERGE_PROCESSAMENTO" / "BALANCE_PROPOSALS"
+
+
+def _editor_root(manga: Path) -> Path:
+    return _secondary(manga) / "01_MERGE_PROCESSAMENTO" / "BALANCE_EDITOR"
 
 
 def _balance_status_root(manga: Path) -> Path:
@@ -652,7 +657,160 @@ def _snap_visual_anchors_to_safe_cuts(
     }
 
 
+def _write_balance_status(
+    manga: Path,
+    chapter: str,
+    *,
+    status: str,
+    generated_at: str,
+    proposal_id: str | None = None,
+    editor_manifest: Path | None = None,
+    proposal_manifest: Path | None = None,
+) -> None:
+    status_dir = _balance_status_root(manga) / chapter
+    status_dir.mkdir(parents=True, exist_ok=True)
+
+    def rel(path: Path | None) -> str | None:
+        return str(path.relative_to(_secondary(manga))) if path is not None else None
+
+    data = {
+        "schema": "balance_status_v2",
+        "chapter": chapter,
+        "status": status,
+        "proposal_id": proposal_id,
+        "editor_manifest": rel(editor_manifest),
+        "proposal_manifest": rel(proposal_manifest),
+        "updated_at": generated_at,
+    }
+    status_file = status_dir / "balance-status.json"
+    temp_file = status_dir / ".balance-status.json.tmp"
+    try:
+        temp_file.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        temp_file.replace(status_file)
+    except Exception:
+        if temp_file.exists():
+            temp_file.unlink()
+        raise
+
+
+def _persist_balance_editor(manga: Path, chapter: str, payload: dict[str, Any]) -> None:
+    editor_dir = _editor_root(manga) / chapter
+    editor_dir.mkdir(parents=True, exist_ok=True)
+    editor_file = editor_dir / "balance-editor.json"
+    editor_file.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+    _write_balance_status(
+        manga, chapter,
+        status=str(payload["status"]),
+        generated_at=str(payload["generated_at"]),
+        proposal_id=str(payload.get("proposal_id") or "") or None,
+        editor_manifest=editor_file,
+    )
+
+
+def _proposal_artifact_name(source_slices: list[dict[str, Any]], start: int, end: int) -> str:
+    touched = [
+        item for item in source_slices
+        if max(start, int(item["global_start"])) < min(end, int(item["global_end"]))
+    ]
+    if not touched:
+        raise ValueError(f"Intervalo sem source_slices: {start}..{end}")
+
+    def page_no(value: Any) -> int:
+        match = re.match(r"^page-(\d+)(?:\.[^.]+)?$", Path(str(value)).name, re.I)
+        if not match:
+            raise ValueError(f"Fonte sem número de página reconhecível: {value}")
+        return int(match.group(1))
+
+    first = page_no(touched[0]["file"])
+    last = page_no(touched[-1]["file"])
+    width = max(3, len(str(first)), len(str(last)))
+    if first == last:
+        return f"page-{first:0{width}d}.png"
+    return f"page-{first:0{width}d}-{last:0{width}d}.png"
+
+
+def _persist_generated_proposal(
+    manga: Path,
+    chapter: str,
+    payload: dict[str, Any],
+    staging_dir: Path,
+    editor_manifest: Path,
+) -> None:
+    final_dir = _proposal_root(manga) / chapter
+    backup_dir = final_dir.parent / f".{chapter}.balance-proposal-backup"
+
+    if backup_dir.is_dir():
+        if final_dir.is_dir():
+            shutil.rmtree(backup_dir)
+        else:
+            backup_dir.rename(final_dir)
+
+    manifest = staging_dir / "balance-proposal-manifest.json"
+    manifest.write_text(
+        json.dumps(payload, ensure_ascii=False, indent=2),
+        encoding="utf-8",
+    )
+
+    expected = {str(x["file"]) for x in payload.get("artifacts") or []}
+    expected.add("balance-proposal-manifest.json")
+    actual = {x.name for x in staging_dir.iterdir() if x.is_file()}
+    if actual != expected:
+        raise RuntimeError("Staging contém arquivos divergentes do manifesto.")
+
+    artifacts = payload.get("artifacts") or []
+    if not artifacts:
+        raise RuntimeError("Proposta sem artefatos.")
+
+    for artifact in artifacts:
+        path = staging_dir / str(artifact["file"])
+        if not path.is_file():
+            raise RuntimeError(f"Artefato ausente: {path.name}")
+        with Image.open(path) as im:
+            if int(im.height) != int(artifact["height"]):
+                raise RuntimeError(f"Altura divergente: {path.name}")
+
+    spans = [
+        (int(x["global_start"]), int(x["global_end"]))
+        for x in artifacts
+    ]
+    region = payload.get("region") or {}
+    if spans[0][0] != int(region["global_start"]) or spans[-1][1] != int(region["global_end"]):
+        raise RuntimeError("Cobertura da proposta divergente da região.")
+    if any(a1 != b0 for (_, a1), (b0, _) in zip(spans, spans[1:])):
+        raise RuntimeError("Proposta possui gap ou overlap.")
+
+    try:
+        if final_dir.is_dir():
+            final_dir.rename(backup_dir)
+        staging_dir.rename(final_dir)
+
+        _write_balance_status(
+            manga, chapter,
+            status=str(payload["status"]),
+            generated_at=str(payload["generated_at"]),
+            proposal_id=str(payload.get("proposal_id") or "") or None,
+            editor_manifest=editor_manifest,
+            proposal_manifest=final_dir / "balance-proposal-manifest.json",
+        )
+    except Exception:
+        if final_dir.is_dir():
+            shutil.rmtree(final_dir)
+        if backup_dir.is_dir():
+            backup_dir.rename(final_dir)
+        raise
+    else:
+        if backup_dir.is_dir():
+            shutil.rmtree(backup_dir)
+
+
 def _persist_balance_proposal(manga: Path, chapter: str, payload: dict[str, Any]) -> None:
+    # Compatibilidade temporária dos geradores automáticos existentes.
     proposal_id = str(payload["proposal_id"])
     proposal_dir = _proposal_root(manga) / chapter / proposal_id
     proposal_dir.mkdir(parents=True, exist_ok=True)
@@ -661,26 +819,13 @@ def _persist_balance_proposal(manga: Path, chapter: str, payload: dict[str, Any]
         json.dumps(payload, ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
-
-    status_dir = _balance_status_root(manga) / chapter
-    status_dir.mkdir(parents=True, exist_ok=True)
-    rel = proposal_file.relative_to(_secondary(manga))
-    (status_dir / "balance-status.json").write_text(
-        json.dumps(
-            {
-                "schema": "balance_status_v1",
-                "chapter": chapter,
-                "status": payload["status"],
-                "proposal_id": proposal_id,
-                "proposal_manifest": str(rel),
-                "updated_at": payload["generated_at"],
-            },
-            ensure_ascii=False,
-            indent=2,
-        ),
-        encoding="utf-8",
+    _write_balance_status(
+        manga, chapter,
+        status=str(payload["status"]),
+        generated_at=str(payload["generated_at"]),
+        proposal_id=proposal_id,
+        proposal_manifest=proposal_file,
     )
-
 
 def _persist_no_proposal(
     manga: Path,
@@ -763,11 +908,11 @@ def prepare_manual_balance(
             })
 
     proposal_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    proposal_dir = _proposal_root(manga) / chapter / proposal_id
-    proposal_dir.mkdir(parents=True, exist_ok=True)
+    editor_dir = _editor_root(manga) / chapter
+    editor_dir.mkdir(parents=True, exist_ok=True)
     rgb = _load_global_region(manga, chapter, region_start, region_end, mode="RGB")
     preview_name = "manual-source.png"
-    rgb.save(proposal_dir / preview_name, format="PNG")
+    rgb.save(editor_dir / preview_name, format="PNG")
 
     generated_at = datetime.now().astimezone().isoformat(timespec="seconds")
     payload = {
@@ -783,7 +928,7 @@ def prepare_manual_balance(
         "safety": {"merge_final_modified": False, "source_files_modified": False,
                    "manual_cut_confirmation_required": True},
     }
-    _persist_balance_proposal(manga, chapter, payload)
+    _persist_balance_editor(manga, chapter, payload)
     _progress(progress_callback, 3, 3, "editor manual preparado.")
     return payload
 
@@ -825,17 +970,26 @@ def generate_manual_balance(
             })
 
     proposal_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
-    proposal_dir = _proposal_root(manga) / chapter / proposal_id
-    proposal_dir.mkdir(parents=True, exist_ok=True)
-    preview_name = "manual-source.png"
-    rgb.save(proposal_dir / preview_name, format="PNG")
+    proposal_parent = _proposal_root(manga)
+    proposal_parent.mkdir(parents=True, exist_ok=True)
+    staging_dir = proposal_parent / f".{chapter}.balance-proposal-staging"
+    if staging_dir.exists():
+        shutil.rmtree(staging_dir)
+    staging_dir.mkdir(parents=True, exist_ok=False)
 
     _progress(progress_callback, 3, 4, "gerando blocos nos cortes definidos...")
     boundaries = [region_start, *chosen, region_end]
     artifacts = []
+    used_names = set()
     for idx, (start, end) in enumerate(zip(boundaries[:-1], boundaries[1:]), start=1):
-        name = f"proposal-{idx:03d}.png"
-        rgb.crop((0, start-region_start, rgb.width, end-region_start)).save(proposal_dir / name, format="PNG")
+        base_name = _proposal_artifact_name(source_slices, start, end)
+        name = base_name
+        if name in used_names:
+            name = f"{Path(base_name).stem}__y-{int(start)}-{int(end)}.png"
+        if name in used_names:
+            raise RuntimeError(f"Colisão de nomenclatura não resolvida: {name}")
+        used_names.add(name)
+        rgb.crop((0, start-region_start, rgb.width, end-region_start)).save(staging_dir / name, format="PNG")
         artifacts.append({"file": name, "global_start": int(start),
                           "global_end": int(end), "height": int(end-start)})
 
@@ -845,7 +999,7 @@ def generate_manual_balance(
         "proposal_id": proposal_id, "chapter": chapter, "status": "PROPOSTA_GERADA",
         "generated_at": generated_at, "selected_files": ordered_names,
         "region": {"global_start": region_start, "global_end": region_end},
-        "source_slices": source_slices, "source_preview": preview_name,
+        "source_slices": source_slices,
         "output_count": len(artifacts),
         "cuts": [{"ordinal": i, "selected_y": y, "origin": "user_defined"}
                  for i, y in enumerate(chosen, start=1)],
@@ -854,7 +1008,19 @@ def generate_manual_balance(
         "safety": {"merge_final_modified": False, "source_files_modified": False,
                    "cuts_user_defined": True},
     }
-    _persist_balance_proposal(manga, chapter, payload)
+    editor_manifest = _editor_root(manga) / chapter / "balance-editor.json"
+    if not editor_manifest.is_file():
+        if staging_dir.is_dir():
+            shutil.rmtree(staging_dir)
+        raise RuntimeError("Estado persistente do editor manual não encontrado.")
+    try:
+        _persist_generated_proposal(
+            manga, chapter, payload, staging_dir, editor_manifest
+        )
+    except Exception:
+        if staging_dir.is_dir():
+            shutil.rmtree(staging_dir)
+        raise
     _progress(progress_callback, 4, 4, "proposta manual gerada.")
     return payload
 

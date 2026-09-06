@@ -264,6 +264,35 @@ def _latest_proposal(manga: Path, chapter: str) -> dict[str, Any] | None:
     except Exception:
         return None
 
+    if status.get("schema") == "balance_status_v2":
+        def load_rel(value):
+            if not value:
+                return None
+            path = (_secondary(manga) / str(value)).resolve()
+            base = _secondary(manga).resolve()
+            if not path.is_relative_to(base) or not path.is_file():
+                return None
+            try:
+                return json.loads(path.read_text(encoding="utf-8"))
+            except Exception:
+                return None
+
+        editor = load_rel(status.get("editor_manifest"))
+        generated = load_rel(status.get("proposal_manifest"))
+        proposal = generated or editor
+        if not proposal:
+            return None
+        result = dict(proposal)
+        result["editor"] = editor
+        result["generated_proposal"] = generated
+        if editor:
+            for key in ("selected_files", "region", "source_slices", "source_preview"):
+                if editor.get(key) is not None:
+                    result[key] = editor.get(key)
+            if generated is None and editor.get("cuts") is not None:
+                result["cuts"] = editor.get("cuts")
+        return result
+
     rel = status.get("proposal_manifest")
     if not rel:
         return None
@@ -292,6 +321,12 @@ def _latest_proposal(manga: Path, chapter: str) -> dict[str, Any] | None:
     }
 
 
+# LEGACY_CANDIDATE:
+# Persistência usada somente pelo generate_balance_proposal() legado deste módulo.
+# O fluxo operacional atual persiste propostas por:
+# processamento.balanceamento.balanceador._persist_balance_proposal().
+# Mantida temporariamente para remoção controlada durante o refactor.
+# Não utilizar em novas implementações.
 def _persist_balance_proposal(manga: Path, chapter: str, payload: dict[str, Any]) -> None:
     proposal_id = str(payload["proposal_id"])
     proposal_dir = _proposal_root(manga) / chapter / proposal_id
@@ -614,6 +649,12 @@ def _filter_balloon_crossing_candidates(
     }
 
 
+# LEGACY_CANDIDATE:
+# Implementação sem chamador ativo no runtime atual.
+# O fluxo operacional atual utiliza:
+# processamento.balanceamento.balanceador.generate_balance_proposal().
+# Mantida temporariamente para remoção controlada durante o refactor.
+# Não utilizar em novas implementações.
 def generate_balance_proposal(
     manga: Path,
     chapter: str,
