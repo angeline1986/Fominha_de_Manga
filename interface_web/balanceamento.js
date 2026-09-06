@@ -13,6 +13,8 @@
   let submittedChapter = null;
   let submittedMerges = [];
   let proposalZoom = 100;
+  let selectedPreviewZoom = 100;
+  let resultZoom = 100;
 
   const escLocal = value => String(value ?? "").replace(/[&<>"']/g, ch => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -141,7 +143,7 @@
     if (count) count.textContent = `${chosen.length} selecionado(s)`;
     host.innerHTML = chosen.length
       ? chosen.map(x => `<article class="bal-preview-card">
-          <div class="bal-preview-stage"><img src="${imageUrl(chapter.chapter,x.file)}" alt="${escLocal(x.file)}"></div>
+          <div class="bal-preview-stage" style="overflow:auto"><img src="${imageUrl(chapter.chapter,x.file)}" alt="${escLocal(x.file)}" style="width:${selectedPreviewZoom}%;max-width:none;height:auto;display:block;margin:0 auto"></div>
           <div class="bal-preview-meta"><b>${escLocal(x.file)}</b><span>${Number(x.height||0).toLocaleString("pt-BR")} px</span></div>
         </article>`).join("")
       : `<div class="bal-empty">Selecione um ou mais merges para visualizar.</div>`;
@@ -178,12 +180,20 @@
   }
 
   function previewSection() {
+    const zoomControls = `<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px">
+      <span class="muted">ZOOM</span>
+      <button type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(-10)" ${selectedPreviewZoom <= 30 ? "disabled" : ""}>−</button>
+      <b style="min-width:48px;text-align:center">${selectedPreviewZoom}%</b>
+      <button type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(10)" ${selectedPreviewZoom >= 200 ? "disabled" : ""}>+</button>
+      <button type="button" class="btn" onclick="BalanceamentoUI.resetSelectedPreviewZoom()" ${selectedPreviewZoom === 100 ? "disabled" : ""}>100%</button>
+    </div>`;
+
     return `<section class="bal-section">
       <button class="bal-section-head" onclick="BalanceamentoUI.toggleSection('preview')" aria-expanded="${openSections.preview}">
         <span>Visualização dos merges selecionados</span>
         <span class="bal-section-head-right"><small id="balSelectedCount">${selectedMerges.size} selecionado(s)</small><i class="bal-chevron">${openSections.preview ? "▼" : "▶"}</i></span>
       </button>
-      ${openSections.preview ? `<div class="bal-section-body"><div id="balSelectedPreview" class="bal-preview-grid"></div></div>` : ""}
+      ${openSections.preview ? `<div class="bal-section-body">${zoomControls}<div id="balSelectedPreview" class="bal-preview-grid"></div></div>` : ""}
     </section>`;
   }
 
@@ -410,8 +420,17 @@
     const canApplyFinal = proposal.status === "PROPOSTA_GERADA";
     const result = canApplyFinal && Array.isArray(proposal.artifacts)
       ? `<div class="bal-preview-grid">${proposal.artifacts.map((x, idx) =>
-          `<article class="bal-preview-card"><div class="bal-preview-stage"><img src="${proposalImageUrl(chapter.chapter,proposal.proposal_id,x.file)}" alt="Bloco ${idx+1}"></div>
+          `<article class="bal-preview-card"><div class="bal-preview-stage" style="overflow:auto"><img src="${proposalImageUrl(chapter.chapter,proposal.proposal_id,x.file)}" alt="Bloco ${idx+1}" style="width:${resultZoom}%;max-width:none;height:auto;display:block;margin:0 auto"></div>
            <div class="bal-preview-meta"><b>Bloco ${idx+1}</b><span>${Number(x.height||0).toLocaleString("pt-BR")} px</span></div></article>`).join("")}</div>`
+      : "";
+    const resultZoomControls = canApplyFinal && Array.isArray(proposal.artifacts) && proposal.artifacts.length
+      ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px">
+          <span class="muted">ZOOM</span>
+          <button type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(-10)" ${resultZoom <= 30 ? "disabled" : ""}>−</button>
+          <b style="min-width:48px;text-align:center">${resultZoom}%</b>
+          <button type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(10)" ${resultZoom >= 200 ? "disabled" : ""}>+</button>
+          <button type="button" class="btn" onclick="BalanceamentoUI.resetResultZoom()" ${resultZoom === 100 ? "disabled" : ""}>100%</button>
+        </div>`
       : "";
     return `<div class="bal-detail-stack">
       <section class="bal-section">
@@ -455,7 +474,7 @@
           <div class="bal-actions" style="margin-top:14px"><button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button></div>
         </div>
       </section>
-      ${result ? `<section class="bal-section"><div class="bal-section-head"><span>Resultado</span></div><div class="bal-section-body">${result}${canApplyFinal ? `<div class="bal-actions" style="margin-top:14px"><button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button></div>` : ""}</div></section>` : ""}
+      ${result ? `<section class="bal-section"><div class="bal-section-head"><span>Resultado</span></div><div class="bal-section-body">${resultZoomControls}${result}${canApplyFinal ? `<div class="bal-actions" style="margin-top:14px"><button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button></div>` : ""}</div></section>` : ""}
     </div>`;
   }
 
@@ -530,6 +549,8 @@
         if (job.status === "error") throw new Error(job.error || job.message || "Falha ao efetivar balanceamento.");
         if (job.status === "done") break;
       }
+      selectedMerges.clear();
+      submittedMerges = [];
       await load();
       toast("Composição final aplicada ao MERGE oficial.");
     } catch (e) {
@@ -730,6 +751,28 @@
     resetProposalZoom(){
       if (proposalZoom === 100) return;
       proposalZoom = 100;
+      renderBody();
+    },
+    changeSelectedPreviewZoom(delta){
+      const next = Math.max(30, Math.min(200, selectedPreviewZoom + (Number(delta) || 0)));
+      if (next === selectedPreviewZoom) return;
+      selectedPreviewZoom = next;
+      renderBody();
+    },
+    resetSelectedPreviewZoom(){
+      if (selectedPreviewZoom === 100) return;
+      selectedPreviewZoom = 100;
+      renderBody();
+    },
+    changeResultZoom(delta){
+      const next = Math.max(30, Math.min(200, resultZoom + (Number(delta) || 0)));
+      if (next === resultZoom) return;
+      resultZoom = next;
+      renderBody();
+    },
+    resetResultZoom(){
+      if (resultZoom === 100) return;
+      resultZoom = 100;
       renderBody();
     },
     render,
