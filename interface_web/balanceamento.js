@@ -341,19 +341,20 @@
   function finalSection(chapter) {
     const proposal = chapter?.proposal;
     const ready = proposal?.status === "PROPOSTA_GERADA";
+    const effected = proposal?.status === "EFETIVADO";
     return `<section class="bal-section">
       <div class="bal-section-head">
         <span>Composição final${chapter ? ` · Cap. ${escLocal(chapter.chapter)}` : ""}</span>
-        <span class="bal-section-head-right"><small>${ready ? "Proposta SAFE disponível" : "Aguardando proposta"}</small></span>
+        <span class="bal-section-head-right"><small>${effected ? "Efetivado" : (ready ? "Proposta SAFE disponível" : "Aguardando proposta")}</small></span>
       </div>
       <div class="bal-section-body">
-        <div class="${ready ? "bal-okbox" : "bal-notice"}">
-          <b>${ready ? "Proposta pronta para aprovação." : "Composição final indisponível."}</b>
-          ${ready ? " Esta etapa ainda não altera o MERGE final." : " Gere uma proposta SAFE em Efetuar balanceamento."}
+        <div class="${ready || effected ? "bal-okbox" : "bal-notice"}">
+          <b>${effected ? "Composição final efetivada." : (ready ? "Proposta pronta para aprovação." : "Composição final indisponível.")}</b>
+          ${effected ? " O MERGE oficial já contém esta proposta." : (ready ? " Esta etapa ainda não altera o MERGE final." : " Gere uma proposta em Novos Cortes.")}
         </div>
         <div class="bal-actions">
           <button class="btn" onclick="BalanceamentoUI.setView('rebalance')">Voltar</button>
-          <button class="btn primary" disabled>Aplicar composição final</button>
+          <button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()" ${ready ? "" : "disabled"}>${effected ? "Composição aplicada" : "Aplicar composição final"}</button>
         </div>
       </div>
     </section>`;
@@ -406,7 +407,8 @@
       return `<div class="bal-manual-cut" data-cut-index="${idx}" style="top:${pct}%"
                    onpointerdown="BalanceamentoUI.startCutDrag(event,${idx})"><span>Corte ${idx + 1}</span></div>`;
     }).join("");
-    const result = proposal.status === "PROPOSTA_GERADA" && Array.isArray(proposal.artifacts)
+    const canApplyFinal = proposal.status === "PROPOSTA_GERADA";
+    const result = canApplyFinal && Array.isArray(proposal.artifacts)
       ? `<div class="bal-preview-grid">${proposal.artifacts.map((x, idx) =>
           `<article class="bal-preview-card"><div class="bal-preview-stage"><img src="${proposalImageUrl(chapter.chapter,proposal.proposal_id,x.file)}" alt="Bloco ${idx+1}"></div>
            <div class="bal-preview-meta"><b>Bloco ${idx+1}</b><span>${Number(x.height||0).toLocaleString("pt-BR")} px</span></div></article>`).join("")}</div>`
@@ -453,7 +455,7 @@
           <div class="bal-actions" style="margin-top:14px"><button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button></div>
         </div>
       </section>
-      ${result ? `<section class="bal-section"><div class="bal-section-head"><span>Resultado</span></div><div class="bal-section-body">${result}</div></section>` : ""}
+      ${result ? `<section class="bal-section"><div class="bal-section-head"><span>Resultado</span></div><div class="bal-section-body">${result}${canApplyFinal ? `<div class="bal-actions" style="margin-top:14px"><button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button></div>` : ""}</div></section>` : ""}
     </div>`;
   }
 
@@ -504,6 +506,35 @@
     } catch (e) {
       toast(e.message || "Não foi possível executar o balanceamento.");
       if (button) { button.disabled = false; button.textContent = "Novos Cortes"; }
+    }
+  }
+
+  async function applyFinal() {
+    const current = (state?.chapters || []).find(x => String(x.chapter) === String(submittedChapter));
+    if (!current?.proposal || current.proposal.status !== "PROPOSTA_GERADA") {
+      toast("Não existe proposta gerada pendente de efetivação.");
+      return;
+    }
+    const button = document.querySelector("#balApplyFinal");
+    if (button) { button.disabled = true; button.textContent = "Aplicando..."; }
+    try {
+      const created = await api("/api/action", {
+        method: "POST", headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({action:"balance_effect",provider:data.provider,manga:data.manga,chapters:[submittedChapter]})
+      });
+      const jobId = created?.job_id;
+      if (!jobId) throw new Error("Job de efetivação não foi criado.");
+      while (true) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        const job = await api("/api/job/" + encodeURIComponent(jobId));
+        if (job.status === "error") throw new Error(job.error || job.message || "Falha ao efetivar balanceamento.");
+        if (job.status === "done") break;
+      }
+      await load();
+      toast("Composição final aplicada ao MERGE oficial.");
+    } catch (e) {
+      toast(e.message || "Não foi possível aplicar a composição final.");
+      if (button) { button.disabled = false; button.textContent = "Aplicar composição final"; }
     }
   }
 
@@ -709,6 +740,7 @@
     toggleMerge,
     toggleSection,
     submitSelected,
+    applyFinal,
     setView,
     changePage(delta){ pageIndex += Number(delta)||0; renderBody(); },
     setFilter(value){ filter=value; pageIndex=1; renderBody(); },

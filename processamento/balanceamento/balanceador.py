@@ -1025,6 +1025,162 @@ def generate_manual_balance(
     return payload
 
 
+def effect_manual_balance(manga: Path, chapter: str, *, progress_callback: ProgressCallback | None = None) -> dict[str, Any]:
+    """Efetiva a proposta manual persistida sem recalcular cortes ou alterar IMG."""
+    chapter = str(chapter)
+    _progress(progress_callback, 1, 5, "validando MERGE oficial e proposta persistida...")
+    merge_dir = _merge_root(manga) / chapter
+    manifest = _merge_manifest(manga, chapter)
+    outputs = manifest.get("outputs") or []
+    if not outputs:
+        raise ValueError("MERGE oficial sem outputs para efetivação.")
+
+    status_file = _balance_status_root(manga) / chapter / "balance-status.json"
+    if not status_file.is_file():
+        raise ValueError("Estado persistente do balanceamento não encontrado.")
+    status = json.loads(status_file.read_text(encoding="utf-8"))
+    if status.get("schema") != "balance_status_v2" or status.get("status") != "PROPOSTA_GERADA":
+        raise ValueError("Não existe proposta gerada pendente de efetivação para este capítulo.")
+
+    secondary = _secondary(manga).resolve()
+    proposal_rel = status.get("proposal_manifest")
+    proposal_path = (secondary / str(proposal_rel or "")).resolve()
+    if not proposal_rel or not proposal_path.is_relative_to(secondary) or not proposal_path.is_file():
+        raise ValueError("Manifesto da proposta não encontrado ou inválido.")
+    proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
+    proposal_id = str(proposal.get("proposal_id") or "")
+    if not proposal_id or proposal_id != str(status.get("proposal_id") or ""):
+        raise ValueError("proposal_id divergente entre status e proposta.")
+    if proposal.get("schema") != "balance_manual_result_v1" or proposal.get("status") != "PROPOSTA_GERADA":
+        raise ValueError("A proposta persistida não é uma proposta manual gerada válida.")
+
+    region = proposal.get("region") or {}
+    region_start, region_end = int(region.get("global_start")), int(region.get("global_end"))
+    if region_end <= region_start:
+        raise ValueError("Região da proposta possui limites inválidos.")
+    selected_files = [str(x) for x in (proposal.get("selected_files") or [])]
+    if len(selected_files) < 2:
+        raise ValueError("Proposta sem seleção original suficiente para efetivação.")
+
+    by_file = {str(x.get("file")): (i, x) for i, x in enumerate(outputs) if isinstance(x, dict) and x.get("file")}
+    if any(name not in by_file for name in selected_files):
+        raise ValueError("Proposta obsoleta: o MERGE oficial mudou desde a geração da proposta.")
+    indexed = sorted((by_file[name][0], name, by_file[name][1]) for name in selected_files)
+    indices = [x[0] for x in indexed]
+    if indices != list(range(indices[0], indices[-1] + 1)):
+        raise ValueError("Proposta obsoleta: os merges originais não são mais contíguos.")
+    selected = [x[2] for x in indexed]
+    if int(selected[0]["global_start"]) != region_start or int(selected[-1]["global_end"]) != region_end:
+        raise ValueError("Proposta obsoleta: a cobertura oficial da região foi alterada.")
+    if any(int(a["global_end"]) != int(b["global_start"]) for a, b in zip(selected, selected[1:])):
+        raise ValueError("MERGE oficial possui gap ou overlap na região selecionada.")
+
+    proposal_dir = proposal_path.parent.resolve()
+    proposal_items = []
+    for artifact in proposal.get("artifacts") or []:
+        name = str(artifact.get("file") or "")
+        source = (proposal_dir / name).resolve()
+        start, end = int(artifact.get("global_start")), int(artifact.get("global_end"))
+        if not name or Path(name).name != name or not source.is_relative_to(proposal_dir) or not source.is_file():
+            raise ValueError(f"Artefato da proposta ausente ou inválido: {name}")
+        if end <= start or int(artifact.get("height")) != end - start:
+            raise ValueError(f"Cobertura inválida no artefato: {name}")
+        proposal_items.append((artifact, source, start, end))
+    if not proposal_items or proposal_items[0][2] != region_start or proposal_items[-1][3] != region_end:
+        raise ValueError("Cobertura dos artefatos diverge da região da proposta.")
+    if any(a[3] != b[2] for a, b in zip(proposal_items, proposal_items[1:])):
+        raise ValueError("Proposta possui gap ou overlap entre artefatos.")
+
+    total_height = int(manifest.get("source_total_height") or 0)
+    source_width = int(manifest.get("source_width") or 0)
+    validation = manifest.get("validation") or {}
+    if total_height <= 0 or source_width <= 0 or validation.get("ok") is not True:
+        raise ValueError("MERGE oficial não possui metadados válidos para efetivação.")
+
+    first_idx, last_idx = indices[0], indices[-1]
+    candidate = [dict(x) for x in outputs[:first_idx]]
+    for artifact, _, start, end in proposal_items:
+        candidate.append({"file": str(artifact["file"]), "global_start": start, "global_end": end,
+                          "width": source_width, "height": end-start, "sources": [],
+                          "source_stage": "balance", "source_file": str(artifact["file"])})
+    candidate.extend(dict(x) for x in outputs[last_idx+1:])
+
+    expected, seen = 0, set()
+    for item in candidate:
+        name, start, end = str(item.get("file") or ""), int(item["global_start"]), int(item["global_end"])
+        if not name or Path(name).name != name or name in seen or start != expected or end <= start:
+            raise ValueError("Composição candidata possui nome, gap, overlap ou intervalo inválido.")
+        seen.add(name); expected = end
+    if expected != total_height:
+        raise ValueError("Composição candidata não preserva a cobertura total do capítulo.")
+
+    _progress(progress_callback, 2, 5, "montando staging do novo MERGE...")
+    staging = merge_dir.parent / f".{chapter}.balance-effect-staging"
+    backup = merge_dir.parent / f".{chapter}.balance-effect-backup"
+    if staging.exists(): shutil.rmtree(staging)
+    if backup.exists():
+        if merge_dir.exists(): shutil.rmtree(backup)
+        else: backup.rename(merge_dir)
+    staging.mkdir(parents=True, exist_ok=False)
+    proposal_sources = {str(x[0]["file"]): x[1] for x in proposal_items}
+
+    try:
+        for item in candidate:
+            name = str(item["file"])
+            source = proposal_sources[name] if item.get("source_stage") == "balance" and name in proposal_sources else merge_dir / name
+            if not source.is_file(): raise RuntimeError(f"Arquivo da composição não encontrado: {name}")
+            shutil.copy2(source, staging / name)
+
+        _progress(progress_callback, 3, 5, "validando pixels e cobertura do candidato...")
+        expected = 0
+        for item in candidate:
+            name, start, end = str(item["file"]), int(item["global_start"]), int(item["global_end"])
+            with Image.open(staging / name) as im:
+                if int(im.width) != source_width or int(im.height) != end-start:
+                    raise RuntimeError(f"Dimensões divergentes no candidato: {name}")
+            if start != expected: raise RuntimeError("Cobertura candidata deixou de ser contínua.")
+            expected = end
+        if expected != total_height: raise RuntimeError("Cobertura final candidata divergente do capítulo.")
+
+        effected_at = datetime.now().astimezone().isoformat(timespec="seconds")
+        new_manifest = dict(manifest)
+        new_manifest["outputs"], new_manifest["merged_images"] = candidate, len(candidate)
+        new_manifest["validation"] = {**validation, "ok": True, "errors": [], "coverage_start": 0, "coverage_end": total_height}
+        composition = list(manifest.get("composition") or [])
+        composition.append({"source_stage": "balance", "proposal_id": proposal_id,
+                            "global_start": region_start, "global_end": region_end,
+                            "replaced_files": selected_files,
+                            "artifacts": [str(x[0]["file"]) for x in proposal_items], "effected_at": effected_at})
+        new_manifest["composition"] = composition
+        (staging / "merge-manifest.json").write_text(json.dumps(new_manifest, ensure_ascii=False, indent=2), encoding="utf-8")
+
+        _progress(progress_callback, 4, 5, "promovendo composição validada...")
+        merge_dir.rename(backup)
+        try:
+            staging.rename(merge_dir)
+            promoted = _merge_manifest(manga, chapter)
+            if len(promoted.get("outputs") or []) != len(candidate):
+                raise RuntimeError("MERGE promovido não corresponde à composição validada.")
+            editor_path = (secondary / str(status.get("editor_manifest"))).resolve() if status.get("editor_manifest") else None
+            if editor_path is not None and (not editor_path.is_relative_to(secondary) or not editor_path.is_file()):
+                raise RuntimeError("Manifesto do editor persistido é inválido.")
+            _write_balance_status(manga, chapter, status="EFETIVADO", generated_at=effected_at,
+                                  proposal_id=proposal_id, editor_manifest=editor_path, proposal_manifest=proposal_path)
+        except Exception:
+            if merge_dir.exists(): shutil.rmtree(merge_dir)
+            if backup.exists(): backup.rename(merge_dir)
+            raise
+        else:
+            if backup.exists(): shutil.rmtree(backup)
+    except Exception:
+        if staging.exists(): shutil.rmtree(staging)
+        raise
+
+    _progress(progress_callback, 5, 5, "composição final efetivada.")
+    return {"chapter": chapter, "status": "EFETIVADO", "proposal_id": proposal_id,
+            "output_count": len(candidate), "message": "Composição final aplicada ao MERGE oficial."}
+
+
 def generate_balance_proposal(
     manga: Path,
     chapter: str,

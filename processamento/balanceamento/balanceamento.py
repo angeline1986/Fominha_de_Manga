@@ -283,6 +283,9 @@ def _latest_proposal(manga: Path, chapter: str) -> dict[str, Any] | None:
         if not proposal:
             return None
         result = dict(proposal)
+        result["proposal_status"] = result.get("status")
+        result["status"] = status.get("status") or result.get("status")
+        result["effected_at"] = status.get("updated_at") if status.get("status") == "EFETIVADO" else None
         result["editor"] = editor
         result["generated_proposal"] = generated
         if editor:

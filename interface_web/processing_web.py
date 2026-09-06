@@ -1609,6 +1609,7 @@ def run_job(job,payload):
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
             elif job.action=="balance_prepare": job.result=do_balance_prepare(job,manga,chs,payload.get("merges") or [])
             elif job.action=="balance_execute": job.result=do_balance_execute(job,manga,chs,payload.get("merges") or [],payload.get("cuts") or [])
+            elif job.action=="balance_effect": job.result=do_balance_effect(job,manga,chs)
             elif job.action=="balance_generate": job.result=do_balance_generate(job,manga,chs,payload.get("merges") or [])
             else: raise ValueError("Ação inválida.")
             job.status="done"; job.message="Processamento concluído."
@@ -1644,6 +1645,18 @@ def do_balance_execute(job,manga,chs,selected_merges,cuts):
     proposal=generate_manual_balance(manga,ch.name,names,cuts,progress_callback=_progress)
     return [{"chapter":ch.name,"status":"ok","proposal_id":proposal.get("proposal_id"),
              "proposal_status":proposal.get("status"),"message":proposal.get("message")}]
+
+
+def do_balance_effect(job,manga,chs):
+    from processamento.balanceamento.balanceador import effect_manual_balance
+    if len(chs) != 1: raise ValueError("Efetivar balanceamento processa um capítulo por vez.")
+    ch=chs[0]
+    def _progress(step,total,detail):
+        job.progress_value=step; job.progress_max=total
+        job.progress_detail=f"Cap. {ch.name}: {detail}"; job.message=job.progress_detail
+    result=effect_manual_balance(manga,ch.name,progress_callback=_progress)
+    return [{"chapter":ch.name,"status":"ok","proposal_id":result.get("proposal_id"),
+             "proposal_status":result.get("status"),"message":result.get("message")}]
 
 
 def do_balance_generate(job,manga,chs,selected_merges):
