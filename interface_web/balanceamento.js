@@ -474,7 +474,6 @@
     const up = () => {
       document.removeEventListener("pointermove", move);
       window.__balManualCuts = [...window.__balManualCuts].sort((a,b) => a-b);
-      renderBody();
     };
     document.addEventListener("pointermove", move);
     document.addEventListener("pointerup", up, {once:true});
