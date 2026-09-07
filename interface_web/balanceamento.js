@@ -8,7 +8,7 @@
   let pageIndex = 1;
   const pageSize = 10;
   let query = "";
-  const openSections = {table: true, chapter: true, preview: true, proposal: true};
+  const openSections = {table: true, chapter: true, preview: true, proposal: true, manual: true, result: true};
   let activeView = "validate";
   let submittedChapter = null;
   let submittedMerges = [];
@@ -187,10 +187,10 @@
   function previewSection() {
     const zoomControls = `<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px">
       <span class="muted">ZOOM</span>
-      <button type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(-10)" ${selectedPreviewZoom <= 30 ? "disabled" : ""}>−</button>
-      <b style="min-width:48px;text-align:center">${selectedPreviewZoom}%</b>
-      <button type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(10)" ${selectedPreviewZoom >= 200 ? "disabled" : ""}>+</button>
-      <button type="button" class="btn" onclick="BalanceamentoUI.resetSelectedPreviewZoom()" ${selectedPreviewZoom === 100 ? "disabled" : ""}>100%</button>
+      <button id="balSelectedZoomOut" type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(-10)" ${selectedPreviewZoom <= 30 ? "disabled" : ""}>−</button>
+      <b id="balSelectedZoomValue" style="min-width:48px;text-align:center">${selectedPreviewZoom}%</b>
+      <button id="balSelectedZoomIn" type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(10)" ${selectedPreviewZoom >= 200 ? "disabled" : ""}>+</button>
+      <button id="balSelectedZoomReset" type="button" class="btn" onclick="BalanceamentoUI.resetSelectedPreviewZoom()" ${selectedPreviewZoom === 100 ? "disabled" : ""}>100%</button>
     </div>`;
 
     return `<section class="bal-section">
@@ -424,17 +424,17 @@
     }).join("");
     const canApplyFinal = proposal.status === "PROPOSTA_GERADA";
     const result = canApplyFinal && Array.isArray(proposal.artifacts)
-      ? `<div class="bal-preview-grid">${proposal.artifacts.map((x, idx) =>
+      ? `<div id="balResultPreview" class="bal-preview-grid">${proposal.artifacts.map((x, idx) =>
           `<article class="bal-preview-card"><div class="bal-preview-stage" style="overflow:auto"><img src="${proposalImageUrl(chapter.chapter,proposal.proposal_id,x.file)}" alt="Bloco ${idx+1}" style="width:${resultZoom}%;max-width:none;height:auto;display:block;margin:0 auto"></div>
            <div class="bal-preview-meta"><b>Bloco ${idx+1}</b><span>${Number(x.height||0).toLocaleString("pt-BR")} px</span></div></article>`).join("")}</div>`
       : "";
     const resultZoomControls = canApplyFinal && Array.isArray(proposal.artifacts) && proposal.artifacts.length
       ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px">
           <span class="muted">ZOOM</span>
-          <button type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(-10)" ${resultZoom <= 30 ? "disabled" : ""}>−</button>
-          <b style="min-width:48px;text-align:center">${resultZoom}%</b>
-          <button type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(10)" ${resultZoom >= 200 ? "disabled" : ""}>+</button>
-          <button type="button" class="btn" onclick="BalanceamentoUI.resetResultZoom()" ${resultZoom === 100 ? "disabled" : ""}>100%</button>
+          <button id="balResultZoomOut" type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(-10)" ${resultZoom <= 30 ? "disabled" : ""}>−</button>
+          <b id="balResultZoomValue" style="min-width:48px;text-align:center">${resultZoom}%</b>
+          <button id="balResultZoomIn" type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(10)" ${resultZoom >= 200 ? "disabled" : ""}>+</button>
+          <button id="balResultZoomReset" type="button" class="btn" onclick="BalanceamentoUI.resetResultZoom()" ${resultZoom === 100 ? "disabled" : ""}>100%</button>
         </div>`
       : "";
     return `<div class="bal-detail-stack">
@@ -452,9 +452,10 @@
             <span class="bal-manual-zoom-value">${Number(window.__balManualZoom || 50)}%</span>
             <button type="button" class="btn" style="min-width:34px;padding:5px 9px" onclick="BalanceamentoUI.changeManualZoom(10)">+</button>
             <button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button>
+            <button class="bal-expand-btn" type="button" data-bal-exec-toggle="manual" onclick="BalanceamentoUI.toggleExecutionSection('manual')" aria-expanded="${openSections.manual}" title="${openSections.manual ? 'Recolher capítulo' : 'Expandir capítulo'}">${openSections.manual ? "▼" : "▶"}</button>
           </span>
         </div>
-        <div class="bal-section-body">
+        <div class="bal-section-body" data-bal-exec-body="manual" ${openSections.manual ? "" : "hidden"}>
           <div id="balManualViewport" style="overflow:auto">
             <div id="balManualWrap" style="position:relative;width:${Number(window.__balManualZoom || 50)}%;margin:0 auto;padding-right:118px;box-sizing:border-box">
               <div id="balManualCanvas" style="position:relative;width:100%;line-height:0;user-select:none;touch-action:none">
@@ -478,8 +479,60 @@
           </style>
         </div>
       </section>
-      ${result ? `<section class="bal-section"><div class="bal-section-head"><span>Resultado</span></div><div class="bal-section-body">${resultZoomControls}${result}${canApplyFinal ? `<div class="bal-actions" style="margin-top:14px"><button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button></div>` : ""}</div></section>` : ""}
+      ${result ? `<section class="bal-section">
+        <div class="bal-section-head" style="cursor:default">
+          <span>Resultado</span>
+          <span class="bal-section-head-right">
+            ${canApplyFinal ? `<button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button>` : ""}
+            <button class="bal-expand-btn" type="button" data-bal-exec-toggle="result" onclick="BalanceamentoUI.toggleExecutionSection('result')" aria-expanded="${openSections.result}" title="${openSections.result ? 'Recolher resultado' : 'Expandir resultado'}">${openSections.result ? "▼" : "▶"}</button>
+          </span>
+        </div>
+        <div class="bal-section-body" data-bal-exec-body="result" ${openSections.result ? "" : "hidden"}>${resultZoomControls}${result}</div>
+      </section>` : ""}
     </div>`;
+  }
+
+  function updateSelectedPreviewZoomUi() {
+    document.querySelectorAll("#balSelectedPreview .bal-preview-stage img").forEach(img => {
+      img.style.width = `${selectedPreviewZoom}%`;
+    });
+    const value = document.querySelector("#balSelectedZoomValue");
+    const zoomOut = document.querySelector("#balSelectedZoomOut");
+    const zoomIn = document.querySelector("#balSelectedZoomIn");
+    const reset = document.querySelector("#balSelectedZoomReset");
+    if (value) value.textContent = `${selectedPreviewZoom}%`;
+    if (zoomOut) zoomOut.disabled = selectedPreviewZoom <= 30;
+    if (zoomIn) zoomIn.disabled = selectedPreviewZoom >= 200;
+    if (reset) reset.disabled = selectedPreviewZoom === 100;
+  }
+
+  function updateResultZoomUi() {
+    document.querySelectorAll("#balResultPreview .bal-preview-stage img").forEach(img => {
+      img.style.width = `${resultZoom}%`;
+    });
+    const value = document.querySelector("#balResultZoomValue");
+    const zoomOut = document.querySelector("#balResultZoomOut");
+    const zoomIn = document.querySelector("#balResultZoomIn");
+    const reset = document.querySelector("#balResultZoomReset");
+    if (value) value.textContent = `${resultZoom}%`;
+    if (zoomOut) zoomOut.disabled = resultZoom <= 30;
+    if (zoomIn) zoomIn.disabled = resultZoom >= 200;
+    if (reset) reset.disabled = resultZoom === 100;
+  }
+
+  function toggleExecutionSection(which) {
+    if (!Object.prototype.hasOwnProperty.call(openSections, which)) return;
+    openSections[which] = !openSections[which];
+    const body = document.querySelector(`[data-bal-exec-body="${which}"]`);
+    const button = document.querySelector(`[data-bal-exec-toggle="${which}"]`);
+    if (body) body.hidden = !openSections[which];
+    if (button) {
+      button.textContent = openSections[which] ? "▼" : "▶";
+      button.setAttribute("aria-expanded", String(openSections[which]));
+      button.title = openSections[which]
+        ? (which === "manual" ? "Recolher capítulo" : "Recolher resultado")
+        : (which === "manual" ? "Expandir capítulo" : "Expandir resultado");
+    }
   }
 
   function startCutDrag(event, index) {
@@ -761,23 +814,23 @@
       const next = Math.max(30, Math.min(200, selectedPreviewZoom + (Number(delta) || 0)));
       if (next === selectedPreviewZoom) return;
       selectedPreviewZoom = next;
-      renderBody();
+      updateSelectedPreviewZoomUi();
     },
     resetSelectedPreviewZoom(){
       if (selectedPreviewZoom === 100) return;
       selectedPreviewZoom = 100;
-      renderBody();
+      updateSelectedPreviewZoomUi();
     },
     changeResultZoom(delta){
       const next = Math.max(30, Math.min(200, resultZoom + (Number(delta) || 0)));
       if (next === resultZoom) return;
       resultZoom = next;
-      renderBody();
+      updateResultZoomUi();
     },
     resetResultZoom(){
       if (resultZoom === 100) return;
       resultZoom = 100;
-      renderBody();
+      updateResultZoomUi();
     },
     render,
     renderValidation,
@@ -786,6 +839,7 @@
     selectChapter,
     toggleMerge,
     toggleSection,
+    toggleExecutionSection,
     submitSelected,
     applyFinal,
     setView,
