@@ -185,12 +185,13 @@
   }
 
   function previewSection() {
-    const zoomControls = `<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px">
-      <span class="muted">ZOOM</span>
-      <button id="balSelectedZoomOut" type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(-10)" ${selectedPreviewZoom <= 30 ? "disabled" : ""}>−</button>
-      <b id="balSelectedZoomValue" style="min-width:48px;text-align:center">${selectedPreviewZoom}%</b>
-      <button id="balSelectedZoomIn" type="button" class="btn" onclick="BalanceamentoUI.changeSelectedPreviewZoom(10)" ${selectedPreviewZoom >= 200 ? "disabled" : ""}>+</button>
-      <button id="balSelectedZoomReset" type="button" class="btn" onclick="BalanceamentoUI.resetSelectedPreviewZoom()" ${selectedPreviewZoom === 100 ? "disabled" : ""}>100%</button>
+    const zoomControls = `<div class="bal-zoom-row">
+      <span class="bal-zoom-control" aria-label="Controle de zoom">
+        <button id="balSelectedZoomOut" type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeSelectedPreviewZoom(-10)" ${selectedPreviewZoom <= 30 ? "disabled" : ""} aria-label="Diminuir zoom">−</button>
+        <b id="balSelectedZoomValue" class="bal-zoom-value">${selectedPreviewZoom}%</b>
+        <button id="balSelectedZoomIn" type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeSelectedPreviewZoom(10)" ${selectedPreviewZoom >= 200 ? "disabled" : ""} aria-label="Aumentar zoom">+</button>
+        <button id="balSelectedZoomReset" type="button" class="bal-zoom-reset" onclick="BalanceamentoUI.resetSelectedPreviewZoom()" ${selectedPreviewZoom === 100 ? "disabled" : ""}>100%</button>
+      </span>
     </div>`;
 
     return `<section class="bal-section">
@@ -321,7 +322,14 @@
       if (proposal?.status === "PROPOSTA_GERADA") {
         toast("Cortes atuais carregados para edição.");
       } else if (proposal) {
-        toast(proposal.message || "Nenhuma proposta SAFE encontrada.");
+        {
+          const message = proposal.message || "Nenhuma proposta SAFE encontrada.";
+          if (message === "Ajuste os cortes livremente e execute para gerar a proposta.") {
+            showBalancePopup(message, "Novos Cortes");
+          } else {
+            toast(message);
+          }
+        }
       }
 
       // Submissão concluída. Permanecer em Validar.
@@ -429,28 +437,29 @@
            <div class="bal-preview-meta"><b>Bloco ${idx+1}</b><span>${Number(x.height||0).toLocaleString("pt-BR")} px</span></div></article>`).join("")}</div>`
       : "";
     const resultZoomControls = canApplyFinal && Array.isArray(proposal.artifacts) && proposal.artifacts.length
-      ? `<div style="display:flex;align-items:center;gap:8px;margin:0 0 12px">
-          <span class="muted">ZOOM</span>
-          <button id="balResultZoomOut" type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(-10)" ${resultZoom <= 30 ? "disabled" : ""}>−</button>
-          <b id="balResultZoomValue" style="min-width:48px;text-align:center">${resultZoom}%</b>
-          <button id="balResultZoomIn" type="button" class="btn" onclick="BalanceamentoUI.changeResultZoom(10)" ${resultZoom >= 200 ? "disabled" : ""}>+</button>
-          <button id="balResultZoomReset" type="button" class="btn" onclick="BalanceamentoUI.resetResultZoom()" ${resultZoom === 100 ? "disabled" : ""}>100%</button>
-        </div>`
+      ? `<span class="bal-zoom-control" aria-label="Controle de zoom do resultado">
+          <button id="balResultZoomOut" type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeResultZoom(-10)" ${resultZoom <= 30 ? "disabled" : ""} aria-label="Diminuir zoom">−</button>
+          <b id="balResultZoomValue" class="bal-zoom-value">${resultZoom}%</b>
+          <button id="balResultZoomIn" type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeResultZoom(10)" ${resultZoom >= 200 ? "disabled" : ""} aria-label="Aumentar zoom">+</button>
+          <button id="balResultZoomReset" type="button" class="bal-zoom-reset" onclick="BalanceamentoUI.resetResultZoom()" ${resultZoom === 100 ? "disabled" : ""}>100%</button>
+        </span>`
       : "";
     return `<div class="bal-detail-stack">
       <section class="bal-section bal-manual-editor-section">
         <div class="bal-section-head bal-manual-sticky-toolbar">
           <span>Cap. ${escLocal(chapter.chapter)}</span>
           <span class="bal-section-head-right bal-manual-toolbar-controls">
+            <span class="bal-zoom-control" aria-label="Controle de zoom do capítulo">
+              <button type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeManualZoom(-10)" ${Number(window.__balManualZoom || 50) <= 20 ? "disabled" : ""} aria-label="Diminuir zoom">−</button>
+              <b class="bal-zoom-value">${Number(window.__balManualZoom || 50)}%</b>
+              <button type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeManualZoom(10)" ${Number(window.__balManualZoom || 50) >= 100 ? "disabled" : ""} aria-label="Aumentar zoom">+</button>
+              <button type="button" class="bal-zoom-reset" onclick="BalanceamentoUI.resetManualZoom()" ${Number(window.__balManualZoom || 50) === 100 ? "disabled" : ""}>100%</button>
+            </span>
+            <span class="bal-manual-toolbar-divider" aria-hidden="true"></span>
             <small>Réguas de corte</small>
             <input id="balManualCutCount" type="number" min="1" max="20" step="1" value="${window.__balManualCuts.length}" onchange="BalanceamentoUI.setManualCutCount(this.value)" style="width:58px;text-align:center;padding:5px 6px">
             <button type="button" class="btn" style="min-width:32px;padding:4px 8px" onclick="BalanceamentoUI.changeManualCutCount(-1)">−</button>
             <button type="button" class="btn" style="min-width:32px;padding:4px 8px" onclick="BalanceamentoUI.changeManualCutCount(1)">+</button>
-            <span class="bal-manual-toolbar-divider" aria-hidden="true"></span>
-            <small>Zoom</small>
-            <button type="button" class="btn" style="min-width:34px;padding:5px 9px" onclick="BalanceamentoUI.changeManualZoom(-10)">−</button>
-            <span class="bal-manual-zoom-value">${Number(window.__balManualZoom || 50)}%</span>
-            <button type="button" class="btn" style="min-width:34px;padding:5px 9px" onclick="BalanceamentoUI.changeManualZoom(10)">+</button>
             <button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button>
             <button class="bal-expand-btn" type="button" data-bal-exec-toggle="manual" onclick="BalanceamentoUI.toggleExecutionSection('manual')" aria-expanded="${openSections.manual}" title="${openSections.manual ? 'Recolher capítulo' : 'Expandir capítulo'}">${openSections.manual ? "▼" : "▶"}</button>
           </span>
@@ -481,15 +490,47 @@
       </section>
       ${result ? `<section class="bal-section">
         <div class="bal-section-head" style="cursor:default">
-          <span>Resultado</span>
+          <span class="bal-result-title-wrap"><span>Resultado</span>${resultZoomControls}</span>
           <span class="bal-section-head-right">
             ${canApplyFinal ? `<button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button>` : ""}
             <button class="bal-expand-btn" type="button" data-bal-exec-toggle="result" onclick="BalanceamentoUI.toggleExecutionSection('result')" aria-expanded="${openSections.result}" title="${openSections.result ? 'Recolher resultado' : 'Expandir resultado'}">${openSections.result ? "▼" : "▶"}</button>
           </span>
         </div>
-        <div class="bal-section-body" data-bal-exec-body="result" ${openSections.result ? "" : "hidden"}>${resultZoomControls}${result}</div>
+        <div class="bal-section-body" data-bal-exec-body="result" ${openSections.result ? "" : "hidden"}>${result}</div>
       </section>` : ""}
     </div>`;
+  }
+
+
+  function showBalancePopup(message, title="Balanceamento") {
+    const existing = document.querySelector("#balFeedbackPopup");
+    if (existing) existing.remove();
+
+    const overlay = document.createElement("div");
+    overlay.id = "balFeedbackPopup";
+    overlay.className = "bal-feedback-overlay";
+    overlay.innerHTML = `
+      <div class="bal-feedback-popup" role="dialog" aria-modal="true" aria-labelledby="balFeedbackTitle">
+        <div class="bal-feedback-popup-head">
+          <strong id="balFeedbackTitle">${escLocal(title)}</strong>
+          <button type="button" class="bal-feedback-popup-close" aria-label="Fechar">×</button>
+        </div>
+        <div class="bal-feedback-popup-body">${escLocal(message)}</div>
+        <div class="bal-feedback-popup-actions">
+          <button type="button" class="btn primary">OK</button>
+        </div>
+      </div>
+    `;
+
+    const close = () => overlay.remove();
+    overlay.addEventListener("click", (ev) => {
+      if (ev.target === overlay) close();
+    });
+    overlay.querySelector(".bal-feedback-popup-close")?.addEventListener("click", close);
+    overlay.querySelector(".bal-feedback-popup-actions .btn")?.addEventListener("click", close);
+
+    document.body.appendChild(overlay);
+    overlay.querySelector(".bal-feedback-popup-actions .btn")?.focus();
   }
 
   function updateSelectedPreviewZoomUi() {
@@ -578,7 +619,7 @@
         if (job.status === "done") break;
       }
       await load();
-      toast("Balanceamento gerado nos cortes definidos.");
+      showBalancePopup("Balanceamento gerado nos cortes definidos.", "Proposta gerada");
     } catch (e) {
       toast(e.message || "Não foi possível executar o balanceamento.");
       if (button) { button.disabled = false; button.textContent = "Novos Cortes"; }
@@ -609,7 +650,7 @@
       selectedMerges.clear();
       submittedMerges = [];
       await load();
-      toast("Composição final aplicada ao MERGE oficial.");
+      showBalancePopup("Composição final aplicada ao MERGE oficial.", "Composição aplicada");
     } catch (e) {
       toast(e.message || "Não foi possível aplicar a composição final.");
       if (button) { button.disabled = false; button.textContent = "Aplicar composição final"; }
@@ -797,6 +838,12 @@
       const next = Math.max(20, Math.min(100, current + (Number(delta) || 0)));
       if (next === current) return;
       window.__balManualZoom = next;
+      renderBody();
+    },
+    resetManualZoom(){
+      const current = Number(window.__balManualZoom || 50);
+      if (current === 100) return;
+      window.__balManualZoom = 100;
       renderBody();
     },
     changeProposalZoom(delta){
