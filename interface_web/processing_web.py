@@ -207,8 +207,6 @@ def _materialize_level1_resolved(ch, part):
     from processamento.unificacao_imagens import image_stitcher as v3
 
     resolved = part.get("resolved_segments") or []
-    if not resolved:
-        return []
 
     manga = ch.parent.parent
     dest = amdir(manga, ch.name)
@@ -1470,7 +1468,7 @@ def row_state(manga,ch):
         and (partition.get("resolved_segments") or [])
     )
     has_level2=bool(
-        has_level2_data
+        partition
         and (partition.get("pending_segments") or [])
     )
     level2_validated=_is_level2_validated(failure)
