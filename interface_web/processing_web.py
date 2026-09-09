@@ -30,7 +30,7 @@ def is_active_image(path):
     )
 
 def manga_path(provider,manga):
-    if provider not in {"comix","mangago"}: raise ValueError("Provider inválido.")
+    if provider not in {"comix","mangago","ridi"}: raise ValueError("Provider inválido.")
     base=(OUTPUT/provider).resolve(); target=(base/manga).resolve()
     if not target.is_relative_to(base) or not target.is_dir(): raise ValueError("Obra inválida.")
     return target
@@ -1100,7 +1100,7 @@ def do_dimension_correct(job,manga,chs,tolerance):
 
 def catalog():
     out={}
-    for provider in ("comix","mangago"):
+    for provider in ("comix","mangago","ridi"):
         p=OUTPUT/provider
         out[provider]=sorted([x.name for x in p.iterdir() if x.is_dir() and (x/"IMG").is_dir()],key=nkey) if p.is_dir() else []
     return out
