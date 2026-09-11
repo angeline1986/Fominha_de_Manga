@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 from __future__ import annotations
-import json, mimetypes, os, re, shutil, subprocess, sys, threading, traceback, urllib.parse, webbrowser
+import json, mimetypes, os, re, shutil, subprocess, sys, threading, traceback, urllib.parse, webbrowser, hashlib, uuid
 from dataclasses import dataclass
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
@@ -35,6 +35,75 @@ def manga_path(provider,manga):
     if not target.is_relative_to(base) or not target.is_dir(): raise ValueError("Obra inválida.")
     return target
 
+EVENT_LOG_LOCK=threading.Lock()
+
+def processing_log_file(manga):
+    return manga/"FLUXO_SECUNDARIO"/"PROCESSING_LOG"/"processing-events.jsonl"
+
+def _event_now():
+    from datetime import datetime, timezone
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="milliseconds")
+
+def _event_sha256(path):
+    if not path.is_file(): return None
+    h=hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024*1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+def _event_state(manga,ch):
+    row=row_state(manga,ch)
+    return {
+        "merge_state":row.get("merge_state"),
+        "merge":bool(row.get("merge")),
+        "merge_failed":bool(row.get("merge_failed")),
+        "level2":bool(row.get("merge_level2")),
+        "level2_validated":bool(row.get("merge_level2_validated")),
+        "level3_pending":bool(row.get("merge_level3_pending")),
+        "level4_pending":bool(row.get("merge_level4_pending")),
+        "level5_pending":bool(row.get("merge_level5_pending")),
+        "needs_review":bool(row.get("needs_review")),
+        "review":bool(row.get("review")),
+    }
+
+def _event_manifests(manga,ch):
+    items=[
+        ("level1",amdir(manga,ch.name)/"auto-merge-manifest.json"),
+        ("level2",l2dir(manga,ch.name)/"merge-level2-manifest.json"),
+        ("level3",l3dir(manga,ch.name)/"merge-level3-manifest.json"),
+        ("level4",l4dir(manga,ch.name)/"merge-level4-manifest.json"),
+        ("level5",l5dir(manga,ch.name)/"merge-level5-manifest.json"),
+        ("review",rdir(manga,ch.name)/"merge-review.json"),
+    ]
+    out={}
+    for stage,path in items:
+        info={"exists":path.is_file(),"path":str(path)}
+        if path.is_file():
+            try:
+                payload=json.loads(path.read_text(encoding="utf-8"))
+                info.update({
+                    "algorithm":payload.get("algorithm"),
+                    "schema_version":payload.get("schema_version"),
+                    "sha256":_event_sha256(path),
+                    "mtime_ns":int(path.stat().st_mtime_ns),
+                })
+            except Exception as exc:
+                info["read_error"]=str(exc)
+        out[stage]=info
+    return out
+
+def write_processing_event(manga_root,event,**fields):
+    try:
+        path=processing_log_file(manga_root)
+        path.parent.mkdir(parents=True,exist_ok=True)
+        raw=json.dumps({"timestamp":_event_now(),"event":event,**fields},ensure_ascii=False,separators=(",",":"))+"\n"
+        with EVENT_LOG_LOCK:
+            with path.open("a",encoding="utf-8") as fh:
+                fh.write(raw); fh.flush(); os.fsync(fh.fileno())
+    except Exception as exc:
+        print(f"[processing-web] Falha ao persistir evento funcional: {exc}")
+
 def chapters(manga):
     root=manga/"IMG"
     if not root.is_dir(): return []
@@ -45,6 +114,7 @@ def amdir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"AUTO_MERGE
 def l2dir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL2"/c
 def l3dir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL3"/c
 def l4dir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL4"/c
+def l5dir(m,c): return m/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"MERGE_LEVEL5"/c
 def cdir(m,c): return m/"FLUXO_SECUNDARIO"/"04_TEXTO_OFF"/"ORIGINAL"/c
 def tmdir(m,c): return m/"FLUXO_SECUNDARIO"/"04_TEXTO_OFF"/"MERGED"/c
 def pmdir(m,c): return m/"FLUXO_SECUNDARIO"/"03_PDF_MERGE"/c
@@ -1343,6 +1413,183 @@ def _level3_ui_detail(manga,ch,failure):
     }
 
 
+def _promote_level5_complete(ch):
+    import hashlib
+    manga=ch.parent.parent
+    auto_dir=amdir(manga,ch.name); level2_dir=l2dir(manga,ch.name)
+    level3_dir=l3dir(manga,ch.name); level4_dir=l4dir(manga,ch.name); level5_dir=l5dir(manga,ch.name)
+    auto,err=_load_stage_manifest(auto_dir/"auto-merge-manifest.json","auto_merge_level1_resolved_segments","Auto-Merge")
+    if err: return False,err
+    l2,err=_load_stage_manifest(level2_dir/"merge-level2-manifest.json","merge_level2_bounded_safe_path_v1","Level II")
+    if err: return False,err
+    l3_path=level3_dir/"merge-level3-manifest.json"
+    l3,err=_load_stage_manifest(l3_path,"merge_level3_structural_safe_v1","Level III")
+    if err: return False,err
+    l4_path=level4_dir/"merge-level4-manifest.json"
+    if not l4_path.is_file(): return False,"Manifesto Level IV ausente para promoção do Level V."
+    try: l4=json.loads(l4_path.read_text(encoding="utf-8"))
+    except Exception as exc: return False,f"Manifesto Level IV inválido: {exc}"
+    if l4.get("algorithm")!="merge_level4_directed_structural_safe_v1":
+        return False,"Level V exige manifesto do novo Level IV dirigido."
+    if str(l4.get("source_level3_sha256") or "")!=hashlib.sha256(l3_path.read_bytes()).hexdigest():
+        return False,"Manifesto Level IV está desatualizado em relação ao Level III."
+    l5_path=level5_dir/"merge-level5-manifest.json"
+    l5,err=_load_stage_manifest(l5_path,"merge_level5_global_structural_safe_v1","Level V")
+    if err: return False,err
+    if str(l5.get("source_level4_sha256") or "")!=hashlib.sha256(l4_path.read_bytes()).hexdigest():
+        return False,"Manifesto Level V está desatualizado em relação ao Level IV."
+    if l5.get("residual_pending_segments"):
+        return False,"Level V ainda possui residual pendente; promoção direta cancelada."
+    pieces=(
+        _stage_artifact_pieces(auto_dir,auto,"artifacts","auto_merge")
+        +_stage_artifact_pieces(level2_dir,l2,"artifacts","level2")
+        +_stage_artifact_pieces(level3_dir,l3,"safe_artifacts","level3")
+        +_stage_artifact_pieces(level4_dir,l4,"safe_artifacts","level4")
+        +_stage_artifact_pieces(level5_dir,l5,"safe_artifacts","level5")
+    )
+    return _promote_stage_composition(
+        ch,pieces,int(l2.get("total_height") or 0),
+        "merge_auto_level2_level3_level4_level5_composition_v1",
+        {"auto_merge_manifest":"auto-merge-manifest.json","level2_manifest":"merge-level2-manifest.json","level3_manifest":"merge-level3-manifest.json","level4_manifest":"merge-level4-manifest.json","level5_manifest":"merge-level5-manifest.json","review_manifest":None,"scope":"level5_all_safe"},
+    )
+
+
+def _materialize_level5_interval(ch, segment):
+    from PIL import Image
+    spans=segment.get("source_spans") or []
+    if not spans: raise ValueError("Segmento Level V sem source_spans.")
+    start=int(segment["global_start"]); end=int(segment["global_end"])
+    if end<=start: raise ValueError("Intervalo Level V inválido.")
+    width=None; canvas=None
+    for span in spans:
+        src=ch/span["file"]
+        if not src.is_file(): raise FileNotFoundError(f"Fonte ausente no Level V: {span['file']}")
+        page_start=int(span["global_start"]); sy0=int(span["source_y_start"]); sy1=int(span["source_y_end"])
+        covered_start=page_start+sy0; covered_end=page_start+sy1
+        lo=max(start,covered_start); hi=min(end,covered_end)
+        if hi<=lo: continue
+        with Image.open(src) as im:
+            if width is None:
+                width=int(im.width); canvas=Image.new("RGB",(width,end-start),"white")
+            elif int(im.width)!=width: raise ValueError("Larguras incompatíveis no Level V.")
+            crop=im.convert("RGB").crop((0,lo-page_start,width,hi-page_start)); canvas.paste(crop,(0,lo-start))
+    if canvas is None: raise ValueError("Falha ao materializar Level V.")
+    return canvas
+
+
+def _level5_review_pending(ch,failure):
+    import hashlib
+    level4_pending,level4_error,level4_source=_level4_review_pending(ch,failure or {})
+    if level4_error: return None,level4_error,level4_source
+    if level4_source!="level4": return level4_pending,None,level4_source
+    if not level4_pending: return None,None,"level4"
+    manga=ch.parent.parent
+    level4_path=l4dir(manga,ch.name)/"merge-level4-manifest.json"
+    if not level4_path.is_file(): return None,"Manifesto Level IV ausente para validar o Level V.","level4"
+    try: level4_payload=json.loads(level4_path.read_text(encoding="utf-8"))
+    except Exception as exc: return None,f"Manifesto Level IV inválido: {exc}","level4"
+    alg=str(level4_payload.get("algorithm") or "")
+    if alg=="merge_level4_global_structural_safe_v1":
+        return level4_pending,None,"legacy_level4"
+    if alg!="merge_level4_directed_structural_safe_v1":
+        return None,"Manifesto Level IV possui algoritmo não suportado.","level4"
+    level5_path=l5dir(manga,ch.name)/"merge-level5-manifest.json"
+    if not level5_path.is_file(): return level4_pending,None,"level4"
+    try:
+        payload=json.loads(level5_path.read_text(encoding="utf-8"))
+        if payload.get("algorithm")!="merge_level5_global_structural_safe_v1":
+            return None,"Manifesto Level V possui algoritmo não suportado.","level5"
+        if int(payload.get("total_height") or 0)!=int(level4_payload.get("total_height") or 0):
+            return None,"Manifesto Level V não corresponde ao total_height atual do Level IV.","level5"
+        if str(payload.get("source_level4_sha256") or "")!=hashlib.sha256(level4_path.read_bytes()).hexdigest():
+            return None,"Manifesto Level V está desatualizado em relação ao Level IV; regenere o Nível V.","level5"
+        parents=sorted((int(x["global_start"]),int(x["global_end"])) for x in level4_pending)
+        safe=payload.get("safe_artifacts") or []; residual=payload.get("residual_pending_segments") or []
+        children=sorted([(int(x["global_start"]),int(x["global_end"])) for x in safe]+[(int(x["global_start"]),int(x["global_end"])) for x in residual])
+        ci=0
+        for pstart,pend in parents:
+            cursor=pstart
+            while ci<len(children) and children[ci][0]<pend:
+                cstart,cend=children[ci]
+                if cstart!=cursor or cend<=cstart or cend>pend:
+                    return None,"Level V não recompõe exatamente o residual do Level IV (GAP/OVERLAP ou intervalo fora do pai).","level5"
+                cursor=cend; ci+=1
+            if cursor!=pend: return None,"Level V não recompõe exatamente o residual do Level IV (cobertura incompleta).","level5"
+        if ci!=len(children): return None,"Level V possui intervalo fora do residual do Level IV.","level5"
+        return (residual or None),None,"level5"
+    except (OSError,ValueError,TypeError,KeyError,IndexError,json.JSONDecodeError) as exc:
+        return None,f"Manifesto Level V inválido: {exc}","level5"
+
+
+def process_merge_level5_pending(ch, failure, job=None):
+    import hashlib, time
+    import numpy as np
+    from processamento.unificacao_imagens import image_stitcher as v3
+    from processamento.unificacao_imagens.image_stitcher_level5 import DEFAULT_MIN_CHUNK_HEIGHT, find_global_safe_composition
+    pending,pending_error,pending_source=_level5_review_pending(ch,failure or {})
+    if pending_error: return False,pending_error,None
+    if pending_source!="level4" or not pending: return False,"Level V exige residual de um Level IV dirigido válido.",None
+    manga=ch.parent.parent; level4_path=l4dir(manga,ch.name)/"merge-level4-manifest.json"
+    level4_payload=json.loads(level4_path.read_text(encoding="utf-8")); total_height=int(level4_payload.get("total_height") or 0)
+    if level4_payload.get("algorithm")!="merge_level4_directed_structural_safe_v1": return False,"Level V exige o novo Level IV dirigido.",None
+    if total_height<=0: return False,"Level IV sem total_height válido para Level V.",None
+    dest=l5dir(manga,ch.name); tmp=dest.parent/f".{ch.name}.level5-tmp"
+    if tmp.is_dir(): shutil.rmtree(tmp)
+    tmp.mkdir(parents=True,exist_ok=False)
+    artifacts=[]; residual=[]; diagnostics=[]
+    scan_total=sum(max(0,(int(seg["global_end"])-int(seg["global_start"]))-(2*int(DEFAULT_MIN_CHUNK_HEIGHT))+1) for seg in pending); scan_done=0
+    if job is not None:
+        job.progress_max=float(max(1,scan_total)); job.progress_value=0.0; job.progress_detail=f"Nível V · cap. {ch.name}: preparando busca global exaustiva SAFE"
+    try:
+        for seg_index,seg in enumerate(pending,1):
+            seg_start=int(seg["global_start"]); seg_end=int(seg["global_end"]); image=_materialize_level5_interval(ch,seg); gray=np.asarray(image.convert("L"),dtype=np.uint8)
+            started=time.monotonic(); base_done=scan_done
+            def on_progress(local_done,local_total):
+                if job is None: return
+                current=min(scan_total,base_done+int(local_done)); job.progress_value=float(current); job.progress_detail=f"Nível V · cap. {ch.name}: região {seg_index}/{len(pending)} · {current}/{max(1,scan_total)} posições avaliadas"
+            plan=find_global_safe_composition(gray,global_start=seg_start,global_end=seg_end,progress_callback=on_progress)
+            scan_done=base_done+int(plan.get("evaluated_candidates") or 0)
+            diagnostics.append({"segment_id":seg.get("id",seg_index),"global_start":seg_start,"global_end":seg_end,"height":seg_end-seg_start,"resolved":bool(plan.get("resolved")),"partial_resolved":bool(plan.get("partial_resolved")),"boundaries":plan.get("boundaries"),"chunks":plan.get("chunks") or [],"residual_start":plan.get("residual_start"),"residual_end":plan.get("residual_end"),"evaluated_candidates":int(plan.get("evaluated_candidates") or 0),"eligible_candidates":int(plan.get("eligible_candidates") or 0),"safe_candidates":int(plan.get("safe_candidates") or 0),"decision_counts":plan.get("decision_counts") or {},"reason_counts":plan.get("reason_counts") or {},"selected_diagnostics":plan.get("selected_diagnostics") or [],"search_passes":int(plan.get("search_passes") or 0),"elapsed_seconds":round(time.monotonic()-started,3)})
+            partial_resolved=bool(plan.get("partial_resolved"))
+            if not plan.get("resolved") and not partial_resolved:
+                residual.append({**seg,"global_start":seg_start,"global_end":seg_end,"height":seg_end-seg_start,"status":"failed","validation":"review_required","reason":"no_complete_global_safe_composition","level5_decision":"UNRESOLVED"}); continue
+            boundaries=[int(x) for x in (plan.get("boundaries") or [])]; selected_by_y={int(x.get("selected_y")):x for x in (plan.get("selected_diagnostics") or []) if x.get("selected_y") is not None}
+            for start,end in zip(boundaries,boundaries[1:]):
+                crop=image.crop((0,start-seg_start,image.width,end-seg_start)); name=v3.page_range_output_name_from_spans(seg.get("source_spans") or [],start,end); path=v3.ensure_unique_output_path(tmp,name); crop.save(path,"PNG")
+                cut_diag=selected_by_y.get(int(end)); artifacts.append({"file":path.name,"global_start":int(start),"global_end":int(end),"height":int(end-start),"source_stage":"level5","source_segment_id":seg.get("id",seg_index),"decision_reason":((cut_diag or {}).get("reason") if int(end)!=seg_end else "remaining_within_max_height")})
+            if partial_resolved:
+                residual_start=int(boundaries[-1])
+                if not (seg_start < residual_start < seg_end): raise ValueError("Level V retornou prefixo SAFE parcial com residual inválido.")
+                residual.append({**seg,"global_start":residual_start,"global_end":seg_end,"height":seg_end-residual_start,"status":"failed","validation":"review_required","reason":"partial_safe_prefix_remaining","level5_decision":"PARTIAL_SAFE"})
+        manifest={"schema_version":1,"algorithm":"merge_level5_global_structural_safe_v1","chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),"total_height":total_height,"source_level4_manifest":"merge-level4-manifest.json","source_level4_sha256":hashlib.sha256(level4_path.read_bytes()).hexdigest(),"safe_artifacts":artifacts,"residual_pending_segments":residual,"diagnostics":diagnostics,"safety":{"level4_safe_artifacts_modified":False,"forced_cut":False,"unsafe_candidate_accepted":False,"inconclusive_candidate_accepted":False,"global_safe_composition_only":True,"exhaustive_fallback":True}}
+        (tmp/"merge-level5-manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+        if dest.is_dir(): shutil.rmtree(dest)
+        tmp.rename(dest)
+        if job is not None: job.progress_value=float(max(1,scan_total)); job.progress_detail=f"Nível V · cap. {ch.name}: análise concluída"
+        return True,f"Level V resolveu {len(artifacts)} trecho(s) por composição global SAFE; {len(residual)} residual(is) segue(m) para Review.",manifest
+    except Exception:
+        if tmp.is_dir(): shutil.rmtree(tmp)
+        raise
+
+
+def _level5_ui_detail(manga,ch,failure):
+    manifest_path=l5dir(manga,ch.name)/"merge-level5-manifest.json"
+    if not manifest_path.is_file(): return None
+    try: payload=json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError,ValueError,TypeError,json.JSONDecodeError) as exc: return {"available":True,"valid":False,"error":f"Manifesto Level V inválido: {exc}"}
+    final_manifest=v3.merge_output_dir(ch)/"merge-manifest.json"; finalized=False
+    if final_manifest.is_file() and v3.is_chapter_merged(ch):
+        try:
+            final_payload=json.loads(final_manifest.read_text(encoding="utf-8")); finalized=(final_payload.get("algorithm") in {"merge_auto_level2_level3_level4_level5_composition_v1","merge_auto_level2_level3_level4_level5_review_composition_v1"} and final_payload.get("status")=="approved" and bool((final_payload.get("validation") or {}).get("ok")) and (final_payload.get("composition") or {}).get("level5_manifest")=="merge-level5-manifest.json")
+        except (OSError,ValueError,TypeError,json.JSONDecodeError): finalized=False
+    if finalized: pending=[]
+    else:
+        pending,pending_error,pending_source=_level5_review_pending(ch,failure or {})
+        if pending_error: return {"available":True,"valid":False,"error":pending_error}
+        if pending_source!="level5": return {"available":True,"valid":False,"error":"Manifesto Level V não é autoritativo para o estado atual."}
+    safe=payload.get("safe_artifacts") or []; residual=payload.get("residual_pending_segments") or []
+    return {"available":True,"valid":True,"error":None,"algorithm":payload.get("algorithm"),"total_height":int(payload.get("total_height") or 0),"safe_artifacts_count":len(safe),"residual_pending_segments_count":len(residual),"safe_artifacts":safe,"residual_pending_segments":residual,"review_pending_segments":pending or [],"diagnostics":payload.get("diagnostics") or [],"safety":payload.get("safety") or {}}
+
 def _level4_review_pending(ch,failure):
     import hashlib
     level3_pending,level3_error,level3_source=_level3_review_pending(ch,failure or {})
@@ -1519,11 +1766,20 @@ def row_state(manga,ch):
         and level3_has_residual
         and not level4_valid
     )
+    level4_algorithm=str((level4_detail or {}).get("algorithm") or "")
+    level4_is_directed=level4_algorithm=="merge_level4_directed_structural_safe_v1"
+    level4_is_legacy_exhaustive=level4_algorithm=="merge_level4_global_structural_safe_v1"
+    level5_detail=_level5_ui_detail(manga,ch,failure)
+    level5_valid=bool(level5_detail and level5_detail.get("available") and level5_detail.get("valid"))
+    level5_has_residual=bool(level5_valid and (level5_detail.get("review_pending_segments") or level5_detail.get("residual_pending_segments")))
+    level5_pending=bool(merge_failed and level4_valid and level4_has_residual and level4_is_directed and not level5_valid)
     needs_review=bool(
         merge_failed
         and not validated_without_pending
-        and level2_validated
-        and level4_has_residual
+        and (
+            (not has_level2)
+            or (level2_validated and (level5_has_residual or (level4_is_legacy_exhaustive and level4_has_residual)))
+        )
     )
     review_items=review_merge_items(manga,ch)
     all_review_files=[p.name for p in v3.merge_artifact_files(rd)] if rd.is_dir() else []
@@ -1539,8 +1795,10 @@ def row_state(manga,ch):
         "merge_level3_detail":level3_detail,
         "merge_level4_pending":level4_pending,
         "merge_level4_detail":level4_detail,
+        "merge_level5_pending":level5_pending,
+        "merge_level5_detail":level5_detail,
         "needs_review":needs_review,
-        "merge_state":"concluido" if merge_ok else ("pendente_level3" if level3_pending else ("pendente_level4" if level4_pending else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("novo" if merge_failed else "novo"))))),
+        "merge_state":"concluido" if merge_ok else ("pendente_level3" if level3_pending else ("pendente_level4" if level4_pending else ("pendente_level5" if level5_pending else ("pendente_review" if needs_review else ("parcial" if (has_level2 or validated_without_pending) else ("novo" if merge_failed else "novo")))))),
         "merged_images":int(merge_meta.get("merged_images") or 0) if merge_ok else 0,
         "review":review_exists,
         "review_images":len(review_items) if review_exists else 0,
@@ -1564,6 +1822,7 @@ def state(provider,manga_name):
         "partial":sum(x["merge_state"]=="parcial" for x in rows),
         "level3_pending":sum(x.get("merge_level3_pending",False) for x in rows),
         "level4_pending":sum(x.get("merge_level4_pending",False) for x in rows),
+        "level5_pending":sum(x.get("merge_level5_pending",False) for x in rows),
         "merge_failed":sum(x["merge_failed"] for x in rows),
         "review_pending":sum(x["needs_review"] for x in rows),
         "review":sum(x["review"] for x in rows),"pdfs":sum(x["pdf"] for x in rows),"clean":sum(x["clean"] for x in rows),
@@ -1575,13 +1834,17 @@ class Job:
     progress_value:float=0.0
     progress_max:float=0.0
     progress_detail:str=""
+    request_id:str=""
+    requested_at:str=""
 
 JOBS={}; COUNTER=0; LOCK=threading.Lock(); OPLOCK=threading.Lock()
 
 def make_job(action,payload):
     global COUNTER
     with LOCK:
-        COUNTER+=1; j=Job(COUNTER,action); JOBS[j.id]=j
+        COUNTER+=1
+        j=Job(COUNTER,action,request_id=uuid.uuid4().hex,requested_at=_event_now())
+        JOBS[j.id]=j
     threading.Thread(target=run_job,args=(j,payload),daemon=True).start()
     return j
 
@@ -1592,9 +1855,21 @@ def selected(manga,names):
     except KeyError as e: raise ValueError(f"Capítulo inválido: {e.args[0]}")
 
 def run_job(job,payload):
+    import time
+    manga=None; started=None; before={}; manifests_before={}
+    provider=str(payload.get("provider","")); manga_name=str(payload.get("manga","")); requested=[str(x) for x in (payload.get("chapters") or [])]
     try:
         with OPLOCK:
-            job.status="running"; manga=manga_path(str(payload.get("provider","")),str(payload.get("manga",""))); chs=selected(manga,payload.get("chapters") or []); job.total=len(chs)
+            started=time.monotonic(); job.status="running"
+            manga=manga_path(provider,manga_name); chs=selected(manga,requested); job.total=len(chs)
+            for ch in chs:
+                try: before[ch.name]=_event_state(manga,ch)
+                except Exception as exc: before[ch.name]={"state_error":str(exc)}
+                manifests_before[ch.name]=_event_manifests(manga,ch)
+            common={"request_id":job.request_id,"job_id":job.id,"action":job.action,"trigger":"manual","provider":provider,"manga":manga_name,"chapters":[ch.name for ch in chs]}
+            write_processing_event(manga,"job_requested",**common,requested_at=job.requested_at)
+            write_processing_event(manga,"job_started",**common,state_before=before,manifests_before=manifests_before)
+
             if job.action=="merge": job.result=do_merge(job,chs)
             elif job.action=="pdf": job.result=do_pdf(job,chs)
             elif job.action=="pdf_merge": job.result=do_pdf_merge(job,manga,chs)
@@ -1603,6 +1878,7 @@ def run_job(job,payload):
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
             elif job.action=="merge_level4": job.result=do_merge_level4(job,chs)
+            elif job.action=="merge_level5": job.result=do_merge_level5(job,chs)
             elif job.action=="dimension_analyze": job.result=do_dimension_analyze(job,manga,chs,payload.get("tolerance",3.0))
             elif job.action=="dimension_correct": job.result=do_dimension_correct(job,manga,chs,payload.get("tolerance",3.0))
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
@@ -1613,11 +1889,20 @@ def run_job(job,payload):
             elif job.action=="balance_effect": job.result=do_balance_effect(job,manga,chs)
             elif job.action=="balance_generate": job.result=do_balance_generate(job,manga,chs,payload.get("merges") or [])
             else: raise ValueError("Ação inválida.")
+
+            after={}; manifests_after={}
+            for ch in chs:
+                try: after[ch.name]=_event_state(manga,ch)
+                except Exception as exc: after[ch.name]={"state_error":str(exc)}
+                manifests_after[ch.name]=_event_manifests(manga,ch)
+                if before.get(ch.name)!=after.get(ch.name):
+                    write_processing_event(manga,"chapter_transition",**common,chapter=ch.name,state_before=before.get(ch.name),state_after=after.get(ch.name),manifests_before=manifests_before.get(ch.name),manifests_after=manifests_after.get(ch.name))
             job.status="done"; job.message="Processamento concluído."
+            write_processing_event(manga,"job_finished",**common,duration_ms=round((time.monotonic()-started)*1000,3),state_before=before,state_after=after,manifests_before=manifests_before,manifests_after=manifests_after,result=job.result)
     except Exception as e:
         job.status="error"; job.error=str(e); job.message=str(e); traceback.print_exc()
-
-
+        if manga is not None:
+            write_processing_event(manga,"job_failed",request_id=job.request_id,job_id=job.id,action=job.action,trigger="manual",provider=provider,manga=manga_name,chapters=requested,duration_ms=(round((time.monotonic()-started)*1000,3) if started is not None else None),error=str(e),state_before=before,manifests_before=manifests_before)
 
 
 def do_balance_prepare(job,manga,chs,selected_merges):
@@ -1984,7 +2269,7 @@ def do_merge_level3(job,chs):
                             if isinstance(x,dict) and (x.get("reason") or x.get("trigger_reason"))
                         ],
                         "stage_folder":str(l3dir(ch.parent.parent,ch.name)),
-                        "next_stage":"Revisão Merge V2" if residual else "—",
+                        "next_stage":"Auto-Merge Nível V" if residual else "—",
                     })
         except Exception as exc:
             out.append({"chapter":ch.name,"status":"error","message":str(exc)})
@@ -2052,6 +2337,36 @@ def do_merge_level4(job,chs):
         job.progress_value=float(i)
     return out
 
+
+
+def do_merge_level5(job,chs):
+    out=[]
+    for i,ch in enumerate(chs,1):
+        job.message=f"Auto-Merge Nível V: capítulo {ch.name}..."
+        try:
+            failure=read_merge_failure(ch) or {}; pending,pending_error,pending_source=_level5_review_pending(ch,failure)
+            if pending_error: out.append({"chapter":ch.name,"status":"error","message":pending_error})
+            elif pending_source=="legacy_level4": out.append({"chapter":ch.name,"status":"skip","message":"Level IV exaustivo legado; segue diretamente para Review por compatibilidade histórica."})
+            elif pending_source!="level4" or not pending: out.append({"chapter":ch.name,"status":"skip","message":"Level IV dirigido não possui residual válido para o Nível V."})
+            else:
+                ok,msg,manifest=process_merge_level5_pending(ch,failure,job=job)
+                if not ok: out.append({"chapter":ch.name,"status":"error","message":msg or "Falha no Auto-Merge Nível V."})
+                else:
+                    residual=(manifest or {}).get("residual_pending_segments") or []; safe=(manifest or {}).get("safe_artifacts") or []; promoted=False; promote_msg=None
+                    if not residual:
+                        promoted,promote_msg=_promote_level5_complete(ch)
+                        if promoted: clear_merge_failure(ch)
+                    status="ok" if (residual or promoted) else "error"
+                    message=(f"Auto-Merge Nível V analisado: {len(safe)} trecho(s) SAFE; {len(residual)} região(ões) seguem para Review." if residual else ("Auto-Merge Nível V resolvido automaticamente." if promoted else (promote_msg or msg)))
+                    pending_files=[]; seen=set()
+                    for seg in residual:
+                        for name in (seg.get("sources") or []):
+                            name=str(name)
+                            if name and name not in seen: seen.add(name); pending_files.append(name)
+                    out.append({"chapter":ch.name,"status":status,"message":message,"safe_segments":len(safe),"residual_pending_segments":len(residual),"stage_files":[str(x.get("file")) for x in safe if isinstance(x,dict) and x.get("file")],"pending_files":pending_files,"residuals":[{"global_start":int(x["global_start"]),"global_end":int(x["global_end"])} for x in residual if x.get("global_start") is not None and x.get("global_end") is not None],"reason_codes":[str(x.get("reason")) for x in residual if isinstance(x,dict) and x.get("reason")],"stage_folder":str(l5dir(ch.parent.parent,ch.name)),"next_stage":"Revisão Merge V2" if residual else "—"})
+        except Exception as exc: out.append({"chapter":ch.name,"status":"error","message":str(exc)})
+        job.progress=i; job.progress_value=float(i)
+    return out
 
 def do_pdf(job,chs):
     from orquestracao.menu import run_pdf_batch
@@ -2252,7 +2567,7 @@ def do_review_generate(job,manga,chs,max_source_images=None):
         pending_segments=None
         pending_source="historical"
         if level2_validated:
-            pending_segments,pending_error,pending_source=_level4_review_pending(ch,failure)
+            pending_segments,pending_error,pending_source=_level5_review_pending(ch,failure)
             if pending_error:
                 out.append({
                     "chapter":ch.name,
@@ -2268,6 +2583,16 @@ def do_review_generate(job,manga,chs,max_source_images=None):
                     "chapter":ch.name,
                     "status":"error",
                     "message":"Auto-Merge Nível IV ainda não foi executado para o residual do Nível III.",
+                    "path":None,
+                    "max_source_images":limit,
+                })
+                job.progress=i
+                continue
+            if pending_source=="level4" and pending_segments:
+                out.append({
+                    "chapter":ch.name,
+                    "status":"error",
+                    "message":"Auto-Merge Nível V ainda não foi executado para o residual do Nível IV dirigido.",
                     "path":None,
                     "max_source_images":limit,
                 })
@@ -2372,6 +2697,7 @@ class Handler(BaseHTTPRequestHandler):
                     "merge_level2":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL2"),
                     "merge_level3":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL3"),
                     "merge_level4":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL4"),
+                    "merge_level5":("01_MERGE_PROCESSAMENTO","MERGE_LEVEL5"),
                     "text_off_merged":("04_TEXTO_OFF","MERGED"),
                     "dimension_analysis":("ANALISE_DIMENSOES",),
                     "merge":("02_MERGE",),
@@ -2396,7 +2722,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         if urllib.parse.urlparse(self.path).path!="/api/action": return self.send_json({"error":"Rota não encontrada."},404)
         try:
-            b=self.body(); j=make_job(str(b.get("action","")),b); return self.send_json({"job_id":j.id},HTTPStatus.ACCEPTED)
+            b=self.body(); j=make_job(str(b.get("action","")),b); return self.send_json({"job_id":j.id,"request_id":j.request_id},HTTPStatus.ACCEPTED)
         except Exception as e:return self.send_json({"error":str(e)},400)
     def static(self,path):
         rel="index.html" if path in {"","/"} else path.lstrip("/"); target=(STATIC/rel).resolve(); base=STATIC.resolve()

@@ -73,6 +73,44 @@ def _best_complete_path(
     return list(result[1]) if result is not None else None
 
 
+def _best_partial_prefix_path(
+    *,
+    start: int,
+    safe_positions: list[int],
+    min_chunk_height: int,
+    max_chunk_height: int,
+    target_height: int,
+) -> list[int] | None:
+    """Return the furthest prefix composed only from already SAFE cuts."""
+    safe = sorted({int(y) for y in safe_positions if int(y) > int(start)})
+    if not safe:
+        return None
+    best = {int(start): ((0, 0, 0), [int(start)], [])}
+    nodes = [int(start), *safe]
+    for y in safe:
+        chosen = None
+        for x in nodes:
+            if x >= y:
+                break
+            previous = best.get(x)
+            if previous is None:
+                continue
+            chunk = y - x
+            if chunk < int(min_chunk_height) or chunk > int(max_chunk_height):
+                continue
+            _, boundaries, chunks = previous
+            candidate_chunks = chunks + [chunk]
+            candidate = (_path_score(candidate_chunks, int(target_height)), boundaries + [y], candidate_chunks)
+            if chosen is None or candidate[0] < chosen[0]:
+                chosen = candidate
+        if chosen is not None:
+            best[y] = chosen
+    if len(best) == 1:
+        return None
+    furthest = max(y for y in best if y != int(start))
+    return best[furthest][1]
+
+
 def find_global_safe_composition(
     image: np.ndarray,
     *,
@@ -194,16 +232,28 @@ def find_global_safe_composition(
                 "search_passes": passes,
             }
 
+    partial_boundaries = _best_partial_prefix_path(
+        start=start,
+        safe_positions=list(safe_results),
+        min_chunk_height=min_h,
+        max_chunk_height=max_h,
+        target_height=target,
+    )
+    if partial_boundaries is not None and len(partial_boundaries) >= 2:
+        cuts = partial_boundaries[1:]
+        chunks = [b - a for a, b in zip(partial_boundaries, partial_boundaries[1:])]
+        selected = [{**safe_results[int(y)].as_dict(), "selected_y": int(y)} for y in cuts]
+        return {
+            "resolved": False, "partial_resolved": True,
+            "boundaries": partial_boundaries, "cuts": cuts, "chunks": chunks,
+            "residual_start": int(partial_boundaries[-1]), "residual_end": end,
+            "evaluated_candidates": evaluated, "eligible_candidates": eligible_total,
+            "safe_candidates": len(safe_results), "decision_counts": decision_counts,
+            "reason_counts": reason_counts, "selected_diagnostics": selected, "search_passes": passes,
+        }
     return {
-        "resolved": False,
-        "boundaries": None,
-        "cuts": [],
-        "chunks": [],
-        "evaluated_candidates": evaluated,
-        "eligible_candidates": eligible_total,
-        "safe_candidates": len(safe_results),
-        "decision_counts": decision_counts,
-        "reason_counts": reason_counts,
-        "selected_diagnostics": [],
-        "search_passes": passes,
+        "resolved": False, "partial_resolved": False, "boundaries": None, "cuts": [], "chunks": [],
+        "evaluated_candidates": evaluated, "eligible_candidates": eligible_total,
+        "safe_candidates": len(safe_results), "decision_counts": decision_counts,
+        "reason_counts": reason_counts, "selected_diagnostics": [], "search_passes": passes,
     }
