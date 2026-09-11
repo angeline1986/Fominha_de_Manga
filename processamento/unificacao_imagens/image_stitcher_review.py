@@ -1011,7 +1011,10 @@ def _approve_scoped_level2_review(
             return False, f"Manifesto Level IV inválido: {exc}"
         if (
             level4_payload.get("algorithm")
-            != "merge_level4_global_structural_safe_v1"
+            not in {
+                "merge_level4_directed_structural_safe_v1",
+                "merge_level4_global_structural_safe_v1",
+            }
         ):
             return False, "Manifesto Level IV possui algoritmo não suportado."
         try:
@@ -1035,6 +1038,21 @@ def _approve_scoped_level2_review(
                 "Manifesto Level IV está desatualizado em relação "
                 "ao manifesto Level III atual."
             )
+
+    level5_dir = manga / SECONDARY / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL5" / chapter_name
+    level5_manifest_path = level5_dir / "merge-level5-manifest.json"
+    level5_payload = None
+    if level5_manifest_path.is_file():
+        if level4_payload is None: return False, "Level V existe sem manifesto Level IV válido."
+        if level4_payload.get("algorithm") != "merge_level4_directed_structural_safe_v1": return False, "Level V só pode derivar do novo Level IV dirigido."
+        try: level5_payload = json.loads(level5_manifest_path.read_text(encoding="utf-8"))
+        except Exception as exc: return False, f"Manifesto Level V inválido: {exc}"
+        if level5_payload.get("algorithm") != "merge_level5_global_structural_safe_v1": return False, "Manifesto Level V possui algoritmo não suportado."
+        try: level5_total = int(level5_payload["total_height"])
+        except (KeyError,TypeError,ValueError): return False, "Manifesto Level V sem total_height válido."
+        if level5_total != total_height: return False, "Manifesto Level V não corresponde ao total_height do Level IV atual."
+        import hashlib
+        if str(level5_payload.get("source_level4_sha256") or "") != hashlib.sha256(level4_manifest_path.read_bytes()).hexdigest(): return False, "Manifesto Level V está desatualizado em relação ao manifesto Level IV atual."
 
     # O Review scoped deve representar a autoridade pendente atual.
     scope = review_payload.get("scope") or {}
@@ -1160,6 +1178,9 @@ def _approve_scoped_level2_review(
             "ainda não foi executado."
         )
 
+    if (level4_payload is not None and level4_payload.get("algorithm")=="merge_level4_directed_structural_safe_v1" and (level4_payload.get("residual_pending_segments") or []) and level5_payload is None):
+        return False, "Level IV dirigido possui residual, mas o Auto-Merge Nível V ainda não foi executado."
+
     if level4_payload is not None:
         try:
             level4_safe_intervals = sorted(
@@ -1221,6 +1242,23 @@ def _approve_scoped_level2_review(
                 "Level IV não possui residual pendente; "
                 "Review scoped não deve ser aprovado."
             )
+
+    if level5_payload is not None:
+        try:
+            level5_safe_intervals=sorted((int(item["global_start"]),int(item["global_end"])) for item in (level5_payload.get("safe_artifacts") or []))
+            level5_residual_intervals=sorted((int(item["global_start"]),int(item["global_end"])) for item in (level5_payload.get("residual_pending_segments") or []))
+        except (KeyError,TypeError,ValueError): return False, "Level V possui intervalos inválidos."
+        children=sorted(level5_safe_intervals+level5_residual_intervals); child_index=0
+        for parent_start,parent_end in authoritative_pending:
+            cursor=parent_start
+            while child_index<len(children) and children[child_index][0]<parent_end:
+                child_start,child_end=children[child_index]
+                if child_start!=cursor or child_end<=child_start or child_end>parent_end: return False, "Level V não recompõe exatamente o residual do Level IV (GAP/OVERLAP)."
+                cursor=child_end; child_index+=1
+            if cursor!=parent_end: return False, "Level V não recompõe exatamente o residual do Level IV (cobertura incompleta)."
+        if child_index!=len(children): return False, "Level V possui intervalo fora do residual do Level IV."
+        authoritative_pending=level5_residual_intervals
+        if not authoritative_pending: return False, "Level V não possui residual pendente; Review scoped não deve ser aprovado."
 
     if review_scope_intervals != authoritative_pending:
         return False, (
@@ -1305,6 +1343,14 @@ def _approve_scoped_level2_review(
                     "global_end": end,
                 }
             )
+
+    if level5_payload is not None:
+        for artifact in level5_payload.get("safe_artifacts") or []:
+            try: start=int(artifact["global_start"]); end=int(artifact["global_end"])
+            except (KeyError,TypeError,ValueError): return False, "Artefato SAFE do Level V possui intervalo inválido."
+            filename=str(artifact.get("file") or "").strip()
+            if not filename: return False, "Artefato SAFE do Level V não possui arquivo."
+            pieces.append({"kind":"level5","source":level5_dir/filename,"source_file":filename,"global_start":start,"global_end":end})
 
     # Review scoped: regions é a fonte de verdade.
     regions = review_payload.get("regions") or []
@@ -1546,12 +1592,16 @@ def _approve_scoped_level2_review(
         manifest = {
             "schema_version": 1,
             "algorithm": (
-                "merge_auto_level2_level3_level4_review_composition_v1"
-                if level4_payload is not None
+                "merge_auto_level2_level3_level4_level5_review_composition_v1"
+                if level5_payload is not None
                 else (
-                    "merge_auto_level2_level3_review_composition_v2"
-                    if level3_payload is not None
-                    else "merge_auto_level2_review_composition_v2"
+                    "merge_auto_level2_level3_level4_review_composition_v1"
+                    if level4_payload is not None
+                    else (
+                        "merge_auto_level2_level3_review_composition_v2"
+                        if level3_payload is not None
+                        else "merge_auto_level2_review_composition_v2"
+                    )
                 )
             ),
             "status": "approved",
@@ -1585,6 +1635,7 @@ def _approve_scoped_level2_review(
                 "level2_passed_artifacts_rerendered": False,
                 "level3_safe_artifacts_rerendered": False,
                 "level4_safe_artifacts_rerendered": False,
+                "level5_safe_artifacts_rerendered": False,
                 "review_artifacts_rerendered": False,
             },
             "composition": {
@@ -1600,6 +1651,11 @@ def _approve_scoped_level2_review(
                 "level4_manifest": (
                     "merge-level4-manifest.json"
                     if level4_payload is not None
+                    else None
+                ),
+                "level5_manifest": (
+                    "merge-level5-manifest.json"
+                    if level5_payload is not None
                     else None
                 ),
                 "review_manifest": (
