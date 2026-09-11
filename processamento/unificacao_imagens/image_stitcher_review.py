@@ -1011,7 +1011,10 @@ def _approve_scoped_level2_review(
             return False, f"Manifesto Level IV inválido: {exc}"
         if (
             level4_payload.get("algorithm")
-            != "merge_level4_global_structural_safe_v1"
+            not in {
+                "merge_level4_directed_structural_safe_v1",
+                "merge_level4_global_structural_safe_v1",
+            }
         ):
             return False, "Manifesto Level IV possui algoritmo não suportado."
         try:

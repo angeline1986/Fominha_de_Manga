@@ -420,7 +420,7 @@ function mergeLevel4(r){
   if(tableStatus==="pending")filtered=filtered.filter(x=>!!x.merge_level4_pending);
   if(tableStatus==="done")filtered=filtered.filter(x=>!x.merge_level4_pending&&x.merge_level4_detail?.available);
   if(!list.length){
-    r.innerHTML=head("Auto-Merge Nível IV","Busca globalmente uma composição completa usando somente cortes estruturais SAFE no residual do Nível III.")+`<div class="empty">Nenhum capítulo aguardando Auto-Merge Nível IV.</div>`;
+    r.innerHTML=head("Auto-Merge Nível IV","Prioriza regiões promissoras do residual do Nível III e confirma cada corte com a validação estrutural SAFE completa.")+`<div class="empty">Nenhum capítulo aguardando Auto-Merge Nível IV.</div>`;
     return;
   }
   let pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));tablePage=Math.min(tablePage,pages);
@@ -432,7 +432,7 @@ function mergeLevel4(r){
     let res=Number(d.residual_pending_segments_count||(d.residual_pending_segments||[]).length||0);
     let state=pending?`<span class="warn">Pendente</span>`:(!d.valid?`<span class="bad">⚠ Inválido</span>`:`<span class="ok">✓ Analisado</span>`);
     let result=pending
-      ?`<span class="muted">Aguardando busca global SAFE</span>`
+      ?`<span class="muted">Aguardando busca dirigida SAFE</span>`
       :(!d.valid
         ?esc(d.error||"Manifesto inválido")
         :(res
@@ -440,7 +440,7 @@ function mergeLevel4(r){
           :`<span class="ok">Resolvido automaticamente</span>`));
     return `<tr data-n="${esc(String(x.chapter)).toLowerCase()}"><td>${pending?`<input class="ck" type="checkbox" value="${esc(x.chapter)}" onchange="syncVisibleMaster(document.querySelector('.visible-master'),'.ck')">`:""}</td><td>${esc(x.chapter)}</td><td>${state}</td><td>${pending?"—":safe}</td><td>${pending?"—":res}</td><td>${result}</td></tr>`;
   }).join("");
-  r.innerHTML=head("Auto-Merge Nível IV","Busca globalmente uma composição completa usando somente cortes estruturais SAFE no residual do Nível III.")+
+  r.innerHTML=head("Auto-Merge Nível IV","Prioriza regiões promissoras do residual do Nível III e confirma cada corte com a validação estrutural SAFE completa.")+
     `<div class="toolbar standard-filterbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><div class="status-filter" role="group" aria-label="Filtrar Nível IV"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="pending"?"active":""}" onclick="setTableStatus('pending')">Pendentes</button><button class="tab ${tableStatus==="done"?"active":""}" onclick="setTableStatus('done')">Analisados</button></div><button class="btn primary filter-primary-action" onclick="runSelected('merge_level4')">Analisar Nível IV</button></div><div class="panel"><table class="l3-table"><thead><tr><th>${visibleMaster()}</th><th>CAP.</th><th>NÍVEL IV</th><th>SAFE</th><th>RESIDUAL</th><th>RESULTADO</th></tr></thead><tbody>${body||`<tr><td colspan="6" class="muted">Nenhum capítulo encontrado.</td></tr>`}</tbody></table>${pager}</div>`;
 }
 

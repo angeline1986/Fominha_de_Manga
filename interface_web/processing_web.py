@@ -420,7 +420,7 @@ def _promote_level4_complete(ch):
     l3_path=level3_dir/"merge-level3-manifest.json"
     l3,err=_load_stage_manifest(l3_path,"merge_level3_structural_safe_v1","Level III")
     if err: return False,err
-    l4,err=_load_stage_manifest(level4_dir/"merge-level4-manifest.json","merge_level4_global_structural_safe_v1","Level IV")
+    l4,err=_load_stage_manifest(level4_dir/"merge-level4-manifest.json","merge_level4_directed_structural_safe_v1","Level IV")
     if err: return False,err
     if str(l4.get("source_level3_sha256") or "") != hashlib.sha256(l3_path.read_bytes()).hexdigest():
         return False,"Manifesto Level IV está desatualizado em relação ao Level III; promoção direta cancelada."
@@ -613,6 +613,7 @@ def process_merge_level4_pending(ch, failure, job=None):
     from processamento.unificacao_imagens import image_stitcher as v3
     from processamento.unificacao_imagens.image_stitcher_level4 import (
         DEFAULT_MIN_CHUNK_HEIGHT,
+        estimate_directed_validation_count,
         find_global_safe_composition,
     )
     pending,pending_error,pending_source=_level3_review_pending(ch,failure or {})
@@ -639,14 +640,14 @@ def process_merge_level4_pending(ch, failure, job=None):
     tmp.mkdir(parents=True,exist_ok=False)
     artifacts=[]; residual=[]; diagnostics=[]
     scan_total=sum(
-        max(0,(int(seg["global_end"])-int(seg["global_start"]))-(2*int(DEFAULT_MIN_CHUNK_HEIGHT))+1)
+        estimate_directed_validation_count(int(seg["global_start"]),int(seg["global_end"]),min_chunk_height=int(DEFAULT_MIN_CHUNK_HEIGHT))
         for seg in pending
     )
     scan_done=0
     if job is not None:
         job.progress_max=float(max(1,scan_total))
         job.progress_value=0.0
-        job.progress_detail=f"Nível IV · cap. {ch.name}: preparando busca global SAFE"
+        job.progress_detail=f"Nível IV · cap. {ch.name}: preparando busca dirigida SAFE"
 
     try:
         for seg_index,seg in enumerate(pending,1):
@@ -682,6 +683,8 @@ def process_merge_level4_pending(ch, failure, job=None):
                 "reason_counts":plan.get("reason_counts") or {},
                 "selected_diagnostics":plan.get("selected_diagnostics") or [],
                 "search_passes":int(plan.get("search_passes") or 0),
+                "strategy":plan.get("strategy"),
+                "preselection":plan.get("preselection") or {},
                 "elapsed_seconds":round(time.monotonic()-started,3),
             })
             if not plan.get("resolved"):
@@ -722,7 +725,7 @@ def process_merge_level4_pending(ch, failure, job=None):
         level3_sha256=hashlib.sha256(level3_path.read_bytes()).hexdigest()
         manifest={
             "schema_version":1,
-            "algorithm":"merge_level4_global_structural_safe_v1",
+            "algorithm":"merge_level4_directed_structural_safe_v1",
             "chapter":ch.name,"source_dir":str(ch),"output_dir":str(dest),
             "total_height":total_height,
             "source_level3_manifest":"merge-level3-manifest.json",
@@ -1355,7 +1358,7 @@ def _level4_review_pending(ch,failure):
         return level3_pending,None,"level3"
     try:
         payload=json.loads(level4_path.read_text(encoding="utf-8"))
-        if payload.get("algorithm")!="merge_level4_global_structural_safe_v1":
+        if payload.get("algorithm") not in {"merge_level4_directed_structural_safe_v1","merge_level4_global_structural_safe_v1"}:
             return None,"Manifesto Level IV possui algoritmo não suportado.","level4"
         level3_path=l3dir(manga,ch.name)/"merge-level3-manifest.json"
         if not level3_path.is_file():
