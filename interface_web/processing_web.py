@@ -1884,6 +1884,12 @@ def run_job(job,payload):
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
             elif job.action=="review_approve": job.result=do_review_approve(job,manga,chs)
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
+            elif job.action=="merge_manual_generate":
+                from processamento.merge_manual.api import generate_merge_manual_proposal_job
+                job.result=generate_merge_manual_proposal_job(manga,chs,review_state_loader=lambda ch: row_state(manga,ch),payload=payload)
+            elif job.action=="merge_manual_apply":
+                from processamento.merge_manual.api import apply_merge_manual_proposal_job
+                job.result=apply_merge_manual_proposal_job(manga,chs,review_state_loader=lambda ch: row_state(manga,ch),payload=payload)
             elif job.action=="balance_prepare": job.result=do_balance_prepare(job,manga,chs,payload.get("merges") or [])
             elif job.action=="balance_execute": job.result=do_balance_execute(job,manga,chs,payload.get("merges") or [],payload.get("cuts") or [])
             elif job.action=="balance_effect": job.result=do_balance_effect(job,manga,chs)
@@ -2679,6 +2685,19 @@ class Handler(BaseHTTPRequestHandler):
             if u.path=="/api/balance-analysis":
                 from processamento.balanceamento.balanceamento import balance_state
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(balance_state(manga))
+            if u.path=="/api/merge-manual":
+                from processamento.merge_manual.api import get_merge_manual_state
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+                return self.send_json(get_merge_manual_state(
+                    manga,
+                    chapters(manga),
+                    review_state_loader=lambda ch: row_state(manga,ch),
+                ))
+            if u.path=="/api/merge-manual-proposal":
+                from processamento.merge_manual.api import get_latest_merge_manual_proposal
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+                chapter=str(q.get("chapter",[""])[0])
+                return self.send_json(get_latest_merge_manual_proposal(manga,chapter))
             if u.path=="/api/pdf-merge-latest":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
                 files=latest_pdf_merge_batch(manga)
@@ -2732,6 +2751,21 @@ class Handler(BaseHTTPRequestHandler):
         manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
         chapter=q.get("chapter",[""])[0]
         kind=q.get("kind",["review"])[0]
+        if kind=="merge_manual_proposal":
+            from processamento.merge_manual.proposal import proposal_dir
+            proposal_id=q.get("proposal",[""])[0]
+            base=proposal_dir(manga,chapter,proposal_id)
+            target=(base/q.get("file",[""])[0]).resolve()
+            if not target.is_relative_to(base) or not target.is_file() or target.suffix.lower() not in IMAGE_EXTS:
+                self.send_error(404); return
+            raw=target.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type",mimetypes.guess_type(target.name)[0] or "image/png")
+            self.send_header("Content-Length",str(len(raw)))
+            self.send_header("Cache-Control","no-store")
+            self.end_headers(); self.wfile.write(raw)
+            return
+
         if kind=="review":
             base=rdir(manga,chapter).resolve()
         elif kind=="source":

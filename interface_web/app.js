@@ -159,7 +159,7 @@ function installPdfMergeUiNormalizer(){
   requestAnimationFrame(run);
 }
 
-function render(){let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let b4=$("#badgeLevel4");if(b4&&data)b4.textContent=data.chapters.filter(x=>x.merge_level4_pending).length;let b5=$("#badgeLevel5");if(b5&&data)b5.textContent=data.chapters.filter(x=>x.merge_level5_pending).length;let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="merge_level4")return mergeLevel4(root);if(page==="merge_level5")return mergeLevel5(root);if(page==="balance")return BalanceamentoUI.renderValidation(root);if(page==="balance_execute")return BalanceamentoUI.renderExecution(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+function render(){let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let b4=$("#badgeLevel4");if(b4&&data)b4.textContent=data.chapters.filter(x=>x.merge_level4_pending).length;let b5=$("#badgeLevel5");if(b5&&data)b5.textContent=data.chapters.filter(x=>x.merge_level5_pending).length;let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="merge_level4")return mergeLevel4(root);if(page==="merge_level5")return mergeLevel5(root);if(page==="balance")return BalanceamentoUI.renderValidation(root);if(page==="balance_execute")return BalanceamentoUI.renderExecution(root);if(page==="merge_manual")return MergeManualUI.renderValidation(root);if(page==="merge_manual_cuts")return MergeManualUI.renderCuts(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
   if(x.merge_state==="parcial")return {cls:"warn",text:"Parcial"};
@@ -282,11 +282,79 @@ function mergePartialText(x){
   if(!pending)return "Auto-Merge não conseguiu concluir este capítulo.";
   return `${resolved} página(s) resolvida(s) automaticamente · ${pending} página(s) permanecem para revisão.`;
 }
+function reviewPendingSegments(x){
+  const l5=x?.merge_level5_detail;
+  if(l5?.available&&l5?.valid){
+    const segs=Array.isArray(l5.review_pending_segments)?l5.review_pending_segments:[];
+    if(segs.length)return segs;
+  }
+
+  const l4=x?.merge_level4_detail;
+  if(l4?.available&&l4?.valid&&l4?.algorithm==="merge_level4_global_structural_safe_v1"){
+    const segs=Array.isArray(l4.review_pending_segments)&&l4.review_pending_segments.length
+      ? l4.review_pending_segments
+      : (Array.isArray(l4.residual_pending_segments)?l4.residual_pending_segments:[]);
+    if(segs.length)return segs;
+  }
+
+  const p=x?.merge_partition||{};
+  return Array.isArray(p.pending_segments)?p.pending_segments:[];
+}
+
+function reviewSegmentSourcePages(seg){
+  const start=Number(seg?.global_start);
+  const end=Number(seg?.global_end);
+  const spans=Array.isArray(seg?.source_spans)?seg.source_spans:[];
+
+  if(Number.isFinite(start)&&Number.isFinite(end)&&end>start&&spans.length){
+    const files=spans
+      .filter(sp=>{
+        const spStart=Number(sp?.global_start);
+        const spEnd=Number(sp?.global_end);
+        return Number.isFinite(spStart)
+          && Number.isFinite(spEnd)
+          && spEnd>start
+          && spStart<end;
+      })
+      .map(sp=>sp?.file)
+      .filter(Boolean);
+
+    if(files.length)return files;
+  }
+
+  return Array.isArray(seg?.sources)?seg.sources.filter(Boolean):[];
+}
+
+function reviewPendingSourcePages(segs){
+  const seen=new Set();
+  const pages=[];
+  for(const seg of segs){
+    for(const file of reviewSegmentSourcePages(seg)){
+      if(!seen.has(file)){
+        seen.add(file);
+        pages.push(file);
+      }
+    }
+  }
+  return pages;
+}
+
 function reviewPendingSummary(x){
-  const p=x?.merge_partition||{},segs=Array.isArray(p.pending_segments)?p.pending_segments:[];
+  const segs=reviewPendingSegments(x);
   if(!segs.length)return "Este capítulo está pendente e ainda não possui uma proposta de merge.";
-  const labels=segs.map(s=>{const src=Array.isArray(s.sources)?s.sources:[];if(!src.length)return `Y ${s.global_start??"?"} → ${s.global_end??"?"}`;return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;});
-  return `${Number(p.resolved_source_pages_count||0)} página(s) já foram resolvida(s) automaticamente. ${Number(p.pending_source_pages_count||0)} página(s) permanecem na revisão: ${labels.join("; ")}.`;
+
+  const labels=segs.map(s=>{
+    const src=reviewSegmentSourcePages(s);
+    if(!src.length)return `Y ${s.global_start??"?"} → ${s.global_end??"?"}`;
+    return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;
+  });
+
+  const pendingPages=reviewPendingSourcePages(segs);
+  const totalPages=Number(x?.pages||0);
+  const pending=pendingPages.length;
+  const resolved=Math.max(0,totalPages-pending);
+
+  return `${resolved} página(s) já foram resolvida(s) automaticamente. ${pending} página(s) permanecem na revisão: ${labels.join("; ")}.`;
 }
 
 function segLabel(s){const src=Array.isArray(s?.sources)?s.sources:[];if(src.length)return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;return `Y ${s?.global_start??"?"} → ${s?.global_end??"?"}`}
