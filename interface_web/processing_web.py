@@ -1572,13 +1572,14 @@ def process_merge_level5_pending(ch, failure, job=None):
         raise
 
 
-def _level5_ui_detail(manga,ch,failure):
+def _level5_ui_detail(manga,ch,failure,merge_ok=None):
     manifest_path=l5dir(manga,ch.name)/"merge-level5-manifest.json"
     if not manifest_path.is_file(): return None
     try: payload=json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError,ValueError,TypeError,json.JSONDecodeError) as exc: return {"available":True,"valid":False,"error":f"Manifesto Level V inválido: {exc}"}
     final_manifest=v3.merge_output_dir(ch)/"merge-manifest.json"; finalized=False
-    if final_manifest.is_file() and v3.is_chapter_merged(ch):
+    merged_for_ui = bool(merge_ok) if merge_ok is not None else v3.is_chapter_merged(ch)
+    if final_manifest.is_file() and merged_for_ui:
         try:
             final_payload=json.loads(final_manifest.read_text(encoding="utf-8")); finalized=(final_payload.get("algorithm") in {"merge_auto_level2_level3_level4_level5_composition_v1","merge_auto_level2_level3_level4_level5_review_composition_v1"} and final_payload.get("status")=="approved" and bool((final_payload.get("validation") or {}).get("ok")) and (final_payload.get("composition") or {}).get("level5_manifest")=="merge-level5-manifest.json")
         except (OSError,ValueError,TypeError,json.JSONDecodeError): finalized=False
@@ -1651,7 +1652,7 @@ def _level4_review_pending(ch,failure):
     except (OSError,ValueError,TypeError,KeyError,IndexError,json.JSONDecodeError) as exc:
         return None,f"Manifesto Level IV inválido: {exc}","level4"
 
-def _level4_ui_detail(manga,ch,failure):
+def _level4_ui_detail(manga,ch,failure,merge_ok=None):
     manifest_path=l4dir(manga,ch.name)/"merge-level4-manifest.json"
     if not manifest_path.is_file():
         return None
@@ -1666,7 +1667,8 @@ def _level4_ui_detail(manga,ch,failure):
     # residual ao Review; o MERGE oficial válido passa a ser a autoridade.
     final_manifest=v3.merge_output_dir(ch)/"merge-manifest.json"
     finalized=False
-    if final_manifest.is_file() and v3.is_chapter_merged(ch):
+    merged_for_ui = bool(merge_ok) if merge_ok is not None else v3.is_chapter_merged(ch)
+    if final_manifest.is_file() and merged_for_ui:
         try:
             final_payload=json.loads(final_manifest.read_text(encoding="utf-8"))
             finalized=(
@@ -1747,7 +1749,7 @@ def row_state(manga,ch):
         and level2_validated
         and not level3_valid
     )
-    level4_detail=_level4_ui_detail(manga,ch,failure)
+    level4_detail=_level4_ui_detail(manga,ch,failure,merge_ok=merge_ok)
     level4_valid=bool(
         level4_detail
         and level4_detail.get("available")
@@ -1769,7 +1771,7 @@ def row_state(manga,ch):
     level4_algorithm=str((level4_detail or {}).get("algorithm") or "")
     level4_is_directed=level4_algorithm=="merge_level4_directed_structural_safe_v1"
     level4_is_legacy_exhaustive=level4_algorithm=="merge_level4_global_structural_safe_v1"
-    level5_detail=_level5_ui_detail(manga,ch,failure)
+    level5_detail=_level5_ui_detail(manga,ch,failure,merge_ok=merge_ok)
     level5_valid=bool(level5_detail and level5_detail.get("available") and level5_detail.get("valid"))
     level5_has_residual=bool(level5_valid and (level5_detail.get("review_pending_segments") or level5_detail.get("residual_pending_segments")))
     level5_pending=bool(merge_failed and level4_valid and level4_has_residual and level4_is_directed and not level5_valid)
