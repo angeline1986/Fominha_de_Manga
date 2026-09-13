@@ -1581,7 +1581,7 @@ def _level5_ui_detail(manga,ch,failure,merge_ok=None):
     merged_for_ui = bool(merge_ok) if merge_ok is not None else v3.is_chapter_merged(ch)
     if final_manifest.is_file() and merged_for_ui:
         try:
-            final_payload=json.loads(final_manifest.read_text(encoding="utf-8")); finalized=(final_payload.get("algorithm") in {"merge_auto_level2_level3_level4_level5_composition_v1","merge_auto_level2_level3_level4_level5_review_composition_v1"} and final_payload.get("status")=="approved" and bool((final_payload.get("validation") or {}).get("ok")) and (final_payload.get("composition") or {}).get("level5_manifest")=="merge-level5-manifest.json")
+            final_payload=json.loads(final_manifest.read_text(encoding="utf-8")); finalized=(final_payload.get("algorithm") in {"merge_auto_level2_level3_level4_level5_composition_v1","merge_auto_level2_level3_level4_level5_review_composition_v1"} and final_payload.get("status")=="approved" and bool((final_payload.get("validation") or {}).get("ok")) and ((final_payload.get("composition") if isinstance(final_payload.get("composition"), dict) else {}) or {}).get("level5_manifest")=="merge-level5-manifest.json")
         except (OSError,ValueError,TypeError,json.JSONDecodeError): finalized=False
     if finalized: pending=[]
     else:
@@ -1678,7 +1678,7 @@ def _level4_ui_detail(manga,ch,failure,merge_ok=None):
                 }
                 and final_payload.get("status")=="approved"
                 and bool((final_payload.get("validation") or {}).get("ok"))
-                and (final_payload.get("composition") or {}).get("level4_manifest")=="merge-level4-manifest.json"
+                and ((final_payload.get("composition") if isinstance(final_payload.get("composition"), dict) else {}) or {}).get("level4_manifest")=="merge-level4-manifest.json"
             )
         except (OSError,ValueError,TypeError,json.JSONDecodeError):
             finalized=False
