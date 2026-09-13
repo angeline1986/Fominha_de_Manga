@@ -573,6 +573,12 @@ def manual_merge_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
 def manual_clean_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     run_clean_flow(output_dir, ask_number=ask_number, print_header=print_header, print_option=print_option, c=c)
 
+def manual_clean_v2_flow() -> None:
+    """Executa o Cleaner V2 no ambiente independente do módulo."""
+    from processamento.limpeza_baloes.cleaner_v2.launcher import run_interactive
+    run_interactive()
+
+
 def manual_merge_review_flow(output_dir: Path = MANGAGO_OUTPUT_DIR) -> None:
     run_merge_review_flow(
         output_dir,
@@ -611,6 +617,7 @@ def build_menu() -> tuple[MenuSection, ...]:
             (
                 MenuItem(3, "Unificar imagens", "Gerar imagens verticais pelo Merge V3", manual_merge_flow, "item_pdf"),
                 MenuItem(4, "Limpar balões", "Limpar textos de balões com Bubble Cleaner V3.5", manual_clean_flow, "item_pdf"),
+                MenuItem(7, "Cleaner V2", "Limpeza em lote com preservação de cores", manual_clean_v2_flow, "item_pdf"),
                 MenuItem(5, "Tratar merges pendentes", "Propor e revisar exceções sem alterar o Merge V3", manual_merge_review_flow, "item_pdf"),
             ),
             "sec_pdf",

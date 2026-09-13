@@ -41,3 +41,10 @@ git commit -m "chore: update mangago_downloader submodule"
 
 O projeto utiliza Git submodules para manter seus módulos independentes. Para alterar módulos, atualizar suas referências ou consultar o fluxo de commits, veja [Fluxo Git e Submodules](dev/docs/git_workflow.md).
 
+
+## Cleaner V2
+
+A opção **7 — Cleaner V2** do menu oferece limpeza em lote com preservação de
+cores e modo offline para OCR já baixado. Veja a
+[instalação e os perfis](processamento/limpeza_baloes/cleaner_v2/README.md).
+A opção anterior e a interface web mantêm seu comportamento atual.
