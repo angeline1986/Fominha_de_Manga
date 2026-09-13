@@ -311,6 +311,70 @@
     catch (_) { return null; }
   }
 
+  function clearPersistedSelection() {
+    localStorage.removeItem(STORAGE_KEY);
+    ui.selected = null;
+    ui.selectedChapter = null;
+  }
+
+  async function persistedSelectionStillPending(selection) {
+    const ctx = context();
+    if (!selection || !ctx.manga ||
+        selection.provider !== ctx.provider ||
+        selection.manga !== ctx.manga) return false;
+
+    try {
+      const response = await fetch(
+        `/api/merge-manual?provider=${encodeURIComponent(ctx.provider)}&manga=${encodeURIComponent(ctx.manga)}&_=${Date.now()}`,
+        {cache:"no-store"}
+      );
+      const payload = await response.json();
+      if (!response.ok || payload?.error) return null;
+
+      const row = (payload.chapters || []).find(item =>
+        String(item.chapter) === String(selection.chapter) &&
+        item.status === "pending"
+      );
+      if (!row) return false;
+
+      const block = (row.pending_blocks || []).find(item =>
+        String(item.id) === String(selection.blockId)
+      );
+      if (!block) return false;
+
+      const names = (block.pages || []).map(item => String(item.file));
+      const start = names.indexOf(String(selection.start));
+      const end = names.indexOf(String(selection.end));
+      return start >= 0 && end >= start;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function renderStaleSelection(root) {
+    if (!root) return;
+    root.innerHTML = `<div class="mm-page">${typeof head === "function" ? head("Novos Cortes", "A faixa selecionada não está mais pendente no estado autoritativo.") : "<h1>Novos Cortes</h1>"}<div class="empty">A faixa selecionada já foi concluída ou deixou de ser elegível. Volte para <b>Validar merge manual</b> para consultar as pendências atuais.</div></div>`;
+  }
+
+  async function invalidateStalePersistedSelection(root, selection) {
+    const valid = await persistedSelectionStillPending(selection);
+    if (valid !== false) return valid;
+
+    const latest = loadSelection();
+    if (!latest ||
+        latest.provider !== selection.provider ||
+        latest.manga !== selection.manga ||
+        String(latest.chapter) !== String(selection.chapter) ||
+        String(latest.blockId) !== String(selection.blockId)) return false;
+
+    clearPersistedSelection();
+    renderStaleSelection(root);
+    if (typeof toast === "function") {
+      toast("A seleção anterior foi descartada porque não está mais pendente.");
+    }
+    return false;
+  }
+
   function renderCuts(root) {
     if (!root) return;
     const selection = loadSelection();
@@ -319,6 +383,8 @@
       root.innerHTML = `<div class="mm-page">${typeof head === "function" ? head("Novos Cortes", "Composição visual da faixa selecionada no Merge Manual.") : "<h1>Novos Cortes</h1>"}<div class="empty">Nenhuma faixa foi submetida. Volte para <b>Validar merge manual</b> e selecione um intervalo.</div></div>`;
       return;
     }
+
+    void invalidateStalePersistedSelection(root, selection);
 
     root.innerHTML = `
       <div class="mm-page mm-cuts-page">
@@ -636,6 +702,16 @@
   async function generateProposal(){
     const selection=loadSelection(),ctx=context();
     if(!selection||proposalBusy)return;
+    const selectionValid = await persistedSelectionStillPending(selection);
+    if (selectionValid === false) {
+      clearPersistedSelection();
+      const root = document.getElementById("page");
+      renderStaleSelection(root);
+      if (typeof toast === "function") {
+        toast("A seleção anterior foi descartada porque não está mais pendente.");
+      }
+      return;
+    }
     normalizeCuts();
     const {total}=logicalMetrics();
     if(!total||!cutEditor.cuts.length){
@@ -698,19 +774,48 @@
       currentProposal=applied;
       renderProposalResult(applied);
 
-      if(typeof toast==="function"){
+      const completedChapter = String(selection.chapter);
+      const manualBlocks = Number(proposal?.outputs?.length || 0);
+      const finalMerges = Number(result?.merged_images || 0);
+
+      clearPersistedSelection();
+
+      if(typeof appModal==="function"){
+        await appModal({
+          title: result?.already_applied ? "Merge Manual já efetivado" : "Merge Manual concluído",
+          message: result?.already_applied
+            ? `A composição do cap. ${completedChapter} já estava efetivada e validada no MERGE oficial.`
+            : `Os novos cortes do cap. ${completedChapter} foram aplicados e o MERGE oficial foi validado com sucesso.`,
+          chips:[
+            {value:`Cap. ${completedChapter}`,label:"capítulo"},
+            {value:manualBlocks,label:manualBlocks===1?"bloco manual":"blocos manuais"},
+            {value:finalMerges,label:finalMerges===1?"merge final":"merges finais"}
+          ],
+          details:[{
+            title:"Resultado",
+            message:result?.already_applied
+              ? "Nenhuma nova composição foi necessária."
+              : "A composição final foi efetivada e a seleção temporária de Novos Cortes foi encerrada."
+          }],
+          confirmText:"Concluir",
+          kind:"success"
+        });
+      }else if(typeof toast==="function"){
         toast(
           result?.already_applied
             ? "Esta composição já havia sido efetivada."
             : "Novos Cortes aplicados. MERGE oficial validado."
         );
       }
-
       try{
-        const page=document.getElementById("page");
+        const root=document.getElementById("page");
         ui.payload=null;
         ui.cacheKey="";
-        if(page)await ensurePayload(page,true);
+        if(typeof page!=="undefined")page="merge_manual";
+        if(root){
+          await ensurePayload(root,true);
+          renderValidation(root);
+        }
       }catch(_){}
 
     }catch(error){
