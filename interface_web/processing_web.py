@@ -1885,6 +1885,9 @@ def run_job(job,payload):
                 from processamento.limpeza_baloes.textoff_level3_analyzer import analyze_residual_job
                 job.result=analyze_residual_job(manga,chs,payload)
                 print(f"[NIVEL3][BACKEND] job concluído id={job.id} candidatos={(job.result or {}).get('count')}", flush=True)
+            elif job.action=="textoff_level3_preview":
+                from processamento.limpeza_baloes.textoff_level3_correction import generate_preview_job
+                job.result=generate_preview_job(manga,chs,payload)
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
             elif job.action=="merge_level4": job.result=do_merge_level4(job,chs)
@@ -2784,6 +2787,9 @@ class Handler(BaseHTTPRequestHandler):
         elif kind in {"textoff_source","textoff_clean"}:
             from processamento.limpeza_baloes.textoff_compare import media_base
             base=media_base(manga,chapter,kind,q.get("source",[""])[0])
+        elif kind=="textoff_level3_preview":
+            from processamento.limpeza_baloes.textoff_level3_correction import proposal_dir
+            base=proposal_dir(manga,chapter,q.get("proposal",[""])[0])
         else:
             self.send_error(404); return
         target=(base/q.get("file",[""])[0]).resolve()
