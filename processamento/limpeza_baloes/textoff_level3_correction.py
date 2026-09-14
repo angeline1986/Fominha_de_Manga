@@ -1,8 +1,9 @@
 """Texto Off — Nível III: preview e promoção segura da correção assistida.
 
-A geração de preview nunca altera a imagem oficial. Somente uma aprovação explícita
-pode promover a proposta validada para o resultado oficial do Texto Off; a imagem
-fonte (IMG/02_MERGE) permanece imutável. O LaMa continua isolado no Cleaner V2.
+A geração de preview nunca altera imagens oficiais. Somente uma aprovação explícita
+pode promover a proposta validada. Para source_stage=MERGE, a aprovação atualiza
+tanto o resultado do Texto Off quanto o arquivo correspondente em 02_MERGE; IMG
+permanece imutável para source_stage=ORIGINAL. O LaMa continua isolado no Cleaner V2.
 """
 from __future__ import annotations
 
@@ -347,6 +348,7 @@ def approve_proposal(
         raise ValueError("A página não está mais pendente para esta proposta do Nível III.")
 
     source_path, clean_path = _validate_current_pair(manga, chapter, stage, source_file, clean_file)
+    promote_merge = stage == "MERGE"
     expected_base = str(manifest.get("base_sha256") or "")
     expected_source = str(manifest.get("source_sha256") or "")
     if not expected_base or _sha256(clean_path) != expected_base:
@@ -359,11 +361,18 @@ def approve_proposal(
     if not preview_path.is_relative_to(pdir_resolved) or not preview_path.is_file():
         raise ValueError("Preview da proposta do Nível III não encontrado.")
 
-    with Image.open(preview_path) as preview_im, Image.open(clean_path) as clean_im:
-        if tuple(preview_im.size) != tuple(clean_im.size):
-            raise RuntimeError(
-                f"Dimensões divergentes entre preview e resultado oficial: {preview_im.size} != {clean_im.size}."
-            )
+    with Image.open(preview_path) as preview_im, Image.open(clean_path) as clean_im, Image.open(source_path) as source_im:
+        preview_size = tuple(preview_im.size)
+        clean_size = tuple(clean_im.size)
+        source_size = tuple(source_im.size)
+    if preview_size != clean_size:
+        raise RuntimeError(
+            f"Dimensões divergentes entre preview e resultado oficial: {preview_size} != {clean_size}."
+        )
+    if promote_merge and preview_size != source_size:
+        raise RuntimeError(
+            f"Dimensões divergentes entre preview e 02_MERGE: {preview_size} != {source_size}."
+        )
 
     preview_sha256 = _sha256(preview_path)
     state_path = _state_path(manga, chapter)
@@ -390,38 +399,51 @@ def approve_proposal(
         raise ValueError("Resultado oficial da pendência diverge da proposta.")
 
     now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    clean_target = str(clean_path.relative_to(manga))
+    merge_target = str(source_path.relative_to(manga)) if promote_merge else None
+    promoted_targets = [clean_target] + ([merge_target] if merge_target else [])
+
     state_item.update({
         "status": STATUS_CORRECTED,
         "proposal_id": str(proposal_id),
         "approved_at": now,
         "approved_sha256": preview_sha256,
+        "promoted_targets": promoted_targets,
         "updated_at": now,
     })
     state["schema_version"] = state.get("schema_version") or 1
     state["chapter"] = chapter
     state["items"] = items
 
-    promoted_to = str(clean_path.relative_to(manga))
     manifest["status"] = STATUS_APPROVED
     manifest["approved_at"] = now
-    manifest["promoted_to"] = promoted_to
+    manifest["promoted_to"] = clean_target
     manifest["promoted_sha256"] = preview_sha256
+    manifest["promoted_targets"] = promoted_targets
     manifest["promotion"] = {
-        "target": promoted_to,
+        "target": clean_target,
+        "clean_target": clean_target,
+        "merge_target": merge_target,
+        "targets": promoted_targets,
         "approved_at": now,
         "promoted_sha256": preview_sha256,
-        "source_image_modified": False,
+        "source_image_modified": promote_merge,
     }
     safety = manifest.setdefault("safety", {})
     safety["official_image_modified"] = True
-    safety["source_image_modified"] = False
+    safety["source_image_modified"] = promote_merge
+    safety["merge_source_promoted"] = promote_merge
+    safety["original_img_modified"] = False
     safety["promotion_requires_explicit_approval"] = True
 
     clean_backup = None
+    source_backup = None
     clean_tmp = None
+    source_tmp = None
     state_tmp = None
     manifest_tmp = None
-    image_replaced = False
+    clean_replaced = False
+    source_replaced = False
     state_replaced = False
     manifest_replaced = False
     try:
@@ -432,12 +454,28 @@ def approve_proposal(
         clean_backup = Path(backup_name)
         shutil.copy2(clean_path, clean_backup)
 
+        if promote_merge:
+            fd, source_backup_name = tempfile.mkstemp(
+                prefix=".textoff-l3-merge-before-", suffix=source_path.suffix, dir=str(source_path.parent)
+            )
+            os.close(fd)
+            source_backup = Path(source_backup_name)
+            shutil.copy2(source_path, source_backup)
+
         fd, promote_name = tempfile.mkstemp(
             prefix=".textoff-l3-promote-", suffix=clean_path.suffix, dir=str(clean_path.parent)
         )
         os.close(fd)
         clean_tmp = Path(promote_name)
         shutil.copy2(preview_path, clean_tmp)
+
+        if promote_merge:
+            fd, source_promote_name = tempfile.mkstemp(
+                prefix=".textoff-l3-merge-promote-", suffix=source_path.suffix, dir=str(source_path.parent)
+            )
+            os.close(fd)
+            source_tmp = Path(source_promote_name)
+            shutil.copy2(preview_path, source_tmp)
 
         state_tmp = _json_temp(state_path, state, ".textoff-l3-state-")
         manifest_tmp = _json_temp(manifest_path, manifest, ".textoff-l3-proposal-")
@@ -447,9 +485,16 @@ def approve_proposal(
 
         os.replace(clean_tmp, clean_path)
         clean_tmp = None
-        image_replaced = True
+        clean_replaced = True
         if _sha256(clean_path) != preview_sha256:
             raise RuntimeError("Falha de integridade ao promover o preview para o Texto Off oficial.")
+
+        if promote_merge:
+            os.replace(source_tmp, source_path)
+            source_tmp = None
+            source_replaced = True
+            if _sha256(source_path) != preview_sha256:
+                raise RuntimeError("Falha de integridade ao promover o preview para 02_MERGE.")
 
         os.replace(state_tmp, state_path)
         state_tmp = None
@@ -459,18 +504,27 @@ def approve_proposal(
         manifest_tmp = None
         manifest_replaced = True
 
-        if _sha256(source_path) != expected_source:
-            raise RuntimeError("A imagem fonte mudou durante a aprovação; rollback acionado.")
         if _sha256(clean_path) != preview_sha256:
             raise RuntimeError("O resultado oficial divergiu após a aprovação; rollback acionado.")
+        if promote_merge:
+            if _sha256(source_path) != preview_sha256:
+                raise RuntimeError("A imagem em 02_MERGE divergiu após a aprovação; rollback acionado.")
+        elif _sha256(source_path) != expected_source:
+            raise RuntimeError("A imagem original mudou durante a aprovação; rollback acionado.")
     except Exception:
         rollback_errors = []
         try:
-            if image_replaced and clean_backup and clean_backup.is_file():
+            if source_replaced and source_backup and source_backup.is_file():
+                os.replace(source_backup, source_path)
+                source_backup = None
+        except Exception as exc:
+            rollback_errors.append(f"imagem 02_MERGE: {exc}")
+        try:
+            if clean_replaced and clean_backup and clean_backup.is_file():
                 os.replace(clean_backup, clean_path)
                 clean_backup = None
         except Exception as exc:
-            rollback_errors.append(f"imagem oficial: {exc}")
+            rollback_errors.append(f"imagem oficial Texto Off: {exc}")
         try:
             if state_replaced:
                 _restore_bytes(state_path, original_state_bytes, ".textoff-l3-state-rollback-")
@@ -485,11 +539,19 @@ def approve_proposal(
             raise RuntimeError("Falha na aprovação e no rollback: " + " | ".join(rollback_errors))
         raise
     finally:
-        for tmp in (clean_tmp, state_tmp, manifest_tmp):
+        for tmp in (clean_tmp, source_tmp, state_tmp, manifest_tmp):
             if isinstance(tmp, Path):
                 tmp.unlink(missing_ok=True)
         if clean_backup is not None:
             clean_backup.unlink(missing_ok=True)
+        if source_backup is not None:
+            source_backup.unlink(missing_ok=True)
+
+    message = "Correção Nível III aprovada. O resultado oficial do Texto Off foi atualizado."
+    if promote_merge:
+        message += " O arquivo correspondente em 02_MERGE também foi atualizado."
+    else:
+        message += " A imagem original em IMG permaneceu inalterada."
 
     return {
         "status": STATUS_APPROVED,
@@ -498,12 +560,13 @@ def approve_proposal(
         "source_stage": stage,
         "source_file": source_file,
         "clean_file": clean_file,
-        "promoted_to": promoted_to,
+        "promoted_to": clean_target,
+        "promoted_targets": promoted_targets,
+        "merge_promoted_to": merge_target,
         "promoted_sha256": preview_sha256,
-        "source_image_modified": False,
-        "message": "Correção Nível III aprovada. O resultado oficial do Texto Off foi atualizado; a imagem fonte permaneceu inalterada.",
+        "source_image_modified": promote_merge,
+        "message": message,
     }
-
 
 def approve_proposal_job(manga: Path, chs, payload: dict) -> dict:
     if len(chs) != 1:
