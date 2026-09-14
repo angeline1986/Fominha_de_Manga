@@ -261,7 +261,7 @@ function tableFilteredRows(k){
   return rows;
 }
 function table(r,k){
-  let cfg={pdf:["Gerar PDF","Gerar PDFs a partir das imagens originais validadas.","pdf"],merge:["Auto-Merge","Aplicar o Merge V3 preservando IMG.","merge"],clean:["Texto Off — Original","Executar Bubble Cleaner V3.5 nas imagens originais.","clean"],clean_merged:["Texto Off — Merged","Limpeza de texto aplicada às imagens consolidadas em MERGE.","clean_merged"],pdf_merge:["PDF do Merge","Gerar PDF com as imagens oficialmente unificadas.","pdf_merge"]}[k];
+  let cfg={pdf:["Gerar PDF","Gerar PDFs a partir das imagens originais validadas.","pdf"],merge:["Auto-Merge","Aplicar o Merge V3 preservando IMG.","merge"],clean:["Texto Off — Original","Executar Cleaner V2 nas imagens originais.","clean"],clean_merged:["Texto Off — Merged","Limpeza de texto aplicada às imagens consolidadas em MERGE.","clean_merged"],pdf_merge:["PDF do Merge","Gerar PDF com as imagens oficialmente unificadas.","pdf_merge"]}[k];
   let all=tableFilteredRows(k),pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));tablePage=Math.min(Math.max(1,tablePage),pages);let cleanField=k==="clean_merged"?"clean_merged":"clean";
   let rows=all.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
   let statusFilter=tableStatusFilter(k);
