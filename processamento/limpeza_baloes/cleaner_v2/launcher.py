@@ -6,7 +6,7 @@ import subprocess
 MODULE_DIR = Path(__file__).resolve().parent
 
 
-def build_command(source: Path, destination: Path, *, offline: bool):
+def build_command(source: Path, destination: Path, *, offline: bool, progress_file: Path | None = None):
     python = MODULE_DIR / '.venv' / ('Scripts/python.exe' if os.name == 'nt' else 'bin/python')
     if not python.is_file():
         raise FileNotFoundError(f'Instale o ambiente do Cleaner V2 conforme {MODULE_DIR / "README.md"}')
@@ -21,6 +21,8 @@ def build_command(source: Path, destination: Path, *, offline: bool):
                '--timeout', '900']
     if offline:
         command.append('--offline')
+    if progress_file is not None:
+        command.extend(['--progress-file', str(Path(progress_file).expanduser().resolve())])
     return command
 
 

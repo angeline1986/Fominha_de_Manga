@@ -1,7 +1,7 @@
 """Integração oficial do Cleaner V2 com o fluxo Texto Off."""
 from __future__ import annotations
 from pathlib import Path
-import json, os, shutil, subprocess, tempfile, uuid
+import json, os, shutil, subprocess, tempfile, time, uuid
 from .launcher import MODULE_DIR, build_command
 
 ALGORITHM = "cleaner_v2_panel_cleaner_2_11_11"
@@ -29,7 +29,7 @@ def _promote_directory(staged: Path, target: Path) -> None:
         if backup.exists():
             shutil.rmtree(backup)
 
-def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 900):
+def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 900, progress_job=None, progress_base: float = 0.0, progress_span: float = 1.0, chapter_name: str | None = None):
     images = [Path(p).resolve() for p in source_images]
     if not images:
         raise ValueError("Nenhuma imagem foi informada ao Cleaner V2.")
@@ -50,10 +50,36 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
     try:
         for src in images:
             os.symlink(src, input_dir/src.name)
-        command = build_command(input_dir, output_dir, offline=True)
-        completed = subprocess.run(command, cwd=MODULE_DIR, check=False)
-        if completed.returncode != 0:
-            raise RuntimeError(f"Cleaner V2 encerrou com código {completed.returncode}. A saída oficial anterior foi preservada.")
+        progress_file = work/'progress.json'
+        command = build_command(input_dir, output_dir, offline=True, progress_file=progress_file)
+        process = subprocess.Popen(command, cwd=MODULE_DIR)
+        last_stamp = None
+        while True:
+            code = process.poll()
+            if progress_job is not None and progress_file.is_file():
+                try:
+                    payload = json.loads(progress_file.read_text(encoding='utf-8'))
+                    stamp = payload.get('updated_at')
+                    if stamp != last_stamp:
+                        last_stamp = stamp
+                        overall = max(0.0, min(1.0, float(payload.get('overall') or 0.0)))
+                        progress_job.progress_value = float(progress_base) + (float(progress_span) * overall)
+                        detail = str(payload.get('detail') or 'Cleaner V2 processando...')
+                        prefix = f"Cap. {chapter_name}: " if chapter_name else ''
+                        progress_job.progress_detail = prefix + detail
+                        progress_job.message = progress_job.progress_detail
+                except (OSError, ValueError, TypeError, json.JSONDecodeError):
+                    pass
+            if code is not None:
+                break
+            time.sleep(0.25)
+        if code != 0:
+            raise RuntimeError(f"Cleaner V2 encerrou com código {code}. A saída oficial anterior foi preservada.")
+        if progress_job is not None:
+            progress_job.progress_value = float(progress_base) + float(progress_span)
+            prefix = f"Cap. {chapter_name}: " if chapter_name else ''
+            progress_job.progress_detail = prefix + 'Cleaner V2 concluído'
+            progress_job.message = progress_job.progress_detail
 
         clean_files, mask_files, missing_clean, missing_mask = [], [], [], []
         for src in images:

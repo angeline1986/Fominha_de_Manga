@@ -2425,7 +2425,7 @@ def do_clean(job,manga,chs):
             out.append({"chapter":ch.name,"status":"error","message":"Capítulo sem imagens para limpeza"})
             job.progress=i; job.progress_value=float(i); continue
         try:
-            result=clean_chapter(imgs,cdir(manga,ch.name),source_stage="ORIGINAL")
+            result=clean_chapter(imgs,cdir(manga,ch.name),source_stage="ORIGINAL",progress_job=job,progress_base=float(i-1),progress_span=1.0,chapter_name=ch.name)
             out.append({"chapter":ch.name,**result})
             job.progress_detail=f"Cap. {ch.name}: concluído pelo Cleaner V2"
         except Exception as exc:
@@ -2454,7 +2454,7 @@ def do_clean_merged(job,manga,chs):
         job.message=f"Texto Off — Merged: capítulo {ch.name} ({i}/{len(chs)})..."
         job.progress_detail=f"Cap. {ch.name}: Cleaner V2 processando {len(imgs)} merge(s)..."
         try:
-            result=clean_chapter(imgs,tmdir(manga,ch.name),source_stage="MERGE")
+            result=clean_chapter(imgs,tmdir(manga,ch.name),source_stage="MERGE",progress_job=job,progress_base=float(i-1),progress_span=1.0,chapter_name=ch.name)
             out.append({"chapter":ch.name,**result})
             job.progress_detail=f"Cap. {ch.name}: concluído pelo Cleaner V2"
         except Exception as exc:
