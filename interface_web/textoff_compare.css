@@ -68,3 +68,118 @@
 .toc-level3-manual-layer.is-active .toc-level3-manual-live{display:block}
 .toc-level3-manual-box{position:absolute;z-index:7;box-sizing:border-box;border:3px solid #b64b6a;background:rgba(182,75,106,.10);pointer-events:none;border-radius:4px}
 .toc-level3-manual-box i{position:absolute;left:-3px;top:-24px;height:20px;padding:0 7px;display:flex;align-items:center;border-radius:999px;background:#b64b6a;color:#fff;font-size:11px;font-style:normal;font-weight:700}
+
+
+/* === TEXT OFF · MODO FOCO (UI only) === */
+.toc-focus-entry{height:32px;padding:0 10px;font-size:12px;white-space:nowrap}
+.toc-focus-bar{position:fixed;z-index:1200;top:0;left:0;right:0;min-height:54px;display:flex;align-items:center;gap:10px;padding:7px 12px;box-sizing:border-box;background:var(--color-surface,#fff);border-bottom:1px solid var(--color-border,#eadce1);box-shadow:0 5px 18px rgba(61,36,46,.08)}
+.toc-focus-bar[hidden]{display:none}
+.toc-focus-identity{display:flex;align-items:center;gap:10px;min-width:0;white-space:nowrap}
+.toc-focus-identity strong{font-size:13px;color:var(--color-text,#342a2e)}
+.toc-focus-identity span{font-size:12px;font-weight:700;color:var(--color-text-muted,#7f7278);overflow:hidden;text-overflow:ellipsis;max-width:290px}
+.toc-focus-slot,.toc-focus-system{display:flex;align-items:center;gap:8px}
+.toc-focus-actions{margin-left:auto}
+.toc-focus-actions .toc-correction-row{margin:0}
+.toc-focus-actions .toc-level3-action-buttons{display:flex;align-items:center;gap:7px}
+.toc-focus-actions .btn,.toc-focus-nav .btn,.toc-focus-system .btn{height:34px;padding:0 10px;white-space:nowrap}
+.toc-focus-zoom .bal-zoom-control{margin:0}
+.toc-focus-nav .toc-pager{display:flex;align-items:center;gap:7px;margin:0}
+.toc-focus-nav .toc-pager span{min-width:auto;white-space:nowrap}
+.toc-focus-fullscreen{width:36px;padding:0!important;font-size:18px}
+body.textoff-focus-mode{overflow:hidden}
+body.textoff-focus-mode .app>header,body.textoff-focus-mode .layout>aside,body.textoff-focus-mode .app>footer{display:none!important}
+body.textoff-focus-mode .layout{display:block!important}
+body.textoff-focus-mode #page{box-sizing:border-box;width:100vw;height:100vh;overflow:hidden;padding:62px 8px 8px!important;margin:0!important}
+body.textoff-focus-mode #page>.head{display:none!important}
+
+body.textoff-focus-compare #textOffCompareBody>.toc-table-panel,
+body.textoff-focus-compare #textOffCompareBody>.toc-table-wrap,
+body.textoff-focus-compare #textOffCompareBody>.toc-table,
+body.textoff-focus-compare #textOffCompareBody .toc-detail-stack>.toc-section:not(:last-child),
+body.textoff-focus-compare #textOffCompareBody .toc-section-head,
+body.textoff-focus-compare #textOffCompareBody .toc-compare-caption,
+body.textoff-focus-compare #textOffCompareBody .toc-correction-row,
+body.textoff-focus-compare #textOffCompareBody .toc-pager{display:none!important}
+body.textoff-focus-compare #textOffCompareBody,
+body.textoff-focus-compare #textOffCompareBody .toc-detail-stack,
+body.textoff-focus-compare #textOffCompareBody .toc-section,
+body.textoff-focus-compare #textOffCompareBody .bal-section-body{height:100%;margin:0!important}
+body.textoff-focus-compare #textOffCompareBody .bal-section-body{padding:0!important}
+body.textoff-focus-compare #textOffCompareBody .toc-compare-grid{height:100%;gap:8px}
+body.textoff-focus-compare #textOffCompareBody .toc-preview-card{height:100%;display:flex;flex-direction:column}
+body.textoff-focus-compare #textOffCompareBody .toc-preview-stage{height:auto!important;min-height:0;flex:1;padding:8px}
+
+body.textoff-focus-level3 #textoffLevel3Body>.toc-level3-summary,
+body.textoff-focus-level3 #textoffLevel3Body>.toc-level3-table-panel,
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-detail-head,
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-actions{display:none!important}
+body.textoff-focus-level3 #textoffLevel3Body,
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-detail{height:100%;margin:0!important}
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-detail{display:flex;flex-direction:column;border-radius:8px}
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-grid{height:100%;min-height:0;padding:0!important;gap:8px}
+body.textoff-focus-level3 #textoffLevel3Body .toc-preview-card{height:100%;display:flex;flex-direction:column}
+body.textoff-focus-level3 #textoffLevel3Body .toc-preview-stage{height:auto!important;min-height:0!important;max-height:none!important;flex:1;padding:8px}
+
+@media(max-width:1180px){
+  .toc-focus-bar{flex-wrap:wrap}
+  .toc-focus-actions{margin-left:0}
+  .toc-focus-identity{width:100%}
+  body.textoff-focus-mode #page{padding-top:104px!important}
+}
+@media(max-width:900px){
+  .toc-focus-bar{align-items:flex-start}
+  .toc-focus-identity{white-space:normal}
+  .toc-focus-identity span{max-width:none}
+  body.textoff-focus-mode #page{padding-top:112px!important}
+}
+/* === /TEXT OFF · MODO FOCO === */
+
+
+/* === TEXT OFF · MODO FOCO · CENTRALIZAÇÃO DO VISUALIZADOR === */
+/*
+  Centraliza o conjunto de comparação no viewport sem alterar zoom,
+  scroll sincronizado, seleção manual ou regras funcionais.
+*/
+body.textoff-focus-mode{
+  --toc-focus-viewer-max-width: 1640px;
+}
+
+body.textoff-focus-compare #textOffCompareBody .toc-compare-grid,
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-grid{
+  width:min(100%, var(--toc-focus-viewer-max-width));
+  margin-left:auto;
+  margin-right:auto;
+}
+
+body.textoff-focus-compare #textOffCompareBody .toc-preview-stage{
+  display:flex;
+  justify-content:center;
+  align-items:flex-start;
+}
+
+body.textoff-focus-compare #textOffCompareBody .toc-preview-stage img{
+  flex:0 0 auto;
+}
+
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-scroll{
+  display:block;
+}
+
+body.textoff-focus-level3 #textoffLevel3Body .toc-level3-image-wrap{
+  margin-left:auto;
+  margin-right:auto;
+}
+
+@media(max-width:1680px){
+  body.textoff-focus-mode{
+    --toc-focus-viewer-max-width: calc(100vw - 32px);
+  }
+}
+
+@media(max-width:900px){
+  body.textoff-focus-mode{
+    --toc-focus-viewer-max-width: 100%;
+  }
+}
+/* === /TEXT OFF · MODO FOCO · CENTRALIZAÇÃO DO VISUALIZADOR === */
+

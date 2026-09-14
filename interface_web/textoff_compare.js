@@ -380,4 +380,153 @@
     }
   }
   window.TextOffCompareUI={render,renderCorrection,selectChapter,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,flagCorrection,selectLevel3,setLevel3Zoom,changeLevel3Zoom,analyzeLevel3,toggleLevel3Selection,generateLevel3Preview,resetLevel3Preview,approveLevel3Preview};
+
+  /* === TEXT OFF · MODO FOCO (UI only) === */
+  const textOffFocus={mode:null,scheduled:false};
+
+  function focusClone(node){
+    if(!node)return null;
+    const clone=node.cloneNode(true);
+    if(clone.id)clone.removeAttribute("id");
+    clone.querySelectorAll("[id]").forEach(x=>x.removeAttribute("id"));
+    clone.querySelectorAll(".bal-zoom-reset").forEach(x=>x.textContent="1:1");
+    return clone;
+  }
+
+  function ensureFocusBar(){
+    let bar=document.querySelector("#tocFocusBar");
+    if(bar)return bar;
+    bar=document.createElement("div");
+    bar.id="tocFocusBar";
+    bar.className="toc-focus-bar";
+    bar.hidden=true;
+    bar.innerHTML=`<div class="toc-focus-identity"><strong id="tocFocusTitle"></strong><span id="tocFocusContext"></span></div>
+      <div id="tocFocusActions" class="toc-focus-slot toc-focus-actions"></div>
+      <div id="tocFocusZoom" class="toc-focus-slot toc-focus-zoom"></div>
+      <div id="tocFocusNav" class="toc-focus-slot toc-focus-nav"></div>
+      <div class="toc-focus-system">
+        <button class="btn toc-focus-exit" type="button" onclick="TextOffCompareUI.toggleFocus()">Sair do foco</button>
+        <button class="btn toc-focus-fullscreen" type="button" onclick="TextOffCompareUI.toggleFullscreen()" aria-label="Alternar tela cheia" title="Tela cheia">⛶</button>
+      </div>`;
+    document.body.appendChild(bar);
+    return bar;
+  }
+
+  function focusContext(){
+    if(document.querySelector("#textoffLevel3Body .toc-level3-detail"))return "level3";
+    const compareHead=[...document.querySelectorAll("#textOffCompareBody .toc-section-head")]
+      .find(x=>x.textContent.includes("Comparação das imagens"));
+    if(compareHead&&document.querySelector("#textOffCompareBody .toc-compare-grid"))return "compare";
+    return null;
+  }
+
+  function ensureFocusEntryButtons(){
+    const compareHead=[...document.querySelectorAll("#textOffCompareBody .toc-section-head")]
+      .find(x=>x.textContent.includes("Comparação das imagens"));
+    const compareRight=compareHead?.querySelector(".bal-section-head-right");
+    if(compareRight&&!compareRight.querySelector(".toc-focus-entry")){
+      const b=document.createElement("button");
+      b.className="btn toc-focus-entry";
+      b.type="button";b.textContent="Modo foco";
+      b.onclick=e=>{e.stopPropagation();toggleFocus("compare")};
+      compareRight.insertBefore(b,compareRight.firstChild);
+    }
+    const level3Right=document.querySelector("#textoffLevel3Body .toc-level3-head-actions");
+    if(level3Right&&!level3Right.querySelector(".toc-focus-entry")){
+      const b=document.createElement("button");
+      b.className="btn toc-focus-entry";
+      b.type="button";b.textContent="Modo foco";
+      b.onclick=()=>toggleFocus("level3");
+      level3Right.insertBefore(b,level3Right.firstChild);
+    }
+  }
+
+  function fillFocusSlot(id,node){
+    const slot=document.querySelector(id);
+    if(!slot)return;
+    slot.replaceChildren();
+    const clone=focusClone(node);
+    if(clone)slot.appendChild(clone);
+  }
+
+  function syncFocusBar(){
+    ensureFocusEntryButtons();
+    if(!textOffFocus.mode)return;
+    const actual=focusContext();
+    if(!actual){exitFocus();return}
+    textOffFocus.mode=actual;
+    document.body.classList.toggle("textoff-focus-compare",actual==="compare");
+    document.body.classList.toggle("textoff-focus-level3",actual==="level3");
+    const bar=ensureFocusBar();
+    bar.hidden=false;
+
+    if(actual==="compare"){
+      const caption=document.querySelector("#textOffCompareBody .toc-compare-caption")?.textContent?.trim()||"";
+      document.querySelector("#tocFocusTitle").textContent="TEXTO OFF › Revisar resultados";
+      document.querySelector("#tocFocusContext").textContent=caption;
+      fillFocusSlot("#tocFocusActions",document.querySelector("#textOffCompareBody .toc-correction-row"));
+      const compareHead=[...document.querySelectorAll("#textOffCompareBody .toc-section-head")]
+        .find(x=>x.textContent.includes("Comparação das imagens"));
+      fillFocusSlot("#tocFocusZoom",compareHead?.querySelector(".bal-zoom-control"));
+      fillFocusSlot("#tocFocusNav",document.querySelector("#textOffCompareBody .toc-pager"));
+    }else{
+      const context=document.querySelector("#textoffLevel3Body .toc-level3-detail-head h2")?.textContent?.trim()||"";
+      document.querySelector("#tocFocusTitle").textContent="TEXTO OFF · NÍVEL III › Correção assistida";
+      document.querySelector("#tocFocusContext").textContent=context;
+      fillFocusSlot("#tocFocusActions",document.querySelector("#textoffLevel3Body .toc-level3-action-buttons"));
+      fillFocusSlot("#tocFocusZoom",document.querySelector("#textoffLevel3Body .toc-level3-detail-head .bal-zoom-control"));
+      fillFocusSlot("#tocFocusNav",null);
+    }
+  }
+
+  function enterFocus(mode){
+    const actual=mode||focusContext();
+    if(!actual)return;
+    textOffFocus.mode=actual;
+    document.body.classList.add("textoff-focus-mode");
+    syncFocusBar();
+  }
+
+  function exitFocus(){
+    textOffFocus.mode=null;
+    document.body.classList.remove("textoff-focus-mode","textoff-focus-compare","textoff-focus-level3");
+    const bar=document.querySelector("#tocFocusBar");
+    if(bar)bar.hidden=true;
+  }
+
+  function toggleFocus(mode){
+    if(textOffFocus.mode)exitFocus();
+    else enterFocus(mode);
+  }
+
+  async function toggleFullscreen(){
+    try{
+      if(document.fullscreenElement)await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    }catch(e){
+      toast(e.message||"Não foi possível alternar a tela cheia.");
+    }
+  }
+
+  function scheduleFocusSync(){
+    if(textOffFocus.scheduled)return;
+    textOffFocus.scheduled=true;
+    requestAnimationFrame(()=>{
+      textOffFocus.scheduled=false;
+      ensureFocusEntryButtons();
+      if(textOffFocus.mode)syncFocusBar();
+    });
+  }
+
+  const textOffFocusObserver=new MutationObserver(scheduleFocusSync);
+  textOffFocusObserver.observe(document.querySelector("#page")||document.body,{
+    childList:true,subtree:true,characterData:true,attributes:true,
+    attributeFilter:["disabled","class","hidden","style"]
+  });
+  document.addEventListener("fullscreenchange",scheduleFocusSync);
+  Object.assign(window.TextOffCompareUI,{toggleFocus,toggleFullscreen});
+  requestAnimationFrame(scheduleFocusSync);
+  /* === /TEXT OFF · MODO FOCO === */
+
+
 })();
