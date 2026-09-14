@@ -1360,6 +1360,19 @@ function showJobResult(j){
   if(mergeOperationResultModal(j,s)) return;
   if(level2ResultModal(j,s)) return;
   if(reviewResultModal(j,s)) return;
+  if((j.action==="clean"||j.action==="clean_merged") && s.kind==="success"){
+    const merged=j.action==="clean_merged";
+    appModal({
+      title:merged?"Texto Off — Merged concluído":"Texto Off — Original concluído",
+      message:merged
+        ?"O Cleaner V2 concluiu a limpeza das imagens consolidadas em MERGE."
+        :"O Cleaner V2 concluiu a limpeza das imagens originais.",
+      kind:"success",
+      chips:[{value:s.ok,label:s.ok===1?"capítulo concluído":"capítulos concluídos"}],
+      confirmText:"Fechar"
+    }).then(()=>load());
+    return;
+  }
   if(s.kind==="error"||s.kind==="partial"){
     let occurrences=(s.details||[]).map(line=>{
       let m=String(line).match(/^Cap\.\s*([^:]+):\s*(.*)$/s);
