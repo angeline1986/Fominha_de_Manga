@@ -45,7 +45,27 @@
     const body=item?`<div class="bal-section-body">${zoomControls}<div class="toc-compare-caption">Cap. ${escLocal(row.chapter)} · ${escLocal(item.source_file)}</div><div class="toc-compare-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>ORIGINAL</strong><span>${escLocal(row.source==="Merged"?"Fonte: MERGE":"Fonte: IMG")}</span></div><div class="toc-preview-stage"><img src="${mediaUrl("textoff_source",row,item.source_file)}" alt="Original · ${escLocal(item.source_file)}" style="width:${zoom}%;max-width:none;height:auto"></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>TEXTO OFF</strong><span>Cleaner V2</span></div><div class="toc-preview-stage"><img src="${mediaUrl("textoff_clean",row,item.clean_file)}" alt="Texto Off · ${escLocal(item.clean_file)}" style="width:${zoom}%;max-width:none;height:auto"></div></article></div><div class="toc-pager"><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(-1)" ${selectedPage<=0?"disabled":""}>‹ Página anterior</button><span>${selectedPage+1} de ${items.length}</span><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(1)" ${selectedPage>=items.length-1?"disabled":""}>Próxima página ›</button></div></div>`:"";
     return `<section class="bal-section toc-section ${!row?"disabled":""}"><button class="bal-section-head" type="button" onclick="TextOffCompareUI.toggleCompare()" aria-expanded="${compareOpen}" ${!row?"disabled":""}><span>Comparação das imagens</span><span class="bal-section-head-right"><small>${item?"1 selecionada":"Nenhuma selecionada"}</small><i class="bal-chevron">${compareOpen?"▼":"▶"}</i></span></button>${compareOpen?body:""}</section>`;
   }
-  function renderBody(){const host=document.querySelector("#textOffCompareBody");if(host)host.innerHTML=tableSection()+`<div class="toc-detail-stack">${chapterSection()}${comparisonSection()}</div>`}
+  function bindSynchronizedScroll(){
+    const stages=[...document.querySelectorAll(".toc-compare-grid .toc-preview-stage")];
+    if(stages.length!==2)return;
+    let syncing=false;
+    const sync=(source,target)=>{
+      if(syncing)return;
+      syncing=true;
+      const sourceMaxY=Math.max(0,source.scrollHeight-source.clientHeight);
+      const targetMaxY=Math.max(0,target.scrollHeight-target.clientHeight);
+      const sourceMaxX=Math.max(0,source.scrollWidth-source.clientWidth);
+      const targetMaxX=Math.max(0,target.scrollWidth-target.clientWidth);
+      const ratioY=sourceMaxY?source.scrollTop/sourceMaxY:0;
+      const ratioX=sourceMaxX?source.scrollLeft/sourceMaxX:0;
+      target.scrollTop=ratioY*targetMaxY;
+      target.scrollLeft=ratioX*targetMaxX;
+      requestAnimationFrame(()=>{syncing=false});
+    };
+    stages[0].addEventListener("scroll",()=>sync(stages[0],stages[1]),{passive:true});
+    stages[1].addEventListener("scroll",()=>sync(stages[1],stages[0]),{passive:true});
+  }
+  function renderBody(){const host=document.querySelector("#textOffCompareBody");if(host){host.innerHTML=tableSection()+`<div class="toc-detail-stack">${chapterSection()}${comparisonSection()}</div>`;bindSynchronizedScroll()}}
   async function load(){try{state=await api(`/api/textoff-compare?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&_=${Date.now()}`);renderBody()}catch(e){toast(e.message||"Não foi possível carregar os resultados do Texto Off.")}}
   function render(root){root.innerHTML=head("Comparar resultados","Compare as imagens antes e depois da limpeza realizada pelo Cleaner V2.")+`<div id="textOffCompareBody"><div class="muted">Carregando resultados do Texto Off…</div></div>`;state=null;sourceFilter="all";query="";pageIndex=1;selectedKey=null;selectedPage=-1;chapterOpen=false;compareOpen=false;zoom=100;load()}
   function selectChapter(key){selectedKey=String(key);selectedPage=-1;chapterOpen=true;compareOpen=false;zoom=100;renderBody()}
