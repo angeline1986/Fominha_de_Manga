@@ -1877,6 +1877,14 @@ def run_job(job,payload):
             elif job.action=="pdf_merge": job.result=do_pdf_merge(job,manga,chs)
             elif job.action=="clean": job.result=do_clean(job,manga,chs)
             elif job.action=="clean_merged": job.result=do_clean_merged(job,manga,chs)
+            elif job.action=="textoff_level3_flag":
+                from processamento.limpeza_baloes.textoff_level3 import flag_correction_job
+                job.result=flag_correction_job(manga,chs,payload)
+            elif job.action=="textoff_level3_analyze":
+                print(f"[NIVEL3][BACKEND] job recebido id={job.id} chapters={[ch.name for ch in chs]} source={payload.get('source_file')} clean={payload.get('clean_file')}", flush=True)
+                from processamento.limpeza_baloes.textoff_level3_analyzer import analyze_residual_job
+                job.result=analyze_residual_job(manga,chs,payload)
+                print(f"[NIVEL3][BACKEND] job concluído id={job.id} candidatos={(job.result or {}).get('count')}", flush=True)
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
             elif job.action=="merge_level4": job.result=do_merge_level4(job,chs)
@@ -2671,6 +2679,9 @@ class Handler(BaseHTTPRequestHandler):
             if u.path=="/api/textoff-compare":
                 from processamento.limpeza_baloes.textoff_compare import comparison_state
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(comparison_state(manga))
+            if u.path=="/api/textoff-level3":
+                from processamento.limpeza_baloes.textoff_level3 import queue_state
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(queue_state(manga))
             if u.path=="/api/dimension-analysis":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(dimension_state(manga))
             if u.path=="/api/balance-analysis":
