@@ -48,10 +48,12 @@
 .toc-level3-empty{padding:24px}
 .toc-status-pending{background:#fff5df;color:#8a6220;border-color:#eed9a6}
 
-.toc-level3-toolbar{display:flex;justify-content:flex-end;padding:12px 18px 0}
-.toc-level3-zoom{display:flex;align-items:center;gap:6px;padding:4px;border:1px solid #eadde2;border-radius:999px;background:#fff}
-.toc-level3-zoom button{min-width:34px;height:32px;border:0;background:transparent;border-radius:999px;cursor:pointer;font-weight:700}
-.toc-level3-zoom span{min-width:58px;text-align:center;font-weight:700}
+.toc-level3-head-actions{display:flex;align-items:center;gap:10px}
+.toc-section-head{display:flex;align-items:center}
+.toc-section-toggle{appearance:none;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;cursor:pointer;flex:1;text-align:left;padding:0}
+.toc-section-toggle:disabled,.toc-chevron-btn:disabled{cursor:default}
+.toc-chevron-btn{appearance:none;border:0;background:transparent;color:inherit;cursor:pointer;padding:4px;display:inline-flex;align-items:center;justify-content:center}
+.toc-header-zoom{margin-right:2px}
 .toc-level3-scroll{overflow:auto;max-height:68vh}
 .toc-level3-image-wrap{position:relative;display:block;min-width:0}
 .toc-level3-image-wrap img{display:block;width:100%;height:auto}

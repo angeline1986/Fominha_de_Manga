@@ -42,7 +42,7 @@ body.sidebar-collapsed .bal-sticky-submit{left:20px}
 .bal-feedback-popup-actions{display:flex;justify-content:flex-end;gap:8px;padding:0 18px 18px}
 @media(max-width:900px){.bal-result-title-wrap{flex-wrap:wrap}}
 
-/* PATCH: zoom capsule controls */
+/* Shared zoom controls — section-header pattern */
 .bal-zoom-row{
   display:flex;
   align-items:center;
@@ -55,7 +55,7 @@ body.sidebar-collapsed .bal-sticky-submit{left:20px}
   gap:2px;
   padding:3px;
   border:1px solid var(--color-border);
-  border-radius:999px;
+  border-radius:8px;
   background:var(--color-surface-soft);
   line-height:1;
   white-space:nowrap;
@@ -70,7 +70,7 @@ body.sidebar-collapsed .bal-sticky-submit{left:20px}
   font:inherit;
   font-weight:700;
   cursor:pointer;
-  border-radius:999px;
+  border-radius:6px;
   min-width:28px;
   height:28px;
   padding:0 8px;
@@ -92,7 +92,7 @@ body.sidebar-collapsed .bal-sticky-submit{left:20px}
   box-sizing:border-box;
   padding:6px 9px;
   border:1px solid var(--color-border);
-  border-radius:999px;
+  border-radius:6px;
   background:var(--color-surface);
   display:inline-flex;
   align-items:center;
