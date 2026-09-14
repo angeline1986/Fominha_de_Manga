@@ -58,3 +58,11 @@
 .toc-level3-box{position:absolute;box-sizing:border-box;border:3px solid #b64b6a;background:rgba(182,75,106,.12);pointer-events:none;border-radius:5px}
 .toc-level3-box i{position:absolute;left:-3px;top:-24px;min-width:20px;height:20px;padding:0 5px;display:flex;align-items:center;justify-content:center;border-radius:999px;background:#b64b6a;color:#fff;font-size:11px;font-style:normal;font-weight:700}
 .toc-level3-analysis-note{font-size:12px;color:#7f7278;margin-top:5px}
+
+.toc-level3-action-buttons{display:flex;align-items:center;gap:8px}
+.toc-level3-manual-layer{position:absolute;inset:0;z-index:8;pointer-events:none}
+.toc-level3-manual-layer.is-active{pointer-events:auto;cursor:crosshair;touch-action:none}
+.toc-level3-manual-live{position:absolute;display:none;box-sizing:border-box;border:2px dashed #b64b6a;background:rgba(182,75,106,.12);pointer-events:none}
+.toc-level3-manual-layer.is-active .toc-level3-manual-live{display:block}
+.toc-level3-manual-box{position:absolute;z-index:7;box-sizing:border-box;border:3px solid #b64b6a;background:rgba(182,75,106,.10);pointer-events:none;border-radius:4px}
+.toc-level3-manual-box i{position:absolute;left:-3px;top:-24px;height:20px;padding:0 7px;display:flex;align-items:center;border-radius:999px;background:#b64b6a;color:#fff;font-size:11px;font-style:normal;font-weight:700}

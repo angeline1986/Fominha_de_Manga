@@ -1,5 +1,5 @@
 (() => {
-  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,flagging=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false;
+  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,flagging=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false,level3Selecting=false,level3Selection=null,level3Drag=null;
   const PAGE_SIZE=15;
   const escLocal=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
   const currentRow=()=>state?.rows?.find(x=>String(x.key)===String(selectedKey))||null;
@@ -98,20 +98,80 @@
   function level3Detail(row){
     if(!row)return `<div class="panel toc-level3-empty"><strong>Nenhuma pendência selecionada.</strong><span>As imagens sinalizadas na comparação aparecerão aqui.</span></div>`;
     const note=level3Analysis?(level3Analysis.count?`${level3Analysis.count} região(ões) suspeita(s) destacada(s).`:"Nenhum resíduo seguro identificado automaticamente."):"";
-    return `<section class="panel toc-level3-detail"><div class="toc-level3-detail-head"><div><span class="caption">PENDÊNCIA SELECIONADA</span><h2>Cap. ${escLocal(row.chapter)} · ${escLocal(row.source_file)}</h2></div><span class="toc-status toc-status-pending">Pendente</span></div><div class="toc-level3-toolbar"><div class="toc-level3-zoom"><button type="button" onclick="TextOffCompareUI.setLevel3Zoom(${level3Zoom-10})">−</button><span>${level3Zoom}%</span><button type="button" onclick="TextOffCompareUI.setLevel3Zoom(${level3Zoom+10})">+</button><button type="button" onclick="TextOffCompareUI.setLevel3Zoom(100)">100%</button></div></div><div class="toc-compare-grid toc-level3-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>ORIGINAL</strong><span>${row.source_stage==="MERGE"?"Fonte: MERGE":"Fonte: IMG"}</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${level3MediaUrl("textoff_source",row,row.source_file)}" alt="Original"></div></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>RESULTADO ATUAL</strong><span>Texto Off</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${level3MediaUrl("textoff_clean",row,row.clean_file)}" alt="Resultado atual">${level3Boxes()}</div></div></article></div><div class="toc-level3-actions"><div><strong>Próxima etapa</strong><span>Análise conservadora de resíduos em balões uniformes.</span>${note?`<span class="toc-level3-analysis-note">${note}</span>`:""}</div><button class="btn primary" type="button" ${level3Analyzing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button></div></section>`;
+    const manualNote=level3Selection?"Área manual selecionada. Próxima etapa: gerar prévia da correção.":(level3Selecting?"Arraste o mouse sobre o resíduo no Resultado atual.":"");
+    return `<section class="panel toc-level3-detail"><div class="toc-level3-detail-head"><div><span class="caption">PENDÊNCIA SELECIONADA</span><h2>Cap. ${escLocal(row.chapter)} · ${escLocal(row.source_file)}</h2></div><span class="toc-status toc-status-pending">Pendente</span></div><div class="toc-level3-toolbar"><div class="toc-level3-zoom"><button type="button" onclick="TextOffCompareUI.setLevel3Zoom(${level3Zoom-10})">−</button><span>${level3Zoom}%</span><button type="button" onclick="TextOffCompareUI.setLevel3Zoom(${level3Zoom+10})">+</button><button type="button" onclick="TextOffCompareUI.setLevel3Zoom(100)">100%</button></div></div><div class="toc-compare-grid toc-level3-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>ORIGINAL</strong><span>${row.source_stage==="MERGE"?"Fonte: MERGE":"Fonte: IMG"}</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${level3MediaUrl("textoff_source",row,row.source_file)}" alt="Original"></div></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>RESULTADO ATUAL</strong><span>Texto Off</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${level3MediaUrl("textoff_clean",row,row.clean_file)}" alt="Resultado atual">${level3Boxes()}${level3SelectionBox()}<span id="tocLevel3ManualLayer" class="toc-level3-manual-layer ${level3Selecting?"is-active":""}"><span class="toc-level3-manual-live"></span></span></div></div></article></div><div class="toc-level3-actions"><div><strong>Próxima etapa</strong><span>Análise automática ou seleção manual da área residual.</span>${note?`<span class="toc-level3-analysis-note">${note}</span>`:""}${manualNote?`<span class="toc-level3-analysis-note">${manualNote}</span>`:""}</div><div class="toc-level3-action-buttons"><button class="btn" type="button" onclick="TextOffCompareUI.toggleLevel3Selection()">${level3Selecting?"Cancelar seleção":"Selecionar área"}</button><button class="btn primary" type="button" ${level3Analyzing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button></div></div></section>`;
   }
   function renderLevel3Body(){
     const host=document.querySelector("#textoffLevel3Body");if(!host)return;
     if(level3Loading){host.innerHTML='<div class="muted">Carregando correções sinalizadas…</div>';return}
     const rows=Array.isArray(level3State?.rows)?level3State.rows:[];
     host.innerHTML=`<div class="toc-level3-summary"><div><b>${rows.length}</b><span>${rows.length===1?"imagem pendente":"imagens pendentes"}</span></div></div>${level3Table(rows)}${level3Detail(level3Current())}`;
-    requestAnimationFrame(bindLevel3Scroll);
+    requestAnimationFrame(()=>{bindLevel3Scroll();bindLevel3ManualSelection()});
   }
   function renderCorrection(root){
     root.innerHTML=`<div class="head"><div><div class="caption">TEXTO OFF · NÍVEL III</div><div class="page-title-wrap" tabindex="0"><h1>Correção assistida</h1><span class="page-title-tooltip" role="tooltip">Revise as páginas sinalizadas antes de qualquer correção.</span></div></div></div><div id="textoffLevel3Body"></div>`;
     level3State=null;level3SelectedKey=null;loadLevel3();
   }
-  function selectLevel3(key){level3SelectedKey=key;level3Analysis=null;renderLevel3Body()}
+  function selectLevel3(key){level3SelectedKey=key;level3Analysis=null;level3Selecting=false;level3Selection=null;level3Drag=null;renderLevel3Body()}
+  function level3SelectionBox(){
+    const b=level3Selection;
+    if(!b)return "";
+    return `<span class="toc-level3-manual-box" style="left:${b.left}%;top:${b.top}%;width:${b.width}%;height:${b.height}%"><i>Manual</i></span>`;
+  }
+  function toggleLevel3Selection(){
+    level3Selecting=!level3Selecting;
+    level3Selection=null;
+    level3Drag=null;
+    console.log("[NIVEL3][MANUAL] modo seleção",level3Selecting?"ativo":"inativo");
+    renderLevel3Body();
+  }
+  function bindLevel3ManualSelection(){
+    const layer=document.querySelector("#tocLevel3ManualLayer");
+    if(!layer||!level3Selecting)return;
+    const pos=e=>{
+      const r=layer.getBoundingClientRect();
+      return {
+        x:Math.max(0,Math.min(r.width,e.clientX-r.left)),
+        y:Math.max(0,Math.min(r.height,e.clientY-r.top)),
+        w:r.width,h:r.height
+      };
+    };
+    layer.addEventListener("pointerdown",e=>{
+      if(e.button!==0)return;
+      const p=pos(e);
+      level3Drag={x:p.x,y:p.y,w:p.w,h:p.h};
+      level3Selection=null;
+      layer.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    layer.addEventListener("pointermove",e=>{
+      if(!level3Drag)return;
+      const p=pos(e);
+      const x=Math.min(level3Drag.x,p.x),y=Math.min(level3Drag.y,p.y);
+      const w=Math.abs(p.x-level3Drag.x),h=Math.abs(p.y-level3Drag.y);
+      level3Selection={
+        left:x/p.w*100,top:y/p.h*100,
+        width:w/p.w*100,height:h/p.h*100
+      };
+      const box=layer.querySelector(".toc-level3-manual-live");
+      if(box){
+        box.style.left=`${level3Selection.left}%`;
+        box.style.top=`${level3Selection.top}%`;
+        box.style.width=`${level3Selection.width}%`;
+        box.style.height=`${level3Selection.height}%`;
+      }
+    });
+    const finish=e=>{
+      if(!level3Drag)return;
+      if(layer.hasPointerCapture?.(e.pointerId))layer.releasePointerCapture(e.pointerId);
+      level3Drag=null;
+      if(level3Selection&&(level3Selection.width<0.3||level3Selection.height<0.3))level3Selection=null;
+      console.log("[NIVEL3][MANUAL] seleção",level3Selection);
+      renderLevel3Body();
+    };
+    layer.addEventListener("pointerup",finish);
+    layer.addEventListener("pointercancel",finish);
+  }
   function level3Boxes(){
     const a=level3Analysis;
     if(!a||!Array.isArray(a.candidates)||!a.image_width||!a.image_height)return "";
@@ -200,5 +260,5 @@
       flagging=false;renderBody();
     }
   }
-  window.TextOffCompareUI={render,renderCorrection,selectChapter,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,flagCorrection,selectLevel3,setLevel3Zoom,analyzeLevel3};
+  window.TextOffCompareUI={render,renderCorrection,selectChapter,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,flagCorrection,selectLevel3,setLevel3Zoom,analyzeLevel3,toggleLevel3Selection};
 })();
