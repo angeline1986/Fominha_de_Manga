@@ -4,6 +4,8 @@ from pathlib import Path
 import json, os, shutil, subprocess, tempfile, time, uuid
 from .launcher import MODULE_DIR, build_command
 
+LEVEL2_SCRIPT = MODULE_DIR / 'level2.py'
+
 ALGORITHM = "cleaner_v2_panel_cleaner_2_11_11"
 PROFILE_NAME = "outlined-text.ini"
 
@@ -103,8 +105,38 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
         if len(mask_files) != len(images):
             raise RuntimeError(f"Lote incompleto: {len(images)} entrada(s), {len(mask_files)} máscara(s).")
 
+        # Nível II é pós-processamento cirúrgico: usa os originais + máscaras reais
+        # do Nível I e altera somente componentes classificados pelo Detector V3.
+        level2_report_path = work/'level2-report.json'
+        level2_command = [
+            str(MODULE_DIR/'.venv'/('Scripts/python.exe' if os.name == 'nt' else 'bin/python')),
+            str(LEVEL2_SCRIPT),
+            '--source-dir', str(input_dir),
+            '--output-dir', str(output_dir),
+            '--report', str(level2_report_path),
+        ]
+        if progress_job is not None:
+            prefix = f"Cap. {chapter_name}: " if chapter_name else ''
+            progress_job.progress_detail = prefix + 'validando Texto Off — Nível II...'
+            progress_job.message = progress_job.progress_detail
+        try:
+            level2_process = subprocess.run(level2_command, cwd=MODULE_DIR, check=False, timeout=900)
+        except subprocess.TimeoutExpired as exc:
+            raise RuntimeError('Texto Off — Nível II excedeu o limite de 900 segundos. A saída oficial anterior foi preservada.') from exc
+        if level2_process.returncode != 0:
+            raise RuntimeError(
+                f"Texto Off — Nível II encerrou com código {level2_process.returncode}. "
+                "A saída oficial anterior foi preservada."
+            )
+        if not level2_report_path.is_file():
+            raise RuntimeError('Texto Off — Nível II não gerou relatório de validação.')
+        level2_report = json.loads(level2_report_path.read_text(encoding='utf-8'))
+        if int(level2_report.get('pages_analyzed') or 0) != len(images):
+            raise RuntimeError('Texto Off — Nível II não analisou todas as imagens do lote.')
+
         for artifact in sorted(p for p in output_dir.iterdir() if p.is_file()):
             shutil.copy2(artifact, staged/artifact.name)
+        shutil.copy2(level2_report_path, staged/'level2-report.json')
 
         manifest = {
             'schema_version': 2,
@@ -123,10 +155,20 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
             'source_artifacts': names,
             'clean_artifacts': [p.name for p in clean_files],
             'mask_artifacts': [p.name for p in mask_files],
+            'level2': {
+                'algorithm': level2_report.get('algorithm'),
+                'detector': level2_report.get('detector'),
+                'inpainter': level2_report.get('inpainter'),
+                'pages_analyzed': level2_report.get('pages_analyzed'),
+                'pages_level2': level2_report.get('pages_level2'),
+                'components_level2': level2_report.get('components_level2'),
+                'type_counts': level2_report.get('type_counts'),
+                'report': 'level2-report.json',
+            },
             'failures': [],
         }
         (staged/'clean-manifest.json').write_text(json.dumps(manifest, indent=2, ensure_ascii=False), encoding='utf-8')
         _promote_directory(staged, target)
-        return {'status':'ok','pages':len(images),'outputs':len(clean_files),'masks':len(mask_files),'mask_complete':True,'stage_folder':str(target)}
+        return {'status':'ok','pages':len(images),'outputs':len(clean_files),'masks':len(mask_files),'mask_complete':True,'level2_pages':int(level2_report.get('pages_level2') or 0),'level2_components':int(level2_report.get('components_level2') or 0),'stage_folder':str(target)}
     finally:
         shutil.rmtree(work, ignore_errors=True)
