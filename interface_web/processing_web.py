@@ -2668,6 +2668,9 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if u.path=="/api/catalog": return self.send_json(catalog())
             if u.path=="/api/state": return self.send_json(state(q.get("provider",[""])[0],q.get("manga",[""])[0]))
+            if u.path=="/api/textoff-compare":
+                from processamento.limpeza_baloes.textoff_compare import comparison_state
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(comparison_state(manga))
             if u.path=="/api/dimension-analysis":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(dimension_state(manga))
             if u.path=="/api/balance-analysis":
@@ -2767,6 +2770,9 @@ class Handler(BaseHTTPRequestHandler):
             chapter_root=(manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"BALANCE_PROPOSALS"/chapter).resolve()
             legacy=(chapter_root/proposal_id).resolve() if proposal_id else None
             base=legacy if legacy is not None and legacy.is_relative_to(chapter_root) and legacy.is_dir() else chapter_root
+        elif kind in {"textoff_source","textoff_clean"}:
+            from processamento.limpeza_baloes.textoff_compare import media_base
+            base=media_base(manga,chapter,kind,q.get("source",[""])[0])
         else:
             self.send_error(404); return
         target=(base/q.get("file",[""])[0]).resolve()
