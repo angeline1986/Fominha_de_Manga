@@ -1888,6 +1888,9 @@ def run_job(job,payload):
             elif job.action=="textoff_level3_preview":
                 from processamento.limpeza_baloes.textoff_level3_correction import generate_preview_job
                 job.result=generate_preview_job(manga,chs,payload)
+            elif job.action=="textoff_level3_approve":
+                from processamento.limpeza_baloes.textoff_level3_correction import approve_proposal_job
+                job.result=approve_proposal_job(manga,chs,payload)
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
             elif job.action=="merge_level4": job.result=do_merge_level4(job,chs)

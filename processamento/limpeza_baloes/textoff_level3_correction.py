@@ -1,8 +1,8 @@
-"""Texto Off — Nível III: geração segura de preview de correção assistida.
+"""Texto Off — Nível III: preview e promoção segura da correção assistida.
 
-Este módulo NÃO promove correções. A imagem oficial do Texto Off é somente leitura.
-A execução do LaMa ocorre no ambiente isolado do Cleaner V2 e a composição final
-substitui exclusivamente os pixels da máscara selecionada.
+A geração de preview nunca altera a imagem oficial. Somente uma aprovação explícita
+pode promover a proposta validada para o resultado oficial do Texto Off; a imagem
+fonte (IMG/02_MERGE) permanece imutável. O LaMa continua isolado no Cleaner V2.
 """
 from __future__ import annotations
 
@@ -23,16 +23,23 @@ import uuid
 from PIL import Image
 
 from processamento.limpeza_baloes.textoff_level3 import (
+    STATUS_PENDING,
     _clean_dir,
     _item_key,
+    _load,
     _normalize_stage,
     _source_dir,
+    _state_path,
     _validate_image_name,
     pending_for_chapter,
 )
-
 SCHEMA = "textoff_level3_proposal_v1"
 STATUS = "PROPOSTA_GERADA"
+STATUS_APPROVED = "APROVADA"
+STATUS_CORRECTED = "CORRIGIDO_NIVEL3"
+MASK_MARGIN_RATIO = 0.15
+MASK_MARGIN_MIN = 16
+MASK_MARGIN_MAX = 64
 PROPOSAL_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]{0,127}$")
 ROOT = Path(__file__).resolve().parents[2]
 CLEANER_VENV_PYTHON = ROOT / "processamento" / "limpeza_baloes" / "cleaner_v2" / ".venv" / "bin" / "python"
@@ -97,6 +104,14 @@ def _bbox_pixels(selection: dict[str, float], width: int, height: int) -> tuple[
     return x1, y1, x2, y2
 
 
+def _mask_bbox_pixels(bbox: tuple[int, int, int, int], width: int, height: int) -> tuple[tuple[int, int, int, int], int]:
+    x1, y1, x2, y2 = bbox
+    margin = int(round(min(x2 - x1, y2 - y1) * MASK_MARGIN_RATIO))
+    margin = max(MASK_MARGIN_MIN, min(MASK_MARGIN_MAX, margin))
+    mask_bbox = (max(0, x1-margin), max(0, y1-margin), min(width, x2+margin), min(height, y2+margin))
+    return mask_bbox, margin
+
+
 def _validate_current_pair(manga: Path, chapter: str, stage: str, source_file: str, clean_file: str) -> tuple[Path, Path]:
     source_base = _source_dir(manga, chapter, stage).resolve()
     clean_base = _clean_dir(manga, chapter, stage).resolve()
@@ -155,6 +170,7 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
         raise RuntimeError(f"Dimensões divergentes entre fonte e resultado atual: {source_size} != {clean_size}.")
     width, height = clean_size
     bbox = _bbox_pixels(selection, width, height)
+    mask_bbox, mask_margin = _mask_bbox_pixels(bbox, width, height)
 
     base_sha256 = _sha256(clean_path)
     source_sha256 = _sha256(source_path)
@@ -172,7 +188,7 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
         env = os.environ.copy()
         env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
         proc = subprocess.run(
-            _worker_command(source_path, clean_path, preview_path, report_path, bbox),
+            _worker_command(source_path, clean_path, preview_path, report_path, mask_bbox),
             cwd=str(ROOT), env=env, text=True, capture_output=True, check=False,
         )
         if proc.returncode != 0:
@@ -199,6 +215,9 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
             "bbox_pixels": {
                 "x": bbox[0], "y": bbox[1], "width": bbox[2] - bbox[0], "height": bbox[3] - bbox[1],
             },
+            "mask_bbox_pixels": {"x": mask_bbox[0], "y": mask_bbox[1], "width": mask_bbox[2]-mask_bbox[0], "height": mask_bbox[3]-mask_bbox[1]},
+            "mask_margin_pixels": mask_margin,
+            "mask_margin_policy": {"ratio": MASK_MARGIN_RATIO, "minimum": MASK_MARGIN_MIN, "maximum": MASK_MARGIN_MAX},
             "crop_pixels": worker.get("crop_pixels"),
             "padding": worker.get("padding"),
             "status": STATUS,
@@ -214,6 +233,7 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
                 "official_image_modified": False,
                 "source_image_modified": False,
                 "composition_limited_to_mask": True,
+                "mask_expands_manual_selection": True,
             },
         }
         report_path.unlink(missing_ok=True)
@@ -229,6 +249,8 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
             "preview_file": "preview.png",
             "selection_percent": selection,
             "bbox_pixels": manifest["bbox_pixels"],
+            "mask_bbox_pixels": manifest["mask_bbox_pixels"],
+            "mask_margin_pixels": mask_margin,
             "base_sha256": base_sha256,
             "device": worker.get("device"),
             "message": "Prévia do Nível III gerada sem alterar a imagem oficial.",
@@ -249,6 +271,254 @@ def generate_preview_job(manga: Path, chs, payload: dict) -> dict:
     return generate_preview(
         manga, ch.name, payload.get("source_stage"), payload.get("source_file"),
         payload.get("clean_file"), payload.get("selection"),
+    )
+
+
+def _json_temp(path: Path, data: dict, prefix: str) -> Path:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=prefix, suffix=".json", dir=str(path.parent))
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+            fh.flush()
+            os.fsync(fh.fileno())
+        return tmp
+    except Exception:
+        tmp.unlink(missing_ok=True)
+        raise
+
+
+def _restore_bytes(path: Path, raw: bytes, prefix: str) -> None:
+    fd, tmp_name = tempfile.mkstemp(prefix=prefix, suffix=path.suffix or ".tmp", dir=str(path.parent))
+    tmp = Path(tmp_name)
+    try:
+        with os.fdopen(fd, "wb") as fh:
+            fh.write(raw)
+            fh.flush()
+            os.fsync(fh.fileno())
+        os.replace(tmp, path)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def approve_proposal(
+    manga: Path,
+    chapter: str,
+    source_stage: str,
+    source_file: str,
+    clean_file: str,
+    proposal_id: str,
+) -> dict:
+    chapter = _chapter_name(chapter)
+    stage = _normalize_stage(source_stage)
+    source_file = _validate_image_name(source_file, "Imagem original")
+    clean_file = _validate_image_name(clean_file, "Imagem limpa")
+
+    pdir = proposal_dir(manga, chapter, proposal_id)
+    manifest_path = (pdir / "proposal.json").resolve()
+    pdir_resolved = pdir.resolve()
+    if not manifest_path.is_relative_to(pdir_resolved) or not manifest_path.is_file():
+        raise ValueError("Manifesto da proposta do Nível III não encontrado.")
+
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError, json.JSONDecodeError) as exc:
+        raise ValueError("Manifesto da proposta do Nível III inválido.") from exc
+    if not isinstance(manifest, dict) or manifest.get("schema") != SCHEMA:
+        raise ValueError("Schema da proposta do Nível III não suportado.")
+    if str(manifest.get("status") or "") != STATUS:
+        raise ValueError("A proposta não está disponível para aprovação.")
+    if str(manifest.get("proposal_id") or "") != str(proposal_id):
+        raise ValueError("Identificador da proposta divergente.")
+    if str(manifest.get("chapter") or "") != chapter:
+        raise ValueError("Capítulo da proposta divergente.")
+    if _normalize_stage(manifest.get("source_stage")) != stage:
+        raise ValueError("Fonte da proposta divergente.")
+    if str(manifest.get("source_file") or "") != source_file:
+        raise ValueError("Imagem fonte da proposta divergente.")
+    if str(manifest.get("clean_file") or "") != clean_file:
+        raise ValueError("Resultado oficial da proposta divergente.")
+
+    pending = pending_for_chapter(manga, chapter)
+    pending_item = pending.get(_item_key(stage, source_file))
+    if not pending_item or str(pending_item.get("clean_file") or "") != clean_file:
+        raise ValueError("A página não está mais pendente para esta proposta do Nível III.")
+
+    source_path, clean_path = _validate_current_pair(manga, chapter, stage, source_file, clean_file)
+    expected_base = str(manifest.get("base_sha256") or "")
+    expected_source = str(manifest.get("source_sha256") or "")
+    if not expected_base or _sha256(clean_path) != expected_base:
+        raise RuntimeError("PROPOSTA_OBSOLETA: o resultado oficial do Texto Off mudou após a geração da prévia.")
+    if not expected_source or _sha256(source_path) != expected_source:
+        raise RuntimeError("PROPOSTA_OBSOLETA: a imagem fonte mudou após a geração da prévia.")
+
+    preview_file = _validate_image_name(manifest.get("preview_file"), "Preview")
+    preview_path = (pdir / preview_file).resolve()
+    if not preview_path.is_relative_to(pdir_resolved) or not preview_path.is_file():
+        raise ValueError("Preview da proposta do Nível III não encontrado.")
+
+    with Image.open(preview_path) as preview_im, Image.open(clean_path) as clean_im:
+        if tuple(preview_im.size) != tuple(clean_im.size):
+            raise RuntimeError(
+                f"Dimensões divergentes entre preview e resultado oficial: {preview_im.size} != {clean_im.size}."
+            )
+
+    preview_sha256 = _sha256(preview_path)
+    state_path = _state_path(manga, chapter)
+    if not state_path.is_file():
+        raise ValueError("Estado pendente do Nível III não encontrado.")
+    original_state_bytes = state_path.read_bytes()
+    original_manifest_bytes = manifest_path.read_bytes()
+    state = _load(state_path)
+    items = [x for x in state.get("items", []) if isinstance(x, dict)]
+    key = _item_key(stage, source_file)
+    state_item = None
+    for candidate in items:
+        try:
+            candidate_stage = _normalize_stage(candidate.get("source_stage"))
+            candidate_source = _validate_image_name(candidate.get("source_file"), "Imagem original")
+        except ValueError:
+            continue
+        if _item_key(candidate_stage, candidate_source) == key:
+            state_item = candidate
+            break
+    if state_item is None or state_item.get("status") != STATUS_PENDING:
+        raise ValueError("Pendência do Nível III não está disponível para aprovação.")
+    if str(state_item.get("clean_file") or "") != clean_file:
+        raise ValueError("Resultado oficial da pendência diverge da proposta.")
+
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    state_item.update({
+        "status": STATUS_CORRECTED,
+        "proposal_id": str(proposal_id),
+        "approved_at": now,
+        "approved_sha256": preview_sha256,
+        "updated_at": now,
+    })
+    state["schema_version"] = state.get("schema_version") or 1
+    state["chapter"] = chapter
+    state["items"] = items
+
+    promoted_to = str(clean_path.relative_to(manga))
+    manifest["status"] = STATUS_APPROVED
+    manifest["approved_at"] = now
+    manifest["promoted_to"] = promoted_to
+    manifest["promoted_sha256"] = preview_sha256
+    manifest["promotion"] = {
+        "target": promoted_to,
+        "approved_at": now,
+        "promoted_sha256": preview_sha256,
+        "source_image_modified": False,
+    }
+    safety = manifest.setdefault("safety", {})
+    safety["official_image_modified"] = True
+    safety["source_image_modified"] = False
+    safety["promotion_requires_explicit_approval"] = True
+
+    clean_backup = None
+    clean_tmp = None
+    state_tmp = None
+    manifest_tmp = None
+    image_replaced = False
+    state_replaced = False
+    manifest_replaced = False
+    try:
+        fd, backup_name = tempfile.mkstemp(
+            prefix=".textoff-l3-before-", suffix=clean_path.suffix, dir=str(clean_path.parent)
+        )
+        os.close(fd)
+        clean_backup = Path(backup_name)
+        shutil.copy2(clean_path, clean_backup)
+
+        fd, promote_name = tempfile.mkstemp(
+            prefix=".textoff-l3-promote-", suffix=clean_path.suffix, dir=str(clean_path.parent)
+        )
+        os.close(fd)
+        clean_tmp = Path(promote_name)
+        shutil.copy2(preview_path, clean_tmp)
+
+        state_tmp = _json_temp(state_path, state, ".textoff-l3-state-")
+        manifest_tmp = _json_temp(manifest_path, manifest, ".textoff-l3-proposal-")
+
+        if _sha256(clean_path) != expected_base or _sha256(source_path) != expected_source:
+            raise RuntimeError("PROPOSTA_OBSOLETA: os arquivos mudaram durante a preparação da aprovação.")
+
+        os.replace(clean_tmp, clean_path)
+        clean_tmp = None
+        image_replaced = True
+        if _sha256(clean_path) != preview_sha256:
+            raise RuntimeError("Falha de integridade ao promover o preview para o Texto Off oficial.")
+
+        os.replace(state_tmp, state_path)
+        state_tmp = None
+        state_replaced = True
+
+        os.replace(manifest_tmp, manifest_path)
+        manifest_tmp = None
+        manifest_replaced = True
+
+        if _sha256(source_path) != expected_source:
+            raise RuntimeError("A imagem fonte mudou durante a aprovação; rollback acionado.")
+        if _sha256(clean_path) != preview_sha256:
+            raise RuntimeError("O resultado oficial divergiu após a aprovação; rollback acionado.")
+    except Exception:
+        rollback_errors = []
+        try:
+            if image_replaced and clean_backup and clean_backup.is_file():
+                os.replace(clean_backup, clean_path)
+                clean_backup = None
+        except Exception as exc:
+            rollback_errors.append(f"imagem oficial: {exc}")
+        try:
+            if state_replaced:
+                _restore_bytes(state_path, original_state_bytes, ".textoff-l3-state-rollback-")
+        except Exception as exc:
+            rollback_errors.append(f"pending.json: {exc}")
+        try:
+            if manifest_replaced:
+                _restore_bytes(manifest_path, original_manifest_bytes, ".textoff-l3-proposal-rollback-")
+        except Exception as exc:
+            rollback_errors.append(f"proposal.json: {exc}")
+        if rollback_errors:
+            raise RuntimeError("Falha na aprovação e no rollback: " + " | ".join(rollback_errors))
+        raise
+    finally:
+        for tmp in (clean_tmp, state_tmp, manifest_tmp):
+            if isinstance(tmp, Path):
+                tmp.unlink(missing_ok=True)
+        if clean_backup is not None:
+            clean_backup.unlink(missing_ok=True)
+
+    return {
+        "status": STATUS_APPROVED,
+        "proposal_id": str(proposal_id),
+        "chapter": chapter,
+        "source_stage": stage,
+        "source_file": source_file,
+        "clean_file": clean_file,
+        "promoted_to": promoted_to,
+        "promoted_sha256": preview_sha256,
+        "source_image_modified": False,
+        "message": "Correção Nível III aprovada. O resultado oficial do Texto Off foi atualizado; a imagem fonte permaneceu inalterada.",
+    }
+
+
+def approve_proposal_job(manga: Path, chs, payload: dict) -> dict:
+    if len(chs) != 1:
+        raise ValueError("O Nível III aprova uma página por vez.")
+    ch = chs[0]
+    requested = str(payload.get("chapter") or ch.name).strip()
+    if requested != str(ch.name):
+        raise ValueError("Capítulo do payload não corresponde ao capítulo selecionado.")
+    return approve_proposal(
+        manga,
+        ch.name,
+        payload.get("source_stage"),
+        payload.get("source_file"),
+        payload.get("clean_file"),
+        payload.get("proposal_id"),
     )
 
 
