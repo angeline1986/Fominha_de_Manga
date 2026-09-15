@@ -521,7 +521,7 @@ function mergeLevel5(r){
   if(!list.length){r.innerHTML=head("Auto-Merge Nível V","Fallback global exaustivo preservado, usando somente cortes estruturais SAFE.")+`<div class="empty">Nenhum capítulo aguardando Auto-Merge Nível V.</div>`;return;}
   let pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));tablePage=Math.min(tablePage,pages);let rows=filtered.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
   let pager=`<div class="table-pager"><span>${filtered.length?((tablePage-1)*PAGE_SIZE+1):0}-${Math.min(tablePage*PAGE_SIZE,filtered.length)} de ${filtered.length}</span><div><button class="btn" ${tablePage<=1?"disabled":""} onclick="changeTablePage(-1)">&lt;&lt;</button><span class="page-indicator">${tablePage} / ${pages}</span><button class="btn" ${tablePage>=pages?"disabled":""} onclick="changeTablePage(1)">&gt;&gt;</button></div></div>`;
-  let body=rows.map(x=>{let d=x.merge_level5_detail||{},pending=!!x.merge_level5_pending;let safe=Number(d.safe_artifacts_count||(d.safe_artifacts||[]).length||0);let res=Number(d.residual_pending_segments_count||(d.residual_pending_segments||[]).length||0);let state=pending?`<span class="warn">Pendente</span>`:(!d.valid?`<span class="bad">⚠ Inválido</span>`:`<span class="ok">✓ Analisado</span>`);let result=pending?`<span class="muted">Aguardando busca global exaustiva SAFE</span>`:(!d.valid?esc(d.error||"Manifesto inválido"):(res?`<span class="bad">Sem composição completa SAFE</span> · <button class="l3-result-link" onclick="reviewCh='${esc(x.chapter)}';page='review_v2';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page==='review_v2'));render()">Revisão Merge V2</button>`:`<span class="ok">Resolvido automaticamente</span>`));return `<tr data-n="${esc(String(x.chapter)).toLowerCase()}"><td>${pending?`<input class="ck" type="checkbox" value="${esc(x.chapter)}" onchange="syncVisibleMaster(document.querySelector('.visible-master'),'.ck')">`:""}</td><td>${esc(x.chapter)}</td><td>${state}</td><td>${pending?"—":safe}</td><td>${pending?"—":res}</td><td>${result}</td></tr>`;}).join("");
+  let body=rows.map(x=>{let d=x.merge_level5_detail||{},pending=!!x.merge_level5_pending;let safe=Number(d.safe_artifacts_count||(d.safe_artifacts||[]).length||0);let res=Number(d.residual_pending_segments_count||(d.residual_pending_segments||[]).length||0);let state=pending?`<span class="warn">Pendente</span>`:(!d.valid?`<span class="bad">⚠ Inválido</span>`:`<span class="ok">✓ Analisado</span>`);let result=pending?`<span class="muted">Aguardando busca global exaustiva SAFE</span>`:(!d.valid?esc(d.error||"Manifesto inválido"):(res?`<span class="bad">Sem composição completa SAFE</span> · <button class="l3-result-link" onclick="reviewCh='${esc(x.chapter)}';page='merge_manual';document.querySelectorAll('nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page==='merge_manual'));render()">Merge Manual</button>`:`<span class="ok">Resolvido automaticamente</span>`));return `<tr data-n="${esc(String(x.chapter)).toLowerCase()}"><td>${pending?`<input class="ck" type="checkbox" value="${esc(x.chapter)}" onchange="syncVisibleMaster(document.querySelector('.visible-master'),'.ck')">`:""}</td><td>${esc(x.chapter)}</td><td>${state}</td><td>${pending?"—":safe}</td><td>${pending?"—":res}</td><td>${result}</td></tr>`;}).join("");
   r.innerHTML=head("Auto-Merge Nível V","Fallback global exaustivo preservado, usando somente cortes estruturais SAFE.")+`<div class="toolbar standard-filterbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><div class="status-filter" role="group" aria-label="Filtrar Nível V"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="pending"?"active":""}" onclick="setTableStatus('pending')">Pendentes</button><button class="tab ${tableStatus==="done"?"active":""}" onclick="setTableStatus('done')">Analisados</button></div><button class="btn primary filter-primary-action" onclick="runSelected('merge_level5')">Analisar Nível V</button></div><div class="panel"><table class="l3-table"><thead><tr><th>${visibleMaster()}</th><th>CAP.</th><th>NÍVEL V</th><th>SAFE</th><th>RESIDUAL</th><th>RESULTADO</th></tr></thead><tbody>${body||`<tr><td colspan="6" class="muted">Nenhum capítulo encontrado.</td></tr>`}</tbody></table>${pager}</div>`;
 }
 
@@ -1187,7 +1187,7 @@ function mergeOperationResultModal(j,s){
         : Number(raw.residual_pending_segments||0);
     const next=raw.next_stage || (
       pendingSegments
-        ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":action==="merge_level3"?"Auto-Merge Nível IV":action==="merge_level4"?"Auto-Merge Nível V":"Revisão Merge V2")
+        ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":action==="merge_level3"?"Auto-Merge Nível IV":action==="merge_level4"?"Auto-Merge Nível V":"Merge Manual")
         : "—"
     );
     const statusRaw=String(raw.status||"").toLowerCase();
@@ -1284,6 +1284,7 @@ function mergeOperationResultModal(j,s){
         </div>
         <div class="merge-chapter-actions">
           <button class="btn" type="button" data-open-merge-folder="${item._index}">Abrir pasta</button>
+          ${action==="merge_level5"&&item._pendingSegments>0?`<button class="btn primary" type="button" data-open-merge-manual="${item._index}">Validar Merge Manual</button>`:""}
         </div>
       </div>
     </section>
@@ -1348,6 +1349,21 @@ function mergeOperationResultModal(j,s){
     };
   });
 
+  overlay.querySelectorAll("[data-open-merge-manual]").forEach(btn=>{
+    btn.onclick=e=>{
+      e.stopPropagation();
+      const item=items[Number(btn.dataset.openMergeManual)];
+      if(!item)return;
+      close();
+      reviewCh=String(item.chapter||"");
+      page="merge_manual";
+      tablePage=1;
+      tableStatus="all";
+      window._tableQuery="";
+      document.querySelectorAll("nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page==="merge_manual"));
+      render();
+    };
+  });
   document.body.appendChild(overlay);
   document.addEventListener("keydown",appModalKey);
   return true;

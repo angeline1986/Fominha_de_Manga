@@ -2379,13 +2379,13 @@ def do_merge_level5(job,chs):
                         promoted,promote_msg=_promote_level5_complete(ch)
                         if promoted: clear_merge_failure(ch)
                     status="ok" if (residual or promoted) else "error"
-                    message=(f"Auto-Merge Nível V analisado: {len(safe)} trecho(s) SAFE; {len(residual)} região(ões) seguem para Review." if residual else ("Auto-Merge Nível V resolvido automaticamente." if promoted else (promote_msg or msg)))
+                    message=(f"Auto-Merge Nível V analisado: {len(safe)} trecho(s) SAFE; {len(residual)} região(ões) seguem para Merge Manual." if residual else ("Auto-Merge Nível V resolvido automaticamente." if promoted else (promote_msg or msg)))
                     pending_files=[]; seen=set()
                     for seg in residual:
                         for name in (seg.get("sources") or []):
                             name=str(name)
                             if name and name not in seen: seen.add(name); pending_files.append(name)
-                    out.append({"chapter":ch.name,"status":status,"message":message,"safe_segments":len(safe),"residual_pending_segments":len(residual),"stage_files":[str(x.get("file")) for x in safe if isinstance(x,dict) and x.get("file")],"pending_files":pending_files,"residuals":[{"global_start":int(x["global_start"]),"global_end":int(x["global_end"])} for x in residual if x.get("global_start") is not None and x.get("global_end") is not None],"reason_codes":[str(x.get("reason")) for x in residual if isinstance(x,dict) and x.get("reason")],"stage_folder":str(l5dir(ch.parent.parent,ch.name)),"next_stage":"Revisão Merge V2" if residual else "—"})
+                    out.append({"chapter":ch.name,"status":status,"message":message,"safe_segments":len(safe),"residual_pending_segments":len(residual),"stage_files":[str(x.get("file")) for x in safe if isinstance(x,dict) and x.get("file")],"pending_files":pending_files,"residuals":[{"global_start":int(x["global_start"]),"global_end":int(x["global_end"])} for x in residual if x.get("global_start") is not None and x.get("global_end") is not None],"reason_codes":[str(x.get("reason")) for x in residual if isinstance(x,dict) and x.get("reason")],"stage_folder":str(l5dir(ch.parent.parent,ch.name)),"next_stage":"Merge Manual" if residual else "—"})
         except Exception as exc: out.append({"chapter":ch.name,"status":"error","message":str(exc)})
         job.progress=i; job.progress_value=float(i)
     return out
