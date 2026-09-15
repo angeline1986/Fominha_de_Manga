@@ -82,3 +82,13 @@
 .toc-table tbody tr:hover {
   background: rgba(24,138,180,.045) !important;
 }
+
+/* Mega Menu — identidade azul do overlay e sombra */
+:root {
+  --fm-mega-shadow-rgb: 6, 69, 90;
+}
+
+.fm-mega-overlay {
+  background: rgba(6, 69, 90, .18) !important;
+}
+
