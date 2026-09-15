@@ -112,7 +112,7 @@
     const actionHint=level3Preview?"Confira o resultado antes de aplicar. Em imagens de Merge, a aprovação também atualiza o arquivo correspondente em 02_MERGE.":"Análise automática ou seleção manual da área residual.";
     const actionButtons=level3Preview
       ? `<div class="toc-level3-action-buttons"><button class="btn" type="button" ${level3Approving?"disabled":""} onclick="TextOffCompareUI.resetLevel3Preview()">Refazer seleção</button><button class="btn primary" type="button" ${level3Approving?"disabled":""} onclick="TextOffCompareUI.approveLevel3Preview()">${level3Approving?"Aprovando…":"Aprovar correção"}</button></div>`
-      : `<div class="toc-level3-action-buttons"><button id="tocLevel3SelectArea" class="btn" type="button" onclick="TextOffCompareUI.toggleLevel3Selection()">${level3Selecting?"Cancelar seleção":"Selecionar área"}</button><button id="tocLevel3GeneratePreview" class="btn" type="button" ${!level3Selection||level3Previewing?"disabled":""} onclick="TextOffCompareUI.generateLevel3Preview()">${level3Previewing?"Gerando prévia…":"Gerar prévia"}</button><button class="btn primary" type="button" ${level3Analyzing||level3Previewing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button></div>`;
+      : `<div class="toc-level3-action-buttons"><button class="btn primary" type="button" ${level3Analyzing||level3Previewing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button><button id="tocLevel3SelectArea" class="btn" type="button" onclick="TextOffCompareUI.toggleLevel3Selection()">${level3Selecting?"Cancelar seleção":"Selecionar área"}</button><button id="tocLevel3GeneratePreview" class="btn" type="button" ${!level3Selection||level3Previewing?"disabled":""} onclick="TextOffCompareUI.generateLevel3Preview()">${level3Previewing?"Gerando prévia…":"Gerar prévia"}</button></div>`;
     const leftTitle=level3Preview?"RESULTADO ATUAL":"ORIGINAL";
     const leftMeta=level3Preview?"Antes":(row.source_stage==="MERGE"?"Fonte: MERGE":"Fonte: IMG");
     const leftUrl=level3Preview?level3MediaUrl("textoff_clean",row,row.clean_file):level3MediaUrl("textoff_source",row,row.source_file);
@@ -126,7 +126,7 @@
     const host=document.querySelector("#textoffLevel3Body");if(!host)return;
     if(level3Loading){host.innerHTML='<div class="muted">Carregando correções sinalizadas…</div>';return}
     const rows=Array.isArray(level3State?.rows)?level3State.rows:[];
-    host.innerHTML=`<div class="toc-level3-summary"><div><b>${rows.length}</b><span>${rows.length===1?"imagem pendente":"imagens pendentes"}</span></div></div>${level3Table(rows)}${level3Detail(level3Current())}`;
+    host.innerHTML=`${level3Table(rows)}${level3Detail(level3Current())}`;
     requestAnimationFrame(()=>{bindLevel3Scroll();bindLevel3ManualSelection()});
   }
   function renderCorrection(root){
