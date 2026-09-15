@@ -26,3 +26,6 @@ interface_web.zip
 processamento.zip
 
 gui_config.json
+
+# Cleaner V2 local environment
+processamento/limpeza_baloes/cleaner_v2/.venv/

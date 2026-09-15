@@ -1,4 +1,4 @@
-const $=s=>document.querySelector(s);let cat={},data=null,page="overview",reviewCh=null,lastUpdated="",tablePage=1,tableStatus="all";const PAGE_SIZE=10;const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));async function api(u,o){let r=await fetch(u,o),j=await r.json();if(!r.ok)throw Error(j.error||"Erro");return j}function toast(m){let t=$("#toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",4000)}
+const $=s=>document.querySelector(s);let cat={},data=null,page="overview",reviewCh=null,lastUpdated="",tablePage=1,tableStatus="all";const PAGE_SIZE=15;const esc=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));async function api(u,o){let r=await fetch(u,o),j=await r.json();if(!r.ok)throw Error(j.error||"Erro");return j}function toast(m){let t=$("#toast");t.textContent=m;t.style.display="block";setTimeout(()=>t.style.display="none",4000)}
 let appModalResolve=null;
 function closeAppModal(value=false){document.querySelector("#appModal")?.remove();document.removeEventListener("keydown",appModalKey);if(appModalResolve){let r=appModalResolve;appModalResolve=null;r(value)}}
 function appModalKey(e){if(e.key==="Escape")closeAppModal(false)}
@@ -63,7 +63,7 @@ function toggleTextoOffNav(button){
   button.setAttribute("aria-expanded",String(open));
   localStorage.setItem("fominha.textoOff.expanded",open?"1":"0");
 }
-async function init(){applySidebarState();applyTextoOffNavState();applyPdfNavState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=fill;$("#manga").onchange=load;document.querySelectorAll("nav button[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button[data-page]").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load()}async function load(){let p=$("#provider").value,m=$("#manga").value;if(!m){data=null;return render()}data=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);lastUpdated=new Date().toLocaleTimeString("pt-BR");updateSidebarSyncState();$("#badge").textContent=data.summary.review_pending??data.summary.pending??0;let b2=$("#badgeLevel2");if(b2)b2.textContent=data.summary.partial||0;render()}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div class="page-title-wrap" tabindex="0"><h1>${esc(t)}</h1>${d?`<span class="page-title-tooltip" role="tooltip">${esc(d)}</span>`:""}</div></div>`}
+async function init(){applySidebarState();applyTextoOffNavState();applyPdfNavState();cat=await api("/api/catalog");$("#provider").innerHTML=Object.keys(cat).map(x=>`<option>${x}</option>`).join("");$("#provider").onchange=()=>fill(true);$("#manga").onchange=()=>load(true);document.querySelectorAll("nav button[data-page]").forEach(b=>b.onclick=()=>{page=b.dataset.page;tablePage=1;tableStatus="all";window._tableQuery="";document.querySelectorAll("nav button[data-page]").forEach(x=>x.classList.toggle("active",x===b));render()});fill()}function fill(showLoading=false){let p=$("#provider").value;$("#manga").innerHTML=(cat[p]||[]).map(x=>`<option>${esc(x)}</option>`).join("");load(showLoading)}let workLoadSeq=0,workLoading=false;async function load(showLoading=false){const seq=++workLoadSeq;let p=$("#provider").value,m=$("#manga").value;if(!m){workLoading=false;data=null;return render()}if(showLoading){workLoading=true;render()}try{const nextData=await api(`/api/state?provider=${encodeURIComponent(p)}&manga=${encodeURIComponent(m)}&_=${Date.now()}`);if(seq!==workLoadSeq||$("#provider").value!==p||$("#manga").value!==m)return;data=nextData;workLoading=false;lastUpdated=new Date().toLocaleTimeString("pt-BR");updateSidebarSyncState();$("#badge").textContent=data.summary.review_pending??data.summary.pending??0;let b2=$("#badgeLevel2");if(b2)b2.textContent=data.summary.partial||0;render()}catch(e){if(seq===workLoadSeq){workLoading=false;if(showLoading){let root=$("#page");if(root)root.innerHTML='<div class="muted">Não foi possível carregar a obra.</div>'}}throw e}}async function refreshStatus(){let p=$("#provider").value,m=$("#manga").value;cat=await api(`/api/catalog?_=${Date.now()}`);let providers=Object.keys(cat);$("#provider").innerHTML=providers.map(x=>`<option>${x}</option>`).join("");$("#provider").value=providers.includes(p)?p:(providers[0]||"");let works=cat[$("#provider").value]||[];$("#manga").innerHTML=works.map(x=>`<option>${esc(x)}</option>`).join("");$("#manga").value=works.includes(m)?m:(works[0]||"");await load()}function head(t,d){return `<div class="head"><div class="page-title-wrap" tabindex="0"><h1>${esc(t)}</h1>${d?`<span class="page-title-tooltip" role="tooltip">${esc(d)}</span>`:""}</div></div>`}
 function normalizePdfMergeTable(){
   const tables=[...document.querySelectorAll("table")];
   const table=tables.find(t=>{
@@ -159,7 +159,7 @@ function installPdfMergeUiNormalizer(){
   requestAnimationFrame(run);
 }
 
-function render(){let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let b4=$("#badgeLevel4");if(b4&&data)b4.textContent=data.chapters.filter(x=>x.merge_level4_pending).length;let b5=$("#badgeLevel5");if(b5&&data)b5.textContent=data.chapters.filter(x=>x.merge_level5_pending).length;let root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="merge_level4")return mergeLevel4(root);if(page==="merge_level5")return mergeLevel5(root);if(page==="balance")return BalanceamentoUI.renderValidation(root);if(page==="balance_execute")return BalanceamentoUI.renderExecution(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
+function render(){let root=$("#page");if(workLoading){let obra=$("#manga")?.value||"obra";root.innerHTML=`<div class="muted">Carregando ${esc(obra)}…</div>`;return}let b3=$("#badgeLevel3");if(b3&&data)b3.textContent=data.chapters.filter(x=>x.merge_level3_pending).length;let b4=$("#badgeLevel4");if(b4&&data)b4.textContent=data.chapters.filter(x=>x.merge_level4_pending).length;let b5=$("#badgeLevel5");if(b5&&data)b5.textContent=data.chapters.filter(x=>x.merge_level5_pending).length;root=$("#page");if(!data){root.innerHTML='<div class="muted">Nenhuma obra encontrada.</div>';return}if(page==="overview")return overview(root);if(page==="validate_images")return validateImages(root);if(page==="merge_level2")return mergeLevel2(root);if(page==="merge_level3")return mergeLevel3(root);if(page==="merge_level4")return mergeLevel4(root);if(page==="merge_level5")return mergeLevel5(root);if(page==="balance")return BalanceamentoUI.renderValidation(root);if(page==="balance_execute")return BalanceamentoUI.renderExecution(root);if(page==="merge_manual")return MergeManualUI.renderValidation(root);if(page==="merge_manual_cuts")return MergeManualUI.renderCuts(root);if(page==="review")return review(root);if(page==="review_v2")return reviewV2(root);if(page==="textoff_compare")return TextOffCompareUI.render(root);if(page==="textoff_level3")return TextOffCompareUI.renderCorrection(root);table(root,page)}function overview(r){let s=data.summary,p=data.chapters.filter(x=>x.merge_state==="pendente_review"||(x.merge_state==="parcial"&&!x.merge_level2_validated)).slice(0,4);r.innerHTML=`<div class="head"><div><div class="caption">VISÃO GERAL</div><div class="page-title-wrap" tabindex="0"><h1>${esc(data.manga)}</h1><span class="page-title-tooltip" role="tooltip">${esc(data.provider)} · pós-processamento</span></div></div></div><div class="kpis"><div class="kpi"><b>${s.chapters}</b><span>CAPÍTULOS</span></div><div class="kpi"><b>${s.merges}</b><span>MERGES</span></div><div class="kpi"><b>${s.pending}</b><span>PENDENTES DE REVISÃO</span></div><div class="kpi"><b>${s.partial??0}</b><span>NÍVEL II</span></div><div class="kpi"><b>${s.review}</b><span>EM REVISÃO</span></div><div class="kpi"><b>${s.pdfs}</b><span>PDFs ORIGINAIS</span></div></div><h3>Atividade da obra</h3><div class="activity">${p.map(x=>`<div class="card"><div><b>Capítulo ${esc(x.chapter)} <span class="warn">· ${x.merge_state==="parcial"?"NÍVEL II":"PENDENTE DE REVISÃO"}</span></b><div class="muted">${mergePartialText(x)}</div></div><button class="btn primary" onclick="${x.merge_state==="parcial"?`goLevel2('${esc(x.chapter)}')`:`goReview('${esc(x.chapter)}')`}">Tratar agora</button></div>`).join("")||'<div class="card ok">Todos os merges concluídos.</div>'}</div>`}function mergeLabel(x){
   if(x.merge)return {cls:"ok",text:`✓ ${x.merged_images}`};
   if(x.merge_error)return {cls:"warn",text:"⚠ Inválido"};
   if(x.merge_state==="parcial")return {cls:"warn",text:"Parcial"};
@@ -261,7 +261,7 @@ function tableFilteredRows(k){
   return rows;
 }
 function table(r,k){
-  let cfg={pdf:["Gerar PDF","Gerar PDFs a partir das imagens originais validadas.","pdf"],merge:["Auto-Merge","Aplicar o Merge V3 preservando IMG.","merge"],clean:["Texto Off — Original","Executar Bubble Cleaner V3.5 nas imagens originais.","clean"],clean_merged:["Texto Off — Merged","Limpeza de texto aplicada às imagens consolidadas em MERGE.","clean_merged"],pdf_merge:["PDF do Merge","Gerar PDF com as imagens oficialmente unificadas.","pdf_merge"]}[k];
+  let cfg={pdf:["Gerar PDF","Gerar PDFs a partir das imagens originais validadas.","pdf"],merge:["Auto-Merge","Aplicar o Merge V3 preservando IMG.","merge"],clean:["Texto Off — Original","Executar Cleaner V2 nas imagens originais.","clean"],clean_merged:["Texto Off — Merged","Limpeza de texto aplicada às imagens consolidadas em MERGE.","clean_merged"],pdf_merge:["PDF do Merge","Gerar PDF com as imagens oficialmente unificadas.","pdf_merge"]}[k];
   let all=tableFilteredRows(k),pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));tablePage=Math.min(Math.max(1,tablePage),pages);let cleanField=k==="clean_merged"?"clean_merged":"clean";
   let rows=all.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
   let statusFilter=tableStatusFilter(k);
@@ -282,11 +282,79 @@ function mergePartialText(x){
   if(!pending)return "Auto-Merge não conseguiu concluir este capítulo.";
   return `${resolved} página(s) resolvida(s) automaticamente · ${pending} página(s) permanecem para revisão.`;
 }
+function reviewPendingSegments(x){
+  const l5=x?.merge_level5_detail;
+  if(l5?.available&&l5?.valid){
+    const segs=Array.isArray(l5.review_pending_segments)?l5.review_pending_segments:[];
+    if(segs.length)return segs;
+  }
+
+  const l4=x?.merge_level4_detail;
+  if(l4?.available&&l4?.valid&&l4?.algorithm==="merge_level4_global_structural_safe_v1"){
+    const segs=Array.isArray(l4.review_pending_segments)&&l4.review_pending_segments.length
+      ? l4.review_pending_segments
+      : (Array.isArray(l4.residual_pending_segments)?l4.residual_pending_segments:[]);
+    if(segs.length)return segs;
+  }
+
+  const p=x?.merge_partition||{};
+  return Array.isArray(p.pending_segments)?p.pending_segments:[];
+}
+
+function reviewSegmentSourcePages(seg){
+  const start=Number(seg?.global_start);
+  const end=Number(seg?.global_end);
+  const spans=Array.isArray(seg?.source_spans)?seg.source_spans:[];
+
+  if(Number.isFinite(start)&&Number.isFinite(end)&&end>start&&spans.length){
+    const files=spans
+      .filter(sp=>{
+        const spStart=Number(sp?.global_start);
+        const spEnd=Number(sp?.global_end);
+        return Number.isFinite(spStart)
+          && Number.isFinite(spEnd)
+          && spEnd>start
+          && spStart<end;
+      })
+      .map(sp=>sp?.file)
+      .filter(Boolean);
+
+    if(files.length)return files;
+  }
+
+  return Array.isArray(seg?.sources)?seg.sources.filter(Boolean):[];
+}
+
+function reviewPendingSourcePages(segs){
+  const seen=new Set();
+  const pages=[];
+  for(const seg of segs){
+    for(const file of reviewSegmentSourcePages(seg)){
+      if(!seen.has(file)){
+        seen.add(file);
+        pages.push(file);
+      }
+    }
+  }
+  return pages;
+}
+
 function reviewPendingSummary(x){
-  const p=x?.merge_partition||{},segs=Array.isArray(p.pending_segments)?p.pending_segments:[];
+  const segs=reviewPendingSegments(x);
   if(!segs.length)return "Este capítulo está pendente e ainda não possui uma proposta de merge.";
-  const labels=segs.map(s=>{const src=Array.isArray(s.sources)?s.sources:[];if(!src.length)return `Y ${s.global_start??"?"} → ${s.global_end??"?"}`;return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;});
-  return `${Number(p.resolved_source_pages_count||0)} página(s) já foram resolvida(s) automaticamente. ${Number(p.pending_source_pages_count||0)} página(s) permanecem na revisão: ${labels.join("; ")}.`;
+
+  const labels=segs.map(s=>{
+    const src=reviewSegmentSourcePages(s);
+    if(!src.length)return `Y ${s.global_start??"?"} → ${s.global_end??"?"}`;
+    return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;
+  });
+
+  const pendingPages=reviewPendingSourcePages(segs);
+  const totalPages=Number(x?.pages||0);
+  const pending=pendingPages.length;
+  const resolved=Math.max(0,totalPages-pending);
+
+  return `${resolved} página(s) já foram resolvida(s) automaticamente. ${pending} página(s) permanecem na revisão: ${labels.join("; ")}.`;
 }
 
 function segLabel(s){const src=Array.isArray(s?.sources)?s.sources:[];if(src.length)return src.length===1?src[0]:`${src[0]} → ${src[src.length-1]}`;return `Y ${s?.global_start??"?"} → ${s?.global_end??"?"}`}
@@ -453,7 +521,7 @@ function mergeLevel5(r){
   if(!list.length){r.innerHTML=head("Auto-Merge Nível V","Fallback global exaustivo preservado, usando somente cortes estruturais SAFE.")+`<div class="empty">Nenhum capítulo aguardando Auto-Merge Nível V.</div>`;return;}
   let pages=Math.max(1,Math.ceil(filtered.length/PAGE_SIZE));tablePage=Math.min(tablePage,pages);let rows=filtered.slice((tablePage-1)*PAGE_SIZE,tablePage*PAGE_SIZE);
   let pager=`<div class="table-pager"><span>${filtered.length?((tablePage-1)*PAGE_SIZE+1):0}-${Math.min(tablePage*PAGE_SIZE,filtered.length)} de ${filtered.length}</span><div><button class="btn" ${tablePage<=1?"disabled":""} onclick="changeTablePage(-1)">&lt;&lt;</button><span class="page-indicator">${tablePage} / ${pages}</span><button class="btn" ${tablePage>=pages?"disabled":""} onclick="changeTablePage(1)">&gt;&gt;</button></div></div>`;
-  let body=rows.map(x=>{let d=x.merge_level5_detail||{},pending=!!x.merge_level5_pending;let safe=Number(d.safe_artifacts_count||(d.safe_artifacts||[]).length||0);let res=Number(d.residual_pending_segments_count||(d.residual_pending_segments||[]).length||0);let state=pending?`<span class="warn">Pendente</span>`:(!d.valid?`<span class="bad">⚠ Inválido</span>`:`<span class="ok">✓ Analisado</span>`);let result=pending?`<span class="muted">Aguardando busca global exaustiva SAFE</span>`:(!d.valid?esc(d.error||"Manifesto inválido"):(res?`<span class="bad">Sem composição completa SAFE</span> · <button class="l3-result-link" onclick="reviewCh='${esc(x.chapter)}';page='review_v2';document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('active',b.dataset.page==='review_v2'));render()">Revisão Merge V2</button>`:`<span class="ok">Resolvido automaticamente</span>`));return `<tr data-n="${esc(String(x.chapter)).toLowerCase()}"><td>${pending?`<input class="ck" type="checkbox" value="${esc(x.chapter)}" onchange="syncVisibleMaster(document.querySelector('.visible-master'),'.ck')">`:""}</td><td>${esc(x.chapter)}</td><td>${state}</td><td>${pending?"—":safe}</td><td>${pending?"—":res}</td><td>${result}</td></tr>`;}).join("");
+  let body=rows.map(x=>{let d=x.merge_level5_detail||{},pending=!!x.merge_level5_pending;let safe=Number(d.safe_artifacts_count||(d.safe_artifacts||[]).length||0);let res=Number(d.residual_pending_segments_count||(d.residual_pending_segments||[]).length||0);let state=pending?`<span class="warn">Pendente</span>`:(!d.valid?`<span class="bad">⚠ Inválido</span>`:`<span class="ok">✓ Analisado</span>`);let result=pending?`<span class="muted">Aguardando busca global exaustiva SAFE</span>`:(!d.valid?esc(d.error||"Manifesto inválido"):(res?`<span class="bad">Sem composição completa SAFE</span> · <button class="l3-result-link" onclick="reviewCh='${esc(x.chapter)}';page='merge_manual';document.querySelectorAll('nav button[data-page]').forEach(b=>b.classList.toggle('active',b.dataset.page==='merge_manual'));render()">Merge Manual</button>`:`<span class="ok">Resolvido automaticamente</span>`));return `<tr data-n="${esc(String(x.chapter)).toLowerCase()}"><td>${pending?`<input class="ck" type="checkbox" value="${esc(x.chapter)}" onchange="syncVisibleMaster(document.querySelector('.visible-master'),'.ck')">`:""}</td><td>${esc(x.chapter)}</td><td>${state}</td><td>${pending?"—":safe}</td><td>${pending?"—":res}</td><td>${result}</td></tr>`;}).join("");
   r.innerHTML=head("Auto-Merge Nível V","Fallback global exaustivo preservado, usando somente cortes estruturais SAFE.")+`<div class="toolbar standard-filterbar"><input id="q" class="search" placeholder="Buscar capítulo..." value="${esc(window._tableQuery||"")}" oninput="window._tableQuery=this.value;tablePage=1;render()"><div class="status-filter" role="group" aria-label="Filtrar Nível V"><button class="tab ${tableStatus==="all"?"active":""}" onclick="setTableStatus('all')">Todos</button><button class="tab ${tableStatus==="pending"?"active":""}" onclick="setTableStatus('pending')">Pendentes</button><button class="tab ${tableStatus==="done"?"active":""}" onclick="setTableStatus('done')">Analisados</button></div><button class="btn primary filter-primary-action" onclick="runSelected('merge_level5')">Analisar Nível V</button></div><div class="panel"><table class="l3-table"><thead><tr><th>${visibleMaster()}</th><th>CAP.</th><th>NÍVEL V</th><th>SAFE</th><th>RESIDUAL</th><th>RESULTADO</th></tr></thead><tbody>${body||`<tr><td colspan="6" class="muted">Nenhum capítulo encontrado.</td></tr>`}</tbody></table>${pager}</div>`;
 }
 
@@ -1119,7 +1187,7 @@ function mergeOperationResultModal(j,s){
         : Number(raw.residual_pending_segments||0);
     const next=raw.next_stage || (
       pendingSegments
-        ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":action==="merge_level3"?"Auto-Merge Nível IV":action==="merge_level4"?"Auto-Merge Nível V":"Revisão Merge V2")
+        ? (action==="merge"?"Auto-Merge Nível II":action==="merge_level2"?"Auto-Merge Nível III":action==="merge_level3"?"Auto-Merge Nível IV":action==="merge_level4"?"Auto-Merge Nível V":"Merge Manual")
         : "—"
     );
     const statusRaw=String(raw.status||"").toLowerCase();
@@ -1216,6 +1284,7 @@ function mergeOperationResultModal(j,s){
         </div>
         <div class="merge-chapter-actions">
           <button class="btn" type="button" data-open-merge-folder="${item._index}">Abrir pasta</button>
+          ${action==="merge_level5"&&item._pendingSegments>0?`<button class="btn primary" type="button" data-open-merge-manual="${item._index}">Validar Merge Manual</button>`:""}
         </div>
       </div>
     </section>
@@ -1280,6 +1349,21 @@ function mergeOperationResultModal(j,s){
     };
   });
 
+  overlay.querySelectorAll("[data-open-merge-manual]").forEach(btn=>{
+    btn.onclick=e=>{
+      e.stopPropagation();
+      const item=items[Number(btn.dataset.openMergeManual)];
+      if(!item)return;
+      close();
+      reviewCh=String(item.chapter||"");
+      page="merge_manual";
+      tablePage=1;
+      tableStatus="all";
+      window._tableQuery="";
+      document.querySelectorAll("nav button[data-page]").forEach(b=>b.classList.toggle("active",b.dataset.page==="merge_manual"));
+      render();
+    };
+  });
   document.body.appendChild(overlay);
   document.addEventListener("keydown",appModalKey);
   return true;
@@ -1292,6 +1376,19 @@ function showJobResult(j){
   if(mergeOperationResultModal(j,s)) return;
   if(level2ResultModal(j,s)) return;
   if(reviewResultModal(j,s)) return;
+  if((j.action==="clean"||j.action==="clean_merged") && s.kind==="success"){
+    const merged=j.action==="clean_merged";
+    appModal({
+      title:merged?"Texto Off — Merged concluído":"Texto Off — Original concluído",
+      message:merged
+        ?"O Cleaner V2 concluiu a limpeza das imagens consolidadas em MERGE."
+        :"O Cleaner V2 concluiu a limpeza das imagens originais.",
+      kind:"success",
+      chips:[{value:s.ok,label:s.ok===1?"capítulo concluído":"capítulos concluídos"}],
+      confirmText:"Fechar"
+    }).then(()=>load());
+    return;
+  }
   if(s.kind==="error"||s.kind==="partial"){
     let occurrences=(s.details||[]).map(line=>{
       let m=String(line).match(/^Cap\.\s*([^:]+):\s*(.*)$/s);
@@ -1324,6 +1421,24 @@ function poll(id,action="",expectedTotal=0){
   b.hidden=false;
   let busy=false;
   let lastStateRefresh=0;
+  let stateRefreshBusy=false;
+  let stateRefreshPending=false;
+  const refreshState=()=>{
+    if(stateRefreshBusy){
+      stateRefreshPending=true;
+      return;
+    }
+    stateRefreshBusy=true;
+    load()
+      .catch(e=>console.warn("Falha ao atualizar status parcial:",e))
+      .finally(()=>{
+        stateRefreshBusy=false;
+        if(stateRefreshPending){
+          stateRefreshPending=false;
+          refreshState();
+        }
+      });
+  };
   const updateProgress=j=>{
     const total=Math.max(0,Number(j.total)||Number(expectedTotal)||0);
     const completed=Math.max(0,Math.min(total||Number.MAX_SAFE_INTEGER,Number(j.progress)||0));
@@ -1359,8 +1474,7 @@ function poll(id,action="",expectedTotal=0){
 
       let now=Date.now();
       if(!["done","error"].includes(j.status) && now-lastStateRefresh>=1200){
-        try{ await load(); }
-        catch(e){ console.warn("Falha ao atualizar status parcial:",e); }
+        refreshState();
         lastStateRefresh=now;
       }
       if(["done","error"].includes(j.status)){
@@ -1369,9 +1483,9 @@ function poll(id,action="",expectedTotal=0){
           j.progress=Number(j.total);
           updateProgress(j);
         }
-        await load();
         setTimeout(()=>b.hidden=true,1200);
         showJobResult(j);
+        refreshState();
       }
     }catch(e){
       console.warn("Falha no polling do job:",e);

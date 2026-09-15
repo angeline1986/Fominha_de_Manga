@@ -11,6 +11,7 @@ Contrato v1:
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 from typing import Callable, Any
 
 import numpy as np
@@ -26,6 +27,7 @@ DEFAULT_TARGET_HEIGHT = 7000
 DEFAULT_MIN_CHUNK_HEIGHT = 3000
 DEFAULT_MAX_CHUNK_HEIGHT = 12000
 DEFAULT_SCAN_STEP = 2
+DEFAULT_CLASSIFIER_WORKERS = 8
 
 
 def _path_score(chunks: list[int], target_height: int) -> tuple:
@@ -121,6 +123,7 @@ def find_global_safe_composition(
     min_chunk_height: int = DEFAULT_MIN_CHUNK_HEIGHT,
     max_chunk_height: int = DEFAULT_MAX_CHUNK_HEIGHT,
     scan_step: int = DEFAULT_SCAN_STEP,
+    classifier_workers: int = DEFAULT_CLASSIFIER_WORKERS,
     progress_callback: Callable[[int, int], None] | None = None,
 ) -> dict[str, Any]:
     start = int(global_start)
@@ -132,6 +135,7 @@ def find_global_safe_composition(
     max_h = max(min_h, int(max_chunk_height))
     target = max(min_h, min(max_h, int(target_height)))
     step = max(1, int(scan_step))
+    workers = max(1, int(classifier_workers))
     height = end - start
     region = Level3PendingRegion(start, end)
     cfg = config or Level3Config()
@@ -186,7 +190,7 @@ def find_global_safe_composition(
             first = lower + ((parity - lower) % 2)
             positions = range(first, upper + 1, 2)
 
-        for y in positions:
+        def classify(y: int) -> tuple[int, Any]:
             result = analyze_structural_candidate(
                 gray,
                 candidate_y=int(y),
@@ -194,14 +198,28 @@ def find_global_safe_composition(
                 image_global_start=start,
                 config=cfg,
             )
-            evaluated += 1
-            decision = result.decision.value
-            decision_counts[decision] = decision_counts.get(decision, 0) + 1
-            reason_counts[result.reason] = reason_counts.get(result.reason, 0) + 1
-            if result.decision == Level3Decision.SAFE:
-                safe_results[int(y)] = result
-            if progress_callback is not None:
-                progress_callback(evaluated, eligible_total)
+            return int(y), result
+
+        if workers == 1:
+            classified = map(classify, positions)
+            executor = None
+        else:
+            executor = ThreadPoolExecutor(max_workers=workers)
+            classified = executor.map(classify, positions)
+
+        try:
+            for y, result in classified:
+                evaluated += 1
+                decision = result.decision.value
+                decision_counts[decision] = decision_counts.get(decision, 0) + 1
+                reason_counts[result.reason] = reason_counts.get(result.reason, 0) + 1
+                if result.decision == Level3Decision.SAFE:
+                    safe_results[int(y)] = result
+                if progress_callback is not None:
+                    progress_callback(evaluated, eligible_total)
+        finally:
+            if executor is not None:
+                executor.shutdown(wait=True)
 
         boundaries = _best_complete_path(
             start=start,

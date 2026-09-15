@@ -1,0 +1,225 @@
+.merge-manual-nav{display:grid;gap:3px}.merge-manual-toggle{display:flex!important;align-items:center;justify-content:space-between;width:100%}.merge-manual-children{display:none;padding-left:14px;gap:3px}.merge-manual-nav.open .merge-manual-children{display:grid}.merge-manual-children button{font-size:12px}
+.mm-page{position:relative;padding-bottom:92px}.mm-loading{padding:28px;color:#8f747c}.mm-toolbar{margin-bottom:14px}.mm-table-panel{overflow:hidden}.mm-table{width:100%;border-collapse:collapse}.mm-table th,.mm-table td{padding:13px 14px;border-bottom:1px solid #efdde2;text-align:left;vertical-align:middle}.mm-table th{font-size:11px;letter-spacing:.08em;color:#a13b59}.mm-row.selected{background:#fff8fa}.mm-chapter-link{border:0;background:transparent;padding:0;color:#44363b;font:inherit;font-weight:700;cursor:pointer;text-decoration:none}.mm-chapter-link:hover,.mm-chapter-link:focus-visible{color:#a83b5b;text-decoration:underline;text-underline-offset:3px}.mm-section-gap{height:14px}.mm-chapter-section{overflow:hidden;background:#fff}.mm-chapter-section-head{display:grid;grid-template-columns:auto minmax(390px,520px) minmax(210px,1fr) auto;gap:18px;align-items:end;padding:14px 18px;border-bottom:1px solid #efdde2}.mm-chapter-title{font-size:18px;font-weight:800;color:#44363b;white-space:nowrap;padding-bottom:8px}.mm-detail-error{display:grid;gap:5px;padding:18px 20px 22px}.mm-detail-error span{color:#b45c68}.mm-resolved-note{padding:18px;color:#6e555d}.mm-block-list{display:grid;gap:12px;padding:0 18px 18px}.mm-range-row{display:grid;grid-template-columns:minmax(180px,1fr) minmax(180px,1fr);gap:14px;max-width:720px}.mm-range-row-inline{grid-template-columns:minmax(150px,1fr) auto minmax(150px,1fr);gap:8px;max-width:none;align-items:end}.mm-range-row label{display:grid;gap:6px}.mm-range-row label>span{font-size:11px;color:#a13b59;font-weight:700}.mm-range-row select{width:100%;min-height:40px;border-radius:9px;border:1px solid #e2bec9;background:#fff;color:#49383e;padding:0 34px 0 10px;box-shadow:none}.mm-range-row select:focus{outline:2px solid rgba(168,59,91,.14);outline-offset:1px;border-color:#bd6f86}.mm-range-arrow{align-self:end;display:grid;place-items:center;height:40px;min-width:22px;color:#6e555d;font-weight:800}.mm-range-summary{font-size:12px;color:#80666e}.mm-range-summary-inline{display:grid;gap:3px;align-self:end;padding-bottom:5px}.mm-range-summary-inline b{font-size:12px;color:#695158;font-weight:500}.mm-range-summary-inline span{font-size:12px;color:#9e405c}.mm-review-notice{margin:16px 18px 12px;padding:11px 14px;border-radius:10px;background:#e6f5ef;color:#14634f;font-size:12px;line-height:1.45}.mm-block-card{padding:14px;border:1px solid #ead6dc;border-radius:12px;background:#fff}.mm-block-head{display:flex;justify-content:space-between;gap:16px;align-items:center}.mm-block-head>div{display:grid;gap:4px}.mm-block-head>span{font-size:12px;color:#a13b59}.mm-eyebrow{font-size:10px;letter-spacing:.09em;color:#ad4663}.mm-status{display:inline-flex;align-items:center;border-radius:999px;padding:4px 8px;font-size:11px;font-weight:700}.mm-status-pending{background:#fff0f3;color:#a83b5b}.mm-status-ok{background:#e3f4ee;color:#22765e}.mm-status-blocked{background:#fbe8e9;color:#b4515d}.mm-actionbar{position:fixed;z-index:35;left:calc(var(--sidebar-w,220px) + 24px);right:24px;bottom:28px;min-height:62px;padding:10px 14px;border:1px solid #e8c8d2;border-radius:13px;background:#fff9fb;color:#44363b;backdrop-filter:blur(12px);box-shadow:0 10px 28px rgba(111,45,65,.14);display:flex;align-items:center;justify-content:space-between;gap:18px}.mm-actionbar>div{display:grid;gap:3px}.mm-actionbar span{font-size:12px;color:#9e405c}.mm-actionbar .btn.primary{background:#a83b5b;border-color:#a83b5b;color:#fff}.mm-actionbar .btn.primary:hover:not(:disabled){background:#94314e;border-color:#94314e}.mm-actionbar .btn.primary:disabled{background:#d7a9b7;border-color:#d7a9b7;color:#fff;opacity:.72}body.sidebar-collapsed .mm-actionbar{left:84px}.mm-cut-toolbar{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:13px 15px;margin-bottom:14px}.mm-cut-toolbar>div:first-child{display:grid;gap:4px}.mm-tool-controls{display:flex;align-items:center;gap:8px}.mm-separator{width:1px;height:24px;background:#ead6dc;margin:0 3px}.mm-stream-wrap{display:flex;justify-content:center;overflow:auto;padding:14px;border:1px solid #ead6dc;border-radius:12px;background:#f8f4f5}.mm-stream{--mm-zoom:1;width:min(100%,900px)}.mm-source{position:relative;margin:0;padding:0;line-height:0}.mm-source figcaption{position:absolute;z-index:2;top:8px;left:8px;line-height:1.2;padding:5px 7px;border-radius:6px;background:rgba(65,45,52,.82);color:#fff;font-size:11px}.mm-source img{display:block;width:calc(100% * var(--mm-zoom));max-width:none;height:auto;margin:0 auto}.mm-readonly-note{margin-top:12px;text-align:center;font-size:12px;color:#8f747c}@media(max-width:1100px){.mm-chapter-section-head{grid-template-columns:auto minmax(360px,1fr) auto}.mm-range-summary-inline{grid-column:2/3}.mm-chapter-section-head>.mm-status{grid-column:3;grid-row:1}}@media(max-width:900px){.mm-range-row{grid-template-columns:1fr}.mm-range-row-inline{grid-template-columns:1fr}.mm-range-arrow{display:none}.mm-chapter-section-head{grid-template-columns:1fr;align-items:stretch}.mm-range-summary-inline,.mm-chapter-section-head>.mm-status{grid-column:auto;grid-row:auto}.mm-chapter-title{padding-bottom:0}.mm-actionbar{left:16px;right:16px}.mm-cut-toolbar{align-items:flex-start;flex-direction:column}.mm-tool-controls{flex-wrap:wrap}}
+
+
+/* Merge Manual — preview imediato da subfaixa selecionada */
+.mm-selected-preview{
+  margin:46px 16px 18px;
+  padding:14px 14px 12px;
+  border:1px solid #ead6dc;
+  border-radius:12px;
+  background:#fff9fb;
+}
+.mm-selected-preview-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:12px;
+}
+.mm-selected-preview-head>span:last-child{
+  font-size:12px;
+  color:#a13b59;
+}
+.mm-selected-preview-strip{
+  display:flex;
+  gap:8px;
+  overflow-x:auto;
+  overflow-y:hidden;
+  padding:2px 1px 6px;
+  scroll-behavior:smooth;
+}
+.mm-preview-thumb{
+  flex:0 0 112px;
+  margin:0;
+  min-width:0;
+}
+.mm-preview-thumb-media{
+  height:92px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  border:1px solid #ead6dc;
+  border-radius:8px;
+  background:#fff;
+}
+.mm-preview-thumb-media img{
+  display:block;
+  max-width:100%;
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+}
+.mm-preview-thumb figcaption{
+  margin-top:5px;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+  text-align:center;
+  font-size:10px;
+  line-height:1.2;
+  color:#5f4b52;
+}
+.mm-selected-preview-strip::-webkit-scrollbar{height:8px}
+.mm-selected-preview-strip::-webkit-scrollbar-thumb{
+  background:#dfbdc8;
+  border-radius:999px;
+}
+.mm-selected-preview-strip::-webkit-scrollbar-track{
+  background:#f8edf1;
+  border-radius:999px;
+}
+@media(max-width:900px){
+  .mm-selected-preview{margin-top:18px}
+  .mm-preview-thumb{flex-basis:96px}
+}
+
+
+/* Merge Manual — zoom do preview e alinhamento da barra fixa */
+.mm-preview-toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:flex-start;
+  gap:12px;
+  padding:18px 16px 0;
+}
+.mm-preview-zoom{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.mm-preview-zoom>span{
+  margin-right:4px;
+  font-size:12px;
+  color:#5f4b52;
+}
+.mm-preview-zoom>b{
+  min-width:48px;
+  text-align:center;
+  font-size:12px;
+  color:#4a3a40;
+}
+.mm-preview-zoom .btn{
+  min-width:36px;
+  height:34px;
+  padding:0 10px;
+}
+.mm-preview-thumb{
+  flex:0 0 calc(112px * var(--mm-preview-zoom, 1));
+}
+.mm-preview-thumb-media{
+  height:calc(92px * var(--mm-preview-zoom, 1));
+}
+
+/* Centraliza a barra com a mesma área útil do conteúdo principal. */
+.mm-bottom-bar{
+  left:0;
+  right:0;
+  width:auto;
+}
+.mm-bottom-bar-inner{
+  width:min(100% - 48px, 1180px);
+  margin:0 auto;
+}
+@media(max-width:900px){
+  .mm-bottom-bar-inner{
+    width:calc(100% - 24px);
+  }
+}
+
+
+/* Correção: alinhar a barra fixa à mesma margem esquerda do conteúdo quando a sidebar está recolhida. */
+body.sidebar-collapsed .mm-actionbar{
+  left:108px;
+  right:24px;
+}
+
+
+/* Merge Manual — editor de réguas em coordenadas lógicas */
+.mm-stream{position:relative}
+.mm-ruler-layer{
+  position:absolute;
+  inset:0 0 auto 0;
+  pointer-events:none;
+  z-index:8;
+}
+.mm-ruler{
+  position:absolute;
+  left:0;
+  right:0;
+  width:100%;
+  height:0;
+  padding:0;
+  border:0;
+  border-top:2px solid #b13f61;
+  background:transparent;
+  cursor:ns-resize;
+  pointer-events:auto;
+  transform:translateY(-1px);
+}
+.mm-ruler::before{
+  content:"";
+  position:absolute;
+  left:0;
+  right:0;
+  top:-7px;
+  height:14px;
+}
+.mm-ruler span{
+  position:absolute;
+  right:8px;
+  top:-26px;
+  padding:4px 7px;
+  border-radius:6px;
+  background:#a83b5b;
+  color:#fff;
+  font-size:10px;
+  line-height:1.2;
+  white-space:nowrap;
+  box-shadow:0 3px 8px rgba(80,28,45,.18);
+}
+.mm-ruler.selected{
+  border-top-width:3px;
+  border-top-color:#7f2442;
+}
+.mm-ruler.selected span{
+  background:#7f2442;
+}
+.mm-tool-controls #mmCutCount{
+  min-width:62px;
+  text-align:center;
+  font-size:12px;
+}
+
+.mm-source-slice{position:relative;width:100%;overflow:hidden;line-height:0;background:#fff}
+.mm-source-slice img{display:block;max-width:none;object-fit:fill}
+.mm-proposal-result{margin-top:14px;padding:14px}
+.mm-proposal-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:14px}
+.mm-proposal-head>div{display:grid;gap:3px}.mm-proposal-head>span{font-size:11px;color:#8f747c}
+.mm-proposal-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
+.mm-proposal-card{margin:0;border:1px solid #ead6dc;border-radius:10px;background:#fff;overflow:hidden}
+.mm-proposal-image{height:240px;display:flex;align-items:flex-start;justify-content:center;overflow:auto;background:#f8f4f5}
+.mm-proposal-image img{display:block;max-width:100%;height:auto}
+.mm-proposal-card figcaption{display:flex;justify-content:space-between;gap:10px;padding:9px 10px;font-size:11px}
+.mm-proposal-card figcaption span{color:#9e405c}
+.mm-proposal-actions{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;padding-top:12px;border-top:1px solid #efdde2}
+.mm-proposal-actions>span{font-size:11px;color:#8f747c}
+
+
+/* Merge Manual — correção de zoom após recorte de fatias residuais.
+   O tamanho visual passa a ser controlado pelo JS; o Y lógico das réguas não muda. */
+.mm-stream{
+  max-width:none;
+  flex:0 0 auto;
+}
+.mm-source,
+.mm-source-slice{
+  flex:0 0 auto;
+}
+.mm-source-slice img{
+  margin-left:0;
+  margin-right:0;
+}

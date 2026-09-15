@@ -1572,15 +1572,16 @@ def process_merge_level5_pending(ch, failure, job=None):
         raise
 
 
-def _level5_ui_detail(manga,ch,failure):
+def _level5_ui_detail(manga,ch,failure,merge_ok=None):
     manifest_path=l5dir(manga,ch.name)/"merge-level5-manifest.json"
     if not manifest_path.is_file(): return None
     try: payload=json.loads(manifest_path.read_text(encoding="utf-8"))
     except (OSError,ValueError,TypeError,json.JSONDecodeError) as exc: return {"available":True,"valid":False,"error":f"Manifesto Level V inválido: {exc}"}
     final_manifest=v3.merge_output_dir(ch)/"merge-manifest.json"; finalized=False
-    if final_manifest.is_file() and v3.is_chapter_merged(ch):
+    merged_for_ui = bool(merge_ok) if merge_ok is not None else v3.is_chapter_merged(ch)
+    if final_manifest.is_file() and merged_for_ui:
         try:
-            final_payload=json.loads(final_manifest.read_text(encoding="utf-8")); finalized=(final_payload.get("algorithm") in {"merge_auto_level2_level3_level4_level5_composition_v1","merge_auto_level2_level3_level4_level5_review_composition_v1"} and final_payload.get("status")=="approved" and bool((final_payload.get("validation") or {}).get("ok")) and (final_payload.get("composition") or {}).get("level5_manifest")=="merge-level5-manifest.json")
+            final_payload=json.loads(final_manifest.read_text(encoding="utf-8")); finalized=(final_payload.get("algorithm") in {"merge_auto_level2_level3_level4_level5_composition_v1","merge_auto_level2_level3_level4_level5_review_composition_v1"} and final_payload.get("status")=="approved" and bool((final_payload.get("validation") or {}).get("ok")) and ((final_payload.get("composition") if isinstance(final_payload.get("composition"), dict) else {}) or {}).get("level5_manifest")=="merge-level5-manifest.json")
         except (OSError,ValueError,TypeError,json.JSONDecodeError): finalized=False
     if finalized: pending=[]
     else:
@@ -1651,7 +1652,7 @@ def _level4_review_pending(ch,failure):
     except (OSError,ValueError,TypeError,KeyError,IndexError,json.JSONDecodeError) as exc:
         return None,f"Manifesto Level IV inválido: {exc}","level4"
 
-def _level4_ui_detail(manga,ch,failure):
+def _level4_ui_detail(manga,ch,failure,merge_ok=None):
     manifest_path=l4dir(manga,ch.name)/"merge-level4-manifest.json"
     if not manifest_path.is_file():
         return None
@@ -1666,7 +1667,8 @@ def _level4_ui_detail(manga,ch,failure):
     # residual ao Review; o MERGE oficial válido passa a ser a autoridade.
     final_manifest=v3.merge_output_dir(ch)/"merge-manifest.json"
     finalized=False
-    if final_manifest.is_file() and v3.is_chapter_merged(ch):
+    merged_for_ui = bool(merge_ok) if merge_ok is not None else v3.is_chapter_merged(ch)
+    if final_manifest.is_file() and merged_for_ui:
         try:
             final_payload=json.loads(final_manifest.read_text(encoding="utf-8"))
             finalized=(
@@ -1676,7 +1678,7 @@ def _level4_ui_detail(manga,ch,failure):
                 }
                 and final_payload.get("status")=="approved"
                 and bool((final_payload.get("validation") or {}).get("ok"))
-                and (final_payload.get("composition") or {}).get("level4_manifest")=="merge-level4-manifest.json"
+                and ((final_payload.get("composition") if isinstance(final_payload.get("composition"), dict) else {}) or {}).get("level4_manifest")=="merge-level4-manifest.json"
             )
         except (OSError,ValueError,TypeError,json.JSONDecodeError):
             finalized=False
@@ -1747,7 +1749,7 @@ def row_state(manga,ch):
         and level2_validated
         and not level3_valid
     )
-    level4_detail=_level4_ui_detail(manga,ch,failure)
+    level4_detail=_level4_ui_detail(manga,ch,failure,merge_ok=merge_ok)
     level4_valid=bool(
         level4_detail
         and level4_detail.get("available")
@@ -1769,7 +1771,7 @@ def row_state(manga,ch):
     level4_algorithm=str((level4_detail or {}).get("algorithm") or "")
     level4_is_directed=level4_algorithm=="merge_level4_directed_structural_safe_v1"
     level4_is_legacy_exhaustive=level4_algorithm=="merge_level4_global_structural_safe_v1"
-    level5_detail=_level5_ui_detail(manga,ch,failure)
+    level5_detail=_level5_ui_detail(manga,ch,failure,merge_ok=merge_ok)
     level5_valid=bool(level5_detail and level5_detail.get("available") and level5_detail.get("valid"))
     level5_has_residual=bool(level5_valid and (level5_detail.get("review_pending_segments") or level5_detail.get("residual_pending_segments")))
     level5_pending=bool(merge_failed and level4_valid and level4_has_residual and level4_is_directed and not level5_valid)
@@ -1875,6 +1877,20 @@ def run_job(job,payload):
             elif job.action=="pdf_merge": job.result=do_pdf_merge(job,manga,chs)
             elif job.action=="clean": job.result=do_clean(job,manga,chs)
             elif job.action=="clean_merged": job.result=do_clean_merged(job,manga,chs)
+            elif job.action=="textoff_level3_flag":
+                from processamento.limpeza_baloes.textoff_level3 import flag_correction_job
+                job.result=flag_correction_job(manga,chs,payload)
+            elif job.action=="textoff_level3_analyze":
+                print(f"[NIVEL3][BACKEND] job recebido id={job.id} chapters={[ch.name for ch in chs]} source={payload.get('source_file')} clean={payload.get('clean_file')}", flush=True)
+                from processamento.limpeza_baloes.textoff_level3_analyzer import analyze_residual_job
+                job.result=analyze_residual_job(manga,chs,payload)
+                print(f"[NIVEL3][BACKEND] job concluído id={job.id} candidatos={(job.result or {}).get('count')}", flush=True)
+            elif job.action=="textoff_level3_preview":
+                from processamento.limpeza_baloes.textoff_level3_correction import generate_preview_job
+                job.result=generate_preview_job(manga,chs,payload)
+            elif job.action=="textoff_level3_approve":
+                from processamento.limpeza_baloes.textoff_level3_correction import approve_proposal_job
+                job.result=approve_proposal_job(manga,chs,payload)
             elif job.action=="merge_level2": job.result=do_merge_level2(job,chs)
             elif job.action=="merge_level3": job.result=do_merge_level3(job,chs)
             elif job.action=="merge_level4": job.result=do_merge_level4(job,chs)
@@ -1884,6 +1900,12 @@ def run_job(job,payload):
             elif job.action=="review_generate": job.result=do_review_generate(job,manga,chs,payload.get("max_source_images"))
             elif job.action=="review_approve": job.result=do_review_approve(job,manga,chs)
             elif job.action=="review_reject": job.result=do_review_reject(job,manga,chs)
+            elif job.action=="merge_manual_generate":
+                from processamento.merge_manual.api import generate_merge_manual_proposal_job
+                job.result=generate_merge_manual_proposal_job(manga,chs,review_state_loader=lambda ch: row_state(manga,ch),payload=payload)
+            elif job.action=="merge_manual_apply":
+                from processamento.merge_manual.api import apply_merge_manual_proposal_job
+                job.result=apply_merge_manual_proposal_job(manga,chs,review_state_loader=lambda ch: row_state(manga,ch),payload=payload)
             elif job.action=="balance_prepare": job.result=do_balance_prepare(job,manga,chs,payload.get("merges") or [])
             elif job.action=="balance_execute": job.result=do_balance_execute(job,manga,chs,payload.get("merges") or [],payload.get("cuts") or [])
             elif job.action=="balance_effect": job.result=do_balance_effect(job,manga,chs)
@@ -2357,13 +2379,13 @@ def do_merge_level5(job,chs):
                         promoted,promote_msg=_promote_level5_complete(ch)
                         if promoted: clear_merge_failure(ch)
                     status="ok" if (residual or promoted) else "error"
-                    message=(f"Auto-Merge Nível V analisado: {len(safe)} trecho(s) SAFE; {len(residual)} região(ões) seguem para Review." if residual else ("Auto-Merge Nível V resolvido automaticamente." if promoted else (promote_msg or msg)))
+                    message=(f"Auto-Merge Nível V analisado: {len(safe)} trecho(s) SAFE; {len(residual)} região(ões) seguem para Merge Manual." if residual else ("Auto-Merge Nível V resolvido automaticamente." if promoted else (promote_msg or msg)))
                     pending_files=[]; seen=set()
                     for seg in residual:
                         for name in (seg.get("sources") or []):
                             name=str(name)
                             if name and name not in seen: seen.add(name); pending_files.append(name)
-                    out.append({"chapter":ch.name,"status":status,"message":message,"safe_segments":len(safe),"residual_pending_segments":len(residual),"stage_files":[str(x.get("file")) for x in safe if isinstance(x,dict) and x.get("file")],"pending_files":pending_files,"residuals":[{"global_start":int(x["global_start"]),"global_end":int(x["global_end"])} for x in residual if x.get("global_start") is not None and x.get("global_end") is not None],"reason_codes":[str(x.get("reason")) for x in residual if isinstance(x,dict) and x.get("reason")],"stage_folder":str(l5dir(ch.parent.parent,ch.name)),"next_stage":"Revisão Merge V2" if residual else "—"})
+                    out.append({"chapter":ch.name,"status":status,"message":message,"safe_segments":len(safe),"residual_pending_segments":len(residual),"stage_files":[str(x.get("file")) for x in safe if isinstance(x,dict) and x.get("file")],"pending_files":pending_files,"residuals":[{"global_start":int(x["global_start"]),"global_end":int(x["global_end"])} for x in residual if x.get("global_start") is not None and x.get("global_end") is not None],"reason_codes":[str(x.get("reason")) for x in residual if isinstance(x,dict) and x.get("reason")],"stage_folder":str(l5dir(ch.parent.parent,ch.name)),"next_stage":"Merge Manual" if residual else "—"})
         except Exception as exc: out.append({"chapter":ch.name,"status":"error","message":str(exc)})
         job.progress=i; job.progress_value=float(i)
     return out
@@ -2404,69 +2426,55 @@ def do_pdf_merge(job,manga,chs):
     return out
 
 def do_clean(job,manga,chs):
-    from processamento.limpeza_baloes.bubble_cleaner import EasyOCRBackend,process_image,resolve_model
-    model=resolve_model(None); ocr=EasyOCRBackend(["en"]); out=[]
-    for i,ch in enumerate(chs,1):
-        target=cdir(manga,ch.name); target.mkdir(parents=True,exist_ok=True); imgs=sorted([p for p in ch.iterdir() if is_active_image(p)],key=nkey); reports=[]; fails=[]
-        for pi,img in enumerate(imgs,1):
-            job.message=f"Capítulo {ch.name}: página {pi}/{len(imgs)}"
-            try: reports.append(process_image(img,target,model,["en"],0.55,ocr_backend=ocr))
-            except Exception as e: fails.append(f"{img.name}: {e}")
-        manifest={"schema_version":1,"algorithm":"bubble_cleaner_v3_5","source_immutable":True,"pages_total":len(reports),"integrity_ok":bool(reports) and all(r["summary"]["integrity_ok"] for r in reports) and not fails,"failures":fails}
-        (target/"clean-manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
-        out.append({"chapter":ch.name,"status":"ok" if not fails else "error","pages":len(reports),"failures":fails}); job.progress=i
-    return out
-def do_clean_merged(job,manga,chs):
-    from processamento.limpeza_baloes.bubble_cleaner import EasyOCRBackend,process_image,resolve_model
-    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged,merge_output_dir
-    model=resolve_model(None); ocr=EasyOCRBackend(["en"]); out=[]
+    from processamento.limpeza_baloes.cleaner_v2.integration import clean_chapter
+    out=[]
     total_chapters=max(1,len(chs))
     job.progress_value=0.0
     job.progress_max=float(total_chapters)
     for i,ch in enumerate(chs,1):
-        chapter_base=float(i-1)
+        imgs=sorted([p for p in ch.iterdir() if is_active_image(p)],key=nkey)
+        job.message=f"Texto Off — Original: capítulo {ch.name} ({i}/{len(chs)})..."
+        job.progress_detail=f"Cap. {ch.name}: Cleaner V2 processando {len(imgs)} imagem(ns)..."
+        if not imgs:
+            out.append({"chapter":ch.name,"status":"error","message":"Capítulo sem imagens para limpeza"})
+            job.progress=i; job.progress_value=float(i); continue
+        try:
+            result=clean_chapter(imgs,cdir(manga,ch.name),source_stage="ORIGINAL",progress_job=job,progress_base=float(i-1),progress_span=1.0,chapter_name=ch.name)
+            out.append({"chapter":ch.name,**result})
+            job.progress_detail=f"Cap. {ch.name}: concluído pelo Cleaner V2"
+        except Exception as exc:
+            out.append({"chapter":ch.name,"status":"error","message":str(exc)})
+            job.progress_detail=f"Cap. {ch.name}: falha no Cleaner V2"
+        job.progress=i; job.progress_value=float(i)
+    return out
+
+def do_clean_merged(job,manga,chs):
+    from processamento.limpeza_baloes.cleaner_v2.integration import clean_chapter
+    from processamento.unificacao_imagens.image_stitcher import is_chapter_merged,merge_output_dir
+    out=[]
+    total_chapters=max(1,len(chs))
+    job.progress_value=0.0
+    job.progress_max=float(total_chapters)
+    for i,ch in enumerate(chs,1):
         job.progress_detail=f"Cap. {ch.name}: validando MERGE..."
         job.message=f"Texto Off — Merged: validando capítulo {ch.name} ({i}/{len(chs)})..."
         if not is_chapter_merged(ch):
             out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial inválido ou ausente"})
-            job.progress=i
-            job.progress_value=float(i)
-            job.progress_detail=f"Cap. {ch.name}: MERGE oficial inválido ou ausente"
-            continue
+            job.progress=i; job.progress_value=float(i); job.progress_detail=f"Cap. {ch.name}: MERGE oficial inválido ou ausente"; continue
         imgs=v3.merge_artifact_files(merge_output_dir(ch))
         if not imgs:
             out.append({"chapter":ch.name,"status":"error","message":"MERGE oficial sem imagens para limpeza"})
-            job.progress=i
-            job.progress_value=float(i)
-            job.progress_detail=f"Cap. {ch.name}: MERGE oficial sem imagens para limpeza"
-            continue
-        target=tmdir(manga,ch.name)
-        if target.is_dir(): shutil.rmtree(target)
-        target.mkdir(parents=True,exist_ok=True)
-        reports=[]; fails=[]
-        total_images=max(1,len(imgs))
-        for pi,img in enumerate(imgs,1):
-            job.progress_value=chapter_base+(float(pi-1)/float(total_images))
-            job.progress_detail=f"Cap. {ch.name}: imagem {pi}/{len(imgs)}"
-            job.message=f"Texto Off — Merged · Capítulo {ch.name}: imagem {pi}/{len(imgs)}"
-            try: reports.append(process_image(img,target,model,["en"],0.55,ocr_backend=ocr))
-            except Exception as e: fails.append(f"{img.name}: {e}")
-            job.progress_value=chapter_base+(float(pi)/float(total_images))
-        manifest={
-            "schema_version":1,
-            "algorithm":"bubble_cleaner_v3_5",
-            "source_stage":"MERGE",
-            "source_immutable":True,
-            "source_artifacts":[p.name for p in imgs],
-            "pages_total":len(reports),
-            "integrity_ok":bool(reports) and all(r["summary"]["integrity_ok"] for r in reports) and not fails,
-            "failures":fails,
-        }
-        (target/"clean-manifest.json").write_text(json.dumps(manifest,indent=2),encoding="utf-8")
-        out.append({"chapter":ch.name,"status":"ok" if not fails else "error","pages":len(reports),"failures":fails,"stage_folder":str(target)})
-        job.progress=i
-        job.progress_value=float(i)
-        job.progress_detail=f"Cap. {ch.name}: concluído"
+            job.progress=i; job.progress_value=float(i); job.progress_detail=f"Cap. {ch.name}: MERGE oficial sem imagens para limpeza"; continue
+        job.message=f"Texto Off — Merged: capítulo {ch.name} ({i}/{len(chs)})..."
+        job.progress_detail=f"Cap. {ch.name}: Cleaner V2 processando {len(imgs)} merge(s)..."
+        try:
+            result=clean_chapter(imgs,tmdir(manga,ch.name),source_stage="MERGE",progress_job=job,progress_base=float(i-1),progress_span=1.0,chapter_name=ch.name)
+            out.append({"chapter":ch.name,**result})
+            job.progress_detail=f"Cap. {ch.name}: concluído pelo Cleaner V2"
+        except Exception as exc:
+            out.append({"chapter":ch.name,"status":"error","message":str(exc)})
+            job.progress_detail=f"Cap. {ch.name}: falha no Cleaner V2"
+        job.progress=i; job.progress_value=float(i)
     return out
 
 def reviewmod():
@@ -2674,11 +2682,30 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if u.path=="/api/catalog": return self.send_json(catalog())
             if u.path=="/api/state": return self.send_json(state(q.get("provider",[""])[0],q.get("manga",[""])[0]))
+            if u.path=="/api/textoff-compare":
+                from processamento.limpeza_baloes.textoff_compare import comparison_state
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(comparison_state(manga))
+            if u.path=="/api/textoff-level3":
+                from processamento.limpeza_baloes.textoff_level3 import queue_state
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(queue_state(manga))
             if u.path=="/api/dimension-analysis":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(dimension_state(manga))
             if u.path=="/api/balance-analysis":
                 from processamento.balanceamento.balanceamento import balance_state
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0]); return self.send_json(balance_state(manga))
+            if u.path=="/api/merge-manual":
+                from processamento.merge_manual.api import get_merge_manual_state
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+                return self.send_json(get_merge_manual_state(
+                    manga,
+                    chapters(manga),
+                    review_state_loader=lambda ch: row_state(manga,ch),
+                ))
+            if u.path=="/api/merge-manual-proposal":
+                from processamento.merge_manual.api import get_latest_merge_manual_proposal
+                manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
+                chapter=str(q.get("chapter",[""])[0])
+                return self.send_json(get_latest_merge_manual_proposal(manga,chapter))
             if u.path=="/api/pdf-merge-latest":
                 manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
                 files=latest_pdf_merge_batch(manga)
@@ -2732,6 +2759,21 @@ class Handler(BaseHTTPRequestHandler):
         manga=manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])
         chapter=q.get("chapter",[""])[0]
         kind=q.get("kind",["review"])[0]
+        if kind=="merge_manual_proposal":
+            from processamento.merge_manual.proposal import proposal_dir
+            proposal_id=q.get("proposal",[""])[0]
+            base=proposal_dir(manga,chapter,proposal_id)
+            target=(base/q.get("file",[""])[0]).resolve()
+            if not target.is_relative_to(base) or not target.is_file() or target.suffix.lower() not in IMAGE_EXTS:
+                self.send_error(404); return
+            raw=target.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type",mimetypes.guess_type(target.name)[0] or "image/png")
+            self.send_header("Content-Length",str(len(raw)))
+            self.send_header("Cache-Control","no-store")
+            self.end_headers(); self.wfile.write(raw)
+            return
+
         if kind=="review":
             base=rdir(manga,chapter).resolve()
         elif kind=="source":
@@ -2745,6 +2787,12 @@ class Handler(BaseHTTPRequestHandler):
             chapter_root=(manga/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/"BALANCE_PROPOSALS"/chapter).resolve()
             legacy=(chapter_root/proposal_id).resolve() if proposal_id else None
             base=legacy if legacy is not None and legacy.is_relative_to(chapter_root) and legacy.is_dir() else chapter_root
+        elif kind in {"textoff_source","textoff_clean"}:
+            from processamento.limpeza_baloes.textoff_compare import media_base
+            base=media_base(manga,chapter,kind,q.get("source",[""])[0])
+        elif kind=="textoff_level3_preview":
+            from processamento.limpeza_baloes.textoff_level3_correction import proposal_dir
+            base=proposal_dir(manga,chapter,q.get("proposal",[""])[0])
         else:
             self.send_error(404); return
         target=(base/q.get("file",[""])[0]).resolve()
