@@ -183,3 +183,12 @@ body.textoff-focus-level3 #textoffLevel3Body .toc-level3-image-wrap{
 }
 /* === /TEXT OFF · MODO FOCO · CENTRALIZAÇÃO DO VISUALIZADOR === */
 
+/* === TEXT OFF · RESULTADOS EXPANSÍVEIS NO PADRÃO DA CENTRAL === */
+.toc-table-toggle-cell{width:38px;padding:0 10px 0 4px !important;text-align:right}
+.toc-table-toggle{width:28px;height:28px;display:inline-flex;align-items:center;justify-content:center;padding:0;border:0;border-radius:6px;background:transparent;color:var(--color-text-secondary);cursor:pointer}
+.toc-table-toggle:hover{background:var(--color-primary-soft);color:var(--color-primary)}
+.toc-table-toggle .bal-chevron{display:inline-block;width:12px;margin:0;font-style:normal;font-size:10px;line-height:1}
+.toc-table-pager{margin:0;padding:12px 14px;border-top:1px solid var(--color-border);display:flex;justify-content:center}
+.toc-table-pager-inner{display:flex;align-items:center;justify-content:center;gap:12px}
+.toc-table-pager .page-indicator{min-width:42px;text-align:center}
+/* === /TEXT OFF · RESULTADOS EXPANSÍVEIS NO PADRÃO DA CENTRAL === */
