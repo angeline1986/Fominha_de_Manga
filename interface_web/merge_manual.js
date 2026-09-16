@@ -399,6 +399,29 @@
             <button id="mmRemoveRuler" class="btn" onclick="MergeManualUI.removeRuler()" disabled>− régua</button>
             <span id="mmCutCount">0 cortes</span>
             <button id="mmAddRuler" class="btn" onclick="MergeManualUI.addRuler()">+ régua</button>
+            <span class="mm-separator"></span>
+            <div class="mm-ruler-color-picker" aria-label="Cor da régua">
+              <button type="button"
+                      class="mm-ruler-color-option active"
+                      data-ruler-color="#188AB4"
+                      style="--swatch:#188AB4"
+                      title="Azul"
+                      onclick="MergeManualUI.setRulerColor('#188AB4')"></button>
+              <button type="button"
+                      class="mm-ruler-color-option"
+                      data-ruler-color="#c05982"
+                      style="--swatch:#c05982"
+                      title="Rosa"
+                      onclick="MergeManualUI.setRulerColor('#c05982')"></button>
+              <button type="button"
+                      class="mm-ruler-color-option"
+                      data-ruler-color="#ffcc00"
+                      style="--swatch:#ffcc00"
+                      title="Amarelo"
+                      onclick="MergeManualUI.setRulerColor('#ffcc00')"></button>
+            </div>
+            <span class="mm-separator"></span>
+            <button type="button" class="btn mm-focus-entry" onclick="MergeManualUI.toggleFocus()">Modo foco</button>
           </div>
         </section>
         <section class="mm-stream-wrap">
@@ -433,6 +456,99 @@
       loadLatestProposal();
     });
   }
+
+
+  /* === MERGE MANUAL · MODO FOCO · NOVOS CORTES (UI only) === */
+
+  const MM_RULER_COLORS = ["#188AB4", "#c05982", "#ffcc00"];
+  let mergeManualRulerColor = "#188AB4";
+  document.documentElement.style.setProperty(
+    "--mm-ruler-color",
+    mergeManualRulerColor
+  );
+
+  function setRulerColor(color) {
+    if (!MM_RULER_COLORS.includes(color)) return;
+
+    mergeManualRulerColor = color;
+    document.documentElement.style.setProperty("--mm-ruler-color", color);
+
+    document.querySelectorAll(".mm-ruler-color-option").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.rulerColor === color
+      );
+    });
+  }
+
+
+
+  let mergeManualFocusActive = false;
+
+  function ensureMergeManualFocusBar() {
+    let bar = document.getElementById("mmFocusBar");
+    if (bar) return bar;
+
+    bar = document.createElement("div");
+    bar.id = "mmFocusBar";
+    bar.className = "mm-focus-bar";
+    bar.hidden = true;
+    bar.innerHTML = `
+      <div class="mm-focus-identity">
+        <strong>MERGE MANUAL › Novos Cortes</strong>
+        <span id="mmFocusContext"></span>
+      </div>
+      <div class="mm-focus-system">
+        <button class="btn mm-focus-exit" type="button"
+                onclick="MergeManualUI.toggleFocus()">Sair do foco</button>
+      </div>`;
+
+    document.body.appendChild(bar);
+    return bar;
+  }
+
+  function enterFocus() {
+    if (!document.querySelector(".mm-cuts-page")) return;
+
+    const selection = loadSelection();
+    const bar = ensureMergeManualFocusBar();
+    const contextLabel = bar.querySelector("#mmFocusContext");
+
+    if (contextLabel) {
+      contextLabel.textContent = selection?.chapter
+        ? `Cap. ${selection.chapter}`
+        : "";
+    }
+
+    mergeManualFocusActive = true;
+    document.body.classList.add("merge-manual-focus-mode");
+    bar.hidden = false;
+
+    requestAnimationFrame(() => {
+      layoutSourceSlices();
+      renderRulers();
+    });
+  }
+
+  function exitFocus() {
+    mergeManualFocusActive = false;
+    document.body.classList.remove("merge-manual-focus-mode");
+
+    const bar = document.getElementById("mmFocusBar");
+    if (bar) bar.hidden = true;
+
+    requestAnimationFrame(() => {
+      layoutSourceSlices();
+      renderRulers();
+    });
+  }
+
+  function toggleFocus() {
+    if (mergeManualFocusActive) exitFocus();
+    else enterFocus();
+  }
+
+  /* === /MERGE MANUAL · MODO FOCO · NOVOS CORTES === */
 
   function sourceImages() {
     const stream = document.getElementById("mmStream");
@@ -887,6 +1003,8 @@
     beginRulerDrag,
     generateProposal,
     zoom,
+    toggleFocus,
+    setRulerColor,
     refresh() {
       ui.payload = null;
       ui.cacheKey = "";
