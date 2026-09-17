@@ -399,6 +399,29 @@
             <button id="mmRemoveRuler" class="btn" onclick="MergeManualUI.removeRuler()" disabled>− régua</button>
             <span id="mmCutCount">0 cortes</span>
             <button id="mmAddRuler" class="btn" onclick="MergeManualUI.addRuler()">+ régua</button>
+            <span class="mm-separator"></span>
+            <div class="mm-ruler-color-picker" aria-label="Cor da régua">
+              <button type="button"
+                      class="mm-ruler-color-option active"
+                      data-ruler-color="#188AB4"
+                      style="--swatch:#188AB4"
+                      title="Azul"
+                      onclick="MergeManualUI.setRulerColor('#188AB4')"></button>
+              <button type="button"
+                      class="mm-ruler-color-option"
+                      data-ruler-color="#c05982"
+                      style="--swatch:#c05982"
+                      title="Rosa"
+                      onclick="MergeManualUI.setRulerColor('#c05982')"></button>
+              <button type="button"
+                      class="mm-ruler-color-option"
+                      data-ruler-color="#ffcc00"
+                      style="--swatch:#ffcc00"
+                      title="Amarelo"
+                      onclick="MergeManualUI.setRulerColor('#ffcc00')"></button>
+            </div>
+            <span class="mm-separator"></span>
+            <button type="button" class="btn mm-focus-entry" onclick="MergeManualUI.toggleFocus()">Modo foco</button>
           </div>
         </section>
         <section class="mm-stream-wrap">
@@ -434,6 +457,121 @@
     });
   }
 
+
+  /* === MERGE MANUAL · MODO FOCO · NOVOS CORTES (UI only) === */
+
+  const MM_RULER_COLORS = ["#188AB4", "#c05982", "#ffcc00"];
+  let mergeManualRulerColor = "#188AB4";
+  document.documentElement.style.setProperty(
+    "--mm-ruler-color",
+    mergeManualRulerColor
+  );
+
+  function setRulerColor(color) {
+    if (!MM_RULER_COLORS.includes(color)) return;
+
+    mergeManualRulerColor = color;
+    document.documentElement.style.setProperty("--mm-ruler-color", color);
+
+    document.querySelectorAll(".mm-ruler-color-option").forEach((button) => {
+      button.classList.toggle(
+        "active",
+        button.dataset.rulerColor === color
+      );
+    });
+  }
+
+
+
+  let mergeManualFocusActive = false;
+
+  function ensureMergeManualFocusBar() {
+    let bar = document.getElementById("mmFocusBar");
+    if (bar) return bar;
+
+    bar = document.createElement("div");
+    bar.id = "mmFocusBar";
+    bar.className = "mm-focus-bar";
+    bar.hidden = true;
+    bar.innerHTML = `
+      <div class="mm-focus-identity">
+        <strong>MERGE MANUAL › Novos Cortes</strong>
+        <span id="mmFocusContext"></span>
+      </div>
+      <div class="mm-focus-tools">
+        <button class="btn" type="button" onclick="MergeManualUI.zoom(-0.1)">−</button>
+        <span id="mmFocusZoomLabel">100%</span>
+        <button class="btn" type="button" onclick="MergeManualUI.zoom(0.1)">+</button>
+        <span class="mm-separator"></span>
+        <button id="mmFocusRemoveRuler" class="btn" type="button"
+                onclick="MergeManualUI.removeRuler()" disabled>− régua</button>
+        <span id="mmFocusCutCount">0 cortes</span>
+        <button class="btn" type="button" onclick="MergeManualUI.addRuler()">+ régua</button>
+        <span class="mm-separator"></span>
+        <div class="mm-ruler-color-picker" aria-label="Cor da régua">
+          <button type="button" class="mm-ruler-color-option active"
+                  data-ruler-color="#188AB4" style="--swatch:#188AB4"
+                  title="Azul" onclick="MergeManualUI.setRulerColor('#188AB4')"></button>
+          <button type="button" class="mm-ruler-color-option"
+                  data-ruler-color="#c05982" style="--swatch:#c05982"
+                  title="Rosa" onclick="MergeManualUI.setRulerColor('#c05982')"></button>
+          <button type="button" class="mm-ruler-color-option"
+                  data-ruler-color="#ffcc00" style="--swatch:#ffcc00"
+                  title="Amarelo" onclick="MergeManualUI.setRulerColor('#ffcc00')"></button>
+        </div>
+      </div>
+      <div class="mm-focus-system">
+        <button class="btn mm-focus-exit" type="button"
+                onclick="MergeManualUI.toggleFocus()">Sair do foco</button>
+      </div>`;
+
+    document.body.appendChild(bar);
+    return bar;
+  }
+
+  function enterFocus() {
+    if (!document.querySelector(".mm-cuts-page")) return;
+
+    const selection = loadSelection();
+    const bar = ensureMergeManualFocusBar();
+    const contextLabel = bar.querySelector("#mmFocusContext");
+
+    if (contextLabel) {
+      contextLabel.textContent = selection?.chapter
+        ? `Cap. ${selection.chapter}`
+        : "";
+    }
+
+    mergeManualFocusActive = true;
+    document.body.classList.add("merge-manual-focus-mode");
+    bar.hidden = false;
+
+    requestAnimationFrame(() => {
+      layoutSourceSlices();
+      renderRulers();
+    });
+  }
+
+  function exitFocus() {
+    mergeManualFocusActive = false;
+    document.body.classList.remove("merge-manual-focus-mode");
+
+    const bar = document.getElementById("mmFocusBar");
+    if (bar) bar.hidden = true;
+
+    requestAnimationFrame(() => {
+      layoutSourceSlices();
+      renderRulers();
+    });
+  }
+
+  function toggleFocus() {
+    if (mergeManualFocusActive) exitFocus();
+    else enterFocus();
+  }
+
+  /* === /MERGE MANUAL · MODO FOCO · NOVOS CORTES === */
+
   function sourceImages() {
     const stream = document.getElementById("mmStream");
     return stream ? [...stream.querySelectorAll(".mm-source img")] : [];
@@ -451,7 +589,7 @@
       stream.dataset.baseWidth = String(baseWidth);
     }
 
-    const zoomValue = Math.min(1.5, Math.max(0.4, Number(window.__mergeManualZoom || 1)));
+    const zoomValue = Math.min(1.5, Math.max(0.3, Number(window.__mergeManualZoom || 1)));
     const renderedWidth = Math.max(120, baseWidth * zoomValue);
     stream.style.width = `${renderedWidth}px`;
     stream.style.maxWidth = "none";
@@ -547,11 +685,16 @@
       </button>
     `).join("");
 
-    const count = document.getElementById("mmCutCount");
-    if (count) count.textContent = `${cutEditor.cuts.length} corte${cutEditor.cuts.length === 1 ? "" : "s"}`;
+    const countText = `${cutEditor.cuts.length} corte${cutEditor.cuts.length === 1 ? "" : "s"}`;
+    for (const id of ["mmCutCount", "mmFocusCutCount"]) {
+      const count = document.getElementById(id);
+      if (count) count.textContent = countText;
+    }
 
-    const remove = document.getElementById("mmRemoveRuler");
-    if (remove) remove.disabled = !cutEditor.cuts.length;
+    for (const id of ["mmRemoveRuler", "mmFocusRemoveRuler"]) {
+      const remove = document.getElementById(id);
+      if (remove) remove.disabled = !cutEditor.cuts.length;
+    }
     const generate=document.getElementById("mmGenerateCuts");
     if(generate)generate.disabled=!cutEditor.cuts.length||proposalBusy;
     const actionText=document.querySelector(".mm-cuts-page .mm-actionbar span");
@@ -648,13 +791,16 @@
 
     const next = Math.min(
       1.5,
-      Math.max(0.4, Number(window.__mergeManualZoom || 1) + Number(delta || 0))
+      Math.max(0.3, Number(window.__mergeManualZoom || 1) + Number(delta || 0))
     );
 
     window.__mergeManualZoom = Number(next.toFixed(2));
 
-    const label = document.getElementById("mmZoomLabel");
-    if (label) label.textContent = `${Math.round(window.__mergeManualZoom * 100)}%`;
+    const zoomText = `${Math.round(window.__mergeManualZoom * 100)}%`;
+    for (const id of ["mmZoomLabel", "mmFocusZoomLabel"]) {
+      const label = document.getElementById(id);
+      if (label) label.textContent = zoomText;
+    }
 
     requestAnimationFrame(() => {
       layoutSourceSlices();
@@ -887,6 +1033,8 @@
     beginRulerDrag,
     generateProposal,
     zoom,
+    toggleFocus,
+    setRulerColor,
     refresh() {
       ui.payload = null;
       ui.cacheKey = "";

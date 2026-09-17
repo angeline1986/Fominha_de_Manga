@@ -1,0 +1,291 @@
+/* Fominha de Manga — Paleta V3 Monocromática Azul
+ * Override visual apenas. Carregar APÓS os CSS atuais.
+ * Não altera layout, comportamento, estados semânticos ou regras de negócio.
+ */
+
+:root {
+  --color-primary: #188AB4;
+  --color-primary-hover: #126887;
+  --color-primary-soft: #E9F7FC;
+  --color-primary-soft-strong: #D2EFF9;
+
+  --color-background: #F5FBFE;
+  --color-surface: #FFFFFF;
+  --color-surface-soft: #E9F7FC;
+
+  --color-text: #0C455A;
+  --color-text-secondary: #188AB4;
+  --color-text-muted: #126887;
+
+  --color-border: #D8EEF7;
+  --color-border-primary: #C8EAF5;
+}
+
+/* Hardcodes Rose confirmados durante o teste visual */
+.context select:focus,
+.header-context select:focus,
+.search:focus,
+.rv-limit input:focus {
+  box-shadow: 0 0 0 2px rgba(24,138,180,.10) !important;
+}
+
+.status-filter .tab.active {
+  box-shadow: inset 0 0 0 1px rgba(24,138,180,.08) !important;
+}
+
+.rv-current-source-band {
+  background: rgba(24,138,180,.08) !important;
+  border-color: rgba(24,138,180,.55) !important;
+}
+
+/* Mega Menu */
+.fm-sidebar-item:hover {
+  background: rgba(24,138,180,.07) !important;
+  border-left-color: rgba(24,138,180,.48) !important;
+}
+
+.fm-mega {
+  border-color: rgba(24,138,180,.22) !important;
+}
+
+.fm-mega-top {
+  border-bottom-color: rgba(24,138,180,.16) !important;
+}
+
+.fm-work-context,
+.fm-mega-grid {
+  border-color: rgba(24,138,180,.18) !important;
+}
+
+.fm-mega-col {
+  border-right-color: rgba(24,138,180,.15) !important;
+}
+
+.fm-mega-note {
+  border-color: rgba(24,138,180,.16) !important;
+}
+
+/* Responsividade: equivalentes às divisórias do Mega Menu */
+@media (max-width: 1050px) {
+  .fm-mega-col:nth-child(3) {
+    border-top-color: rgba(24,138,180,.15) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .fm-mega-col {
+    border-bottom-color: rgba(24,138,180,.15) !important;
+  }
+}
+
+/* Texto Off: apenas hover de tabela; cores semânticas permanecem intactas */
+.toc-table tbody tr:hover {
+  background: rgba(24,138,180,.045) !important;
+}
+
+/* Mega Menu — identidade azul do overlay e sombra */
+:root {
+  --fm-mega-shadow-rgb: 6, 69, 90;
+}
+
+.fm-mega-overlay {
+  background: rgba(6, 69, 90, .18) !important;
+}
+
+/* Merge Manual — identidade visual V3 azul
+ * Override exclusivamente visual.
+ * Estados semânticos Pendente, Bloqueado, OK e avisos permanecem originais.
+ */
+
+/* Estrutura geral */
+.mm-loading,
+.mm-resolved-note,
+.mm-readonly-note {
+  color: #126887 !important;
+}
+
+.mm-table th,
+.mm-range-row label > span,
+.mm-block-head > span,
+.mm-eyebrow {
+  color: #188AB4 !important;
+}
+
+.mm-table th,
+.mm-table td,
+.mm-chapter-section-head {
+  border-bottom-color: #D8EEF7 !important;
+}
+
+.mm-row.selected {
+  background: #E9F7FC !important;
+}
+
+.mm-chapter-title,
+.mm-chapter-link {
+  color: #0C455A !important;
+}
+
+.mm-chapter-link:hover,
+.mm-chapter-link:focus-visible {
+  color: #188AB4 !important;
+}
+
+/* Seleção de faixa */
+.mm-range-row select {
+  border-color: #C8EAF5 !important;
+  background: #FFFFFF !important;
+  color: #0C455A !important;
+}
+
+.mm-range-row select:focus {
+  outline-color: rgba(24,138,180,.14) !important;
+  border-color: #188AB4 !important;
+}
+
+.mm-range-arrow {
+  color: #126887 !important;
+}
+
+.mm-range-summary,
+.mm-range-summary-inline b {
+  color: #126887 !important;
+}
+
+.mm-range-summary-inline span {
+  color: #188AB4 !important;
+}
+
+/* Cards e separadores */
+.mm-block-card,
+.mm-stream-wrap,
+.mm-proposal-card {
+  border-color: #D8EEF7 !important;
+}
+
+.mm-separator {
+  background: #D8EEF7 !important;
+}
+
+.mm-stream-wrap,
+.mm-proposal-image {
+  background: #F5FBFE !important;
+}
+
+/* Preview imediato da faixa */
+.mm-selected-preview {
+  border-color: #C8EAF5 !important;
+  background: #F5FBFE !important;
+}
+
+.mm-selected-preview-head > span:last-child {
+  color: #188AB4 !important;
+}
+
+.mm-preview-thumb-media {
+  border-color: #D8EEF7 !important;
+  background: #FFFFFF !important;
+}
+
+.mm-preview-thumb figcaption {
+  color: #0C455A !important;
+}
+
+.mm-selected-preview-strip::-webkit-scrollbar-thumb {
+  background: #A5DEF3 !important;
+}
+
+.mm-selected-preview-strip::-webkit-scrollbar-track {
+  background: #E9F7FC !important;
+}
+
+.mm-preview-zoom > span {
+  color: #126887 !important;
+}
+
+.mm-preview-zoom > b {
+  color: #0C455A !important;
+}
+
+/* Editor de réguas */
+.mm-ruler {
+  border-top-color: #188AB4 !important;
+}
+
+.mm-ruler span {
+  background: #188AB4 !important;
+  box-shadow: 0 3px 8px rgba(12,69,90,.18) !important;
+}
+
+.mm-ruler.selected {
+  border-top-color: #126887 !important;
+}
+
+.mm-ruler.selected span {
+  background: #126887 !important;
+}
+
+/* Resultado / proposta */
+.mm-proposal-head > span,
+.mm-proposal-actions > span {
+  color: #126887 !important;
+}
+
+.mm-proposal-card figcaption span {
+  color: #188AB4 !important;
+}
+
+.mm-proposal-actions {
+  border-top-color: #D8EEF7 !important;
+}
+
+/* Barra fixa */
+.mm-actionbar {
+  border-color: #C8EAF5 !important;
+  background: #FFFFFF !important;
+  color: #0C455A !important;
+  box-shadow: 0 10px 28px rgba(12,69,90,.14) !important;
+}
+
+.mm-actionbar span {
+  color: #126887 !important;
+}
+
+.mm-actionbar .btn.primary {
+  background: #188AB4 !important;
+  border-color: #188AB4 !important;
+}
+
+.mm-actionbar .btn.primary:hover:not(:disabled) {
+  background: #126887 !important;
+  border-color: #126887 !important;
+}
+
+.mm-actionbar .btn.primary:disabled {
+  background: #A5DEF3 !important;
+  border-color: #A5DEF3 !important;
+  color: #FFFFFF !important;
+}
+
+/*
+ * IMPORTANTE:
+ * Não sobrescrever:
+ * .mm-status-pending
+ * .mm-status-blocked
+ * .mm-status-ok
+ * .mm-review-notice
+ * .mm-detail-error
+ */
+
+
+/* Merge Manual — status Pendente na identidade V3 */
+.mm-status-pending {
+  background: #E9F7FC !important;
+  color: #188AB4 !important;
+}
+
+/* Merge Manual — status Bloqueado na identidade V3 */
+.mm-status-blocked {
+  background: #D2EFF9 !important;
+  color: #0C455A !important;
+}

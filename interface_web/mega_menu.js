@@ -17,7 +17,22 @@
   const title=$('#fominhaMegaTitle'), subtitle=$('#fominhaMegaSubtitle'), titleIcon=$('#fominhaMegaTitleIcon'), closeBtn=$('#fominhaMegaClose');
   const side=$$('.fm-sidebar-item[data-panel]');
   if(!legacy||!mega||!inner||!overlay||!content)return;
-  let openKey=null,lastAnchor=null,swapTimer=null;
+  let openKey=null,lastAnchor=null,swapTimer=null,hoverCloseTimer=null;
+  const HOVER_CLOSE_DELAY=600;
+
+  function cancelHoverClose(){
+    clearTimeout(hoverCloseTimer);
+    hoverCloseTimer=null;
+  }
+
+  function scheduleHoverClose(){
+    cancelHoverClose();
+    hoverCloseTimer=setTimeout(()=>{
+      hoverCloseTimer=null;
+      if(mega.matches(':hover') || side.some(x=>x.matches(':hover')))return;
+      closePanel();
+    },HOVER_CLOSE_DELAY);
+  }
 
   const legacyButtons=()=>$$('button[data-page]',legacy);
   const legacyButton=page=>legacy.querySelector(`button[data-page="${CSS.escape(page)}"]`);
@@ -88,7 +103,7 @@
   const col=(name,icon,body)=>`<section class="fm-mega-col"><div class="fm-mega-col-title">${sw(icon)}<span>${name}</span></div>${body}</section>`;
 
   function buildOverview(){return `<div class="fm-work-context"><div class="fm-work-context-title">Contexto de trabalho</div><div id="fmWorkContextHost" style="display:contents"></div></div><div class="fm-mega-grid">${col('Resumo',icons.overview,item('overview','Visão Geral','Resumo da operação',icons.overview))}${col('Validação',icons.eye,item('validate_images','Validar imagens','Verificar qualidade e dimensões',icons.eye))}${col('Contexto',icons.overview,'<div class="fm-mega-note">Provider e obra definidos aqui permanecem ativos em toda a Central.</div>')}</div>`}
-  function buildProcess(){const m=manualRoutes(),cutsReady=manualCutsReady();return `<div class="fm-mega-grid">${col('Auto Merge',icons.merge,[item('merge','Auto Merge','Processamento inicial',icons.merge),item('merge_level2','AM Nível II','Resultados parciais',icons.merge),item('merge_level3','AM Nível III','Tentativa residual',icons.merge),item('merge_level4','AM Nível IV','Processamento dirigido',icons.merge),item('merge_level5','AM Nível V','Classificação residual',icons.merge)].join(''))}${col('Revisão',icons.check,item('review','Revisão Merge','Tratar casos pendentes',icons.check)+item('review_v2','Revisão Merge V2','Fluxo alternativo',icons.edit))}${col('Merge Manual',icons.scissors,item(m.validate,'Validar','Selecionar faixa pendente',icons.eye,!!m.validate)+item(m.cuts,'Novos Cortes','Definir novos pontos de corte e efetivar o MERGE',icons.scissors,!!m.cuts&&cutsReady)+((!m.validate||!m.cuts)?'<div class="fm-mega-note">Rotas do Merge Manual não foram detectadas integralmente. Nenhuma rota foi inventada.</div>':''))}</div>`}
+  function buildProcess(){const m=manualRoutes(),cutsReady=manualCutsReady();return `<div class="fm-mega-grid">${col('Auto Merge',icons.merge,[item('merge','Auto Merge','Processamento inicial',icons.merge),item('merge_level2','AM Nível II','Resultados parciais',icons.merge),item('merge_level3','AM Nível III','Tentativa residual',icons.merge),item('merge_level4','AM Nível IV','Processamento dirigido',icons.merge),item('merge_level5','AM Nível V','Classificação residual',icons.merge)].join(''))}${col('Revisão',icons.check,item('review','Revisão Merge','Tratar casos pendentes',icons.check)+item('review_v2','Revisão Merge V2','Fluxo alternativo',icons.edit))}${col('Merge Manual',icons.scissors,item(m.validate,'Validar','Selecionar faixa pendente',icons.eye,!!m.validate)+item(m.cuts,'Novos Merges','Definir novos pontos de corte, revisar a proposta e efetivar o MERGE',icons.scissors,!!m.cuts&&cutsReady)+((!m.validate||!m.cuts)?'<div class="fm-mega-note">Rotas do Merge Manual não foram detectadas integralmente. Nenhuma rota foi inventada.</div>':''))}</div>`}
   function buildBalance(){return `<div class="fm-mega-grid">${col('Validação',icons.check,item('balance','Validar','Verificar estado dos merges',icons.eye))}${col('Ajustes',icons.scissors,item('balance_execute','Novos Cortes','Criar novos cortes',icons.scissors))}${col('Contexto',icons.scale,'<div class="fm-mega-note">Somente a navegação foi reorganizada; a lógica de Balanceamento permanece intacta.</div>')}</div>`}
   function buildPdf(){return `<div class="fm-mega-grid">${col('Opções',icons.pdf,item('pdf','Original','Imagens originais',icons.pdf)+item('pdf_merge','Merge','Imagens mescladas',icons.merge))}${col('Contexto',icons.pdf,'<div class="fm-mega-note">A obra ativa é definida em Visão Geral.</div>')}${col('Acesso',icons.pdf,'<div class="fm-mega-note">As rotas atuais de geração de PDF foram preservadas.</div>')}</div>`}
   function buildText(){return `<div class="fm-mega-grid">${col('Fonte',icons.text,item('clean','Original','Imagens originais',icons.text)+item('clean_merged','Merged','Imagens mescladas',icons.merge))}${col('Resultados',icons.eye,item('textoff_compare','Comparar resultados','Original × imagem limpa',icons.eye)+item('textoff_level3','Correção assistida','Tratar imagens sinalizadas',icons.edit))}${col('Acesso',icons.text,'<div class="fm-mega-note">A lógica do Texto Off não foi alterada.</div>')}</div>`}
@@ -99,6 +114,22 @@
   function render(key){const p=panels[key];title.textContent=p.title;subtitle.textContent=p.sub;titleIcon.innerHTML=sw(p.icon);parkContext();content.innerHTML=p.build();if(key==='overview')moveContext()}
   function openPanel(key,a){if(!panels[key])return;if(openKey===key&&mega.classList.contains('open'))return closePanel();lastAnchor=a;side.forEach(x=>x.classList.toggle('active',x===a));if(!mega.classList.contains('open')){openKey=key;render(key);mega.style.top=wantedTop(a)+'px';mega.style.height='0px';mega.classList.add('open');overlay.classList.add('active');requestAnimationFrame(()=>geometry(a));return}openKey=key;clearTimeout(swapTimer);mega.classList.add('swapping');mega.style.top=wantedTop(a)+'px';swapTimer=setTimeout(()=>{render(key);geometry(a);requestAnimationFrame(()=>requestAnimationFrame(()=>mega.classList.remove('swapping')))},160)}
   function closePanel(){clearTimeout(swapTimer);mega.classList.add('swapping');mega.style.height='0px';setTimeout(()=>{mega.classList.remove('open','swapping');overlay.classList.remove('active');side.forEach(x=>x.classList.remove('active'));openKey=null;lastAnchor=null},300)}
-  side.forEach(b=>b.addEventListener('click',()=>openPanel(b.dataset.panel,b)));closeBtn?.addEventListener('click',closePanel);overlay.addEventListener('click',closePanel);document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel()});content.addEventListener('click',e=>{const b=e.target.closest('.fm-mega-item[data-page]');if(b&&!b.disabled)clickPage(b.dataset.page)});window.addEventListener('resize',()=>{if(openKey&&lastAnchor&&mega.classList.contains('open'))geometry(lastAnchor)});
+  side.forEach(b=>{
+    b.addEventListener('click',()=>openPanel(b.dataset.panel,b));
+    b.addEventListener('mouseenter',()=>{
+      cancelHoverClose();
+      const key=b.dataset.panel;
+      if(openKey===key && mega.classList.contains('open'))return;
+      openPanel(key,b);
+    });
+    b.addEventListener('mouseleave',scheduleHoverClose);
+  });
+  mega.addEventListener('mouseenter',cancelHoverClose);
+  mega.addEventListener('mouseleave',scheduleHoverClose);
+  closeBtn?.addEventListener('click',closePanel);
+  overlay.addEventListener('click',closePanel);
+  document.addEventListener('keydown',e=>{if(e.key==='Escape')closePanel()});
+  content.addEventListener('click',e=>{const b=e.target.closest('.fm-mega-item[data-page]');if(b&&!b.disabled)clickPage(b.dataset.page)});
+  window.addEventListener('resize',()=>{if(openKey&&lastAnchor&&mega.classList.contains('open'))geometry(lastAnchor)});
   moveGlobalActions();
 })();

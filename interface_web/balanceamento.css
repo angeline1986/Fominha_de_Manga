@@ -122,3 +122,78 @@ body.sidebar-collapsed .bal-sticky-submit{left:20px}
   gap:10px;
   min-width:0;
 }
+
+/* === BALANCEAMENTO · MODO FOCO (UI only) === */
+.bal-focus-preview-head{cursor:default}
+.bal-focus-preview-toggle{min-width:0;flex:1;align-self:stretch;display:flex;align-items:center;padding:0;border:0;background:transparent;color:inherit;font:inherit;font-weight:800;text-align:left;cursor:pointer}
+.bal-focus-preview-chevron{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--color-text-secondary);cursor:pointer}
+.bal-focus-preview-chevron:hover{background:var(--color-primary-soft);color:var(--color-primary)}
+.bal-focus-entry{height:32px;padding:0 10px;font-size:12px;white-space:nowrap}
+.bal-focus-bar{position:fixed;z-index:1200;top:0;left:0;right:0;min-height:54px;display:flex;align-items:center;gap:10px;padding:7px 12px;box-sizing:border-box;background:var(--color-surface,#fff);border-bottom:1px solid var(--color-border,#eadce1);box-shadow:0 5px 18px rgba(61,36,46,.08)}
+.bal-focus-bar[hidden]{display:none}
+.bal-focus-identity{display:flex;align-items:center;gap:10px;min-width:0;white-space:nowrap}
+.bal-focus-identity strong{font-size:13px;color:var(--color-text,#342a2e)}
+.bal-focus-identity span{font-size:12px;font-weight:700;color:var(--color-text-secondary);overflow:hidden;text-overflow:ellipsis;max-width:290px}
+.bal-focus-zoom{display:flex;align-items:center;gap:8px;margin-left:auto}
+.bal-focus-zoom .bal-zoom-control{margin:0}
+.bal-focus-system{display:flex;align-items:center;gap:8px}
+.bal-focus-system .btn{height:34px;padding:0 10px;white-space:nowrap}
+.bal-focus-fullscreen{width:36px;padding:0!important;font-size:18px}
+body.balance-focus-mode{overflow:hidden}
+body.balance-focus-mode .app>header,
+body.balance-focus-mode .layout>aside,
+body.balance-focus-mode .app>footer{display:none!important}
+body.balance-focus-mode .layout{display:block!important}
+body.balance-focus-mode #page{box-sizing:border-box;width:100vw;height:100vh;overflow-x:hidden;overflow-y:auto;padding:62px 8px 8px!important;margin:0!important}
+body.balance-focus-mode #page>.head{display:none!important}
+
+body.balance-focus-preview .bal-detail-stack>.bal-section:not(.bal-focus-preview-section),
+body.balance-focus-preview .bal-focus-preview-section>.bal-section-head,
+body.balance-focus-preview .bal-focus-preview-section .bal-zoom-row{display:none!important}
+body.balance-focus-preview .bal-detail-stack,
+body.balance-focus-preview .bal-focus-preview-section,
+body.balance-focus-preview .bal-focus-preview-section>.bal-section-body{height:100%;margin:0!important}
+body.balance-focus-preview .bal-focus-preview-section>.bal-section-body{padding:0!important;border-top:0}
+body.balance-focus-preview #balSelectedPreview{height:100%;width:min(100%,1640px);margin:0 auto;gap:8px}
+body.balance-focus-preview #balSelectedPreview .bal-preview-card{min-height:0;display:flex;flex-direction:column}
+body.balance-focus-preview #balSelectedPreview .bal-preview-stage{min-height:0;flex:1;padding:8px}
+@media(max-width:1180px){
+  .bal-focus-bar{flex-wrap:wrap}
+  .bal-focus-identity{width:100%}
+  .bal-focus-zoom{margin-left:0}
+  body.balance-focus-mode #page{padding-top:104px!important}
+}
+@media(max-width:900px){
+  .bal-focus-bar{align-items:flex-start}
+  .bal-focus-identity{white-space:normal}
+  .bal-focus-identity span{max-width:none}
+  body.balance-focus-mode #page{padding-top:112px!important}
+  body.balance-focus-preview #balSelectedPreview{width:100%}
+}
+/* === /BALANCEAMENTO · MODO FOCO === */
+
+/* === BALANCEAMENTO · MODO FOCO · NOVOS CORTES / CAPÍTULO === */
+body.balance-focus-manual #page{overflow-x:hidden;overflow-y:auto}
+body.balance-focus-manual .bal-detail-stack>.bal-section:not(.bal-manual-editor-section){display:none!important}
+body.balance-focus-manual .bal-detail-stack{margin-top:0!important}
+body.balance-focus-manual .bal-manual-editor-section{margin:0!important;overflow:visible}
+body.balance-focus-manual .bal-manual-sticky-toolbar{top:54px;z-index:14}
+body.balance-focus-manual .bal-manual-editor-section>.bal-section-body{padding:8px!important}
+body.balance-focus-manual #balManualViewport{overflow:visible!important}
+body.balance-focus-manual #balManualWrap{max-width:1640px}
+@media(max-width:900px){
+  body.balance-focus-manual .bal-manual-sticky-toolbar{top:54px}
+}
+/* === /BALANCEAMENTO · MODO FOCO · NOVOS CORTES / CAPÍTULO === */
+
+/* === BALANCEAMENTO · MODO FOCO · NOVOS CORTES / RESULTADO === */
+body.balance-focus-result #page{overflow-x:hidden;overflow-y:auto}
+body.balance-focus-result .bal-detail-stack>.bal-section:not(.bal-focus-result-section){display:none!important}
+body.balance-focus-result .bal-detail-stack{margin-top:0!important}
+body.balance-focus-result .bal-focus-result-section{margin:0!important;overflow:visible}
+body.balance-focus-result .bal-focus-result-section>.bal-section-head{display:none!important}
+body.balance-focus-result .bal-focus-result-section>.bal-section-body{padding:8px!important;border-top:0}
+body.balance-focus-result #balResultPreview{width:min(100%,1640px);margin:0 auto;gap:8px}
+body.balance-focus-result #balResultPreview .bal-preview-stage{padding:8px}
+@media(max-width:900px){body.balance-focus-result #balResultPreview{grid-template-columns:1fr}}
+/* === /BALANCEAMENTO · MODO FOCO · NOVOS CORTES / RESULTADO === */

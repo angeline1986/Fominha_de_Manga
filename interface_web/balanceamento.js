@@ -193,15 +193,128 @@
         <button id="balSelectedZoomReset" type="button" class="bal-zoom-reset" onclick="BalanceamentoUI.resetSelectedPreviewZoom()" ${selectedPreviewZoom === 100 ? "disabled" : ""}>100%</button>
       </span>
     </div>`;
-
-    return `<section class="bal-section">
-      <button class="bal-section-head" onclick="BalanceamentoUI.toggleSection('preview')" aria-expanded="${openSections.preview}">
-        <span>Visualização dos merges selecionados</span>
-        <span class="bal-section-head-right"><small id="balSelectedCount">${selectedMerges.size} selecionado(s)</small><i class="bal-chevron">${openSections.preview ? "▼" : "▶"}</i></span>
-      </button>
+    return `<section class="bal-section bal-focus-preview-section">
+      <div class="bal-section-head bal-focus-preview-head">
+        <button type="button" class="bal-focus-preview-toggle" onclick="BalanceamentoUI.toggleSection('preview')" aria-expanded="${openSections.preview}">
+          <span>Visualização dos merges selecionados</span>
+        </button>
+        <span class="bal-section-head-right">
+          <small id="balSelectedCount">${selectedMerges.size} selecionado(s)</small>
+          <button type="button" class="btn bal-focus-entry" onclick="BalanceamentoUI.toggleFocus('preview')">Modo foco</button>
+          <button type="button" class="bal-focus-preview-chevron" onclick="BalanceamentoUI.toggleSection('preview')" aria-label="${openSections.preview ? "Recolher" : "Expandir"}"><i class="bal-chevron">${openSections.preview ? "▼" : "▶"}</i></button>
+        </span>
+      </div>
       ${openSections.preview ? `<div class="bal-section-body">${zoomControls}<div id="balSelectedPreview" class="bal-preview-grid"></div></div>` : ""}
     </section>`;
   }
+
+  /* === BALANCEAMENTO · MODO FOCO (UI only) === */
+  const balanceFocus = { mode: null };
+
+  function ensureBalanceFocusBar() {
+    let bar = document.querySelector("#balFocusBar");
+    if (bar) return bar;
+    bar = document.createElement("div");
+    bar.id = "balFocusBar";
+    bar.className = "bal-focus-bar";
+    bar.hidden = true;
+    bar.innerHTML = `<div class="bal-focus-identity">
+        <strong>BALANCEAMENTO › Validar</strong>
+        <span id="balFocusContext"></span>
+      </div>
+      <div class="bal-focus-zoom">
+        <span class="bal-zoom-control" aria-label="Controle de zoom">
+          <button id="balFocusZoomOut" type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeSelectedPreviewZoom(-10)" aria-label="Diminuir zoom">−</button>
+          <b id="balFocusZoomValue" class="bal-zoom-value">${selectedPreviewZoom}%</b>
+          <button id="balFocusZoomIn" type="button" class="bal-zoom-action" onclick="BalanceamentoUI.changeSelectedPreviewZoom(10)" aria-label="Aumentar zoom">+</button>
+          <button id="balFocusZoomReset" type="button" class="bal-zoom-reset" onclick="BalanceamentoUI.resetSelectedPreviewZoom()">100%</button>
+        </span>
+      </div>
+      <div class="bal-focus-system">
+        <button class="btn bal-focus-exit" type="button" onclick="BalanceamentoUI.toggleFocus()">Sair do foco</button>
+        <button class="btn bal-focus-fullscreen" type="button" onclick="BalanceamentoUI.toggleFullscreen()" aria-label="Alternar tela cheia" title="Tela cheia">⛶</button>
+      </div>`;
+    document.body.appendChild(bar);
+    return bar;
+  }
+
+  function syncBalanceFocusBar() {
+    if (!balanceFocus.mode) return;
+    const bar = ensureBalanceFocusBar();
+    const chapter = (state?.chapters || []).find(x => String(x.chapter) === String(selectedChapter));
+    const title = bar.querySelector(".bal-focus-identity strong");
+    const context = bar.querySelector("#balFocusContext");
+    const zoom = bar.querySelector(".bal-focus-zoom");
+
+    if (balanceFocus.mode === "preview") {
+      if (title) title.textContent = "BALANCEAMENTO › Validar";
+      if (context) context.textContent = chapter ? `Cap. ${chapter.chapter}` : "";
+      if (zoom) zoom.hidden = false;
+      updateSelectedPreviewZoomUi();
+    } else if (balanceFocus.mode === "manual") {
+      if (title) title.textContent = "BALANCEAMENTO › Novos Cortes › Capítulo";
+      if (context) context.textContent = chapter ? `Cap. ${chapter.chapter}` : "";
+      if (zoom) zoom.hidden = true;
+    } else if (balanceFocus.mode === "result") {
+      if (title) title.textContent = "BALANCEAMENTO › Novos Cortes › Resultado";
+      if (context) context.textContent = chapter ? `Cap. ${chapter.chapter}` : "";
+      if (zoom) zoom.hidden = false;
+      const out = bar.querySelector("#balFocusZoomOut");
+      const value = bar.querySelector("#balFocusZoomValue");
+      const input = bar.querySelector("#balFocusZoomIn");
+      const reset = bar.querySelector("#balFocusZoomReset");
+      if (out) { out.onclick = () => BalanceamentoUI.changeResultZoom(-10); out.disabled = resultZoom <= 30; }
+      if (value) value.textContent = `${resultZoom}%`;
+      if (input) { input.onclick = () => BalanceamentoUI.changeResultZoom(10); input.disabled = resultZoom >= 200; }
+      if (reset) { reset.onclick = () => BalanceamentoUI.resetResultZoom(); reset.disabled = resultZoom === 100; }
+    }
+
+    bar.hidden = false;
+  }
+
+  function enterFocus(mode) {
+    if (!["preview", "manual", "result"].includes(mode)) return;
+
+    if (mode === "preview" && !openSections.preview) {
+      openSections.preview = true;
+      renderBody();
+    }
+    if (mode === "manual" && !openSections.manual) {
+      openSections.manual = true;
+      renderBody();
+    }
+    if (mode === "result" && !openSections.result) {
+      openSections.result = true;
+      renderBody();
+    }
+
+    balanceFocus.mode = mode;
+    document.body.classList.remove("balance-focus-preview", "balance-focus-manual", "balance-focus-result");
+    document.body.classList.add("balance-focus-mode", `balance-focus-${mode}`);
+    syncBalanceFocusBar();
+  }
+
+  function exitFocus() {
+    balanceFocus.mode = null;
+    document.body.classList.remove("balance-focus-mode", "balance-focus-preview", "balance-focus-manual", "balance-focus-result");
+    const bar = document.querySelector("#balFocusBar");
+    if (bar) bar.hidden = true;
+  }
+
+  function toggleFocus(mode) {
+    if (balanceFocus.mode) exitFocus();
+    else enterFocus(mode);
+  }
+
+  async function toggleFullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  /* === /BALANCEAMENTO · MODO FOCO === */
 
   function proposalSection(chapter) {
     const proposal = chapter?.proposal;
@@ -461,6 +574,7 @@
             <button type="button" class="btn" style="min-width:32px;padding:4px 8px" onclick="BalanceamentoUI.changeManualCutCount(-1)">−</button>
             <button type="button" class="btn" style="min-width:32px;padding:4px 8px" onclick="BalanceamentoUI.changeManualCutCount(1)">+</button>
             <button id="balExecuteManual" class="btn primary" onclick="BalanceamentoUI.executeManual()">Novos Cortes</button>
+            <button type="button" class="btn bal-focus-entry" onclick="BalanceamentoUI.toggleFocus('manual')">Modo foco</button>
             <button class="bal-expand-btn" type="button" data-bal-exec-toggle="manual" onclick="BalanceamentoUI.toggleExecutionSection('manual')" aria-expanded="${openSections.manual}" title="${openSections.manual ? 'Recolher capítulo' : 'Expandir capítulo'}">${openSections.manual ? "▼" : "▶"}</button>
           </span>
         </div>
@@ -488,11 +602,12 @@
           </style>
         </div>
       </section>
-      ${result ? `<section class="bal-section">
+      ${result ? `<section class="bal-section bal-focus-result-section">
         <div class="bal-section-head" style="cursor:default">
           <span class="bal-result-title-wrap"><span>Resultado</span>${resultZoomControls}</span>
           <span class="bal-section-head-right">
             ${canApplyFinal ? `<button id="balApplyFinal" class="btn primary" onclick="BalanceamentoUI.applyFinal()">Aplicar composição final</button>` : ""}
+            <button type="button" class="btn bal-focus-entry" onclick="BalanceamentoUI.toggleFocus('result')">Modo foco</button>
             <button class="bal-expand-btn" type="button" data-bal-exec-toggle="result" onclick="BalanceamentoUI.toggleExecutionSection('result')" aria-expanded="${openSections.result}" title="${openSections.result ? 'Recolher resultado' : 'Expandir resultado'}">${openSections.result ? "▼" : "▶"}</button>
           </span>
         </div>
@@ -545,6 +660,14 @@
     if (zoomOut) zoomOut.disabled = selectedPreviewZoom <= 30;
     if (zoomIn) zoomIn.disabled = selectedPreviewZoom >= 200;
     if (reset) reset.disabled = selectedPreviewZoom === 100;
+    const focusValue = document.querySelector("#balFocusZoomValue");
+    const focusZoomOut = document.querySelector("#balFocusZoomOut");
+    const focusZoomIn = document.querySelector("#balFocusZoomIn");
+    const focusReset = document.querySelector("#balFocusZoomReset");
+    if (focusValue) focusValue.textContent = `${selectedPreviewZoom}%`;
+    if (focusZoomOut) focusZoomOut.disabled = selectedPreviewZoom <= 30;
+    if (focusZoomIn) focusZoomIn.disabled = selectedPreviewZoom >= 200;
+    if (focusReset) focusReset.disabled = selectedPreviewZoom === 100;
   }
 
   function updateResultZoomUi() {
@@ -559,6 +682,18 @@
     if (zoomOut) zoomOut.disabled = resultZoom <= 30;
     if (zoomIn) zoomIn.disabled = resultZoom >= 200;
     if (reset) reset.disabled = resultZoom === 100;
+
+    if (balanceFocus.mode === "result") {
+      const bar = document.querySelector("#balFocusBar");
+      const focusValue = bar?.querySelector("#balFocusZoomValue");
+      const focusOut = bar?.querySelector("#balFocusZoomOut");
+      const focusIn = bar?.querySelector("#balFocusZoomIn");
+      const focusReset = bar?.querySelector("#balFocusZoomReset");
+      if (focusValue) focusValue.textContent = `${resultZoom}%`;
+      if (focusOut) focusOut.disabled = resultZoom <= 30;
+      if (focusIn) focusIn.disabled = resultZoom >= 200;
+      if (focusReset) focusReset.disabled = resultZoom === 100;
+    }
   }
 
   function toggleExecutionSection(which) {
@@ -887,6 +1022,8 @@
     toggleMerge,
     toggleSection,
     toggleExecutionSection,
+    toggleFocus,
+    toggleFullscreen,
     submitSelected,
     applyFinal,
     setView,
