@@ -498,6 +498,28 @@
         <strong>MERGE MANUAL › Novos Cortes</strong>
         <span id="mmFocusContext"></span>
       </div>
+      <div class="mm-focus-tools">
+        <button class="btn" type="button" onclick="MergeManualUI.zoom(-0.1)">−</button>
+        <span id="mmFocusZoomLabel">100%</span>
+        <button class="btn" type="button" onclick="MergeManualUI.zoom(0.1)">+</button>
+        <span class="mm-separator"></span>
+        <button id="mmFocusRemoveRuler" class="btn" type="button"
+                onclick="MergeManualUI.removeRuler()" disabled>− régua</button>
+        <span id="mmFocusCutCount">0 cortes</span>
+        <button class="btn" type="button" onclick="MergeManualUI.addRuler()">+ régua</button>
+        <span class="mm-separator"></span>
+        <div class="mm-ruler-color-picker" aria-label="Cor da régua">
+          <button type="button" class="mm-ruler-color-option active"
+                  data-ruler-color="#188AB4" style="--swatch:#188AB4"
+                  title="Azul" onclick="MergeManualUI.setRulerColor('#188AB4')"></button>
+          <button type="button" class="mm-ruler-color-option"
+                  data-ruler-color="#c05982" style="--swatch:#c05982"
+                  title="Rosa" onclick="MergeManualUI.setRulerColor('#c05982')"></button>
+          <button type="button" class="mm-ruler-color-option"
+                  data-ruler-color="#ffcc00" style="--swatch:#ffcc00"
+                  title="Amarelo" onclick="MergeManualUI.setRulerColor('#ffcc00')"></button>
+        </div>
+      </div>
       <div class="mm-focus-system">
         <button class="btn mm-focus-exit" type="button"
                 onclick="MergeManualUI.toggleFocus()">Sair do foco</button>
@@ -567,7 +589,7 @@
       stream.dataset.baseWidth = String(baseWidth);
     }
 
-    const zoomValue = Math.min(1.5, Math.max(0.4, Number(window.__mergeManualZoom || 1)));
+    const zoomValue = Math.min(1.5, Math.max(0.3, Number(window.__mergeManualZoom || 1)));
     const renderedWidth = Math.max(120, baseWidth * zoomValue);
     stream.style.width = `${renderedWidth}px`;
     stream.style.maxWidth = "none";
@@ -663,11 +685,16 @@
       </button>
     `).join("");
 
-    const count = document.getElementById("mmCutCount");
-    if (count) count.textContent = `${cutEditor.cuts.length} corte${cutEditor.cuts.length === 1 ? "" : "s"}`;
+    const countText = `${cutEditor.cuts.length} corte${cutEditor.cuts.length === 1 ? "" : "s"}`;
+    for (const id of ["mmCutCount", "mmFocusCutCount"]) {
+      const count = document.getElementById(id);
+      if (count) count.textContent = countText;
+    }
 
-    const remove = document.getElementById("mmRemoveRuler");
-    if (remove) remove.disabled = !cutEditor.cuts.length;
+    for (const id of ["mmRemoveRuler", "mmFocusRemoveRuler"]) {
+      const remove = document.getElementById(id);
+      if (remove) remove.disabled = !cutEditor.cuts.length;
+    }
     const generate=document.getElementById("mmGenerateCuts");
     if(generate)generate.disabled=!cutEditor.cuts.length||proposalBusy;
     const actionText=document.querySelector(".mm-cuts-page .mm-actionbar span");
@@ -764,13 +791,16 @@
 
     const next = Math.min(
       1.5,
-      Math.max(0.4, Number(window.__mergeManualZoom || 1) + Number(delta || 0))
+      Math.max(0.3, Number(window.__mergeManualZoom || 1) + Number(delta || 0))
     );
 
     window.__mergeManualZoom = Number(next.toFixed(2));
 
-    const label = document.getElementById("mmZoomLabel");
-    if (label) label.textContent = `${Math.round(window.__mergeManualZoom * 100)}%`;
+    const zoomText = `${Math.round(window.__mergeManualZoom * 100)}%`;
+    for (const id of ["mmZoomLabel", "mmFocusZoomLabel"]) {
+      const label = document.getElementById(id);
+      if (label) label.textContent = zoomText;
+    }
 
     requestAnimationFrame(() => {
       layoutSourceSlices();

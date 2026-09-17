@@ -224,7 +224,11 @@ body.sidebar-collapsed .mm-actionbar{
   margin-right:0;
 }
 
-/* === MERGE MANUAL · MODO FOCO · NOVOS CORTES (UI only) === */
+/* === MERGE MANUAL · MODO FOCO · NOVOS CORTES === */
+
+:root {
+  --mm-ruler-color: #188AB4;
+}
 
 .mm-focus-entry {
   white-space: nowrap;
@@ -269,11 +273,25 @@ body.sidebar-collapsed .mm-actionbar{
   color: var(--color-text-muted, #126887);
 }
 
+.mm-focus-tools,
 .mm-focus-system {
-  margin-left: auto;
   display: flex;
   align-items: center;
   gap: 8px;
+}
+
+.mm-focus-tools {
+  margin-left: auto;
+}
+
+.mm-focus-system {
+  margin-left: 4px;
+}
+
+.mm-focus-tools #mmFocusCutCount {
+  min-width: 62px;
+  text-align: center;
+  font-size: 12px;
 }
 
 body.merge-manual-focus-mode {
@@ -290,13 +308,15 @@ body.merge-manual-focus-mode .layout {
   display: block !important;
 }
 
+/* Único scroll container vertical do Modo Foco. */
 body.merge-manual-focus-mode #page {
   box-sizing: border-box;
   width: 100vw;
   height: 100vh;
+  min-height: 0;
   overflow-x: hidden;
   overflow-y: auto;
-  padding: 62px 8px 90px !important;
+  padding: 62px 8px 12px !important;
   margin: 0 !important;
 }
 
@@ -307,21 +327,21 @@ body.merge-manual-focus-mode .mm-cuts-page > .head {
 
 body.merge-manual-focus-mode .mm-cuts-page {
   width: min(100%, 1640px);
+  min-height: 0;
+  height: auto;
   margin: 0 auto;
   padding-bottom: 92px;
 }
 
+/* A toolbar original existe somente no modo normal. */
 body.merge-manual-focus-mode .mm-cut-toolbar {
-  position: sticky;
-  top: 0;
-  z-index: 14;
-  margin-bottom: 8px;
+  display: none !important;
 }
 
 body.merge-manual-focus-mode .mm-stream-wrap {
+  min-height: 0;
+  height: auto;
   overflow: visible;
-  padding-left: 38px;
-  padding-right: 38px;
 }
 
 body.merge-manual-focus-mode .mm-actionbar {
@@ -329,118 +349,42 @@ body.merge-manual-focus-mode .mm-actionbar {
   right: 8px;
 }
 
-/* A régua continua funcionalmente com 100% da largura do stream.
- * Somente a linha visual ultrapassa 24px de cada lado.
- */
-.mm-ruler::before {
-  left: -24px !important;
-  right: -24px !important;
-}
-
 /* === /MERGE MANUAL · MODO FOCO · NOVOS CORTES === */
 
 
-
-/* === MERGE MANUAL · NOVOS CORTES · AJUSTES V2 === */
-
-:root {
-  --mm-ruler-color: #188AB4;
-}
-
-/* ----------------------------------------------------------
- * Régua
- *
- * O elemento funcional continua ocupando a largura original.
- * A extensão lateral é apenas visual.
- * ---------------------------------------------------------- */
+/* === MERGE MANUAL · NOVOS CORTES · RÉGUA E CORES === */
 
 .mm-ruler {
   border-top: 0 !important;
   overflow: visible !important;
 }
 
-/* Neutraliza a tentativa anterior, caso exista */
-.mm-ruler::before {
-  content: "" !important;
-  position: absolute !important;
-
-  /*
-   * 36 px além da imagem de cada lado.
-   * Maior que os 24 px da primeira tentativa.
-   */
-  left: -36px !important;
-  right: -36px !important;
-  top: -2px !important;
-
-  height: 4px !important;
-
-  background: var(--mm-ruler-color) !important;
-
-  border: 0 !important;
-  border-radius: 999px !important;
-
-  pointer-events: none !important;
-}
-
-/* Régua selecionada continua contínua */
-.mm-ruler.selected {
-  border-top: 0 !important;
-}
-
-.mm-ruler.selected::before {
-  background: var(--mm-ruler-color) !important;
-}
-
-/* Etiqueta acompanha a cor selecionada */
-.mm-ruler > span,
-.mm-ruler span {
-  background: var(--mm-ruler-color) !important;
-}
-
-/* ----------------------------------------------------------
- * Seletor de cor
- * ---------------------------------------------------------- */
-
 .mm-ruler-color-picker {
   display: inline-flex;
   align-items: center;
-  gap: 7px;
-
+  gap: 8px !important;
   height: 36px;
-  padding: 0 10px;
-
+  padding: 0 10px !important;
   box-sizing: border-box;
-
   border: 1px solid var(--color-border-primary, #C8EAF5);
   border-radius: 9px;
-
   background: var(--color-surface, #FFFFFF);
-
   white-space: nowrap;
 }
 
+/* O seletor contém somente as três cores. */
 .mm-ruler-color-picker > span {
-  margin-right: 2px;
-
-  font-size: 12px;
-  font-weight: 700;
-
-  color: var(--color-text, #0C455A);
+  display: none !important;
 }
 
 .mm-ruler-color-option {
   width: 18px;
   height: 18px;
-
   padding: 0;
-
   border: 2px solid transparent;
   border-radius: 50%;
-
   background: var(--swatch);
-
   cursor: pointer;
-
   box-shadow: 0 0 0 1px rgba(12,69,90,.10);
 }
 
@@ -455,95 +399,10 @@ body.merge-manual-focus-mode .mm-actionbar {
     0 0 0 3px rgba(12,69,90,.12);
 }
 
-/* ----------------------------------------------------------
- * Modo foco
- *
- * Remove a altura artificial que estava permitindo continuar
- * rolando depois do conteúdo real.
- * ---------------------------------------------------------- */
-
-body.merge-manual-focus-mode {
-  overflow: hidden !important;
-}
-
-body.merge-manual-focus-mode #page {
-  min-height: 0 !important;
-  height: 100vh !important;
-
-  overflow-x: hidden !important;
-  overflow-y: auto !important;
-
-  padding-bottom: 12px !important;
-}
-
-body.merge-manual-focus-mode .mm-cuts-page {
-  min-height: 0 !important;
-  height: auto !important;
-
-  padding-bottom: 76px !important;
-}
-
 /*
- * O wrapper acompanha o conteúdo real.
- * Não cria uma área vertical extra após a última imagem.
+ * Régua aprovada:
+ * extensão lateral, 5px e hitbox completo no próprio elemento.
  */
-body.merge-manual-focus-mode .mm-stream-wrap {
-  min-height: 0 !important;
-  height: auto !important;
-
-  overflow: visible !important;
-
-  padding-left: 52px !important;
-  padding-right: 52px !important;
-}
-
-/*
- * Espaço horizontal para os 36 px extras da régua sem alterar
- * a largura lógica do stream/imagens.
- */
-.mm-stream-wrap {
-  overflow-x: visible;
-}
-
-.mm-ruler-layer {
-  overflow: visible !important;
-}
-
-/* === /MERGE MANUAL · NOVOS CORTES · AJUSTES V2 === */
-
-
-/* === MERGE MANUAL · NOVOS CORTES · AJUSTES V3 === */
-
-/*
- * TOOLBAR
- * Separa visualmente:
- *   zoom | régua | cores | modo foco
- */
-
-.mm-cut-toolbar .mm-cut-actions {
-  column-gap: 10px !important;
-}
-
-.mm-ruler-color-picker {
-  gap: 8px !important;
-  padding: 0 10px !important;
-}
-
-/* O seletor agora contém somente as três cores. */
-.mm-ruler-color-picker > span {
-  display: none !important;
-}
-
-/*
- * RÉGUA
- *
- * V2 usava ::before para desenhar a extensão.
- * Isso criava uma linha visual maior, mas o hitbox continuava
- * restrito à régua original.
- *
- * V3 aumenta o próprio elemento interativo.
- */
-
 .mm-ruler::before {
   content: none !important;
   display: none !important;
@@ -554,40 +413,29 @@ body.merge-manual-focus-mode .mm-stream-wrap {
   left: -42px !important;
   right: -42px !important;
   width: auto !important;
-
   height: 5px !important;
-
   border: 0 !important;
   border-radius: 999px !important;
-
   background: var(--mm-ruler-color) !important;
-
   cursor: ns-resize !important;
   pointer-events: auto !important;
-
   box-sizing: border-box !important;
 }
 
-/*
- * A linha inteira é agora o alvo de interação.
- * O label continua apenas como indicador visual.
- */
 .mm-ruler > span,
 .mm-ruler span {
   background: var(--mm-ruler-color) !important;
 }
 
-/*
- * Dá folga suficiente para os 42px extras sem aumentar
- * a largura lógica das imagens.
- */
+/* Folga horizontal para os 42px extras sem alterar a largura lógica das imagens. */
 .mm-stream-wrap {
   padding-left: 58px !important;
   padding-right: 58px !important;
+  overflow-x: visible;
 }
 
 .mm-ruler-layer {
   overflow: visible !important;
 }
 
-/* === /MERGE MANUAL · NOVOS CORTES · AJUSTES V3 === */
+/* === /MERGE MANUAL · NOVOS CORTES · RÉGUA E CORES === */
