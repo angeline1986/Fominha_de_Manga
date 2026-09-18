@@ -2681,6 +2681,9 @@ class Handler(BaseHTTPRequestHandler):
         u=urllib.parse.urlparse(self.path); q=urllib.parse.parse_qs(u.query)
         try:
             if u.path=="/api/catalog": return self.send_json(catalog())
+            if u.path=="/api/export/select-directory":
+                from processamento.exportacao.exportador import select_directory
+                return self.send_json(select_directory())
             if u.path=="/api/state": return self.send_json(state(q.get("provider",[""])[0],q.get("manga",[""])[0]))
             if u.path=="/api/textoff-compare":
                 from processamento.limpeza_baloes.textoff_compare import comparison_state
@@ -2747,8 +2750,17 @@ class Handler(BaseHTTPRequestHandler):
             return self.static(u.path)
         except Exception as e:return self.send_json({"error":str(e)},400)
     def do_POST(self):
-        if urllib.parse.urlparse(self.path).path!="/api/action": return self.send_json({"error":"Rota não encontrada."},404)
+        path=urllib.parse.urlparse(self.path).path
         try:
+            if path=="/api/export/simulate":
+                from processamento.exportacao.exportador import simulate_export
+                b=self.body(); manga=manga_path(str(b.get("provider","")),str(b.get("manga","")))
+                return self.send_json(simulate_export(manga,str(b.get("destination","")),b.get("contents") or []))
+            if path=="/api/export/execute":
+                from processamento.exportacao.exportador import execute_plan
+                b=self.body(); manga=manga_path(str(b.get("provider","")),str(b.get("manga","")))
+                return self.send_json(execute_plan(manga,str(b.get("plan_id",""))))
+            if path!="/api/action": return self.send_json({"error":"Rota não encontrada."},404)
             b=self.body(); j=make_job(str(b.get("action","")),b); return self.send_json({"job_id":j.id,"request_id":j.request_id},HTTPStatus.ACCEPTED)
         except Exception as e:return self.send_json({"error":str(e)},400)
     def static(self,path):
