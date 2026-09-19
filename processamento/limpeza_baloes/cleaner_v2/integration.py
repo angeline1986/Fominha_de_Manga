@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 import json, os, shutil, subprocess, tempfile, time, uuid
 from .launcher import MODULE_DIR, build_command
+from .balloon_authorization import apply_balloon_authorization
 
 LEVEL2_SCRIPT = MODULE_DIR / 'level2.py'
 
@@ -105,6 +106,15 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
         if len(mask_files) != len(images):
             raise RuntimeError(f"Lote incompleto: {len(images)} entrada(s), {len(mask_files)} máscara(s).")
 
+        # Nível I: Cleaner V2 intacto; máscara autorizada somente dentro de balões reais.
+        level1_report_path = work/'level1-balloon-report.json'
+        level1_report = apply_balloon_authorization(
+            images, output_dir, level1_report_path,
+            progress_job=progress_job, chapter_name=chapter_name,
+        )
+        if int(level1_report.get('pages_total') or 0) != len(images):
+            raise RuntimeError('Texto Off — Nível I não analisou todas as imagens do lote.')
+
         # Nível II é pós-processamento cirúrgico: usa os originais + máscaras reais
         # do Nível I e altera somente componentes classificados pelo Detector V3.
         level2_report_path = work/'level2-report.json'
@@ -136,10 +146,11 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
 
         for artifact in sorted(p for p in output_dir.iterdir() if p.is_file()):
             shutil.copy2(artifact, staged/artifact.name)
+        shutil.copy2(level1_report_path, staged/'level1-balloon-report.json')
         shutil.copy2(level2_report_path, staged/'level2-report.json')
 
         manifest = {
-            'schema_version': 2,
+            'schema_version': 3,
             'algorithm': ALGORITHM,
             'engine': 'Panel Cleaner',
             'engine_version': '2.11.11',
@@ -155,6 +166,19 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
             'source_artifacts': names,
             'clean_artifacts': [p.name for p in clean_files],
             'mask_artifacts': [p.name for p in mask_files],
+            'authorization': {
+            },
+            'level1': {
+                'algorithm': level1_report.get('algorithm'),
+                'policy': level1_report.get('policy'),
+                'fail_closed': level1_report.get('fail_closed'),
+                'model': level1_report.get('model'),
+                'pages_total': level1_report.get('pages_total'),
+                'cleaner_mask_pixels': level1_report.get('cleaner_mask_pixels'),
+                'authorized_mask_pixels': level1_report.get('authorized_mask_pixels'),
+                'authorized_percent': level1_report.get('authorized_percent'),
+                'report': 'level1-balloon-report.json',
+            },
             'level2': {
                 'algorithm': level2_report.get('algorithm'),
                 'detector': level2_report.get('detector'),
