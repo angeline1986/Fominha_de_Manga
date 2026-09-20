@@ -1,0 +1,867 @@
+{
+  "schema_version": 1,
+  "dataset_id": "textoff_m1_acceptance_matrix",
+  "dataset_version": 1,
+  "purpose": "REGIONAL_ROUTING_ACCEPTANCE",
+  "artifact_locator": {
+    "path_type": "RELATIVE_TO_CONFIGURABLE_ARTIFACT_ROOT",
+    "root_in_fixture": null
+  },
+  "usage_constraints": [
+    "Ground truth restrito às regiões identificadas e fontes com hash correspondente.",
+    "Destinos, tags, agrupamentos e métricas históricas não devem alimentar o classificador.",
+    "Comparar a saída independente do pipeline ao destino esperado; não transformar exemplos em regras ou thresholds.",
+    "IDs CTD são históricos; associação futura deve considerar geometria e identidade da fonte, com política explícita para divisão, agrupamento ou ausência de candidatos.",
+    "Fonte ausente ou hash divergente não equivale a teste aprovado; relatar indisponibilidade ou necessidade de revalidação.",
+    "Casos agrupados são avaliados individualmente; acerto de H1 não implica acerto de H2.",
+    "Pendências de cobertura não contam como casos aprovados.",
+    "Métricas são referência histórica descritiva; relatórios completos não são necessários ao consumo do fixture nem estão incluídos."
+  ],
+  "sources": {
+    "candy_ch04_merged_049_054": {
+      "work": "Candy YumYum (Yaoi)",
+      "chapter": "Ch. 4",
+      "stage": "MERGED",
+      "page": "page-049-054.png",
+      "artifact_relative_path": "mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 4/page-049-054.png",
+      "sha256": "f85d381edf51cb461d8e36cb31728bcd09e14109669ee649c4e4d5fe451cc67c",
+      "width": 720,
+      "height": 6801,
+      "case_ids": [
+        "candy_ch04_a1",
+        "candy_ch04_a2",
+        "candy_ch04_b",
+        "candy_ch04_e",
+        "candy_ch04_f",
+        "candy_ch04_g",
+        "candy_ch04_h1",
+        "candy_ch04_h2"
+      ]
+    },
+    "candy_ch04_merged_083_089": {
+      "work": "Candy YumYum (Yaoi)",
+      "chapter": "Ch. 4",
+      "stage": "MERGED",
+      "page": "page-083-089.png",
+      "artifact_relative_path": "mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 4/page-083-089.png",
+      "sha256": "9a11dffa101aed0712a04a8d307cd44b1504cdf01d9e59177ec5ad8526a7df5c",
+      "width": 720,
+      "height": 6404,
+      "case_ids": [
+        "candy_ch04_c"
+      ]
+    }
+  },
+  "coverage": [
+    {
+      "category": "A_WHITE_CONVENTIONAL",
+      "status": "VALIDATED_CASES",
+      "case_ids": [
+        "candy_ch04_a1",
+        "candy_ch04_a2"
+      ]
+    },
+    {
+      "category": "B_SFX",
+      "status": "VALIDATED_CASES",
+      "case_ids": [
+        "candy_ch04_b"
+      ]
+    },
+    {
+      "category": "C_TITLE_CREDITS_EDITORIAL",
+      "status": "VALIDATED_CASES",
+      "case_ids": [
+        "candy_ch04_c"
+      ]
+    },
+    {
+      "category": "C_TO_BE_CONTINUED",
+      "status": "GROUND_TRUTH_PENDING",
+      "case_ids": [],
+      "note": "Sem golden case próprio; aprovação de título/créditos não cobre este subtipo."
+    },
+    {
+      "category": "D_SEMITRANSPARENT",
+      "status": "GROUND_TRUTH_PENDING",
+      "case_ids": [],
+      "note": "GROUND TRUTH PENDENTE — SEM EXEMPLO REAL APROVADO"
+    },
+    {
+      "category": "E_INTENSE_COLOR",
+      "status": "VALIDATED_CASES",
+      "case_ids": [
+        "candy_ch04_e"
+      ],
+      "note": "Características de cor e decoração/textura sobrepostas."
+    },
+    {
+      "category": "F_GRADIENT_TEXTURE",
+      "status": "VALIDATED_CASES",
+      "case_ids": [
+        "candy_ch04_f"
+      ],
+      "note": "Não representa uma característica pura e exclusiva."
+    },
+    {
+      "category": "G_UNCERTAIN",
+      "status": "VALIDATED_CASES",
+      "case_ids": [
+        "candy_ch04_g"
+      ]
+    },
+    {
+      "category": "PALE_DECORATIVE_STRUCTURE",
+      "status": "VALIDATED_CASES",
+      "case_ids": [
+        "candy_ch04_h1",
+        "candy_ch04_h2"
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "case_id": "candy_ch04_a1",
+      "category_tags": [
+        "WHITE_CONVENTIONAL"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          263,
+          1348,
+          533,
+          1424
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0004-22e7bbc05ffc",
+        "source_index": 4,
+        "split_page": "page-049-054_split_1.png",
+        "split_bbox": [
+          263,
+          1348,
+          533,
+          1424
+        ],
+        "split_width": 720,
+        "split_height": 1652,
+        "offset_x": 0,
+        "offset_y": 0,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "LEVEL_3",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "WHAT DOES HYUNJI EVEN LOOK LIKE?",
+        "visual_observation": "Diálogo em balão branco delimitado; fundo visualmente uniforme.",
+        "historical_full_page_balloon": null,
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 3,
+          "best_balloon_id": 3,
+          "box_inside_balloon_percent": 100.0,
+          "center_inside_balloon": true,
+          "best_balloon_box_overlap_percent": 100.0,
+          "balloon_inside_box_percent": 13.1511
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 6,
+          "background_pixels": 34724,
+          "measurement_status": "OK",
+          "saturation_mean": 0.0,
+          "saturation_p90": 0.0,
+          "rgb_std_mean": 24.6789,
+          "luminance_std": 24.6817,
+          "spatial_luminance": {
+            "left_right_delta": 0.004,
+            "top_bottom_delta": 0.0517,
+            "quadrant_range": 0.0643
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "4b61ae8b-ecbf-4c4a-b0c7-5377686b0522_page-049-054_split_1.json",
+          "audit_report_sha256": "c70948048d72433173981bb5bc16471e3ebf0913b296d4d2db5728b12533d99a",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "4b61ae8b-ecbf-4c4a-b0c7-5377686b0522_page-049-054_split_1#raw.json",
+          "raw_json_sha256": "3165df704bfcee252b5a3a18ef9e227220e3fa92b28798d57acc87d3a11ec375",
+          "split_image_sha256": "e73210b40ae4713e64fc1a47e0e724d8bc16f05e607f071b644925c2c109fc8d",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página."
+      ]
+    },
+    {
+      "case_id": "candy_ch04_a2",
+      "category_tags": [
+        "WHITE_CONVENTIONAL",
+        "COLORED_CONTEXT"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          392,
+          6543,
+          665,
+          6612
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0003-f1697867cf88",
+        "source_index": 3,
+        "split_page": "page-049-054_split_4.png",
+        "split_bbox": [
+          392,
+          1011,
+          665,
+          1080
+        ],
+        "split_width": 720,
+        "split_height": 1269,
+        "offset_x": 0,
+        "offset_y": 5532,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "LEVEL_3",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "THAT’S EVERYONE’S IDEAL TYPE.",
+        "visual_observation": "Balão branco próximo à roupa e à mesa coloridas; contexto não define sozinho a superfície interna.",
+        "historical_full_page_balloon": null,
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 2,
+          "best_balloon_id": 2,
+          "box_inside_balloon_percent": 100.0,
+          "center_inside_balloon": true,
+          "best_balloon_box_overlap_percent": 100.0,
+          "balloon_inside_box_percent": 25.1056
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 6,
+          "background_pixels": 26523,
+          "measurement_status": "OK",
+          "saturation_mean": 19.64,
+          "saturation_p90": 100.0,
+          "rgb_std_mean": 71.9101,
+          "luminance_std": 70.4317,
+          "spatial_luminance": {
+            "left_right_delta": 50.8948,
+            "top_bottom_delta": 3.6336,
+            "quadrant_range": 55.9714
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "ba456072-bddb-420a-94e3-356ace420aad_page-049-054_split_4.json",
+          "audit_report_sha256": "1a818600d22bf87905a295c75b9e44470107cfa3233e5427af30817234aab6bc",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "ba456072-bddb-420a-94e3-356ace420aad_page-049-054_split_4#raw.json",
+          "raw_json_sha256": "b19727d06f3853afa266d618bdd21246e4a4de7169b3a341ace6d7ee4ee5fc7d",
+          "split_image_sha256": "df0fc04e7a0770bd9c15bc824af6bd70fa336337b211de56242dd2f798add939",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página.",
+        "Não implica ignorar contexto colorido em outros casos."
+      ]
+    },
+    {
+      "case_id": "candy_ch04_b",
+      "category_tags": [
+        "SFX"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          262,
+          6401,
+          353,
+          6445
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0002-9bf385091507",
+        "source_index": 2,
+        "split_page": "page-049-054_split_4.png",
+        "split_bbox": [
+          262,
+          869,
+          353,
+          913
+        ],
+        "split_width": 720,
+        "split_height": 1269,
+        "offset_x": 0,
+        "offset_y": 5532,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "PROTEGER",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "CLINK",
+        "visual_observation": "Efeito sonoro junto à colher, com lettering próprio.",
+        "historical_full_page_balloon": null,
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 2,
+          "best_balloon_id": null,
+          "box_inside_balloon_percent": 0.0,
+          "center_inside_balloon": false,
+          "best_balloon_box_overlap_percent": 0.0,
+          "balloon_inside_box_percent": 0.0
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 4,
+          "background_pixels": 6322,
+          "measurement_status": "OK",
+          "saturation_mean": 26.0875,
+          "saturation_p90": 51.0,
+          "rgb_std_mean": 67.7089,
+          "luminance_std": 69.0737,
+          "spatial_luminance": {
+            "left_right_delta": 56.0846,
+            "top_bottom_delta": 14.3353,
+            "quadrant_range": 80.2388
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "ba456072-bddb-420a-94e3-356ace420aad_page-049-054_split_4.json",
+          "audit_report_sha256": "1a818600d22bf87905a295c75b9e44470107cfa3233e5427af30817234aab6bc",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "ba456072-bddb-420a-94e3-356ace420aad_page-049-054_split_4#raw.json",
+          "raw_json_sha256": "b19727d06f3853afa266d618bdd21246e4a4de7169b3a341ace6d7ee4ee5fc7d",
+          "split_image_sha256": "df0fc04e7a0770bd9c15bc824af6bd70fa336337b211de56242dd2f798add939",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página.",
+        "Ausência de balão não implica SFX ou proteção em outros casos."
+      ]
+    },
+    {
+      "case_id": "candy_ch04_c",
+      "category_tags": [
+        "TITLE",
+        "CREDITS",
+        "EDITORIAL"
+      ],
+      "source_id": "candy_ch04_merged_083_089",
+      "region": {
+        "bbox": [
+          180,
+          5524,
+          670,
+          5994
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "MANUAL_CONTEXT"
+      },
+      "candidate_reference": null,
+      "human_ground_truth": {
+        "destination": "PROTEGER",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "Candy Yum Yum / título, créditos de produção e aviso editorial",
+        "visual_observation": "Bloco editorial ao final da página, incluindo título e créditos.",
+        "provenance": {
+          "observation_source": "MERGED_SOURCE_IMAGE",
+          "candidate_reference_status": "NOT_AVAILABLE",
+          "candidate_reference_reason": "Raw correspondente não localizado na auditoria de referência."
+        }
+      },
+      "limitations": [
+        "Delimitação manual aproximada de contexto; não é bbox CTD nem máscara de remoção.",
+        "Não cobre To be continued."
+      ]
+    },
+    {
+      "case_id": "candy_ch04_e",
+      "category_tags": [
+        "COLOR_INTENSE",
+        "DECORATIVE_TEXTURE"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          182,
+          5274,
+          340,
+          5343
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0009-0fd536915641",
+        "source_index": 9,
+        "split_page": "page-049-054_split_3.png",
+        "split_bbox": [
+          182,
+          2232,
+          340,
+          2301
+        ],
+        "split_width": 720,
+        "split_height": 2490,
+        "offset_x": 0,
+        "offset_y": 3042,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "LEVEL_5",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "SHE’S JUST PRETTY.",
+        "visual_observation": "Fundo de cor intensa com elementos decorativos.",
+        "historical_full_page_balloon": "BAL 11",
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 6,
+          "best_balloon_id": 5,
+          "box_inside_balloon_percent": 100.0,
+          "center_inside_balloon": true,
+          "best_balloon_box_overlap_percent": 100.0,
+          "balloon_inside_box_percent": 7.0905
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 6,
+          "background_pixels": 17586,
+          "measurement_status": "OK",
+          "saturation_mean": 107.0045,
+          "saturation_p90": 113.0,
+          "rgb_std_mean": 7.3752,
+          "luminance_std": 7.2081,
+          "spatial_luminance": {
+            "left_right_delta": 2.6322,
+            "top_bottom_delta": 2.735,
+            "quadrant_range": 5.3611
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3.json",
+          "audit_report_sha256": "995f9464f95993a5bae2b663bd3ea90d78376177aa865a7ac07b416fed9e0ab6",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3#raw.json",
+          "raw_json_sha256": "1f4e172d0f2b96d75404bce1ccd5f3a46747de6179bf6e9b4de7105349fe191a",
+          "split_image_sha256": "f4549ebac2e9496cd849ec8fa2e08baad3184b7244d016ecbfa64b485d14133c",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página.",
+        "Cor e textura se sobrepõem; não é exemplo puro ou exclusivo de uma característica."
+      ]
+    },
+    {
+      "case_id": "candy_ch04_f",
+      "category_tags": [
+        "COLOR",
+        "GRADIENT_TEXTURE"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          319,
+          4162,
+          537,
+          4304
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0004-d60e6cef9ff2",
+        "source_index": 4,
+        "split_page": "page-049-054_split_3.png",
+        "split_bbox": [
+          319,
+          1120,
+          537,
+          1262
+        ],
+        "split_width": 720,
+        "split_height": 2490,
+        "offset_x": 0,
+        "offset_y": 3042,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "LEVEL_5",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "HER LIPS WERE RED TOO. SHE’S JUST PRETTY.",
+        "visual_observation": "Fundo colorido com variação tonal, pontilhado e brilhos.",
+        "historical_full_page_balloon": "BAL 06",
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 6,
+          "best_balloon_id": 1,
+          "box_inside_balloon_percent": 100.0,
+          "center_inside_balloon": true,
+          "best_balloon_box_overlap_percent": 100.0,
+          "balloon_inside_box_percent": 16.8329
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 11,
+          "background_pixels": 50180,
+          "measurement_status": "OK",
+          "saturation_mean": 49.4727,
+          "saturation_p90": 66.0,
+          "rgb_std_mean": 27.3803,
+          "luminance_std": 26.5585,
+          "spatial_luminance": {
+            "left_right_delta": 2.6455,
+            "top_bottom_delta": 9.7652,
+            "quadrant_range": 15.2936
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3.json",
+          "audit_report_sha256": "995f9464f95993a5bae2b663bd3ea90d78376177aa865a7ac07b416fed9e0ab6",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3#raw.json",
+          "raw_json_sha256": "1f4e172d0f2b96d75404bce1ccd5f3a46747de6179bf6e9b4de7105349fe191a",
+          "split_image_sha256": "f4549ebac2e9496cd849ec8fa2e08baad3184b7244d016ecbfa64b485d14133c",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página.",
+        "Cor e textura se sobrepõem; não é exemplo puro ou exclusivo de uma característica."
+      ]
+    },
+    {
+      "case_id": "candy_ch04_g",
+      "category_tags": [
+        "UNCERTAIN"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          413,
+          4804,
+          521,
+          4837
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0006-820f291e25e0",
+        "source_index": 6,
+        "split_page": "page-049-054_split_3.png",
+        "split_bbox": [
+          413,
+          1762,
+          521,
+          1795
+        ],
+        "split_width": 720,
+        "split_height": 2490,
+        "offset_x": 0,
+        "offset_y": 3042,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "REVIEW",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "ENOUGH…",
+        "visual_observation": "Texto sobre a cena, sem superfície convencional delimitada e segura de limpeza.",
+        "historical_full_page_balloon": null,
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 6,
+          "best_balloon_id": null,
+          "box_inside_balloon_percent": 0.0,
+          "center_inside_balloon": false,
+          "best_balloon_box_overlap_percent": 0.0,
+          "balloon_inside_box_percent": 0.0
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 4,
+          "background_pixels": 5732,
+          "measurement_status": "OK",
+          "saturation_mean": 5.9716,
+          "saturation_p90": 13.0,
+          "rgb_std_mean": 15.2426,
+          "luminance_std": 14.9831,
+          "spatial_luminance": {
+            "left_right_delta": 12.5541,
+            "top_bottom_delta": 4.9998,
+            "quadrant_range": 17.5985
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3.json",
+          "audit_report_sha256": "995f9464f95993a5bae2b663bd3ea90d78376177aa865a7ac07b416fed9e0ab6",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3#raw.json",
+          "raw_json_sha256": "1f4e172d0f2b96d75404bce1ccd5f3a46747de6179bf6e9b4de7105349fe191a",
+          "split_image_sha256": "f4549ebac2e9496cd849ec8fa2e08baad3184b7244d016ecbfa64b485d14133c",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página.",
+        "REVIEW é o resultado esperado correto; não é ausência de ground truth."
+      ]
+    },
+    {
+      "case_id": "candy_ch04_h1",
+      "category_tags": [
+        "PALE_COLOR",
+        "DECORATIVE_TEXTURE"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          127,
+          2925,
+          350,
+          2994
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0003-916bc06fbf04",
+        "source_index": 3,
+        "split_page": "page-049-054_split_2.png",
+        "split_bbox": [
+          127,
+          1273,
+          350,
+          1342
+        ],
+        "split_width": 720,
+        "split_height": 1390,
+        "offset_x": 0,
+        "offset_y": 1652,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "LEVEL_5",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "FIRST, HER EYES WERE CUTE!",
+        "visual_observation": "Interior quase neutro pertencente a uma estrutura decorativa/colorida maior.",
+        "historical_full_page_balloon": "BAL 01",
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 2,
+          "best_balloon_id": 2,
+          "box_inside_balloon_percent": 100.0,
+          "center_inside_balloon": true,
+          "best_balloon_box_overlap_percent": 100.0,
+          "balloon_inside_box_percent": 16.1689
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 6,
+          "background_pixels": 25308,
+          "measurement_status": "OK",
+          "saturation_mean": 4.4636,
+          "saturation_p90": 5.0,
+          "rgb_std_mean": 1.4922,
+          "luminance_std": 1.4302,
+          "spatial_luminance": {
+            "left_right_delta": 1.1923,
+            "top_bottom_delta": 1.5091,
+            "quadrant_range": 2.6978
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "fb3c125c-f4ea-4ee4-b9a7-b442608ff1ed_page-049-054_split_2.json",
+          "audit_report_sha256": "46d58c75c5ec425e384acd0b284a98cbee6e9633c1049170b70efae2b3da231d",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "fb3c125c-f4ea-4ee4-b9a7-b442608ff1ed_page-049-054_split_2#raw.json",
+          "raw_json_sha256": "c43c8605e4d7f4a1da91dbdd88c75ecdf88757429184fb2a0fb3c0f5516ad8a7",
+          "split_image_sha256": "4dd84193cd054b1bdfaec41410c744b0e1ccdc54ec8a707eade63737b9a91502",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página.",
+        "Agrupamento apenas contextual; avaliação independente de H1 e H2.",
+        "Requer evidências combinadas; não autoriza exceção por obra, BAL 01, rosa ou saturação isolada."
+      ],
+      "visual_group_id": "candy_ch04_bal01"
+    },
+    {
+      "case_id": "candy_ch04_h2",
+      "category_tags": [
+        "PALE_COLOR",
+        "DECORATIVE_TEXTURE"
+      ],
+      "source_id": "candy_ch04_merged_049_054",
+      "region": {
+        "bbox": [
+          362,
+          3077,
+          588,
+          3253
+        ],
+        "coordinate_system": "MERGED_XYXY_TOP_LEFT_END_EXCLUSIVE",
+        "bbox_origin": "CTD"
+      },
+      "candidate_reference": {
+        "role": "HISTORICAL_REFERENCE_ONLY",
+        "candidate_id": "ctd-0002-6c0bbc588218",
+        "source_index": 2,
+        "split_page": "page-049-054_split_3.png",
+        "split_bbox": [
+          362,
+          35,
+          588,
+          211
+        ],
+        "split_width": 720,
+        "split_height": 2490,
+        "offset_x": 0,
+        "offset_y": 3042,
+        "scale": 1.0
+      },
+      "human_ground_truth": {
+        "destination": "LEVEL_5",
+        "status": "VALIDATED",
+        "scope": "REGION",
+        "ground_truth_version": 1
+      },
+      "reference_evidence": {
+        "text_reference": "SHE HAD BIG EYES AND LONG EYELASHES. HER FEATURES WERE SO DELICATE.",
+        "visual_observation": "Continuação da estrutura decorativa/colorida que contém H1.",
+        "historical_full_page_balloon": "BAL 01",
+        "balloon_evidence": {
+          "algorithm": "textoff_pipeline_balloon_evidence_v1",
+          "balloons_detected": 6,
+          "best_balloon_id": 2,
+          "box_inside_balloon_percent": 100.0,
+          "center_inside_balloon": true,
+          "best_balloon_box_overlap_percent": 100.0,
+          "balloon_inside_box_percent": 36.6491
+        },
+        "visual_evidence": {
+          "algorithm": "textoff_pipeline_visual_evidence_v1",
+          "context_expansion_ratio": 0.35,
+          "text_exclusion_dilation_px": 14,
+          "background_pixels": 53016,
+          "measurement_status": "OK",
+          "saturation_mean": 19.1835,
+          "saturation_p90": 49.0,
+          "rgb_std_mean": 21.3711,
+          "luminance_std": 21.9171,
+          "spatial_luminance": {
+            "left_right_delta": 2.0068,
+            "top_bottom_delta": 8.0473,
+            "quadrant_range": 15.8913
+          }
+        },
+        "provenance": {
+          "audit_report_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3.json",
+          "audit_report_sha256": "995f9464f95993a5bae2b663bd3ea90d78376177aa865a7ac07b416fed9e0ab6",
+          "audit_algorithm": "textoff_pipeline_milestone_1a",
+          "audit_schema_version": 1,
+          "raw_json_filename": "4a8583e9-dbfa-482e-91db-e4a47567a3cc_page-049-054_split_3#raw.json",
+          "raw_json_sha256": "1f4e172d0f2b96d75404bce1ccd5f3a46747de6179bf6e9b4de7105349fe191a",
+          "split_image_sha256": "f4549ebac2e9496cd849ec8fa2e08baad3184b7244d016ecbfa64b485d14133c",
+          "split_pixels_match_merged": true,
+          "metrics_origin": "EXISTING_REPORT_NOT_RECOMPUTED",
+          "availability": "REFERENCE_SNAPSHOT_ONLY_FULL_REPORTS_NOT_BUNDLED"
+        }
+      },
+      "limitations": [
+        "BBox de texto não é máscara de remoção.",
+        "IDs de balão do split não são IDs globais da página.",
+        "Agrupamento apenas contextual; avaliação independente de H1 e H2.",
+        "Requer evidências combinadas; não autoriza exceção por obra, BAL 01, rosa ou saturação isolada."
+      ],
+      "visual_group_id": "candy_ch04_bal01"
+    }
+  ]
+}
