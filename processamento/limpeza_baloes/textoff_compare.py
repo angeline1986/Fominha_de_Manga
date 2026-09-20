@@ -41,8 +41,9 @@ def _manifest_rows(manga: Path, folder_stage: str, manifest_stage: str) -> list[
             continue
 
         from processamento.limpeza_baloes.textoff_level3 import pending_for_chapter
+        from processamento.limpeza_baloes.especial.state import special_for_chapter
         level3_pending = pending_for_chapter(manga, chapter_dir.name)
-
+        special_pending = special_for_chapter(manga, chapter_dir.name)
         items = []
         for source_name, clean_name in zip(sources, cleans):
             if Path(source_name).suffix.lower() not in IMAGE_EXTS:
@@ -52,10 +53,13 @@ def _manifest_rows(manga: Path, folder_stage: str, manifest_stage: str) -> list[
             if not (chapter_dir / clean_name).is_file():
                 continue
             pending = level3_pending.get(f"{manifest_stage}:{source_name}")
+            special = special_pending.get(f"{manifest_stage}:{source_name}")
             items.append({
                 "source_file": source_name,
                 "clean_file": clean_name,
                 "level3_status": pending.get("status") if pending else None,
+                "special_status": special.get("status") if special else None,
+                "special_type": special.get("special_type") if special else None,
             })
 
         if not items:

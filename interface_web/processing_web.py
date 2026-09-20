@@ -1880,6 +1880,15 @@ def run_job(job,payload):
             elif job.action=="textoff_level3_flag":
                 from processamento.limpeza_baloes.textoff_level3 import flag_correction_job
                 job.result=flag_correction_job(manga,chs,payload)
+            elif job.action=="textoff_special_flag":
+                from processamento.limpeza_baloes.especial.state import flag_special_job
+                job.result=flag_special_job(manga,chs,payload)
+            elif job.action=="textoff_special_preview":
+                from processamento.limpeza_baloes.especial.correction import generate_preview_job
+                job.result=generate_preview_job(manga,chs,payload)
+            elif job.action=="textoff_special_approve":
+                from processamento.limpeza_baloes.especial.correction import approve_proposal_job
+                job.result=approve_proposal_job(manga,chs,payload)
             elif job.action=="textoff_level3_analyze":
                 print(f"[NIVEL3][BACKEND] job recebido id={job.id} chapters={[ch.name for ch in chs]} source={payload.get('source_file')} clean={payload.get('clean_file')}", flush=True)
                 from processamento.limpeza_baloes.textoff_level3_analyzer import analyze_residual_job
@@ -2805,6 +2814,9 @@ class Handler(BaseHTTPRequestHandler):
         elif kind=="textoff_level3_preview":
             from processamento.limpeza_baloes.textoff_level3_correction import proposal_dir
             base=proposal_dir(manga,chapter,q.get("proposal",[""])[0])
+        elif kind=="textoff_special_preview":
+            from processamento.limpeza_baloes.especial.correction import proposal_dir
+            base=proposal_dir(manga,chapter,q.get("source",[""])[0],q.get("source_file",[""])[0],q.get("proposal",[""])[0])
         else:
             self.send_error(404); return
         target=(base/q.get("file",[""])[0]).resolve()

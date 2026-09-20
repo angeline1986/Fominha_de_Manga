@@ -4,6 +4,7 @@ from pathlib import Path
 import json, os, shutil, subprocess, tempfile, time, uuid
 from .launcher import MODULE_DIR, build_command
 from .balloon_authorization import apply_balloon_authorization
+from ..pipeline.functional_guard import protect_colored_balloons
 
 LEVEL2_SCRIPT = MODULE_DIR / 'level2.py'
 
@@ -106,7 +107,13 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
         if len(mask_files) != len(images):
             raise RuntimeError(f"Lote incompleto: {len(images)} entrada(s), {len(mask_files)} máscara(s).")
 
-        # Nível I: Cleaner V2 intacto; máscara autorizada somente dentro de balões reais.
+        # Refactor Texto Off: barreira funcional antes da autorização convencional.
+        # Balões com risco de cor/gradiente são restaurados do original e retirados
+        # da máscara; portanto os níveis legados abaixo não podem promovê-los.
+        guard_report_path = work/'level2-routing-guard-report.json'
+        guard_report = protect_colored_balloons(images, output_dir, guard_report_path)
+
+        # Nível I legado: recebe somente o que sobreviveu à barreira de proteção.
         level1_report_path = work/'level1-balloon-report.json'
         level1_report = apply_balloon_authorization(
             images, output_dir, level1_report_path,
@@ -146,6 +153,7 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
 
         for artifact in sorted(p for p in output_dir.iterdir() if p.is_file()):
             shutil.copy2(artifact, staged/artifact.name)
+        shutil.copy2(guard_report_path, staged/'level2-routing-guard-report.json')
         shutil.copy2(level1_report_path, staged/'level1-balloon-report.json')
         shutil.copy2(level2_report_path, staged/'level2-report.json')
 
@@ -167,6 +175,12 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
             'clean_artifacts': [p.name for p in clean_files],
             'mask_artifacts': [p.name for p in mask_files],
             'authorization': {
+                'pre_level3_guard': {
+                    'algorithm': guard_report.get('algorithm'),
+                    'protected_balloons_total': guard_report.get('protected_balloons_total'),
+                    'route': guard_report.get('route'),
+                    'report': 'level2-routing-guard-report.json',
+                },
             },
             'level1': {
                 'algorithm': level1_report.get('algorithm'),

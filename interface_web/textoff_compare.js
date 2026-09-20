@@ -1,5 +1,5 @@
 (() => {
-  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,flagging=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false,level3Selecting=false,level3Selection=null,level3Drag=null,level3Preview=null,level3Previewing=false,level3Approving=false,resultsOpen=true;
+  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,flagging=false,specialFlagging=false,specialSelecting=false,specialSelection=null,specialDrag=null,specialPreview=null,specialPreviewing=false,specialApproving=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false,level3Selecting=false,level3Selection=null,level3Drag=null,level3Preview=null,level3Previewing=false,level3Approving=false,resultsOpen=true;
   const PAGE_SIZE=15;
   const escLocal=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
   const currentRow=()=>state?.rows?.find(x=>String(x.key)===String(selectedKey))||null;
@@ -46,8 +46,17 @@
     const item=selectedPage>=0?items[selectedPage]:null;
     const zoomControls=item?`<span class="bal-zoom-control toc-header-zoom" aria-label="Controle de zoom sincronizado"><button id="tocCompareZoomOut" type="button" class="bal-zoom-action" onclick="event.stopPropagation();TextOffCompareUI.changeZoom(-10)" ${zoom<=30?"disabled":""} aria-label="Diminuir zoom">−</button><b id="tocCompareZoomValue" class="bal-zoom-value">${zoom}%</b><button id="tocCompareZoomIn" type="button" class="bal-zoom-action" onclick="event.stopPropagation();TextOffCompareUI.changeZoom(10)" ${zoom>=200?"disabled":""} aria-label="Aumentar zoom">+</button><button id="tocCompareZoomReset" type="button" class="bal-zoom-reset" onclick="event.stopPropagation();TextOffCompareUI.resetZoom()" ${zoom===100?"disabled":""}>100%</button></span>`:"";
     const flagged=item?.level3_status==="PENDENTE_NIVEL3";
-    const correctionAction=item?`<div class="toc-correction-row"><button class="btn toc-correction-btn ${flagged?"is-flagged":""}" type="button" onclick="TextOffCompareUI.flagCorrection()" ${flagged||flagging?"disabled":""}>${flagged?"✓ Correção sinalizada":(flagging?"Sinalizando…":"Sinalizar correção")}</button></div>`:"";
-    const body=item?`<div class="bal-section-body"><div class="toc-compare-caption">Cap. ${escLocal(row.chapter)} · ${escLocal(item.source_file)}</div>${correctionAction}<div class="toc-compare-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>ORIGINAL</strong><span>${escLocal(row.source==="Merged"?"Fonte: MERGE":"Fonte: IMG")}</span></div><div class="toc-preview-stage"><img src="${mediaUrl("textoff_source",row,item.source_file)}" alt="Original · ${escLocal(item.source_file)}" style="width:${zoom}%;max-width:none;height:auto"></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>TEXTO OFF</strong><span>Cleaner V2</span></div><div class="toc-preview-stage"><img src="${mediaUrl("textoff_clean",row,item.clean_file)}" alt="Texto Off · ${escLocal(item.clean_file)}" style="width:${zoom}%;max-width:none;height:auto"></div></article></div><div class="toc-pager"><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(-1)" ${selectedPage<=0?"disabled":""}>&lt;&lt;</button><span>${selectedPage+1} / ${items.length}</span><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(1)" ${selectedPage>=items.length-1?"disabled":""}>&gt;&gt;</button></div></div>`:"";
+    const special=item?.special_status==="PENDENTE_ESPECIAL";
+    const specialLabel=item?.special_type==="TRANSPARENCIA"?"Transparência":"Colorido / gradiente / textura";
+    const specialColor=special&&item?.special_type==="COLORIDO_GRADIENTE_TEXTURA";
+    const correctionAction=item?`<div class="toc-correction-row"><button class="btn toc-correction-btn ${flagged?"is-flagged":""}" type="button" onclick="TextOffCompareUI.flagCorrection()" ${flagged||flagging?"disabled":""}>${flagged?"✓ Correção sinalizada":(flagging?"Sinalizando…":"Sinalizar correção")}</button>${special?`<button class="btn is-flagged" type="button" disabled>✓ Caso especial · ${specialLabel}</button>`:`<button class="btn" type="button" onclick="TextOffCompareUI.flagSpecial('TRANSPARENCIA')" ${specialFlagging?"disabled":""}>Especial · Transparência</button><button class="btn" type="button" onclick="TextOffCompareUI.flagSpecial('COLORIDO_GRADIENTE_TEXTURA')" ${specialFlagging?"disabled":""}>Especial · Cor/gradiente</button>`}</div>`:"";
+    const specialActions=specialColor?`<div class="toc-level3-actions"><div><strong>Correção especial regional</strong><span>${specialPreview?(specialSelecting?"Arraste sobre a próxima região problemática.":(specialSelection?"Nova área selecionada. Atualize a prévia acumulada.":`Prévia acumulada · ${Number(specialPreview.region_count||specialPreview.regions?.length||1)} região(ões).`)):(specialSelection?"Área selecionada. Gere a prévia especial.":(specialSelecting?"Arraste sobre somente a região de texto problemática.":"Selecione apenas a região que precisa ser reconstruída."))}</span></div><div class="toc-level3-action-buttons">${specialPreview?(specialSelection?`<button class="btn" type="button" onclick="TextOffCompareUI.cancelSpecialAdditionalSelection()">Cancelar nova área</button><button class="btn primary" type="button" onclick="TextOffCompareUI.generateSpecialPreview()" ${specialPreviewing?"disabled":""}>${specialPreviewing?"Atualizando prévia…":"Adicionar à prévia"}</button>`:`<button class="btn" type="button" onclick="TextOffCompareUI.addSpecialSelection()" ${specialApproving?"disabled":""}>Adicionar outra área</button><button class="btn primary" type="button" onclick="TextOffCompareUI.approveSpecialPreview()" ${specialApproving?"disabled":""}>${specialApproving?"Aprovando…":"Aprovar correção especial"}</button>`):`<button class="btn" type="button" onclick="TextOffCompareUI.toggleSpecialSelection()">${specialSelecting?"Cancelar seleção":"Selecionar área"}</button><button class="btn primary" type="button" onclick="TextOffCompareUI.generateSpecialPreview()" ${!specialSelection||specialPreviewing?"disabled":""}>${specialPreviewing?"Gerando prévia…":"Gerar prévia especial"}</button>`}</div></div>`:"";
+    const currentUrl=item?mediaUrl("textoff_clean",row,item.clean_file):"";
+    const rightUrl=item?(specialPreview?specialProposalMediaUrl(row,item,specialPreview):currentUrl):"";
+    const rightTitle=item?(specialPreview?"PROPOSTA ESPECIAL":"TEXTO OFF"):"";
+    const rightMeta=item?(specialPreview?"Preview temporário · não aplicado":"Cleaner V2"):"";
+    const rightOverlay=item&&specialColor?`${specialSelectionBox()}<span id="tocSpecialManualLayer" class="toc-level3-manual-layer ${specialSelecting?"is-active":""}"><span class="toc-level3-manual-live"></span></span>`:"";
+    const body=item?`<div class="bal-section-body"><div class="toc-compare-caption">Cap. ${escLocal(row.chapter)} · ${escLocal(item.source_file)}</div>${correctionAction}<div class="toc-compare-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>${specialPreview?"RESULTADO ATUAL":"ORIGINAL"}</strong><span>${specialPreview?"Antes":escLocal(row.source==="Merged"?"Fonte: MERGE":"Fonte: IMG")}</span></div><div class="toc-preview-stage"><div class="toc-level3-image-wrap" style="width:${zoom}%"><img src="${specialPreview?currentUrl:mediaUrl("textoff_source",row,item.source_file)}" alt="Referência · ${escLocal(item.source_file)}" style="width:100%;max-width:none;height:auto"></div></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>${rightTitle}</strong><span>${rightMeta}</span></div><div class="toc-preview-stage"><div class="toc-level3-image-wrap" style="width:${zoom}%"><img src="${rightUrl}" alt="${rightTitle} · ${escLocal(item.clean_file)}" style="width:100%;max-width:none;height:auto">${rightOverlay}</div></div></article></div>${specialActions}<div class="toc-pager"><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(-1)" ${selectedPage<=0?"disabled":""}>&lt;&lt;</button><span>${selectedPage+1} / ${items.length}</span><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(1)" ${selectedPage>=items.length-1?"disabled":""}>&gt;&gt;</button></div></div>`:"";
     return `<section class="bal-section toc-section ${!row?"disabled":""}"><div class="bal-section-head toc-section-head"><button class="toc-section-toggle" type="button" onclick="TextOffCompareUI.toggleCompare()" aria-expanded="${compareOpen}" ${!row?"disabled":""}><span>Comparação das imagens</span></button><span class="bal-section-head-right">${compareOpen?zoomControls:""}<small>${item?"1 selecionada":"Nenhuma selecionada"}</small><button class="toc-chevron-btn" type="button" onclick="TextOffCompareUI.toggleCompare()" ${!row?"disabled":""}><i class="bal-chevron">${compareOpen?"▼":"▶"}</i></button></span></div>${compareOpen?body:""}</section>`;
   }
   function bindSynchronizedScroll(){
@@ -70,16 +79,16 @@
     stages[0].addEventListener("scroll",()=>sync(stages[0],stages[1]),{passive:true});
     stages[1].addEventListener("scroll",()=>sync(stages[1],stages[0]),{passive:true});
   }
-  function renderBody(){const host=document.querySelector("#textOffCompareBody");if(host){host.innerHTML=tableSection()+`<div class="toc-detail-stack">${chapterSection()}${comparisonSection()}</div>`;bindSynchronizedScroll()}}
+  function renderBody(){const host=document.querySelector("#textOffCompareBody");if(host){host.innerHTML=tableSection()+`<div class="toc-detail-stack">${chapterSection()}${comparisonSection()}</div>`;bindSynchronizedScroll();bindSpecialSelection()}}
   async function load(){try{state=await api(`/api/textoff-compare?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&_=${Date.now()}`);renderBody()}catch(e){toast(e.message||"Não foi possível carregar os resultados do Texto Off.")}}
   function render(root){root.innerHTML=head("Comparar resultados","Compare as imagens antes e depois da limpeza realizada pelo Cleaner V2.")+`<div id="textOffCompareBody"><div class="muted">Carregando resultados do Texto Off…</div></div>`;state=null;sourceFilter="all";query="";pageIndex=1;selectedKey=null;selectedPage=-1;chapterOpen=false;compareOpen=false;zoom=100;resultsOpen=true;load()}
   function selectChapter(key){selectedKey=String(key);selectedPage=-1;chapterOpen=true;compareOpen=false;zoom=100;renderBody()}
-  function selectImage(index){const items=Array.isArray(currentRow()?.items)?currentRow().items:[];selectedPage=Math.max(0,Math.min(Number(index)||0,items.length-1));compareOpen=true;renderBody();requestAnimationFrame(()=>document.querySelector(".toc-detail-stack .toc-section:last-child")?.scrollIntoView({behavior:"smooth",block:"start"}))}
+  function selectImage(index){const items=Array.isArray(currentRow()?.items)?currentRow().items:[];selectedPage=Math.max(0,Math.min(Number(index)||0,items.length-1));compareOpen=true;specialSelecting=false;specialSelection=null;specialDrag=null;specialPreview=null;renderBody();requestAnimationFrame(()=>document.querySelector(".toc-detail-stack .toc-section:last-child")?.scrollIntoView({behavior:"smooth",block:"start"}))}
   function moveImage(delta){const items=Array.isArray(currentRow()?.items)?currentRow().items:[];if(!items.length)return;selectedPage=Math.max(0,Math.min(items.length-1,selectedPage+Number(delta||0)));renderBody()}
   function toggleChapter(){if(currentRow()){chapterOpen=!chapterOpen;renderBody()}}
   function toggleCompare(){if(currentRow()&&selectedPage>=0){compareOpen=!compareOpen;renderBody()}}
   function updateCompareZoomUi(){
-    document.querySelectorAll(".toc-compare-grid .toc-preview-stage img").forEach(img=>{img.style.width=`${zoom}%`});
+    document.querySelectorAll(".toc-compare-grid .toc-preview-stage > .toc-level3-image-wrap").forEach(wrap=>{wrap.style.width=`${zoom}%`;const img=wrap.querySelector(":scope > img");if(img)img.style.width="100%";});
     const value=document.querySelector("#tocCompareZoomValue"),zoomOut=document.querySelector("#tocCompareZoomOut"),zoomIn=document.querySelector("#tocCompareZoomIn"),reset=document.querySelector("#tocCompareZoomReset");
     if(value)value.textContent=`${zoom}%`; if(zoomOut)zoomOut.disabled=zoom<=30; if(zoomIn)zoomIn.disabled=zoom>=200; if(reset)reset.disabled=zoom===100;
   }
@@ -383,7 +392,84 @@
       flagging=false;renderBody();
     }
   }
-  window.TextOffCompareUI={render,renderCorrection,selectChapter,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,toggleResults,flagCorrection,selectLevel3,setLevel3Zoom,changeLevel3Zoom,analyzeLevel3,toggleLevel3Selection,generateLevel3Preview,resetLevel3Preview,approveLevel3Preview};
+
+  function specialProposalMediaUrl(row,item,preview){return `/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=textoff_special_preview&source=${encodeURIComponent(row.source_stage)}&source_file=${encodeURIComponent(item.source_file)}&chapter=${encodeURIComponent(row.chapter)}&proposal=${encodeURIComponent(preview.proposal_id)}&file=${encodeURIComponent(preview.preview_file)}&_=${Date.now()}`;}
+  function specialSelectionBox(){const b=specialSelection;if(!b)return "";return `<span class="toc-level3-manual-box" style="left:${b.left}%;top:${b.top}%;width:${b.width}%;height:${b.height}%"><i>Especial</i></span>`;}
+  function syncSpecialSelectionUi(){
+    const layer=document.querySelector("#tocSpecialManualLayer");
+    if(!layer)return;
+    layer.classList.toggle("is-active",specialSelecting);
+    const wrap=layer.closest(".toc-level3-image-wrap");
+    wrap?.querySelector(".toc-level3-manual-box")?.remove();
+    const live=layer.querySelector(".toc-level3-manual-live");
+    if(live)live.style.display="none";
+    if(specialSelection&&wrap){
+      const box=document.createElement("span");
+      box.className="toc-level3-manual-box";
+      box.style.left=`${specialSelection.left}%`;
+      box.style.top=`${specialSelection.top}%`;
+      box.style.width=`${specialSelection.width}%`;
+      box.style.height=`${specialSelection.height}%`;
+      box.innerHTML="<i>Especial</i>";
+      wrap.insertBefore(box,layer);
+    }
+    const actions=layer.closest(".bal-section-body")?.querySelector(".toc-level3-actions");
+    if(actions){
+      const hint=actions.querySelector("div > span");
+      if(hint)hint.textContent=specialPreview?(specialSelection?"Nova área selecionada. Atualize a prévia acumulada.":(specialSelecting?"Arraste sobre a próxima região problemática.":`Prévia acumulada · ${Number(specialPreview.region_count||specialPreview.regions?.length||1)} região(ões).`)):(specialSelection?"Área selecionada. Gere a prévia especial.":(specialSelecting?"Arraste sobre somente a região de texto problemática.":"Selecione apenas a região que precisa ser reconstruída."));
+      const buttons=actions.querySelector(".toc-level3-action-buttons");
+      if(buttons&&!specialPreview){
+        const selectBtn=buttons.querySelector("button:first-child");
+        const previewBtn=buttons.querySelector("button.primary");
+        if(selectBtn)selectBtn.textContent=specialSelecting?"Cancelar seleção":"Selecionar área";
+        if(previewBtn)previewBtn.disabled=!specialSelection||specialPreviewing;
+      }else if(buttons&&specialPreview&&specialSelection){
+        buttons.innerHTML=`<button class="btn" type="button" onclick="TextOffCompareUI.cancelSpecialAdditionalSelection()">Cancelar nova área</button><button class="btn primary" type="button" onclick="TextOffCompareUI.generateSpecialPreview()" ${specialPreviewing?"disabled":""}>${specialPreviewing?"Atualizando prévia…":"Adicionar à prévia"}</button>`;
+      }
+    }
+  }
+  function toggleSpecialSelection(){specialSelecting=!specialSelecting;specialSelection=null;specialDrag=null;specialPreview=null;renderBody();}
+  function bindSpecialSelection(){
+    const layer=document.querySelector("#tocSpecialManualLayer");if(!layer||layer.dataset.bound==="1")return;layer.dataset.bound="1";
+    const pos=e=>{const r=layer.getBoundingClientRect();return{x:Math.max(0,Math.min(r.width,e.clientX-r.left)),y:Math.max(0,Math.min(r.height,e.clientY-r.top)),w:r.width,h:r.height}};
+    layer.addEventListener("pointerdown",e=>{if(!specialSelecting||e.button!==0)return;const p=pos(e);specialDrag={x:p.x,y:p.y};specialSelection=null;layer.setPointerCapture(e.pointerId);e.preventDefault()});
+    layer.addEventListener("pointermove",e=>{if(!specialDrag)return;const p=pos(e),x=Math.min(specialDrag.x,p.x),y=Math.min(specialDrag.y,p.y),w=Math.abs(p.x-specialDrag.x),h=Math.abs(p.y-specialDrag.y);specialSelection={left:x/p.w*100,top:y/p.h*100,width:w/p.w*100,height:h/p.h*100};const live=layer.querySelector(".toc-level3-manual-live");if(live){live.style.display="block";live.style.left=`${specialSelection.left}%`;live.style.top=`${specialSelection.top}%`;live.style.width=`${specialSelection.width}%`;live.style.height=`${specialSelection.height}%`;}});
+    const finish=e=>{if(!specialDrag)return;if(layer.hasPointerCapture?.(e.pointerId))layer.releasePointerCapture(e.pointerId);specialDrag=null;if(specialSelection&&(specialSelection.width<0.3||specialSelection.height<0.3))specialSelection=null;specialSelecting=false;syncSpecialSelectionUi()};layer.addEventListener("pointerup",finish);layer.addEventListener("pointercancel",finish);
+  }
+  async function specialJob(action,payload,limit=240){const start=await api("/api/action",{method:"POST",body:JSON.stringify({action,provider:data.provider,manga:data.manga,...payload})});if(!start?.job_id)throw new Error("Job do fluxo especial não foi criado.");for(let i=0;i<limit;i++){await new Promise(r=>setTimeout(r,500));const j=await api(`/api/job/${encodeURIComponent(start.job_id)}?_=${Date.now()}`);if(j.status==="done")return j.result;if(j.status==="error")throw new Error(j.error||j.message||"Falha no fluxo especial.");}throw new Error("A operação especial não concluiu no tempo esperado.");}
+  async function generateSpecialPreview(){const row=currentRow(),items=Array.isArray(row?.items)?row.items:[],item=selectedPage>=0?items[selectedPage]:null;if(!row||!item||!specialSelection||specialPreviewing)return;specialPreviewing=true;renderBody();try{specialPreview=await specialJob("textoff_special_preview",{chapters:[String(row.chapter)],chapter:row.chapter,source_stage:row.source_stage,source_file:item.source_file,clean_file:item.clean_file,selection:specialSelection,base_proposal_id:specialPreview?.proposal_id||null});specialSelection=null;specialDrag=null;specialSelecting=false;textOffSuccess("Prévia especial gerada",specialPreview.message||"Confira a proposta antes de aprovar.");}catch(e){toast(e.message||"Não foi possível gerar a prévia especial.");}finally{specialPreviewing=false;renderBody();}}
+  function addSpecialSelection(){if(specialApproving||specialPreviewing||!specialPreview)return;specialSelection=null;specialDrag=null;specialSelecting=true;renderBody();}
+  function cancelSpecialAdditionalSelection(){if(specialApproving||specialPreviewing)return;specialSelection=null;specialDrag=null;specialSelecting=false;renderBody();}
+  function resetSpecialPreview(){if(specialApproving)return;specialPreview=null;specialSelection=null;specialDrag=null;specialSelecting=true;renderBody();}
+  async function approveSpecialPreview(){const row=currentRow(),items=Array.isArray(row?.items)?row.items:[],item=selectedPage>=0?items[selectedPage]:null;if(!row||!item||!specialPreview?.proposal_id||specialApproving)return;specialApproving=true;renderBody();try{const result=await specialJob("textoff_special_approve",{chapters:[String(row.chapter)],chapter:row.chapter,source_stage:row.source_stage,source_file:item.source_file,clean_file:item.clean_file,proposal_id:specialPreview.proposal_id},120);textOffSuccess("Correção especial aplicada",result.message||"Correção especial aprovada.");specialPreview=null;specialSelection=null;specialSelecting=false;state=await api(`/api/textoff-compare?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&_=${Date.now()}`);}catch(e){toast(e.message||"Não foi possível aprovar a correção especial.");}finally{specialApproving=false;renderBody();}}
+
+  async function flagSpecial(specialType){
+    const row=currentRow();
+    const items=Array.isArray(row?.items)?row.items:[];
+    const item=selectedPage>=0?items[selectedPage]:null;
+    if(!row||!item||specialFlagging||item.special_status==="PENDENTE_ESPECIAL")return;
+    specialFlagging=true;renderBody();
+    try{
+      const response=await fetch("/api/action",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"textoff_special_flag",provider:data.provider,manga:data.manga,chapters:[String(row.chapter)],source_stage:row.source_stage,source_file:item.source_file,clean_file:item.clean_file,special_type:specialType})});
+      const created=await response.json();
+      if(!response.ok||created.error)throw new Error(created.error||"Não foi possível sinalizar o caso especial.");
+      if(!created.job_id)throw new Error("Job do fluxo especial não retornado.");
+      for(let attempt=0;attempt<20;attempt++){
+        await new Promise(resolve=>setTimeout(resolve,500));
+        const jr=await fetch(`/api/job/${encodeURIComponent(created.job_id)}?_=${Date.now()}`,{cache:"no-store"});
+        const job=await jr.json();
+        if(!jr.ok||job.error||job.status==="error")throw new Error(job.error||job.message||"Falha ao sinalizar o caso especial.");
+        if(job.status==="done"){
+          state=await api(`/api/textoff-compare?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&_=${Date.now()}`);
+          textOffSuccess("Caso especial sinalizado","Referências preservadas em fluxo isolado. Nenhum resultado oficial foi alterado.");
+          return;
+        }
+      }
+      throw new Error("A sinalização do caso especial demorou mais que o esperado.");
+    }catch(e){toast(e.message||"Não foi possível sinalizar o caso especial.")}
+    finally{specialFlagging=false;renderBody()}
+  }
+  window.TextOffCompareUI={render,renderCorrection,selectChapter,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,toggleResults,flagCorrection,flagSpecial,toggleSpecialSelection,generateSpecialPreview,addSpecialSelection,cancelSpecialAdditionalSelection,resetSpecialPreview,approveSpecialPreview,selectLevel3,setLevel3Zoom,changeLevel3Zoom,analyzeLevel3,toggleLevel3Selection,generateLevel3Preview,resetLevel3Preview,approveLevel3Preview};
 
   /* === TEXT OFF · MODO FOCO (UI only) === */
   const textOffFocus={mode:null,scheduled:false};
