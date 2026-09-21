@@ -7,8 +7,11 @@ IMG original -> Panel Cleaner (workspace temporário) -> surface gate LAB/conect
 Não altera IMG nem artefatos oficiais.
 """
 from __future__ import annotations
+import time
 import json, re, shutil, subprocess, sys
 from pathlib import Path
+
+from processamento.limpeza_baloes.cleaner_v2.balloon_authorization import apply_balloon_authorization
 
 ROOT=Path(__file__).resolve().parents[2]
 MANGA=ROOT/"download"/"mangago_downloader"/"output"/"mangago"/"Candy YumYum (Yaoi)"
@@ -57,7 +60,7 @@ def _run_cleaner(page,target):
     shutil.copy2(page,input_dir/page.name)
     cmd=[str(CLEANER_PY),str(CLEANER_MAIN),"-i",str(input_dir),"-o",str(output_dir),
          "--profile",str(PROFILE),"--timeout","900"]
-    print("1/3 Cleaner: gerando clean + mask...")
+    print("1/4 Cleaner: gerando clean + mask...")
     proc=subprocess.run(cmd,cwd=str(CLEANER_DIR),check=False)
     if proc.returncode:raise RuntimeError(f"Cleaner encerrou com código {proc.returncode}")
     clean=output_dir/f"{page.stem}_clean.png"
@@ -66,6 +69,17 @@ def _run_cleaner(page,target):
         found=", ".join(p.name for p in sorted(output_dir.iterdir()))
         raise RuntimeError(f"Cleaner não gerou clean/mask esperados. Saída: {found or '(vazia)'}")
     return clean,mask
+
+def _authorize_balloon(page, clean, mask, target):
+    report=target/"balloon_authorization.json"
+    # A função estável modifica SOMENTE os clean/mask do workspace experimental:
+    # effective = cleaner_mask & balloon_mask e reconstrói clean a partir do original.
+    data=apply_balloon_authorization([page], clean.parent, report)
+    authorized=int(data.get("authorized_mask_pixels",0))
+    raw=int(data.get("cleaner_mask_pixels",0))
+    pct=float(data.get("authorized_percent",0.0))
+    print(f"    máscara Cleaner={raw} px · autorizada={authorized} px · {pct:.2f}%")
+    return report
 
 def _surface(clean_path,mask_path,dest):
     import cv2, numpy as np
@@ -175,14 +189,31 @@ def _run(chapter,page):
     target.mkdir(parents=True)
     print(f"\n--- {chapter.name} · {page.name} ---")
     try:
+        total_t0=time.perf_counter()
+        step_t0=time.perf_counter()
         clean,mask=_run_cleaner(page,target)
-        print("2/3 Surface gate: LAB + conectividade...")
+        cleaner_s=time.perf_counter()-step_t0
+        print(f"    ⏱ Cleaner: {cleaner_s:.2f}s")
+        print("2/4 Balloon Authorization: Cleaner mask ∩ Balloon mask...")
+        step_t0=time.perf_counter()
+        auth_report=_authorize_balloon(page,clean,mask,target)
+        balloon_s=time.perf_counter()-step_t0
+        print(f"    ⏱ Balloon Authorization: {balloon_s:.2f}s")
+        print("3/4 Surface gate: LAB + conectividade...")
+        step_t0=time.perf_counter()
         surface_path=target/"01_surface_allowed.png"; _surface(clean,mask,surface_path)
-        print("3/3 Local Heal: 9x9 · radius 70 · step 2 · source >=92%...")
+        surface_s=time.perf_counter()-step_t0
+        print(f"    ⏱ Surface Gate: {surface_s:.2f}s")
+        print("4/4 Local Heal: 9x9 · radius 70 · step 2 · source >=92%...")
+        step_t0=time.perf_counter()
         components,filled=_local_heal(clean,mask,surface_path,target)
-        meta={"source":str(page),"clean":str(clean),"mask":str(mask),"surface":str(surface_path),
-              "parameters":{"patch":"9x9","search_radius":70,"search_step":2,"min_context":12,"source_valid":0.92},
-              "components":components,"pixels_filled":filled}
+        local_heal_s=time.perf_counter()-step_t0
+        total_s=time.perf_counter()-total_t0
+        print(f"    ⏱ Local Heal: {local_heal_s:.2f}s")
+        print(f"    ⏱ TEMPO TOTAL: {total_s:.2f}s")
+        timing={"cleaner":round(cleaner_s,3),"balloon_authorization":round(balloon_s,3),"surface_gate":round(surface_s,3),"local_heal":round(local_heal_s,3),"total":round(total_s,3)}
+        meta={"source":str(page),"clean":str(clean),"mask":str(mask),"balloon_authorization":str(auth_report),"surface":str(surface_path),"timing_seconds":timing,
+              "parameters":{"patch":"9x9","search_radius":70,"search_step":2,"min_context":12,"source_valid":0.92},"components":components,"pixels_filled":filled}
         (target/"run.json").write_text(json.dumps(meta,ensure_ascii=False,indent=2),encoding="utf-8")
         print(f"Concluído: {target/'01_local_heal.png'}")
         if sys.platform=="darwin":subprocess.run(["open",str(target/"01_local_heal.png")],check=False)
@@ -195,7 +226,7 @@ def run_patch_degrade_experiment():
     chapters=sorted([p for p in IMG.iterdir() if p.is_dir() and any((p/n).is_file() for n in ALLOWED)],key=_key)
     print("\nPATCH DEGRADÊ · EXPERIMENTO ISOLADO")
     print("Obra: Candy YumYum (Yaoi)")
-    print("Pipeline: IMG → Cleaner temporário → Surface Gate → Local Heal")
+    print("Pipeline: IMG → Cleaner temporário → Balloon Authorization → Surface Gate → Local Heal")
     print("\nSelecione o capítulo:\n")
     for i,ch in enumerate(chapters,1):print(f"[{i}] {ch.name}")
     print("[0] Voltar")
