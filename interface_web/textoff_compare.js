@@ -107,20 +107,22 @@
   }
   function level3Detail(row){
     if(!row)return `<div class="panel toc-level3-empty"><strong>Nenhuma pendência selecionada.</strong><span>As imagens sinalizadas na comparação aparecerão aqui.</span></div>`;
+    const gradientPreview=level3Preview?.algorithm==="textoff_gradient_patch_v1";
     const note=level3Analysis?(level3Analysis.count?`${level3Analysis.count} região(ões) suspeita(s) destacada(s).`:"Nenhum resíduo seguro identificado automaticamente."):"";
     const manualNote=level3Preview?"Prévia gerada. A imagem oficial permanece inalterada.":(level3Selection?"Área manual selecionada. Gere a prévia para comparar Antes × Depois.":(level3Selecting?"Arraste o mouse sobre o resíduo no Resultado atual.":""));
     const actionHint=level3Preview?"Confira o resultado antes de aplicar. Em imagens de Merge, a aprovação também atualiza o arquivo correspondente em 02_MERGE.":"Análise automática ou seleção manual da área residual.";
     const actionButtons=level3Preview
       ? `<div class="toc-level3-action-buttons"><button class="btn" type="button" ${level3Approving?"disabled":""} onclick="TextOffCompareUI.resetLevel3Preview()">Refazer seleção</button><button class="btn primary" type="button" ${level3Approving?"disabled":""} onclick="TextOffCompareUI.approveLevel3Preview()">${level3Approving?"Aprovando…":"Aprovar correção"}</button></div>`
-      : `<div class="toc-level3-action-buttons"><button class="btn primary" type="button" ${level3Analyzing||level3Previewing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button><button id="tocLevel3SelectArea" class="btn" type="button" onclick="TextOffCompareUI.toggleLevel3Selection()">${level3Selecting?"Cancelar seleção":"Selecionar área"}</button><button id="tocLevel3GeneratePreview" class="btn" type="button" ${!level3Selection||level3Previewing?"disabled":""} onclick="TextOffCompareUI.generateLevel3Preview()">${level3Previewing?"Gerando prévia…":"Gerar prévia"}</button></div>`;
-    const leftTitle=level3Preview?"RESULTADO ATUAL":"ORIGINAL";
-    const leftMeta=level3Preview?"Antes":(row.source_stage==="MERGE"?"Fonte: MERGE":"Fonte: IMG");
-    const leftUrl=level3Preview?level3MediaUrl("textoff_clean",row,row.clean_file):level3MediaUrl("textoff_source",row,row.source_file);
-    const rightTitle=level3Preview?"PREVIEW NÍVEL III":"RESULTADO ATUAL";
-    const rightMeta=level3Preview?"Depois · temporário":"Texto Off";
-    const rightUrl=level3Preview?level3ProposalMediaUrl(row,level3Preview):level3MediaUrl("textoff_clean",row,row.clean_file);
+      : `<div class="toc-level3-action-buttons"><button class="btn primary" type="button" ${level3Analyzing||level3Previewing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button><button id="tocLevel3SelectArea" class="btn" type="button" onclick="TextOffCompareUI.toggleLevel3Selection()">${level3Selecting?"Cancelar seleção":"Selecionar área"}</button><button id="tocLevel3GeneratePreview" class="btn" type="button" ${!level3Selection||level3Previewing?"disabled":""} onclick="TextOffCompareUI.generateLevel3Preview()">${level3Previewing?"Gerando prévia…":"Gerar prévia"}</button>${gradientPagePicker(row)}<button id="tocLevel3GradientPatch" class="btn" type="button" ${((String(row.source_stage||"").toUpperCase()!=="ORIGINAL"&&!level3GradientPages.length)||level3Previewing)?"disabled":""} onclick="TextOffCompareUI.generateGradientPatch()">${level3Previewing?"Processando…":"Patch Degradê"}</button></div>`;
+    const leftTitle=gradientPreview?"ORIGINAL":(level3Preview?"RESULTADO ATUAL":"ORIGINAL");
+    const leftMeta=gradientPreview?(row.source_stage==="MERGE"?"Fonte: MERGE":"Fonte: IMG"):(level3Preview?"Antes":(row.source_stage==="MERGE"?"Fonte: MERGE":"Fonte: IMG"));
+    const leftUrl=gradientPreview?level3MediaUrl("textoff_source",row,row.source_file):(level3Preview?level3MediaUrl("textoff_clean",row,row.clean_file):level3MediaUrl("textoff_source",row,row.source_file));
+    const rightTitle=gradientPreview?"RESULTADO ATUAL":(level3Preview?"PREVIEW NÍVEL III":"RESULTADO ATUAL");
+    const rightMeta=gradientPreview?"Texto Off":(level3Preview?"Depois · temporário":"Texto Off");
+    const rightUrl=gradientPreview?level3MediaUrl("textoff_clean",row,row.clean_file):(level3Preview?level3ProposalMediaUrl(row,level3Preview):level3MediaUrl("textoff_clean",row,row.clean_file));
     const rightOverlays=level3Preview?"":`${level3Boxes()}${level3SelectionBox()}<span id="tocLevel3ManualLayer" class="toc-level3-manual-layer ${level3Selecting?"is-active":""}"><span class="toc-level3-manual-live"></span></span>`;
-    return `<section class="panel toc-level3-detail"><div class="toc-level3-detail-head"><div><span class="caption">PENDÊNCIA SELECIONADA</span><h2>Cap. ${escLocal(row.chapter)} · ${escLocal(row.source_file)}</h2></div><div class="toc-level3-head-actions"><span class="bal-zoom-control" aria-label="Controle de zoom sincronizado"><button id="tocLevel3ZoomOut" type="button" class="bal-zoom-action" onclick="TextOffCompareUI.changeLevel3Zoom(-10)" ${level3Zoom<=30?"disabled":""}>−</button><b id="tocLevel3ZoomValue" class="bal-zoom-value">${level3Zoom}%</b><button id="tocLevel3ZoomIn" type="button" class="bal-zoom-action" onclick="TextOffCompareUI.changeLevel3Zoom(10)" ${level3Zoom>=200?"disabled":""}>+</button><button id="tocLevel3ZoomReset" type="button" class="bal-zoom-reset" onclick="TextOffCompareUI.setLevel3Zoom(100)" ${level3Zoom===100?"disabled":""}>100%</button></span><span class="toc-status toc-status-pending">Pendente</span></div></div><div class="toc-compare-grid toc-level3-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>${leftTitle}</strong><span>${leftMeta}</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${leftUrl}" alt="${leftTitle}"></div></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>${rightTitle}</strong><span>${rightMeta}</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${rightUrl}" alt="${rightTitle}">${rightOverlays}</div></div></article></div><div class="toc-level3-actions"><div><strong>Próxima etapa</strong><span>${actionHint}</span>${note?`<span class="toc-level3-analysis-note">${note}</span>`:""}<span id="tocLevel3ManualNote" class="toc-level3-analysis-note" ${manualNote?"":"hidden"}>${manualNote}</span></div>${actionButtons}</div></section>`;
+    const gradientResult=gradientPreview?`<section class="toc-gradient-result"><div class="toc-gradient-result-head"><div><strong>PATCH DEGRADÊ</strong><span>Nova imagem processada · prévia temporária</span></div><span class="toc-status">Prévia gerada</span></div><div class="toc-gradient-result-stage"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${level3ProposalMediaUrl(row,level3Preview)}" alt="Patch Degradê · ${escLocal(row.source_file)}"></div></div><div class="toc-gradient-result-footer"><span>A imagem oficial permanece inalterada até a aprovação.</span>${actionButtons}</div></section>`:"";
+    return `<section class="panel toc-level3-detail"><div class="toc-level3-detail-head"><div><span class="caption">PENDÊNCIA SELECIONADA</span><h2>Cap. ${escLocal(row.chapter)} · ${escLocal(row.source_file)}</h2></div><div class="toc-level3-head-actions"><span class="bal-zoom-control" aria-label="Controle de zoom sincronizado"><button id="tocLevel3ZoomOut" type="button" class="bal-zoom-action" onclick="TextOffCompareUI.changeLevel3Zoom(-10)" ${level3Zoom<=30?"disabled":""}>−</button><b id="tocLevel3ZoomValue" class="bal-zoom-value">${level3Zoom}%</b><button id="tocLevel3ZoomIn" type="button" class="bal-zoom-action" onclick="TextOffCompareUI.changeLevel3Zoom(10)" ${level3Zoom>=200?"disabled":""}>+</button><button id="tocLevel3ZoomReset" type="button" class="bal-zoom-reset" onclick="TextOffCompareUI.setLevel3Zoom(100)" ${level3Zoom===100?"disabled":""}>100%</button></span><span class="toc-status toc-status-pending">Pendente</span></div></div><div class="toc-compare-grid toc-level3-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>${leftTitle}</strong><span>${leftMeta}</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${leftUrl}" alt="${leftTitle}"></div></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>${rightTitle}</strong><span>${rightMeta}</span></div><div class="toc-preview-stage toc-level3-scroll"><div class="toc-level3-image-wrap" style="width:${level3Zoom}%"><img src="${rightUrl}" alt="${rightTitle}">${rightOverlays}</div></div></article></div>${gradientResult}${gradientPreview?"":`<div class="toc-level3-actions"><div><strong>Próxima etapa</strong><span>${actionHint}</span>${note?`<span class="toc-level3-analysis-note">${note}</span>`:""}<span id="tocLevel3ManualNote" class="toc-level3-analysis-note" ${manualNote?"":"hidden"}>${manualNote}</span></div>${actionButtons}</div>`}</section>`;
   }
   function renderLevel3Body(){
     const host=document.querySelector("#textoffLevel3Body");if(!host)return;
@@ -133,7 +135,7 @@
     root.innerHTML=`<div class="head"><div><div class="caption">TEXTO OFF · NÍVEL III</div><div class="page-title-wrap" tabindex="0"><h1>Correção assistida</h1><span class="page-title-tooltip" role="tooltip">Revise as páginas sinalizadas antes de qualquer correção.</span></div></div></div><div id="textoffLevel3Body"></div>`;
     level3State=null;level3SelectedKey=null;loadLevel3();
   }
-  function selectLevel3(key){level3SelectedKey=key;level3Analysis=null;level3Selecting=false;level3Selection=null;level3Drag=null;level3Preview=null;level3Previewing=false;level3Approving=false;renderLevel3Body()}
+  function selectLevel3(key){level3GradientPages=[];level3SelectedKey=key;level3Analysis=null;level3Selecting=false;level3Selection=null;level3Drag=null;level3Preview=null;level3Previewing=false;level3Approving=false;renderLevel3Body()}
   function level3SelectionBox(){
     const b=level3Selection;
     if(!b)return "";
@@ -286,6 +288,57 @@
       level3Previewing=false;renderLevel3Body();
     }
   }
+  let level3GradientPages=[];
+  function gradientInternalPages(row){
+    const source=String(row?.source_stage||"").toUpperCase();
+    const file=String(row?.source_file||"");
+    if(source==="ORIGINAL"){
+      const m=file.match(/^(page-\d+)\.(?:png|jpe?g|webp|bmp)$/i);
+      return m?[m[1]]:[];
+    }
+    const m=file.match(/^page-(\d+)-(\d+)\.(?:png|jpe?g|webp|bmp)$/i);
+    if(!m)return [];
+    const a=Number(m[1]),b=Number(m[2]),w=Math.max(m[1].length,m[2].length,3);
+    return Array.from({length:b-a+1},(_,i)=>`page-${String(a+i).padStart(w,"0")}`);
+  }
+  function toggleGradientPage(page){
+    const s=new Set(level3GradientPages);s.has(page)?s.delete(page):s.add(page);
+    level3GradientPages=[...s];renderLevel3Body();
+  }
+  function gradientThumbUrl(row,page){
+    return `/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=textoff_internal_source&chapter=${encodeURIComponent(row.chapter)}&file=${encodeURIComponent(page+".png")}`;
+  }
+  function gradientPagePicker(row){
+    const pages=gradientInternalPages(row);
+    if(!pages.length)return "";
+    if(String(row?.source_stage||"").toUpperCase()==="ORIGINAL")return "";
+    return `<div class="toc-gradient-picker"><div class="toc-gradient-picker-head"><div><strong>Patch Degradê</strong><span>Selecione visualmente as páginas internas.</span></div><small>${level3GradientPages.length} selecionada(s)</small></div><div class="toc-gradient-filmstrip">${pages.map(p=>{const active=level3GradientPages.includes(p);return `<button type="button" class="toc-gradient-thumb ${active?"is-selected":""}" onclick="TextOffCompareUI.toggleGradientPage('${p}')" onmouseenter="TextOffCompareUI.focusGradientPage('${p}')" aria-pressed="${active}"><span class="toc-gradient-thumb-image"><img loading="lazy" src="${gradientThumbUrl(row,p)}" alt="${p}"></span><span class="toc-gradient-thumb-label"><b>${p.replace("page-","")}</b>${active?"<i>✓</i>":""}</span></button>`}).join("")}</div></div>`;
+  }
+  function focusGradientPage(page){
+    const row=level3Current(),pages=gradientInternalPages(row),i=pages.indexOf(page);if(i<0)return;
+    document.querySelectorAll("#textoffLevel3Body .toc-level3-scroll").forEach(pane=>{
+      const max=Math.max(0,pane.scrollHeight-pane.clientHeight),ratio=pages.length>1?i/(pages.length-1):0;
+      pane.scrollTo({top:max*ratio,behavior:"smooth"});
+    });
+  }
+
+  async function generateGradientPatch(){
+    const row=level3Current();
+    if(!row||level3Previewing)return;
+    const isOriginal=String(row.source_stage||"").toUpperCase()==="ORIGINAL";
+    if(!isOriginal&&!level3GradientPages.length){toast("Selecione pelo menos uma página interna.");return}
+    level3Previewing=true;level3Preview=null;level3Selecting=false;level3Selection=null;renderLevel3Body();
+    try{
+      const start=await api("/api/action",{method:"POST",body:JSON.stringify({action:"textoff_gradient_patch_preview",provider:data.provider,manga:data.manga,chapters:[row.chapter],chapter:row.chapter,source_stage:row.source_stage,source_file:row.source_file,clean_file:row.clean_file,selected_pages:isOriginal?[]:level3GradientPages})});
+      const jobId=start?.job_id;if(!jobId)throw new Error("Job do Patch Degradê não foi criado.");
+      let result=null;
+      for(let i=0;i<240;i++){await new Promise(r=>setTimeout(r,500));const j=await api(`/api/job/${encodeURIComponent(jobId)}?_=${Date.now()}`);if(j.status==="done"){result=j.result||null;break}if(j.status==="error")throw new Error(j.error||j.message||"Falha ao gerar Patch Degradê.");}
+      if(!result)throw new Error("O Patch Degradê não concluiu no tempo esperado.");
+      level3Preview=result;textOffSuccess("Patch Degradê gerado",result.message||"Prévia temporária gerada.");
+    }catch(e){console.error("[PATCH-DEGRADE] erro",e);toast(e.message||"Não foi possível gerar o Patch Degradê.");}
+    finally{level3Previewing=false;renderLevel3Body();}
+  }
+
   function resetLevel3Preview(){
     if(level3Approving)return;
     level3Preview=null;
@@ -383,7 +436,7 @@
       flagging=false;renderBody();
     }
   }
-  window.TextOffCompareUI={render,renderCorrection,selectChapter,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,toggleResults,flagCorrection,selectLevel3,setLevel3Zoom,changeLevel3Zoom,analyzeLevel3,toggleLevel3Selection,generateLevel3Preview,resetLevel3Preview,approveLevel3Preview};
+  window.TextOffCompareUI={render,renderCorrection,selectChapter,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,toggleResults,flagCorrection,selectLevel3,setLevel3Zoom,changeLevel3Zoom,analyzeLevel3,toggleLevel3Selection,generateLevel3Preview,generateGradientPatch,toggleGradientPage,focusGradientPage,resetLevel3Preview,approveLevel3Preview};
 
   /* === TEXT OFF · MODO FOCO (UI only) === */
   const textOffFocus={mode:null,scheduled:false};

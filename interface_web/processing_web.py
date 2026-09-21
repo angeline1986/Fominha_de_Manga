@@ -1888,6 +1888,9 @@ def run_job(job,payload):
             elif job.action=="textoff_level3_preview":
                 from processamento.limpeza_baloes.textoff_level3_correction import generate_preview_job
                 job.result=generate_preview_job(manga,chs,payload)
+            elif job.action=="textoff_gradient_patch_preview":
+                from processamento.limpeza_baloes.textoff_gradient_patch import generate_gradient_preview_job
+                job.result=generate_gradient_preview_job(manga,chs,payload)
             elif job.action=="textoff_level3_approve":
                 from processamento.limpeza_baloes.textoff_level3_correction import approve_proposal_job
                 job.result=approve_proposal_job(manga,chs,payload)
@@ -2802,6 +2805,8 @@ class Handler(BaseHTTPRequestHandler):
         elif kind in {"textoff_source","textoff_clean"}:
             from processamento.limpeza_baloes.textoff_compare import media_base
             base=media_base(manga,chapter,kind,q.get("source",[""])[0])
+        elif kind=="textoff_internal_source":
+            base=(manga/"IMG"/chapter).resolve()
         elif kind=="textoff_level3_preview":
             from processamento.limpeza_baloes.textoff_level3_correction import proposal_dir
             base=proposal_dir(manga,chapter,q.get("proposal",[""])[0])
