@@ -19,6 +19,7 @@ from processamento.unificacao_imagens.image_stitcher_review import run_merge_rev
 from processamento.limpeza_baloes.bubble_cleaner_flow import run_clean_flow
 from processamento.limpeza_baloes.patch_degrade_experimento import run_patch_degrade_experiment
 from processamento.limpeza_baloes.patch_balao_estilizado_experimento import run_styled_balloon_experiment
+from processamento.limpeza_baloes.patch_balao_transparente_experimento import run_transparent_balloon_experiment
 from processamento.pdf_original.pdf_divergence_review import run_divergence_review
 from processamento.pdf_original.pdf_batch_validation import (
     IMAGE_EXTENSIONS,
@@ -604,6 +605,7 @@ def build_menu() -> tuple[MenuSection, ...]:
                 MenuItem(6, "Central de Processamento", "Abrir servidor Web", open_processing_web, "item_pdf"),
                 MenuItem(7, "Patch Degradê", "Teste isolado em imagens IMG", run_patch_degrade_experiment, "item_pdf"),
                 MenuItem(8, "Patch Balão Estilizado", "Fallback assistido para balões estilizados", run_styled_balloon_experiment, "item_pdf"),
+                MenuItem(9, "Diagnóstico Balão Transparente", "Comparar comportamento do Cleaner", run_transparent_balloon_experiment, "item_pdf"),
             ),
             "sec_pdf",
         ),
