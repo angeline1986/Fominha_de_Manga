@@ -9,6 +9,12 @@ from processamento.limpeza_baloes import patch_degrade_experimento as base
 
 OUT = base.ROOT / "reports/experimentos/patch_balao_estilizado"
 MIN_AREA = 100
+GRAPHIC_DETAIL_PROTECTION_V1 = True
+GRAPHIC_SAT_MIN = 70
+GRAPHIC_LOCAL_SAT_DELTA = 24
+GRAPHIC_LOCAL_VALUE_DELTA = 18
+GRAPHIC_MAX_COMPONENT_AREA = 1800
+GRAPHIC_DILATE = 1
 
 def _components(mask_path: Path):
     raw=cv2.imread(str(mask_path),cv2.IMREAD_GRAYSCALE)
@@ -68,6 +74,32 @@ def _authorized_mask(mask_path: Path, page: Path, target: Path):
     if not cv2.imwrite(str(out),authorized): raise RuntimeError("Falha ao salvar máscara autorizada.")
     return out,decisions
 
+def _protect_graphic_details(page: Path, auth_mask: Path, target: Path):
+    original=cv2.imread(str(page)); raw=cv2.imread(str(auth_mask),cv2.IMREAD_GRAYSCALE)
+    if original is None or raw is None: raise RuntimeError("Falha ao abrir original/máscara.")
+    mask=raw>0
+    hsv=cv2.cvtColor(original,cv2.COLOR_BGR2HSV)
+    sat=hsv[:,:,1].astype(np.int16); val=hsv[:,:,2].astype(np.int16)
+    sat_med=cv2.medianBlur(hsv[:,:,1],31).astype(np.int16)
+    val_med=cv2.medianBlur(hsv[:,:,2],31).astype(np.int16)
+    candidate=mask & (sat>=GRAPHIC_SAT_MIN) & (((sat-sat_med)>=GRAPHIC_LOCAL_SAT_DELTA)|((val_med-val)>=GRAPHIC_LOCAL_VALUE_DELTA))
+    n,labels,stats,_=cv2.connectedComponentsWithStats(candidate.astype(np.uint8),8)
+    protected=np.zeros(mask.shape,np.uint8); details=[]
+    for label in range(1,n):
+        area=int(stats[label,cv2.CC_STAT_AREA])
+        if area<3 or area>GRAPHIC_MAX_COMPONENT_AREA: continue
+        x=int(stats[label,cv2.CC_STAT_LEFT]); y=int(stats[label,cv2.CC_STAT_TOP])
+        w=int(stats[label,cv2.CC_STAT_WIDTH]); h=int(stats[label,cv2.CC_STAT_HEIGHT])
+        protected[labels==label]=255
+        details.append({"bbox":[x,y,w,h],"area":area})
+    if GRAPHIC_DILATE and np.any(protected):
+        k=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
+        protected=cv2.dilate(protected,k,iterations=GRAPHIC_DILATE); protected[~mask]=0
+    effective=(mask & (protected==0)).astype(np.uint8)*255
+    cv2.imwrite(str(target/"02_graphic_protected.png"),protected)
+    cv2.imwrite(str(target/"03_effective_mask.png"),effective)
+    return target/"03_effective_mask.png",details,int(np.count_nonzero(protected))
+
 def _rebuild_clean_from_original(page: Path, cleaner_clean: Path, auth_mask: Path):
     original=cv2.imread(str(page)); clean=cv2.imread(str(cleaner_clean))
     mask=cv2.imread(str(auth_mask),cv2.IMREAD_GRAYSCALE)
@@ -87,15 +119,21 @@ def _run(chapter,page):
     print(f"\n--- {chapter.name} · {page.name} ---")
     try:
         clean,raw_mask=base._run_cleaner(page,target)
-        print("2/4 Autorização assistida de componentes...")
+        print("2/5 Autorização assistida de componentes...")
         auth_mask,decisions=_authorized_mask(raw_mask,page,target)
         _rebuild_clean_from_original(page,clean,auth_mask)
-        print("3/4 Surface Gate...")
-        surface=target/"02_surface_allowed.png"; base._surface(clean,auth_mask,surface)
-        print("4/4 Local Heal (parâmetros congelados do Patch Degradê)...")
-        components,filled=base._local_heal(clean,auth_mask,surface,target)
-        meta={"source":str(page),"mode":"styled_balloon_assisted_v1",
-              "authorized_mask":str(auth_mask),"decisions":decisions,
+        print("3/5 Proteção de detalhes gráficos...")
+        effective_mask,graphic_details,protected_pixels=_protect_graphic_details(page,auth_mask,target)
+        print(f"    detalhes protegidos: {len(graphic_details)} · pixels protegidos: {protected_pixels}")
+        _rebuild_clean_from_original(page,clean,effective_mask)
+        print("4/5 Surface Gate...")
+        surface=target/"04_surface_allowed.png"; base._surface(clean,effective_mask,surface)
+        print("5/5 Local Heal (parâmetros congelados do Patch Degradê)...")
+        components,filled=base._local_heal(clean,effective_mask,surface,target)
+        meta={"source":str(page),"mode":"styled_balloon_assisted_graphic_protection_v1",
+              "authorized_mask":str(auth_mask),"effective_mask":str(effective_mask),
+              "graphic_protection":{"algorithm":"local_hsv_detail_v1","details":graphic_details,"protected_pixels":protected_pixels},
+              "decisions":decisions,
               "parameters":{"patch":"9x9","search_radius":70,"search_step":2,
                             "min_context":12,"source_valid":0.92},
               "components":components,"pixels_filled":filled}
