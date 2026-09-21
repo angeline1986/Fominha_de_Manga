@@ -40,21 +40,44 @@ def _make_overlay(page: Path, labels, comps, dest: Path):
     if not cv2.imwrite(str(dest),overlay): raise RuntimeError("Falha ao salvar overlay.")
     return dest
 
-def _select_components(comps):
-    print("\nComponentes encontrados pelo Cleaner:")
-    for idx,(_,x,y,w,h,area) in enumerate(comps,1):
-        print(f"[{idx}] bbox=({x},{y},{w},{h}) area={area}")
-    print("\nAutorize SOMENTE componentes que visualmente estão dentro de balões.")
-    print("Texto externo/SFX deve ficar sem seleção. Enter ou 0 = preservar tudo.")
-    raw=input("Componentes autorizados (ex.: 2,3) › ").strip()
-    if not raw or raw=="0": return []
+STYLED_BALLOON_AUTO_CLASSIFIER_V2 = True
+AUTO_RING_MIN_PIXELS = 80
+AUTO_RING_RADIUS = 12
+AUTO_RELATIVE_EDGE_FACTOR = 3.0
+AUTO_RELATIVE_MAD_FACTOR = 3.0
+AUTO_EDGE_FLOOR = 0.025
+AUTO_MAD_FLOOR = 3.5
+
+def _select_components(comps, page=None, labels=None):
+    if page is None or labels is None: raise RuntimeError("Classificador requer página e labels.")
+    img=cv2.imread(str(page))
+    if img is None: raise RuntimeError("Falha ao abrir original.")
+    lab=cv2.cvtColor(img,cv2.COLOR_BGR2LAB).astype(np.float32)
+    edges=cv2.Canny(cv2.cvtColor(img,cv2.COLOR_BGR2GRAY),70,150)>0
+    kernel=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(AUTO_RING_RADIUS*2+1,AUTO_RING_RADIUS*2+1))
+    metrics=[]
+    for idx,(label,x,y,w,h,area) in enumerate(comps,1):
+        comp=(labels==label).astype(np.uint8)
+        ring=(cv2.dilate(comp,kernel,iterations=1)>0)&(comp==0)
+        rp=int(np.count_nonzero(ring)); mad=999.0; edge=1.0
+        if rp>=AUTO_RING_MIN_PIXELS:
+            vals=lab[ring]; med=np.median(vals,axis=0)
+            mad=float(np.median(np.sqrt(np.sum((vals-med)**2,axis=1))))
+            edge=float(np.mean(edges[ring]))
+        metrics.append((idx,x,y,w,h,area,rp,mad,edge))
+    valid=[m for m in metrics if m[6]>=AUTO_RING_MIN_PIXELS]
+    if not valid:
+        print("\nClassificação automática V2: sem referência; preservar tudo."); return []
+    base_edge=float(np.median([m[8] for m in valid])); base_mad=float(np.median([m[7] for m in valid]))
+    edge_limit=max(AUTO_EDGE_FLOOR,base_edge*AUTO_RELATIVE_EDGE_FACTOR)
+    mad_limit=max(AUTO_MAD_FLOOR,base_mad*AUTO_RELATIVE_MAD_FACTOR)
     out=[]
-    for token in raw.split(","):
-        token=token.strip()
-        if not token: continue
-        n=int(token)
-        if not 1<=n<=len(comps): raise ValueError(f"Componente fora da lista: {n}")
-        if n not in out: out.append(n)
+    print("\nClassificação automática V2 dos componentes:")
+    print(f"Referência relativa: edge_med={base_edge:.3f} mad_med={base_mad:.1f} -> limites edge={edge_limit:.3f} mad={mad_limit:.1f}")
+    for idx,x,y,w,h,area,rp,mad,edge in metrics:
+        ok=rp>=AUTO_RING_MIN_PIXELS and edge<=edge_limit and mad<=mad_limit
+        if ok: out.append(idx)
+        print(f"[{idx}] bbox=({x},{y},{w},{h}) area={area} -> {'AUTORIZAR' if ok else 'PRESERVAR'} (surface_mad={mad:.1f}, edge_density={edge:.3f}, ring={rp})")
     return out
 
 def _authorized_mask(mask_path: Path, page: Path, target: Path):
@@ -62,7 +85,7 @@ def _authorized_mask(mask_path: Path, page: Path, target: Path):
     overlay=_make_overlay(page,labels,comps,target/"00_componentes.png")
     print(f"\nOverlay: {overlay}")
     if sys.platform=="darwin": subprocess.run(["open",str(overlay)],check=False)
-    selected=_select_components(comps)
+    selected=_select_components(comps, page=page, labels=labels)
     authorized=np.zeros(mask.shape,np.uint8)
     decisions=[]
     for idx,(label,x,y,w,h,area) in enumerate(comps,1):
@@ -73,32 +96,6 @@ def _authorized_mask(mask_path: Path, page: Path, target: Path):
     out=target/"01_authorized_mask.png"
     if not cv2.imwrite(str(out),authorized): raise RuntimeError("Falha ao salvar máscara autorizada.")
     return out,decisions
-
-def _protect_graphic_details(page: Path, auth_mask: Path, target: Path):
-    original=cv2.imread(str(page)); raw=cv2.imread(str(auth_mask),cv2.IMREAD_GRAYSCALE)
-    if original is None or raw is None: raise RuntimeError("Falha ao abrir original/máscara.")
-    mask=raw>0
-    hsv=cv2.cvtColor(original,cv2.COLOR_BGR2HSV)
-    sat=hsv[:,:,1].astype(np.int16); val=hsv[:,:,2].astype(np.int16)
-    sat_med=cv2.medianBlur(hsv[:,:,1],31).astype(np.int16)
-    val_med=cv2.medianBlur(hsv[:,:,2],31).astype(np.int16)
-    candidate=mask & (sat>=GRAPHIC_SAT_MIN) & (((sat-sat_med)>=GRAPHIC_LOCAL_SAT_DELTA)|((val_med-val)>=GRAPHIC_LOCAL_VALUE_DELTA))
-    n,labels,stats,_=cv2.connectedComponentsWithStats(candidate.astype(np.uint8),8)
-    protected=np.zeros(mask.shape,np.uint8); details=[]
-    for label in range(1,n):
-        area=int(stats[label,cv2.CC_STAT_AREA])
-        if area<3 or area>GRAPHIC_MAX_COMPONENT_AREA: continue
-        x=int(stats[label,cv2.CC_STAT_LEFT]); y=int(stats[label,cv2.CC_STAT_TOP])
-        w=int(stats[label,cv2.CC_STAT_WIDTH]); h=int(stats[label,cv2.CC_STAT_HEIGHT])
-        protected[labels==label]=255
-        details.append({"bbox":[x,y,w,h],"area":area})
-    if GRAPHIC_DILATE and np.any(protected):
-        k=cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(3,3))
-        protected=cv2.dilate(protected,k,iterations=GRAPHIC_DILATE); protected[~mask]=0
-    effective=(mask & (protected==0)).astype(np.uint8)*255
-    cv2.imwrite(str(target/"02_graphic_protected.png"),protected)
-    cv2.imwrite(str(target/"03_effective_mask.png"),effective)
-    return target/"03_effective_mask.png",details,int(np.count_nonzero(protected))
 
 def _rebuild_clean_from_original(page: Path, cleaner_clean: Path, auth_mask: Path):
     original=cv2.imread(str(page)); clean=cv2.imread(str(cleaner_clean))
@@ -119,21 +116,16 @@ def _run(chapter,page):
     print(f"\n--- {chapter.name} · {page.name} ---")
     try:
         clean,raw_mask=base._run_cleaner(page,target)
-        print("2/5 Autorização assistida de componentes...")
+        print("2/4 Classificação automática de componentes...")
         auth_mask,decisions=_authorized_mask(raw_mask,page,target)
         _rebuild_clean_from_original(page,clean,auth_mask)
-        print("3/5 Proteção de detalhes gráficos...")
-        effective_mask,graphic_details,protected_pixels=_protect_graphic_details(page,auth_mask,target)
-        print(f"    detalhes protegidos: {len(graphic_details)} · pixels protegidos: {protected_pixels}")
-        _rebuild_clean_from_original(page,clean,effective_mask)
-        print("4/5 Surface Gate...")
-        surface=target/"04_surface_allowed.png"; base._surface(clean,effective_mask,surface)
-        print("5/5 Local Heal (parâmetros congelados do Patch Degradê)...")
-        components,filled=base._local_heal(clean,effective_mask,surface,target)
-        meta={"source":str(page),"mode":"styled_balloon_assisted_graphic_protection_v1",
-              "authorized_mask":str(auth_mask),"effective_mask":str(effective_mask),
-              "graphic_protection":{"algorithm":"local_hsv_detail_v1","details":graphic_details,"protected_pixels":protected_pixels},
-              "decisions":decisions,
+        _rebuild_clean_from_original(page,clean,auth_mask)
+        print("3/4 Surface Gate...")
+        surface=target/"02_surface_allowed.png"; base._surface(clean,auth_mask,surface)
+        print("4/4 Local Heal (parâmetros congelados do Patch Degradê)...")
+        components,filled=base._local_heal(clean,auth_mask,surface,target)
+        meta={"source":str(page),"mode":"styled_balloon_auto_v2",
+              "authorized_mask":str(auth_mask),"decisions":decisions,
               "parameters":{"patch":"9x9","search_radius":70,"search_step":2,
                             "min_context":12,"source_valid":0.92},
               "components":components,"pixels_filled":filled}
