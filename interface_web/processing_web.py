@@ -2757,7 +2757,12 @@ class Handler(BaseHTTPRequestHandler):
         try:
             if path=="/api/textoff-special/process":
                 from processamento.limpeza_baloes.textoff_special_web import process_special_image
-                return self.send_json(process_special_image(self.body()))
+                b=self.body(); manga=manga_path(str(b.get("provider","")),str(b.get("manga","")))
+                return self.send_json(process_special_image(b,manga))
+            if path=="/api/textoff-special/promote":
+                from processamento.limpeza_baloes.textoff_special_web import promote_special_result
+                b=self.body(); manga=manga_path(str(b.get("provider","")),str(b.get("manga","")))
+                return self.send_json(promote_special_result(b,manga))
             if path=="/api/export/simulate":
                 from processamento.exportacao.exportador import simulate_export
                 b=self.body(); manga=manga_path(str(b.get("provider","")),str(b.get("manga","")))

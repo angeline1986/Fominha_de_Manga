@@ -24,6 +24,8 @@
   };
 
   let selectedFile = null;
+  let selectedSourcePath = "";
+  let currentRunId = "";
   let sourceUrl = "";
   let resultUrl = "";
   let busy = false;
@@ -45,6 +47,7 @@
   function resetResult() {
     revoke(resultUrl);
     resultUrl = "";
+    currentRunId = "";
     const box = document.querySelector("#specialResult");
     if (box) box.innerHTML = "";
   }
@@ -122,6 +125,7 @@
       const bytes = new Uint8Array(binary.length);
       for (let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
       selectedFile = new File([bytes], r.filename || "imagem.png", {type:r.mime || "image/png"});
+      selectedSourcePath = r.path || "";
       updateFile();
     } catch (err) {
       toast(err.message || "Não foi possível escolher a imagem.");
@@ -130,6 +134,7 @@
 
   function fileChanged(input) {
     selectedFile = input.files?.[0] || null;
+    selectedSourcePath = "";
     updateFile();
   }
 
@@ -158,11 +163,15 @@
         headers: {"Content-Type":"application/json"},
         body: JSON.stringify({
           patch: currentPatch(),
+          provider: data?.provider || "",
+          manga: data?.manga || "",
           filename: selectedFile.name,
+          source_path: selectedSourcePath,
           content_base64: content
         })
       });
 
+      currentRunId = response.run_id || "";
       const binary = atob(response.content_base64);
       const bytes = new Uint8Array(binary.length);
       for (let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
@@ -219,18 +228,35 @@
   }
   function wireCompare(){document.querySelectorAll("[data-z^='compare']").forEach(b=>b.onclick=()=>setCompareZoom(b.dataset.z.endsWith("in")?compareZoom+10:b.dataset.z.endsWith("out")?compareZoom-10:100));setCompareZoom(compareZoom);const a=document.querySelector("#specialOriginalStage"),b=document.querySelector("#specialResultStage");if(!a||!b)return;let lock=false;const sync=(f,t)=>{if(lock)return;lock=true;const fx=Math.max(1,f.scrollWidth-f.clientWidth),fy=Math.max(1,f.scrollHeight-f.clientHeight);t.scrollLeft=f.scrollLeft/fx*Math.max(0,t.scrollWidth-t.clientWidth);t.scrollTop=f.scrollTop/fy*Math.max(0,t.scrollHeight-t.clientHeight);requestAnimationFrame(()=>lock=false);};a.addEventListener("scroll",()=>sync(a,b),{passive:true});b.addEventListener("scroll",()=>sync(b,a),{passive:true});}
 
-  function saveResult(name) {
-    if (!resultUrl) return;
-    const a = document.createElement("a");
-    a.href = resultUrl;
-    a.download = name || "resultado.png";
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
+  async function saveResult(name) {
+    if (!resultUrl || !currentRunId || busy) return;
+    if (!selectedSourcePath) {
+      toast("Para salvar no Texto Off, selecione a imagem pelo botão Escolher para preservar o caminho original.");
+      return;
+    }
+    busy = true;
+    try {
+      const response = await api("/api/textoff-special/promote", {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify({
+          provider: data?.provider || "",
+          manga: data?.manga || "",
+          run_id: currentRunId
+        })
+      });
+      toast(response.message || `Resultado salvo: ${response.output_name || name || "Texto Off"}.`);
+    } catch (err) {
+      toast(err.message || "Não foi possível salvar o resultado no Texto Off.");
+    } finally {
+      busy = false;
+    }
   }
 
   function clearFile() {
     selectedFile = null;
+    selectedSourcePath = "";
+    currentRunId = "";
     const input = document.querySelector("#specialFileInput");
     if (input) input.value = "";
     updateFile();
@@ -238,6 +264,8 @@
 
   function render(root) {
     selectedFile = null;
+    selectedSourcePath = "";
+    currentRunId = "";
     revoke(sourceUrl); sourceUrl = "";
     revoke(resultUrl); resultUrl = "";
     root.innerHTML = `

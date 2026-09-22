@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
+import os
 import shutil
+import tempfile
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 
 import cv2
@@ -82,11 +86,122 @@ def _run_transparent(source: Path, target: Path) -> Path:
     copied=target/result.name; shutil.copy2(result,copied); return copied
 
 
-def process_special_image(payload: dict) -> dict:
+def _sha256(path: Path) -> str:
+    h = hashlib.sha256()
+    with path.open("rb") as fh:
+        for chunk in iter(lambda: fh.read(1024 * 1024), b""):
+            h.update(chunk)
+    return h.hexdigest()
+
+
+def _now_iso() -> str:
+    return datetime.now(timezone.utc).astimezone().isoformat(timespec="seconds")
+
+
+def _validated_original_path(manga_path: Path, raw_path: str) -> Path | None:
+    raw = str(raw_path or "").strip()
+    if not raw:
+        return None
+    manga = Path(manga_path).resolve()
+    chosen = Path(raw).expanduser().resolve()
+    if not chosen.is_file() or chosen.suffix.lower() not in ALLOWED:
+        raise ValueError("A imagem original selecionada não é válida.")
+    if not chosen.is_relative_to(manga):
+        raise ValueError("A imagem precisa pertencer à obra selecionada para ser promovida ao Texto Off.")
+    return chosen
+
+
+def _official_target(manga_path: Path, source_path: Path) -> tuple[str, str, Path]:
+    manga = Path(manga_path).resolve()
+    source = Path(source_path).resolve()
+    img_root = (manga / "IMG").resolve()
+    merge_root = (manga / "FLUXO_SECUNDARIO" / "02_MERGE").resolve()
+
+    if source.is_relative_to(img_root):
+        rel = source.relative_to(img_root)
+        stage = "ORIGINAL"
+    elif source.is_relative_to(merge_root):
+        rel = source.relative_to(merge_root)
+        stage = "MERGED"
+    else:
+        raise ValueError("Promoção oficial aceita imagens vindas de IMG ou FLUXO_SECUNDARIO/02_MERGE.")
+
+    if len(rel.parts) != 2:
+        raise ValueError("Não foi possível identificar o capítulo da imagem selecionada.")
+
+    chapter = rel.parts[0]
+    target_dir = (manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / stage / chapter).resolve()
+    textoff_root = (manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF").resolve()
+    if not target_dir.is_relative_to(textoff_root):
+        raise ValueError("Destino Texto Off inválido.")
+    return stage, chapter, target_dir / f"{source.stem}_clean.png"
+
+
+def _atomic_json(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as fh:
+            json.dump(payload, fh, indent=2, ensure_ascii=False)
+            fh.write("\n")
+        os.replace(tmp_name, path)
+    except Exception:
+        try:
+            os.unlink(tmp_name)
+        except OSError:
+            pass
+        raise
+
+
+def _append_special_manifest(target_dir: Path, *, patch: str, run_id: str,
+                             source_path: Path, target: Path, stage: str,
+                             replaced_existing: bool, backup: Path | None) -> Path:
+    manifest_path = target_dir / "special-patches-manifest.json"
+    if manifest_path.is_file():
+        try:
+            manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(f"Manifesto de patches especiais inválido: {manifest_path}") from exc
+        if int(manifest.get("schema_version") or 0) != 1:
+            raise RuntimeError("Versão não suportada de special-patches-manifest.json.")
+        entries = manifest.get("applications")
+        if not isinstance(entries, list):
+            raise RuntimeError("special-patches-manifest.json não possui applications válido.")
+    else:
+        manifest = {"schema_version": 1, "manifest": "textoff_special_patches", "applications": []}
+        entries = manifest["applications"]
+
+    entry = {
+        "application_id": uuid.uuid4().hex,
+        "applied_at": _now_iso(),
+        "patch": patch,
+        "backend": {
+            "degrade": "patch_degrade_experimento",
+            "estilizado": "patch_balao_estilizado_experimento",
+            "transparente": "patch_balao_transparente_experimento",
+        }[patch],
+        "run_id": run_id,
+        "source_stage": stage,
+        "official_stage": stage,
+        "source_file": source_path.name,
+        "source_sha256": _sha256(source_path),
+        "output_file": target.name,
+        "output_sha256": _sha256(target),
+        "replaced_existing_output": bool(replaced_existing),
+        "backup_file": backup.name if backup else None,
+    }
+    entries.append(entry)
+    manifest["updated_at"] = entry["applied_at"]
+    _atomic_json(manifest_path, manifest)
+    return manifest_path
+
+
+def process_special_image(payload: dict, manga_path: Path) -> dict:
     patch = str(payload.get("patch") or "").strip().lower()
     if patch not in PATCHES:
         raise ValueError("Tratamento especial inválido.")
 
+    original_path = _validated_original_path(manga_path, str(payload.get("source_path") or ""))
     source, run_dir = _decode_image(payload)
     target = run_dir / patch
     target.mkdir(parents=True, exist_ok=True)
@@ -98,16 +213,112 @@ def process_special_image(payload: dict) -> dict:
     else:
         result = _run_transparent(source, target)
 
+    run_meta = {
+        "schema_version": 1,
+        "run_id": run_dir.name,
+        "created_at": _now_iso(),
+        "patch": patch,
+        "source_name": str(payload.get("filename") or source.name),
+        "source_path": str(original_path) if original_path else None,
+        "source_sha256": _sha256(source),
+        "result_file": str(result.relative_to(run_dir)),
+        "result_sha256": _sha256(result),
+        "official_files_modified": False,
+    }
+    _atomic_json(run_dir / "run.json", run_meta)
+
     encoded = _encode_result(result)
     return {
         "ok": True,
         "patch": patch,
         "source_name": str(payload.get("filename") or source.name),
+        "source_path": str(original_path) if original_path else None,
         "result_name": encoded["filename"],
         "mime": encoded["mime"],
         "content_base64": encoded["content_base64"],
+        "run_id": run_dir.name,
         "run_dir": str(run_dir),
         "official_files_modified": False,
+        "can_promote": original_path is not None,
+    }
+
+
+def promote_special_result(payload: dict, manga_path: Path) -> dict:
+    run_id = str(payload.get("run_id") or "").strip()
+    if not run_id or not run_id.isalnum():
+        raise ValueError("Execução do tratamento especial inválida.")
+
+    run_dir = (WORK_ROOT / run_id).resolve()
+    if not run_dir.is_relative_to(WORK_ROOT.resolve()) or not run_dir.is_dir():
+        raise ValueError("Execução do tratamento especial não encontrada.")
+
+    meta_path = run_dir / "run.json"
+    if not meta_path.is_file():
+        raise ValueError("A execução não possui metadados para promoção oficial.")
+    meta = json.loads(meta_path.read_text(encoding="utf-8"))
+
+    patch = str(meta.get("patch") or "").lower()
+    if patch not in PATCHES:
+        raise ValueError("Tratamento especial inválido nos metadados da execução.")
+
+    source_path = _validated_original_path(manga_path, str(meta.get("source_path") or ""))
+    if source_path is None:
+        raise ValueError("Esta execução não preservou o caminho original.")
+
+    result = (run_dir / Path(str(meta.get("result_file") or ""))).resolve()
+    if not result.is_relative_to(run_dir) or not result.is_file():
+        raise ValueError("Resultado da execução não encontrado.")
+
+    expected_result_sha = str(meta.get("result_sha256") or "")
+    if not expected_result_sha or _sha256(result) != expected_result_sha:
+        raise RuntimeError("Integridade do resultado processado não confere.")
+
+    stage, chapter, official = _official_target(manga_path, source_path)
+    official.parent.mkdir(parents=True, exist_ok=True)
+
+    replaced = official.is_file()
+    backup = None
+    if replaced:
+        backup_dir = official.parent / ".special_backups"
+        backup_dir.mkdir(parents=True, exist_ok=True)
+        stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        backup = backup_dir / f"{official.stem}.before-{patch}-{stamp}{official.suffix}"
+        shutil.copy2(official, backup)
+
+    tmp = official.parent / f".{official.name}.special-{uuid.uuid4().hex}.tmp"
+    try:
+        shutil.copy2(result, tmp)
+        if _sha256(tmp) != expected_result_sha:
+            raise RuntimeError("Falha de integridade durante a promoção do resultado.")
+        os.replace(tmp, official)
+    finally:
+        if tmp.exists():
+            tmp.unlink()
+
+    manifest_path = _append_special_manifest(
+        official.parent, patch=patch, run_id=run_id, source_path=source_path,
+        target=official, stage=stage,
+        replaced_existing=replaced, backup=backup,
+    )
+
+    meta["official_files_modified"] = True
+    meta["promoted_at"] = _now_iso()
+    meta["official_stage"] = stage
+    meta["official_chapter"] = chapter
+    meta["official_output"] = str(official)
+    meta["official_output_sha256"] = _sha256(official)
+    meta["special_manifest"] = str(manifest_path)
+    _atomic_json(meta_path, meta)
+
+    return {
+        "ok": True,
+        "message": f"Resultado salvo em Texto Off — {stage} / {chapter}.",
+        "patch": patch, "stage": stage, "chapter": chapter,
+        "output": str(official), "output_name": official.name,
+        "output_sha256": _sha256(official),
+        "replaced_existing_output": replaced,
+        "backup": str(backup) if backup else None,
+        "manifest": str(manifest_path),
     }
 
 
