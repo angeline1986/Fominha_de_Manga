@@ -605,7 +605,7 @@ def build_menu() -> tuple[MenuSection, ...]:
                 MenuItem(6, "Central de Processamento", "Abrir servidor Web", open_processing_web, "item_pdf"),
                 MenuItem(7, "Patch Degradê", "Teste isolado em imagens IMG", run_patch_degrade_experiment, "item_pdf"),
                 MenuItem(8, "Patch Balão Estilizado", "Fallback assistido para balões estilizados", run_styled_balloon_experiment, "item_pdf"),
-                MenuItem(9, "Diagnóstico Balão Transparente", "Comparar comportamento do Cleaner", run_transparent_balloon_experiment, "item_pdf"),
+                MenuItem(9, "Patch Balão Transparente", "LaMa restrito à máscara de texto", run_transparent_balloon_experiment, "item_pdf"),
             ),
             "sec_pdf",
         ),

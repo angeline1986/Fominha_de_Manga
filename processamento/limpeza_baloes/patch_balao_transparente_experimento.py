@@ -1,498 +1,768 @@
-"""Diagnóstico isolado: reproduz checkpoints históricos do Texto Off em f4a26ce.
+"""Experimento isolado para balões semitransparentes.
+
+Algoritmo:
+    transparent_balloon_lama_text_mask_v1
+
+Estratégia validada experimentalmente:
+    1. selecionar uma página IMG;
+    2. selecionar manualmente uma região contendo o texto;
+    3. detectar componentes escuros compatíveis com texto;
+    4. criar máscara base com dilatação 3x3;
+    5. ampliar a autorização com elipse 9x9;
+    6. executar LaMa usando contexto ao redor;
+    7. promover SOMENTE pixels pertencentes à máscara autorizada.
 
 Não altera IMG, 02_MERGE, 04_TEXTO_OFF nem qualquer saída oficial.
-Usa a opção 9 já existente e grava somente em reports/experimentos.
+Todos os artefatos são gravados em reports/experimentos.
 """
+
 from __future__ import annotations
 
 from pathlib import Path
 import json
-import shutil
+import os
+import re
+import subprocess
 import time
 
 import cv2
 import numpy as np
-from PIL import Image, ImageDraw
 
 from processamento.limpeza_baloes import patch_degrade_experimento as base
-import subprocess
-import re
 
-# Congelado de f4a26ce:
-MODEL_REPO = "huyvux3005/manga109-segmentation-bubble"
-MODEL_FILE = "best.pt"
-MODEL_REVISION = "f9a4108c4955136a810e5e92207972f3fb3a65fd"
-CONF = 0.25
-IOU = 0.45
-HISTORICAL_AUTH_ALGORITHM = "textoff_level1_balloon_gate_v1"
+
+ALGORITHM = "transparent_balloon_lama_text_mask_v1"
 
 TEST_CHAPTER = "Ch. 3"
-TEST_PAGES = ("page-036.png", "page-037.png", "page-040.png", "page-084.png")
-OUT = base.OUT / "transparent_historical_f4a26ce"
+TEST_PAGES = (
+    "page-036.png",
+    "page-037.png",
+    "page-040.png",
+    "page-084.png",
+)
+
+OUT = base.OUT / "transparent_balloon_lama_text_mask_v1"
+
+
+BASE_DILATION = (3, 3)
+AUTHORIZED_DILATION = (9, 9)
 
 
 
-def protect_colored_balloons(source_images, output_dir: Path, report_path: Path) -> dict:
-    """Implementação congelada de functional_guard.py em f4a26ce."""
-    from huggingface_hub import hf_hub_download
-    from ultralytics import YOLO
-
-    SAT_MEAN_RISK = 25.0
-    SAT_P90_RISK = 55.0
-    MIN_INTERIOR_PIXELS = 500
-    model_path = hf_hub_download(repo_id=MODEL_REPO, filename=MODEL_FILE, revision=MODEL_REVISION)
-    model = YOLO(model_path)
-    output_dir = Path(output_dir)
-    pages = []
-    protected_total = 0
-
-    for src in map(Path, source_images):
-        original = cv2.imread(str(src))
-        if original is None:
-            raise RuntimeError(f"Guard histórico falhou ao ler original: {src}")
-        clean_path = _single(output_dir, src.stem, "clean")
-        mask_path = _single(output_dir, src.stem, "mask")
-        cleaned = cv2.imread(str(clean_path))
-        cleaner_mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
-        if cleaned is None or cleaner_mask is None:
-            raise RuntimeError(f"Guard histórico falhou ao ler artefatos de {src.name}.")
-
-        result = model.predict(source=original, conf=CONF, iou=IOU, verbose=False)[0]
-        hsv = cv2.cvtColor(original, cv2.COLOR_BGR2HSV)
-        page_balloons = []
-
-        if result.masks is not None:
-            for idx, poly in enumerate(result.masks.xy, start=1):
-                pts = np.asarray(poly, dtype=np.int32)
-                if len(pts) < 3:
-                    continue
-                balloon = np.zeros(original.shape[:2], dtype=np.uint8)
-                cv2.fillPoly(balloon, [pts], 255)
-                area = int(np.count_nonzero(balloon))
-                if area <= 0:
-                    continue
-                interior = cv2.erode(balloon, np.ones((9, 9), np.uint8), iterations=1)
-                valid = interior > 0
-                interior_pixels = int(np.count_nonzero(valid))
-                if interior_pixels < MIN_INTERIOR_PIXELS:
-                    valid = balloon > 0
-                    interior_pixels = area
-
-                sat = hsv[:, :, 1][valid].astype(np.float32)
-                sat_mean = float(sat.mean()) if sat.size else 0.0
-                sat_p90 = float(np.percentile(sat, 90)) if sat.size else 0.0
-                lum = cv2.cvtColor(original, cv2.COLOR_BGR2GRAY)[valid].astype(np.float32)
-                lum_std = float(lum.std()) if lum.size else 0.0
-                sustained = bool(sat.size and sat_mean >= SAT_MEAN_RISK and sat_p90 >= SAT_P90_RISK)
-                pale = bool(sat.size and sat_p90 >= 80.0 and lum_std >= 35.0)
-                risky = sustained or pale
-                before = int(np.count_nonzero(cleaner_mask[balloon > 0]))
-                if risky:
-                    cleaned[balloon > 0] = original[balloon > 0]
-                    cleaner_mask[balloon > 0] = 0
-                    protected_total += 1
-                page_balloons.append({
-                    "balloon_id": idx, "area_pixels": area, "interior_pixels": interior_pixels,
-                    "saturation_mean": round(sat_mean,4), "saturation_p90": round(sat_p90,4),
-                    "luminance_std": round(lum_std,4),
-                    "risk_signals":{"sustained_chroma":sustained,"pale_gradient_risk":pale},
-                    "mask_pixels_before_guard":before, "protected_from_level3":risky,
-                    "route_hint":"LEVEL_5" if risky else "UNDECIDED"
-                })
-        cv2.imwrite(str(clean_path), cleaned)
-        cv2.imwrite(str(mask_path), cleaner_mask)
-        pages.append({"source":src.name,"balloons":page_balloons})
-
-    report={"schema_version":1,"algorithm":"textoff_level2_colored_balloon_guard_v1",
-            "mode":"FUNCTIONAL_FAIL_CLOSED_GUARD","protected_balloons_total":protected_total,
-            "pages":pages}
-    Path(report_path).write_text(json.dumps(report,indent=2,ensure_ascii=False),encoding="utf-8")
-    return report
-
-def _single(folder: Path, stem: str, kind: str) -> Path:
-    matches = sorted(p for p in folder.glob(f"{stem}_{kind}.*") if p.is_file())
-    if len(matches) != 1:
-        raise RuntimeError(
-            f"Esperado 1 artefato {kind} para {stem}; encontrados: "
-            + (", ".join(p.name for p in matches) if matches else "nenhum")
-        )
-    return matches[0]
 
 
-def _copy_checkpoint(clean_path: Path, target: Path) -> Path:
-    target.parent.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(clean_path, target)
-    return target
+LAMA_PADDING = 120
 
 
-def _historical_balloon_authorization(source: Path, output_dir: Path, report_path: Path) -> dict:
-    """Cópia funcional do apply_balloon_authorization em f4a26ce."""
-    from huggingface_hub import hf_hub_download
-    from ultralytics import YOLO
+def _available_chapters() -> list[Path]:
+    root = Path(base.IMG)
 
-    model_path = hf_hub_download(
-        repo_id=MODEL_REPO,
-        filename=MODEL_FILE,
-        revision=MODEL_REVISION,
-    )
-    model = YOLO(model_path)
-    names = {str(v).strip().lower() for v in (model.names or {}).values()}
-    if getattr(model, "task", None) != "segment" or "balloon" not in names:
-        raise RuntimeError(
-            f"Modelo histórico inválido: task={getattr(model, 'task', None)!r}, "
-            f"classes={model.names!r}"
-        )
-
-    clean_path = _single(output_dir, source.stem, "clean")
-    mask_path = _single(output_dir, source.stem, "mask")
-    original = cv2.imread(str(source))
-    cleaned = cv2.imread(str(clean_path))
-    cleaner_mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
-    if original is None or cleaned is None or cleaner_mask is None:
-        raise RuntimeError("Falha ao ler os artefatos do checkpoint histórico.")
-    if original.shape != cleaned.shape or cleaner_mask.shape[:2] != original.shape[:2]:
-        raise RuntimeError("Dimensões divergentes no checkpoint histórico.")
-
-    result = model.predict(source=original, conf=CONF, iou=IOU, verbose=False)[0]
-    balloon_mask = np.zeros(original.shape[:2], dtype=np.uint8)
-    balloons = 0
-    if result.masks is not None:
-        for poly in result.masks.xy:
-            pts = np.asarray(poly, dtype=np.int32)
-            if len(pts) >= 3:
-                cv2.fillPoly(balloon_mask, [pts], 255)
-                balloons += 1
-
-    effective = cv2.bitwise_and(cleaner_mask, balloon_mask)
-
-    # Exatamente a política histórica: ORIGINAL como base e apenas pixels
-    # autorizados vindos do resultado do Cleaner.
-    final = original.copy()
-    final[effective > 0] = cleaned[effective > 0]
-
-    if not cv2.imwrite(str(clean_path), final):
-        raise RuntimeError("Falha ao gravar clean histórico autorizado.")
-    if not cv2.imwrite(str(mask_path), effective):
-        raise RuntimeError("Falha ao gravar mask histórica autorizada.")
-
-    cp = int(np.count_nonzero(cleaner_mask))
-    ap = int(np.count_nonzero(effective))
-    report = {
-        "schema_version": 1,
-        "algorithm": HISTORICAL_AUTH_ALGORITHM,
-        "policy": "cleaner_mask_intersection_balloon_mask",
-        "fail_closed": True,
-        "model": {
-            "repo": MODEL_REPO,
-            "file": MODEL_FILE,
-            "revision": MODEL_REVISION,
-            "task": "segment",
-            "class": "balloon",
-            "conf": CONF,
-            "iou": IOU,
-        },
-        "pages_total": 1,
-        "cleaner_mask_pixels": cp,
-        "authorized_mask_pixels": ap,
-        "authorized_percent": round(ap / cp * 100, 4) if cp else 0.0,
-        "pages": [{
-            "source": source.name,
-            "balloons_detected": balloons,
-            "cleaner_mask_pixels": cp,
-            "authorized_mask_pixels": ap,
-            "authorized_percent": round(ap / cp * 100, 4) if cp else 0.0,
-        }],
-    }
-    report_path.write_text(json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8")
-    return report
-
-
-def _montage(items: list[tuple[str, Path]], target: Path) -> None:
-    opened = []
-    try:
-        for label, path in items:
-            opened.append((label, Image.open(path).convert("RGB")))
-        max_h = max(im.height for _, im in opened)
-        normalized = []
-        for label, im in opened:
-            if im.height != max_h:
-                width = max(1, round(im.width * (max_h / im.height)))
-                im = im.resize((width, max_h), Image.Resampling.LANCZOS)
-            normalized.append((label, im))
-
-        header = 44
-        gap = 8
-        width = sum(im.width for _, im in normalized) + gap * (len(normalized) - 1)
-        canvas = Image.new("RGB", (width, max_h + header), "white")
-        draw = ImageDraw.Draw(canvas)
-        x = 0
-        for label, im in normalized:
-            canvas.paste(im, (x, header))
-            draw.text((x + 8, 14), label, fill="black")
-            x += im.width + gap
-        canvas.save(target, "PNG")
-    finally:
-        for _, im in opened:
-            try:
-                im.close()
-            except Exception:
-                pass
-
-
-def _run_page(page: Path) -> Path:
-    target = OUT / TEST_CHAPTER / page.stem
-    if target.exists():
-        shutil.rmtree(target)
-    target.mkdir(parents=True, exist_ok=True)
-
-    started = time.monotonic()
-    print(f"\n--- {TEST_CHAPTER} · {page.name} ---")
-    print("Checkpoint 1/4: Panel Cleaner bruto...")
-    clean_path, mask_path = base._run_cleaner(page, target)
-    raw = _copy_checkpoint(clean_path, target / "01_cleaner_bruto.png")
-    shutil.copy2(mask_path, target / "01_cleaner_mask.png")
-
-    print("Checkpoint 2/4: Guard histórico de f4a26ce...")
-    guard_report_path = target / "02_guard_report.json"
-    guard_report = protect_colored_balloons([page], clean_path.parent, guard_report_path)
-    clean_path = _single(clean_path.parent, page.stem, "clean")
-    guard = _copy_checkpoint(clean_path, target / "02_apos_guard.png")
-    shutil.copy2(_single(clean_path.parent, page.stem, "mask"), target / "02_apos_guard_mask.png")
-
-    print("Checkpoint 3/4: Balloon Authorization histórica de f4a26ce...")
-    auth_report_path = target / "03_balloon_authorization_report.json"
-    auth_report = _historical_balloon_authorization(page, clean_path.parent, auth_report_path)
-    clean_path = _single(clean_path.parent, page.stem, "clean")
-    auth = _copy_checkpoint(clean_path, target / "03_apos_balloon_authorization.png")
-    shutil.copy2(_single(clean_path.parent, page.stem, "mask"), target / "03_apos_balloon_authorization_mask.png")
-
-    print("Checkpoint 4/4: Nível II / LaMa histórico...")
-    # IMPORTANTE: o LaMa não está instalado no Python do Fominha/menu.
-    # O pipeline histórico executava level2.py no Python isolado do Cleaner V2.
-    source_dir = target / "historical_source"
-    source_dir.mkdir()
-    shutil.copy2(page, source_dir / page.name)
-    level2_report_path = target / "04_level2_report.json"
-    level2_script = base.CLEANER_DIR / "level2.py"
-    cmd = [
-        str(base.CLEANER_PY),
-        str(level2_script),
-        "--source-dir", str(source_dir),
-        "--output-dir", str(clean_path.parent),
-        "--report", str(level2_report_path),
+    chapters = [
+        path
+        for path in root.iterdir()
+        if path.is_dir() and path.name.startswith("Ch. ")
     ]
-    proc = subprocess.run(cmd, cwd=str(base.CLEANER_DIR), check=False)
+
+    def sort_key(path: Path):
+        match = re.search(r"(\d+)", path.name)
+        return (
+            int(match.group(1)) if match else 10**9,
+            path.name,
+        )
+
+    return sorted(chapters, key=sort_key)
+
+
+def _available_pages(chapter: Path) -> list[Path]:
+    pages = [
+        path
+        for path in chapter.iterdir()
+        if path.is_file()
+        and path.name.startswith("page-")
+        and path.suffix.lower() in {
+            ".png",
+            ".jpg",
+            ".jpeg",
+            ".webp",
+        }
+    ]
+
+    def sort_key(path: Path):
+        match = re.search(r"page-(\d+)", path.stem, re.I)
+        return (
+            int(match.group(1)) if match else 10**9,
+            path.name,
+        )
+
+    return sorted(pages, key=sort_key)
+
+
+def _read_image(path: Path) -> np.ndarray:
+    image = cv2.imread(str(path))
+    if image is None:
+        raise RuntimeError(f"Falha ao ler imagem: {path}")
+    return image
+
+
+def _parse_page_selection(raw: str, total: int) -> list[int]:
+    selected = []
+    seen = set()
+
+    for token in raw.split(","):
+        token = token.strip()
+
+        if not token:
+            continue
+
+        try:
+            value = int(token)
+        except ValueError as exc:
+            raise ValueError(
+                "Use números separados por vírgula, "
+                "por exemplo: 1 ou 1,2,3."
+            ) from exc
+
+        if not 1 <= value <= total:
+            raise ValueError(
+                f"Página {value} fora da lista 1..{total}."
+            )
+
+        index = value - 1
+
+        if index not in seen:
+            selected.append(index)
+            seen.add(index)
+
+    if not selected:
+        raise ValueError("Nenhuma página selecionada.")
+
+    return selected
+
+
+def _mask_components(mask: np.ndarray) -> list[dict]:
+    binary = (mask > 0).astype(np.uint8)
+
+    count, _, stats, _ = cv2.connectedComponentsWithStats(
+        binary,
+        connectivity=8,
+    )
+
+    components = []
+
+    for component_id in range(1, count):
+        x, y, w, h, area = map(
+            int,
+            stats[component_id],
+        )
+
+        components.append(
+            {
+                "component": component_id,
+                "bbox_page": [x, y, w, h],
+                "area": area,
+            }
+        )
+
+    return components
+
+
+def _detect_text_mask(
+    page: Path,
+    target: Path,
+) -> tuple[np.ndarray, list[dict]]:
+    """Obtém automaticamente a máscara detectada pelo Cleaner."""
+
+    cleaner_target = target / "cleaner_stage"
+
+    if cleaner_target.exists():
+        import shutil
+        shutil.rmtree(cleaner_target)
+
+    cleaner_target.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    print("1/4 Cleaner: detectando texto e gerando máscara...")
+
+    _, mask_path = base._run_cleaner(
+        page,
+        cleaner_target,
+    )
+
+    cleaner_mask = cv2.imread(
+        str(mask_path),
+        cv2.IMREAD_GRAYSCALE,
+    )
+
+    if cleaner_mask is None:
+        raise RuntimeError(
+            f"Falha ao ler máscara do Cleaner: {mask_path}"
+        )
+
+    original = _read_image(page)
+
+    if cleaner_mask.shape != original.shape[:2]:
+        raise RuntimeError(
+            "Dimensões divergentes entre IMG e máscara do Cleaner: "
+            f"IMG={original.shape[:2]} "
+            f"mask={cleaner_mask.shape}"
+        )
+
+    components = _mask_components(cleaner_mask)
+
+    if not components:
+        raise RuntimeError(
+            "Cleaner não detectou componentes de texto."
+        )
+
+    print(
+        f"    componentes detectados: {len(components)}"
+    )
+    print(
+        "    pixels Cleaner:",
+        int(np.count_nonzero(cleaner_mask)),
+    )
+
+    print("2/4 Máscara de texto: dilatação base 3x3...")
+
+    kernel = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE,
+        BASE_DILATION,
+    )
+
+    base_mask = cv2.dilate(
+        cleaner_mask,
+        kernel,
+        iterations=1,
+    )
+
+    return base_mask, components
+
+
+def _authorize_mask(base_mask: np.ndarray) -> np.ndarray:
+    """Ampliação 9x9 validada no P3C/P16-B/P20."""
+
+    kernel = cv2.getStructuringElement(
+        cv2.MORPH_ELLIPSE,
+        AUTHORIZED_DILATION,
+    )
+
+    return cv2.dilate(
+        base_mask,
+        kernel,
+        iterations=1,
+    )
+
+
+def _write_mask_overlay(
+    image: np.ndarray,
+    mask: np.ndarray,
+    target: Path,
+) -> None:
+    overlay = image.copy()
+
+    visible = mask > 0
+
+    if np.any(visible):
+        highlighted = overlay.copy()
+        highlighted[visible] = (255, 255, 255)
+
+        overlay = cv2.addWeighted(
+            overlay,
+            0.70,
+            highlighted,
+            0.30,
+            0,
+        )
+
+    if not cv2.imwrite(str(target), overlay):
+        raise RuntimeError(
+            f"Falha ao gravar overlay: {target}"
+        )
+
+
+def _run_lama_worker(
+    source: Path,
+    mask_path: Path,
+    result_path: Path,
+    metadata_path: Path,
+) -> None:
+    """Executa LaMa no Python isolado já existente do Cleaner V2."""
+
+    worker = result_path.parent / "_lama_worker.py"
+
+    worker.write_text(
+        r'''
+from pathlib import Path
+import json
+import os
+import sys
+
+import cv2
+import numpy as np
+from PIL import Image
+import torch
+
+source = Path(sys.argv[1])
+mask_path = Path(sys.argv[2])
+result_path = Path(sys.argv[3])
+metadata_path = Path(sys.argv[4])
+cleaner_dir = Path(sys.argv[5])
+padding = int(sys.argv[6])
+
+sys.path.insert(0, str(cleaner_dir.parent))
+
+import cleaner_v2.level2 as level2
+
+image = cv2.imread(str(source))
+mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
+
+if image is None:
+    raise RuntimeError(f"Falha ao ler imagem: {source}")
+
+if mask is None:
+    raise RuntimeError(f"Falha ao ler máscara: {mask_path}")
+
+if mask.shape != image.shape[:2]:
+    raise RuntimeError(
+        f"Dimensões divergentes: image={image.shape[:2]} mask={mask.shape}"
+    )
+
+ys, xs = np.where(mask > 0)
+
+if len(xs) == 0:
+    raise RuntimeError("Máscara autorizada vazia.")
+
+model_path = level2._find_model()
+
+os.environ["LAMA_MODEL"] = str(model_path)
+
+device = (
+    torch.device("mps")
+    if torch.backends.mps.is_available()
+    else torch.device("cpu")
+)
+
+model = level2.SimpleLama(device=device)
+
+x1 = max(0, int(xs.min()) - padding)
+y1 = max(0, int(ys.min()) - padding)
+x2 = min(image.shape[1], int(xs.max()) + padding + 1)
+y2 = min(image.shape[0], int(ys.max()) + padding + 1)
+
+crop = image[y1:y2, x1:x2]
+crop_mask = mask[y1:y2, x1:x2]
+
+crop_rgb = cv2.cvtColor(
+    crop,
+    cv2.COLOR_BGR2RGB,
+)
+
+pil_image = Image.fromarray(crop_rgb)
+pil_mask = Image.fromarray(crop_mask)
+
+lama = model(
+    pil_image,
+    pil_mask,
+)
+
+if lama.size != pil_image.size:
+    lama = lama.crop(
+        (
+            0,
+            0,
+            pil_image.width,
+            pil_image.height,
+        )
+    )
+
+lama_np = cv2.cvtColor(
+    np.asarray(lama),
+    cv2.COLOR_RGB2BGR,
+)
+
+final = image.copy()
+
+target = final[y1:y2, x1:x2]
+authorized = crop_mask > 0
+
+target[authorized] = lama_np[authorized]
+
+final[y1:y2, x1:x2] = target
+
+difference = cv2.absdiff(
+    image,
+    final,
+)
+
+changed = np.any(
+    difference != 0,
+    axis=2,
+)
+
+outside = changed & ~(mask > 0)
+
+outside_count = int(
+    np.count_nonzero(outside)
+)
+
+if outside_count:
+    raise RuntimeError(
+        "Falha de segurança: "
+        f"{outside_count} pixel(s) alterado(s) fora da máscara."
+    )
+
+if not cv2.imwrite(str(result_path), final):
+    raise RuntimeError(
+        f"Falha ao gravar resultado: {result_path}"
+    )
+
+metadata = {
+    "model": str(model_path),
+    "device": str(device),
+    "padding": padding,
+    "mask_pixels": int(
+        np.count_nonzero(mask)
+    ),
+    "changed_pixels": int(
+        np.count_nonzero(changed)
+    ),
+    "changed_outside_mask": outside_count,
+    "crop": [x1, y1, x2, y2],
+}
+
+metadata_path.write_text(
+    json.dumps(
+        metadata,
+        indent=2,
+        ensure_ascii=False,
+    ),
+    encoding="utf-8",
+)
+'''.lstrip(),
+        encoding="utf-8",
+    )
+
+    command = [
+        str(base.CLEANER_PY),
+        str(worker),
+        str(source),
+        str(mask_path),
+        str(result_path),
+        str(metadata_path),
+        str(base.CLEANER_DIR),
+        str(LAMA_PADDING),
+    ]
+
+    proc = subprocess.run(
+        command,
+        cwd=str(base.CLEANER_DIR),
+        check=False,
+    )
+
     if proc.returncode:
         raise RuntimeError(
-            f"Nível II histórico falhou com código {proc.returncode}. "
-            f"Comando executado no ambiente isolado do Cleaner V2: {' '.join(cmd)}"
+            "LaMa experimental falhou com código "
+            f"{proc.returncode}. "
+            "O ambiente do Cleaner não foi modificado."
         )
-    level2_report = json.loads(level2_report_path.read_text(encoding="utf-8"))
-    clean_path = _single(clean_path.parent, page.stem, "clean")
-    lama = _copy_checkpoint(clean_path, target / "04_apos_level2_lama.png")
 
-    comparison = target / "00_comparativo_historico_f4a26ce.png"
-    _montage([
-        ("ORIGINAL", page),
-        ("1 CLEANER BRUTO", raw),
-        ("2 APOS GUARD", guard),
-        ("3 APOS AUTH f4a26ce", auth),
-        ("4 LAMA NIVEL II", lama),
-    ], comparison)
 
-    run = {
-        "reference_commit": "f4a26cedf06d8494137f0093a5338c75591bd7ee",
-        "source": str(page),
-        "elapsed_seconds": round(time.monotonic() - started, 3),
-        "checkpoints": {
-            "cleaner_raw": raw.name,
-            "after_guard": guard.name,
-            "after_historical_authorization": auth.name,
-            "after_level2_lama": lama.name,
-            "comparison": comparison.name,
-        },
-        "guard": {
-            "algorithm": guard_report.get("algorithm"),
-            "protected_balloons_total": guard_report.get("protected_balloons_total"),
-        },
-        "authorization": {
-            "algorithm": auth_report.get("algorithm"),
-            "cleaner_mask_pixels": auth_report.get("cleaner_mask_pixels"),
-            "authorized_mask_pixels": auth_report.get("authorized_mask_pixels"),
-            "authorized_percent": auth_report.get("authorized_percent"),
-        },
-        "level2": {
-            "algorithm": level2_report.get("algorithm"),
-            "pages_level2": level2_report.get("pages_level2"),
-            "components_level2": level2_report.get("components_level2"),
-            "type_counts": level2_report.get("type_counts"),
-        },
-        "official_files_modified": False,
-    }
-    (target / "run.json").write_text(
-        json.dumps(run, indent=2, ensure_ascii=False), encoding="utf-8"
+def _run_page(
+    page: Path,
+) -> Path:
+    chapter_name = page.parent.name
+    target = OUT / chapter_name / page.stem
+
+    target.mkdir(
+        parents=True,
+        exist_ok=True,
     )
-
-    print(f"\nComparativo: {comparison}")
-    print("Ordem: ORIGINAL | CLEANER BRUTO | APÓS GUARD | APÓS AUTH f4a26ce | LAMA NÍVEL II")
-    print("Nenhum arquivo oficial foi alterado.")
-    return comparison
-
-
-
-def _merge_chapter_dir() -> Path:
-    # IMG = <obra>/IMG; Merge oficial fica no mesmo root da obra.
-    work_root = Path(base.IMG).parent
-    candidates = [
-        work_root / "FLUXO_SECUNDARIO" / "02_MERGE" / TEST_CHAPTER,
-        work_root / "FLUXO_SECUNDARIO" / "02_MERGE" / TEST_CHAPTER.replace("Ch. ", ""),
-    ]
-    for folder in candidates:
-        if folder.is_dir():
-            return folder
-    raise FileNotFoundError(
-        "Não encontrei o Merge do Ch. 3. Procurado em: " +
-        " | ".join(str(x) for x in candidates)
-    )
-
-
-def _range_from_name(path: Path):
-    m = re.fullmatch(r"page-(\d+)-(\d+)\.(?:png|jpg|jpeg|webp)", path.name, re.I)
-    return (int(m.group(1)), int(m.group(2))) if m else None
-
-
-def _merged_candidates_for_page(page_number: int = 37) -> list[Path]:
-    folder = _merge_chapter_dir()
-    found = []
-    for path in sorted(folder.iterdir()):
-        if not path.is_file():
-            continue
-        rg = _range_from_name(path)
-        if rg and rg[0] <= page_number <= rg[1]:
-            found.append(path)
-    return found
-
-
-def _mask_components(mask_path: Path) -> list[dict]:
-    mask = cv2.imread(str(mask_path), cv2.IMREAD_GRAYSCALE)
-    if mask is None:
-        return []
-    binary = (mask > 0).astype(np.uint8)
-    n, _, stats, _ = cv2.connectedComponentsWithStats(binary, 8)
-    rows = []
-    for idx in range(1, n):
-        x, y, w, h, area = map(int, stats[idx])
-        rows.append({"component": idx, "bbox": [x, y, w, h], "area": area})
-    return rows
-
-
-def _run_merged_raw(page: Path) -> Path:
-    target = OUT / "MERGED_LONG_STRIP" / page.stem
-    if target.exists():
-        shutil.rmtree(target)
-    target.mkdir(parents=True, exist_ok=True)
-
-    print(f"\n--- MERGE LONGO · {page.name} ---")
-    print("Objetivo: reproduzir SOMENTE o Cleaner V2 bruto sobre a geometria longa.")
-    print("Sem Guard, Authorization, Local Heal ou LaMa.\n")
 
     started = time.monotonic()
-    clean_path, mask_path = base._run_cleaner(page, target)
-    raw = _copy_checkpoint(clean_path, target / "01_cleaner_bruto_merge.png")
-    raw_mask = target / "01_cleaner_mask_merge.png"
-    shutil.copy2(mask_path, raw_mask)
+    original = _read_image(page)
 
-    comps = _mask_components(raw_mask)
-    near_historical = []
-    for row in comps:
-        x, y, w, h = row["bbox"]
-        # Não força igualdade: registra candidatos geometricamente próximos do
-        # componente histórico [208,3573,180,141].
-        if abs(y - 3573) <= 700 or (
-            abs(w - 180) <= 70 and abs(h - 141) <= 70
-        ):
-            near_historical.append(row)
-
-    comparison = target / "00_original_vs_cleaner_merge.png"
-    _montage([
-        ("ORIGINAL MERGE", page),
-        ("CLEANER V2 BRUTO MERGE", raw),
-    ], comparison)
-
-    with Image.open(page) as im:
-        source_size = [im.width, im.height]
-
-    report = {
-        "reference_commit": "f4a26cedf06d8494137f0093a5338c75591bd7ee",
-        "experiment": "merged_long_strip_raw_cleaner",
-        "source": str(page),
-        "source_size": source_size,
-        "historical_component_reference": {
-            "bbox": [208, 3573, 180, 141],
-            "rectangularity": 0.8877,
-            "internal_std": 4.3045,
-        },
-        "mask_components": comps,
-        "candidates_near_historical_geometry": near_historical,
-        "elapsed_seconds": round(time.monotonic() - started, 3),
-        "official_files_modified": False,
-    }
-    (target / "run_merge.json").write_text(
-        json.dumps(report, indent=2, ensure_ascii=False), encoding="utf-8"
+    base_mask, components = _detect_text_mask(
+        page,
+        target,
     )
 
-    print(f"Dimensão da entrada: {source_size[0]}x{source_size[1]}")
-    print(f"Componentes na máscara: {len(comps)}")
-    print("Referência histórica procurada: bbox=[208,3573,180,141]")
-    if near_historical:
-        print("Candidatos próximos:")
-        for row in near_historical:
-            print(f"  comp {row['component']}: bbox={row['bbox']} area={row['area']}")
-    else:
-        print("Nenhum componente geometricamente próximo da referência histórica.")
+    print("3/4 Autorização: ampliando máscara com elipse 9x9...")
 
-    print(f"\nComparativo: {comparison}")
-    print(f"Relatório:   {target / 'run_merge.json'}")
+    authorized_mask = _authorize_mask(
+        base_mask,
+    )
+
+    base_pixels = int(
+        np.count_nonzero(base_mask)
+    )
+
+    authorized_pixels = int(
+        np.count_nonzero(authorized_mask)
+    )
+
+    if base_pixels == 0:
+        raise RuntimeError(
+            "Máscara de texto vazia após o Cleaner."
+        )
+
+    base_mask_path = target / "01_text_mask.png"
+    authorized_mask_path = target / "02_authorized_mask_9x9.png"
+    overlay_path = target / "03_authorized_mask_overlay.png"
+    result_path = target / "04_lama_text_only.png"
+    worker_metadata_path = target / "lama_metadata.json"
+
+    if not cv2.imwrite(
+        str(base_mask_path),
+        base_mask,
+    ):
+        raise RuntimeError(
+            f"Falha ao gravar {base_mask_path}"
+        )
+
+    if not cv2.imwrite(
+        str(authorized_mask_path),
+        authorized_mask,
+    ):
+        raise RuntimeError(
+            f"Falha ao gravar {authorized_mask_path}"
+        )
+
+    _write_mask_overlay(
+        original,
+        authorized_mask,
+        overlay_path,
+    )
+
+    print()
+    print("Máscara:")
+    print(
+        f"  componentes detectados . {len(components)}"
+    )
+    print(
+        f"  pixels base ............. {base_pixels}"
+    )
+    print(
+        f"  pixels autorizados ...... {authorized_pixels}"
+    )
+
+    print()
+    print(
+        "4/4 LaMa: reconstruindo somente "
+        "a região autorizada..."
+    )
+
+    _run_lama_worker(
+        page,
+        authorized_mask_path,
+        result_path,
+        worker_metadata_path,
+    )
+
+    worker_metadata = json.loads(
+        worker_metadata_path.read_text(
+            encoding="utf-8",
+        )
+    )
+
+    run = {
+        "schema_version": 1,
+        "algorithm": ALGORITHM,
+        "experimental": True,
+        "official_files_modified": False,
+        "source": str(page),
+        "chapter": chapter_name,
+        "selection_mode": "automatic_cleaner_mask",
+        "base_dilation": list(BASE_DILATION),
+        "authorized_dilation": list(AUTHORIZED_DILATION),
+        "lama_padding": LAMA_PADDING,
+        "components": components,
+        "base_mask_pixels": base_pixels,
+        "authorized_mask_pixels": authorized_pixels,
+        "lama": worker_metadata,
+        "artifacts": {
+            "text_mask": base_mask_path.name,
+            "authorized_mask": authorized_mask_path.name,
+            "overlay": overlay_path.name,
+            "result": result_path.name,
+        },
+        "elapsed_seconds": round(
+            time.monotonic() - started,
+            3,
+        ),
+    }
+
+    report_path = target / "run.json"
+
+    report_path.write_text(
+        json.dumps(
+            run,
+            indent=2,
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    print()
+    print("Resultado:")
+    print(result_path)
+
+    print()
+    print("Overlay da máscara:")
+    print(overlay_path)
+
+    print()
+    print("Relatório:")
+    print(report_path)
+
+    print()
+    print(
+        "Alterações fora da máscara:",
+        worker_metadata["changed_outside_mask"],
+    )
+
     print("Nenhum arquivo oficial foi alterado.")
-    return comparison
+
+    return result_path
 
 
 def run() -> None:
-    print("\nDIAGNÓSTICO BALÃO TRANSPARENTE · GEOMETRIA HISTÓRICA")
-    print("Teste isolado do Cleaner V2 sobre o MERGE longo que contém a page-037.")
-    print("Sem Guard, Authorization, Local Heal ou LaMa.\n")
+    print()
+    print("PATCH BALÃO TRANSPARENTE · EXPERIMENTO ISOLADO")
+    print()
+    print("Obra: Candy YumYum (Yaoi)")
+    print(
+        "Pipeline: IMG → Cleaner temporário → "
+        "máscara 3x3 → autorização 9x9 → LaMa"
+    )
+    print(
+        "A página IMG original é somente leitura. "
+        "Os resultados ficam em reports/experimentos."
+    )
 
-    try:
-        candidates = _merged_candidates_for_page(37)
-    except FileNotFoundError as exc:
-        print(exc)
+    chapters = _available_chapters()
+
+    if not chapters:
+        print()
+        print(
+            f"Nenhum capítulo encontrado em {Path(base.IMG)}"
+        )
         return
 
-    if not candidates:
-        print(f"Nenhum arquivo de Merge contendo a page-037 foi encontrado em {_merge_chapter_dir()}.")
-        return
+    print()
+    print("Selecione o capítulo:")
+    print()
 
-    print(f"Merge Ch. 3: {_merge_chapter_dir()}")
-    print("Arquivos cujo intervalo contém a página 037:")
-    for idx, page in enumerate(candidates, 1):
-        try:
-            with Image.open(page) as im:
-                dims = f"{im.width}x{im.height}"
-        except Exception:
-            dims = "dimensão indisponível"
-        print(f"[{idx}] {page.name}  ({dims})")
+    for index, chapter in enumerate(
+        chapters,
+        start=1,
+    ):
+        print(
+            f"[{index}] {chapter.name}"
+        )
+
     print("[0] Voltar")
 
-    raw = input("\nMerge › ").strip()
+    raw = input(
+        "\nCapítulo › "
+    ).strip()
+
     if raw == "0":
         return
+
     try:
-        page = candidates[int(raw) - 1]
+        chapter = chapters[int(raw) - 1]
     except (ValueError, IndexError):
         print("Seleção inválida.")
         return
 
-    _run_merged_raw(page)
+    pages = _available_pages(chapter)
+
+    if not pages:
+        print()
+        print(
+            f"Nenhuma página encontrada em {chapter}"
+        )
+        return
+
+    print()
+    print(chapter.name)
+    print()
+
+    for index, page in enumerate(
+        pages,
+        start=1,
+    ):
+        print(
+            f"[{index}] {page.name}"
+        )
+
+    print()
+
+    raw = input(
+        "Páginas (ex.: 1 ou 1,2,3; 0=Voltar) › "
+    ).strip()
+
+    if raw == "0":
+        return
+
+    try:
+        indexes = _parse_page_selection(
+            raw,
+            len(pages),
+        )
+    except ValueError as exc:
+        print()
+        print(
+            f"Seleção inválida: {exc}"
+        )
+        return
+
+    selected = [
+        pages[index]
+        for index in indexes
+    ]
+
+    completed = 0
+    failures = []
+
+    for page in selected:
+        print()
+        print(
+            f"--- {chapter.name} · {page.name} ---"
+        )
+
+        try:
+            _run_page(page)
+            completed += 1
+        except Exception as exc:
+            failures.append(
+                (page.name, str(exc))
+            )
+
+            print()
+            print(
+                f"Falha em {page.name}: {exc}"
+            )
+
+    print()
+    print(
+        "Processamento concluído: "
+        f"{completed}/{len(selected)} página(s)."
+    )
+
+    if failures:
+        print()
+        print("Falhas:")
+
+        for page_name, error in failures:
+            print(
+                f"  - {page_name}: {error}"
+            )
+
+    print()
+    print("Nenhum arquivo oficial foi alterado.")
 
 
 def run_transparent_balloon_experiment():
