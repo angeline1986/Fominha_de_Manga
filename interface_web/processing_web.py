@@ -2684,6 +2684,9 @@ class Handler(BaseHTTPRequestHandler):
             if u.path=="/api/export/select-directory":
                 from processamento.exportacao.exportador import select_directory
                 return self.send_json(select_directory())
+            if u.path=="/api/textoff-special/select-image":
+                from processamento.limpeza_baloes.textoff_special_web import select_special_image
+                return self.send_json(select_special_image(manga_path(q.get("provider",[""])[0],q.get("manga",[""])[0])))
             if u.path=="/api/state": return self.send_json(state(q.get("provider",[""])[0],q.get("manga",[""])[0]))
             if u.path=="/api/textoff-compare":
                 from processamento.limpeza_baloes.textoff_compare import comparison_state
@@ -2752,6 +2755,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_POST(self):
         path=urllib.parse.urlparse(self.path).path
         try:
+            if path=="/api/textoff-special/process":
+                from processamento.limpeza_baloes.textoff_special_web import process_special_image
+                return self.send_json(process_special_image(self.body()))
             if path=="/api/export/simulate":
                 from processamento.exportacao.exportador import simulate_export
                 b=self.body(); manga=manga_path(str(b.get("provider","")),str(b.get("manga","")))
