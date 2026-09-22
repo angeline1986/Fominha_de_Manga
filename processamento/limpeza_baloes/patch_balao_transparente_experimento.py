@@ -29,6 +29,7 @@ import cv2
 import numpy as np
 
 from processamento.limpeza_baloes import patch_degrade_experimento as base
+from processamento.limpeza_baloes.cleaner_v2.balloon_authorization import apply_balloon_authorization
 
 
 ALGORITHM = "transparent_balloon_lama_text_mask_v1"
@@ -209,22 +210,46 @@ def _detect_text_mask(
             f"mask={cleaner_mask.shape}"
         )
 
-    components = _mask_components(cleaner_mask)
+    raw_components = _mask_components(cleaner_mask)
 
-    if not components:
+    if not raw_components:
         raise RuntimeError(
             "Cleaner não detectou componentes de texto."
         )
 
-    print(
-        f"    componentes detectados: {len(components)}"
-    )
-    print(
-        "    pixels Cleaner:",
-        int(np.count_nonzero(cleaner_mask)),
+    raw_pixels = int(np.count_nonzero(cleaner_mask))
+    print(f"    componentes Cleaner: {len(raw_components)}")
+    print("    pixels Cleaner:", raw_pixels)
+
+    print("2/5 Balloon Authorization: filtrando texto fora de balões...")
+    authorization_path = target / "balloon_authorization.json"
+    authorization = apply_balloon_authorization(
+        [page], mask_path.parent, authorization_path
     )
 
-    print("2/4 Máscara de texto: dilatação base 3x3...")
+    authorized_cleaner_mask = cv2.imread(
+        str(mask_path), cv2.IMREAD_GRAYSCALE
+    )
+    if authorized_cleaner_mask is None:
+        raise RuntimeError(
+            f"Falha ao reler máscara autorizada: {mask_path}"
+        )
+
+    components = _mask_components(authorized_cleaner_mask)
+    authorized_cleaner_pixels = int(np.count_nonzero(authorized_cleaner_mask))
+    authorized_component_count = sum(
+        int(p.get("components_authorized", 0))
+        for p in authorization.get("pages", [])
+    )
+    print("    componentes autorizados:", authorized_component_count)
+    print("    pixels após Balloon Authorization:", authorized_cleaner_pixels)
+
+    if authorized_cleaner_pixels == 0:
+        raise RuntimeError(
+            "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+        )
+
+    print("3/5 Máscara de texto: dilatação base 3x3...")
 
     kernel = cv2.getStructuringElement(
         cv2.MORPH_ELLIPSE,
@@ -232,12 +257,24 @@ def _detect_text_mask(
     )
 
     base_mask = cv2.dilate(
-        cleaner_mask,
+        authorized_cleaner_mask,
         kernel,
         iterations=1,
     )
 
-    return base_mask, components
+    authorization_summary = {
+        "report": authorization_path.name,
+        "algorithm": authorization.get("algorithm"),
+        "policy": authorization.get("policy"),
+        "cleaner_components": len(raw_components),
+        "authorized_components": authorized_component_count,
+        "cleaner_mask_pixels": raw_pixels,
+        "authorized_cleaner_mask_pixels": authorized_cleaner_pixels,
+        "authorized_percent": authorization.get("authorized_percent", 0.0),
+        "pages": authorization.get("pages", []),
+    }
+
+    return base_mask, components, authorization_summary
 
 
 def _authorize_mask(base_mask: np.ndarray) -> np.ndarray:
@@ -483,12 +520,12 @@ def _run_page(
     started = time.monotonic()
     original = _read_image(page)
 
-    base_mask, components = _detect_text_mask(
+    base_mask, components, balloon_authorization = _detect_text_mask(
         page,
         target,
     )
 
-    print("3/4 Autorização: ampliando máscara com elipse 9x9...")
+    print("4/5 Autorização: ampliando máscara com elipse 9x9...")
 
     authorized_mask = _authorize_mask(
         base_mask,
@@ -549,7 +586,7 @@ def _run_page(
 
     print()
     print(
-        "4/4 LaMa: reconstruindo somente "
+        "5/5 LaMa: reconstruindo somente "
         "a região autorizada..."
     )
 
@@ -573,7 +610,8 @@ def _run_page(
         "official_files_modified": False,
         "source": str(page),
         "chapter": chapter_name,
-        "selection_mode": "automatic_cleaner_mask",
+        "selection_mode": "automatic_cleaner_mask_balloon_authorized",
+        "balloon_authorization": balloon_authorization,
         "base_dilation": list(BASE_DILATION),
         "authorized_dilation": list(AUTHORIZED_DILATION),
         "lama_padding": LAMA_PADDING,
@@ -633,7 +671,7 @@ def run() -> None:
     print()
     print("Obra: Candy YumYum (Yaoi)")
     print(
-        "Pipeline: IMG → Cleaner temporário → "
+        "Pipeline: IMG → Cleaner temporário → Balloon Authorization → "
         "máscara 3x3 → autorização 9x9 → LaMa"
     )
     print(
