@@ -20,6 +20,13 @@
       description: "Indicado para balões transparentes ou semitransparentes, quando roupas, cabelos ou cenário continuam visíveis atrás do texto.",
       pipeline: "Cleaner → Máscara 3×3 → Autorização 9×9 → LaMa",
       exampleClass: "transparent"
+    },
+    gradiente_suave: {
+      title: "Gradiente Suave",
+      badge: "EXPERIMENTAL",
+      description: "Reconstrói gradientes suaves usando o contexto acima e abaixo da seleção.",
+      pipeline: "Seleção manual → Expansão 35% → LAB → Mediana → Suavização → Interpolação vertical",
+      exampleClass: "degrade"
     }
   };
 
@@ -31,6 +38,8 @@
   let busy = false;
   let previewZoom = 100;
   let compareZoom = 100;
+  let smoothSelection = null;
+  let smoothDrag = null;
 
   const e = s => String(s ?? "").replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -88,6 +97,7 @@
     const host = document.querySelector("#specialExample");
     if (host) host.innerHTML = exampleHtml(currentPatch());
     resetResult();
+    smoothSelection=null; smoothDrag=null; updateSmoothSelectionMode();
   }
 
   function updateFile() {
@@ -96,6 +106,7 @@
     const preview = document.querySelector("#specialPreview");
     const apply = document.querySelector("#specialApply");
     resetResult();
+    smoothSelection=null; smoothDrag=null;
     revoke(sourceUrl);
     sourceUrl = "";
 
@@ -112,7 +123,8 @@
       <div class="special-preview-head"><div><b>PRÉ-VISUALIZAÇÃO</b><span>${e(selectedFile.name)}</span></div><div class="special-zoom"><button data-z="preview-out">−</button><button data-z="preview-reset"><span id="specialPreviewZoom">100%</span></button><button data-z="preview-in">+</button></div></div>
       <div id="specialPreviewStage" class="special-preview-stage"><div id="specialImageWrap" class="special-image-wrap"><img id="specialPreviewImage" src="${sourceUrl}" alt="Imagem selecionada"></div></div>`;
     wirePreview();
-    if (apply) apply.disabled = false;
+    updateSmoothSelectionMode();
+    if (apply) apply.disabled = currentPatch() === "gradiente_suave";
   }
 
   async function choose() {
@@ -149,6 +161,7 @@
 
   async function apply() {
     if (!selectedFile || busy) return;
+    if(currentPatch()==="gradiente_suave"&&!smoothSelection){toast("Selecione a região do texto na pré-visualização.");return;}
     busy = true;
     const btn = document.querySelector("#specialApply");
     if (btn) {
@@ -167,7 +180,8 @@
           manga: data?.manga || "",
           filename: selectedFile.name,
           source_path: selectedSourcePath,
-          content_base64: content
+          content_base64: content,
+          selection: smoothSelection
         })
       });
 
@@ -223,6 +237,28 @@
     });
   }
 
+  function updateSmoothSelectionMode(){
+    const wrap=document.querySelector("#specialImageWrap"),apply=document.querySelector("#specialApply");
+    if(!wrap)return;
+    const active=currentPatch()==="gradiente_suave";
+    wrap.classList.toggle("is-selectable",active);
+    let help=document.querySelector("#specialRoiHelp");
+    if(!help){help=document.createElement("div");help.id="specialRoiHelp";help.className="special-roi-help";wrap.parentElement?.before(help);}
+    help.textContent=active?(smoothSelection?"Região selecionada. Arraste novamente para substituir.":"Arraste sobre o texto que deve ser reconstruído."):"";
+    if(!active)wrap.querySelector(".special-roi-box")?.remove();
+    if(apply)apply.disabled=!selectedFile||(active&&!smoothSelection);
+  }
+
+  function wireSmoothSelection(){
+    const img=document.querySelector("#specialPreviewImage"),wrap=document.querySelector("#specialImageWrap");
+    if(!img||!wrap)return;
+    const point=ev=>{const r=img.getBoundingClientRect();return{x:Math.max(0,Math.min(r.width,ev.clientX-r.left)),y:Math.max(0,Math.min(r.height,ev.clientY-r.top)),r};};
+    const draw=(a,b)=>{let box=wrap.querySelector(".special-roi-box");if(!box){box=document.createElement("div");box.className="special-roi-box";wrap.appendChild(box);}box.style.left=`${Math.min(a.x,b.x)}px`;box.style.top=`${Math.min(a.y,b.y)}px`;box.style.width=`${Math.abs(b.x-a.x)}px`;box.style.height=`${Math.abs(b.y-a.y)}px`;};
+    img.onpointerdown=ev=>{if(currentPatch()!=="gradiente_suave")return;ev.preventDefault();smoothDrag=point(ev);draw(smoothDrag,smoothDrag);};
+    img.onpointermove=ev=>{if(smoothDrag&&currentPatch()==="gradiente_suave")draw(smoothDrag,point(ev));};
+    img.onpointerup=ev=>{if(!smoothDrag||currentPatch()!=="gradiente_suave")return;const end=point(ev),start=smoothDrag;smoothDrag=null;const l=Math.min(start.x,end.x),t=Math.min(start.y,end.y),w=Math.abs(end.x-start.x),h=Math.abs(end.y-start.y);if(w<3||h<3){smoothSelection=null;updateSmoothSelectionMode();return;}smoothSelection={x:Math.round(l*img.naturalWidth/end.r.width),y:Math.round(t*img.naturalHeight/end.r.height),width:Math.round(w*img.naturalWidth/end.r.width),height:Math.round(h*img.naturalHeight/end.r.height)};updateSmoothSelectionMode();};
+  }
+
   function wirePreview(){
     const img=document.querySelector("#specialPreviewImage");
     if(!img)return;
@@ -233,8 +269,9 @@
       setZoom:setPreviewZoom
     });
 
-    img.onload=()=>setPreviewZoom(previewZoom);
+    img.onload=()=>{setPreviewZoom(previewZoom);wireSmoothSelection();updateSmoothSelectionMode();};
     setPreviewZoom(previewZoom);
+    wireSmoothSelection();
   }
 
   function wireCompare(){
@@ -302,6 +339,7 @@
             <option value="degrade">Patch Degradê</option>
             <option value="estilizado">Patch Balão Estilizado</option>
             <option value="transparente">Patch Balão Transparente</option>
+            <option value="gradiente_suave">Gradiente Suave</option>
           </select>
         </div>
 

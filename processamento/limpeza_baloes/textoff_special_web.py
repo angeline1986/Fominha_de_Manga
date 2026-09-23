@@ -17,7 +17,7 @@ from config.data_paths import OUTPUT_ROOT
 ROOT = Path(__file__).resolve().parents[2]
 WORK_ROOT = ROOT / "reports" / "experimentos" / "textoff_especiais"
 ALLOWED = {".png", ".jpg", ".jpeg", ".webp"}
-PATCHES = {"degrade", "estilizado", "transparente"}
+PATCHES = {"degrade", "estilizado", "transparente", "gradiente_suave"}
 
 
 def _decode_image(payload: dict) -> tuple[Path, Path]:
@@ -87,6 +87,18 @@ def _run_transparent(source: Path, target: Path) -> Path:
     if not result.is_file(): raise RuntimeError("Backend da opção 9 não gerou resultado.")
     copied=target/result.name; shutil.copy2(result,copied); return copied
 
+
+def _run_smooth_gradient(source: Path, target: Path, selection) -> tuple[Path, dict]:
+    from processamento.limpeza_baloes.gradiente_suave.gradiente_suave import reconstruct
+    if not isinstance(selection, dict):
+        raise ValueError("Selecione a região do texto para aplicar Gradiente Suave.")
+    try:
+        bbox=tuple(int(round(float(selection[k]))) for k in ("x","y","width","height"))
+    except Exception as exc:
+        raise ValueError("Seleção do Gradiente Suave inválida.") from exc
+    result=target/"gradiente_suave.png"
+    meta=reconstruct(source,result,bbox,target/"gradiente_suave_report.json")
+    return result,meta
 
 def _sha256(path: Path) -> str:
     h = hashlib.sha256()
@@ -181,6 +193,7 @@ def _append_special_manifest(target_dir: Path, *, patch: str, run_id: str,
             "degrade": "patch_degrade_experimento",
             "estilizado": "patch_balao_estilizado_experimento",
             "transparente": "patch_balao_transparente_experimento",
+            "gradiente_suave": "gradiente_suave_v1",
         }[patch],
         "run_id": run_id,
         "source_stage": stage,
@@ -223,12 +236,15 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
     target = run_dir / patch
     target.mkdir(parents=True, exist_ok=True)
 
+    treatment_meta = None
     if patch == "degrade":
         result = _run_degrade(source, target)
     elif patch == "estilizado":
         result = _run_styled(source, target)
-    else:
+    elif patch == "transparente":
         result = _run_transparent(source, target)
+    else:
+        result, treatment_meta = _run_smooth_gradient(source, target, payload.get("selection"))
 
     run_meta = {
         "schema_version": 1,
@@ -244,6 +260,7 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
         "result_file": str(result.relative_to(run_dir)),
         "result_sha256": _sha256(result),
         "official_files_modified": False,
+        "treatment": treatment_meta,
     }
     _atomic_json(run_dir / "run.json", run_meta)
 
