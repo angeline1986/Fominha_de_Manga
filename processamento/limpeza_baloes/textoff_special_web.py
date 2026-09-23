@@ -67,9 +67,14 @@ def _encode_result(path: Path) -> dict:
     }
 
 
-def _run_degrade(source: Path, target: Path, selections) -> tuple[Path, dict]:
+def _run_degrade(
+    source: Path,
+    target: Path,
+    selections,
+    base_snapshot: Path | None = None,
+) -> tuple[Path, dict]:
     from processamento.limpeza_baloes.textoff_special_roi import run_degrade_roi
-    return run_degrade_roi(source, target, selections)
+    return run_degrade_roi(source, target, selections, base_snapshot=base_snapshot)
 
 def _run_styled(source: Path, target: Path) -> Path:
     from processamento.limpeza_baloes import patch_balao_estilizado_experimento as patch
@@ -229,12 +234,31 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
             base_state = "ABSENT"
 
     source, run_dir = _decode_image(payload)
+
+    # Snapshot imutável da base oficial usada para gerar a proposta.
+    # O ROI Degradê usa o SOURCE para executar o algoritmo, mas compõe
+    # somente suas alterações efetivas sobre esta base.
+    base_snapshot = None
+    if patch == "degrade" and base_state == "EXISTS":
+        base_snapshot = run_dir / "base_official_snapshot.png"
+        shutil.copy2(base_official, base_snapshot)
+        if _sha256(base_snapshot) != base_sha256:
+            shutil.rmtree(run_dir, ignore_errors=True)
+            raise RuntimeError(
+                "PROPOSTA_OBSOLETA: a base oficial mudou durante a criação da proposta."
+            )
+
     target = run_dir / patch
     target.mkdir(parents=True, exist_ok=True)
 
     treatment_meta = None
     if patch == "degrade":
-        result, treatment_meta = _run_degrade(source, target, payload.get("selections") or payload.get("selection"))
+        result, treatment_meta = _run_degrade(
+            source,
+            target,
+            payload.get("selections") or payload.get("selection"),
+            base_snapshot=base_snapshot,
+        )
     elif patch == "estilizado":
         result = _run_styled(source, target)
     elif patch == "transparente":
@@ -293,8 +317,6 @@ def promote_special_result(payload: dict, manga_path: Path) -> dict:
     patch = str(meta.get("patch") or "").lower()
     if patch not in PATCHES:
         raise ValueError("Tratamento especial inválido nos metadados da execução.")
-    if patch == "degrade" and (meta.get("treatment") or {}).get("algorithm") == "textoff_special_roi_degrade_v2":
-        raise RuntimeError("ROI Degradê V2 em fase de prova: promoção oficial bloqueada.")
 
     source_path = _validated_original_path(manga_path, str(meta.get("source_path") or ""))
     if source_path is None:

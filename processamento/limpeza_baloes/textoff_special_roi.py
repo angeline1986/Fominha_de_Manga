@@ -6,7 +6,12 @@ import numpy as np
 
 ALGORITHM = "textoff_special_roi_degrade_v2"
 
-def run_degrade_roi(source: Path, target: Path, selections):
+def run_degrade_roi(
+    source: Path,
+    target: Path,
+    selections,
+    base_snapshot: Path | None = None,
+):
     from processamento.limpeza_baloes import patch_degrade_experimento as base
     if isinstance(selections, dict):
         selections = [selections]
@@ -58,7 +63,46 @@ def run_degrade_roi(source: Path, target: Path, selections):
     result=target/"01_local_heal.png"
     if not result.is_file():
         raise RuntimeError("ROI Degradê não gerou resultado.")
-    meta={"algorithm":ALGORITHM,"proof_phase":True,"promotion_allowed":False,
+
+    # O algoritmo protegido continua trabalhando sobre o SOURCE.
+    # O arquivo promovível, porém, parte da base oficial usada pela proposta
+    # e recebe somente as alterações efetivamente produzidas pelo ROI.
+    technical_result=cv2.imread(str(result))
+    if technical_result is None:
+        raise RuntimeError("Resultado técnico do ROI Degradê inválido.")
+    if technical_result.shape != original.shape:
+        raise RuntimeError("Resultado técnico do ROI Degradê possui dimensões incompatíveis.")
+
+    changed_from_source=np.any(technical_result != original,axis=2)
+    effective_changed_pixels=int(np.count_nonzero(changed_from_source))
+
+    composition_mode="source_without_official_base"
+    outside_effective_change_pixels=0
+
+    if base_snapshot is not None:
+        official_base=cv2.imread(str(base_snapshot))
+        if official_base is None:
+            raise RuntimeError("Snapshot da base oficial do ROI Degradê inválido.")
+        if official_base.shape != original.shape:
+            raise RuntimeError("Snapshot da base oficial possui dimensões incompatíveis.")
+
+        composed=official_base.copy()
+        composed[changed_from_source]=technical_result[changed_from_source]
+
+        outside_effective_change_pixels=int(np.count_nonzero(
+            np.any(composed != official_base,axis=2) & ~changed_from_source
+        ))
+        if outside_effective_change_pixels != 0:
+            raise RuntimeError(
+                "ROI Degradê alterou pixels fora da composição efetiva autorizada."
+            )
+
+        if not cv2.imwrite(str(result),composed):
+            raise RuntimeError("Falha ao salvar composição segura do ROI Degradê.")
+
+        composition_mode="effective_changes_over_official_base"
+
+    meta={"algorithm":ALGORITHM,"proof_phase":False,"promotion_allowed":True,
           "selection_count":len(boxes),"selections":[list(b) for b in boxes],
           "authorization_rule":"whole_existing_authorized_components_intersecting_roi",
           "authorized_pixels_before_roi":int(np.count_nonzero(authorized)),
@@ -66,6 +110,10 @@ def run_degrade_roi(source: Path, target: Path, selections):
           "components_before_count":len(before),"components_selected_count":len(selected),
           "components_selected_by_roi":selected,"processed_components":int(processed),
           "pixels_filled":int(filled),
+          "composition_mode":composition_mode,
+          "effective_changed_pixels":effective_changed_pixels,
+          "outside_effective_change_pixels":outside_effective_change_pixels,
+          "base_snapshot_used":base_snapshot is not None,
           "timing_seconds":{"cleaner":round(cleaner,3),"balloon_authorization":round(auth,3),
                             "surface_gate":round(surface_s,3),"local_heal":round(heal,3),
                             "total":round(time.perf_counter()-started,3)},
