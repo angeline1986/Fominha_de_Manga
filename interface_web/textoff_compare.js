@@ -1,5 +1,5 @@
 (() => {
-  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,flagging=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false,level3Selecting=false,level3Selection=null,level3Drag=null,level3Preview=null,level3Previewing=false,level3Approving=false,resultsOpen=true;
+  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,flagging=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false,level3Selecting=false,level3Selections=[],level3Selection=null,level3Drag=null,level3Preview=null,level3Previewing=false,level3Approving=false,resultsOpen=true;
   const PAGE_SIZE=15;
   const escLocal=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
   const currentRow=()=>state?.rows?.find(x=>String(x.key)===String(selectedKey))||null;
@@ -108,11 +108,11 @@
   function level3Detail(row){
     if(!row)return `<div class="panel toc-level3-empty"><strong>Nenhuma pendência selecionada.</strong><span>As imagens sinalizadas na comparação aparecerão aqui.</span></div>`;
     const note=level3Analysis?(level3Analysis.count?`${level3Analysis.count} região(ões) suspeita(s) destacada(s).`:"Nenhum resíduo seguro identificado automaticamente."):"";
-    const manualNote=level3Preview?"Prévia gerada. A imagem oficial permanece inalterada.":(level3Selection?"Área manual selecionada. Gere a prévia para comparar Antes × Depois.":(level3Selecting?"Arraste o mouse sobre o resíduo no Resultado atual.":""));
+    const manualNote=level3Preview?"Prévia gerada. A imagem oficial permanece inalterada.":(level3Selections.length?`${level3Selections.length} área(s) manual(is) selecionada(s).`:(level3Selecting?"Arraste sobre cada resíduo que deseja corrigir.":""));
     const actionHint=level3Preview?"Confira o resultado antes de aplicar. Em imagens de Merge, a aprovação também atualiza o arquivo correspondente em 02_MERGE.":"Análise automática ou seleção manual da área residual.";
     const actionButtons=level3Preview
       ? `<div class="toc-level3-action-buttons"><button class="btn" type="button" ${level3Approving?"disabled":""} onclick="TextOffCompareUI.resetLevel3Preview()">Refazer seleção</button><button class="btn primary" type="button" ${level3Approving?"disabled":""} onclick="TextOffCompareUI.approveLevel3Preview()">${level3Approving?"Aprovando…":"Aprovar correção"}</button></div>`
-      : `<div class="toc-level3-action-buttons"><button class="btn primary" type="button" ${level3Analyzing||level3Previewing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button><button id="tocLevel3SelectArea" class="btn" type="button" onclick="TextOffCompareUI.toggleLevel3Selection()">${level3Selecting?"Cancelar seleção":"Selecionar área"}</button><button id="tocLevel3GeneratePreview" class="btn" type="button" ${!level3Selection||level3Previewing?"disabled":""} onclick="TextOffCompareUI.generateLevel3Preview()">${level3Previewing?"Gerando prévia…":"Gerar prévia"}</button></div>`;
+      : `<div class="toc-level3-action-buttons"><button class="btn primary" type="button" ${level3Analyzing||level3Previewing?"disabled":""} onclick="TextOffCompareUI.analyzeLevel3()">${level3Analyzing?"Analisando…":"Analisar resíduos"}</button><button id="tocLevel3SelectArea" class="btn" type="button" onclick="TextOffCompareUI.toggleLevel3Selection()">${level3Selecting?"Cancelar seleção":"Selecionar área"}</button><button id="tocLevel3GeneratePreview" class="btn" type="button" ${!level3Selections.length||level3Previewing?"disabled":""} onclick="TextOffCompareUI.generateLevel3Preview()">${level3Previewing?"Gerando prévia…":"Gerar prévia"}</button></div>`;
     const leftTitle=level3Preview?"RESULTADO ATUAL":"ORIGINAL";
     const leftMeta=level3Preview?"Antes":(row.source_stage==="MERGE"?"Fonte: MERGE":"Fonte: IMG");
     const leftUrl=level3Preview?level3MediaUrl("textoff_clean",row,row.clean_file):level3MediaUrl("textoff_source",row,row.source_file);
@@ -133,41 +133,45 @@
     root.innerHTML=`<div class="head"><div><div class="caption">TEXTO OFF · NÍVEL III</div><div class="page-title-wrap" tabindex="0"><h1>Correção assistida</h1><span class="page-title-tooltip" role="tooltip">Revise as páginas sinalizadas antes de qualquer correção.</span></div></div></div><div id="textoffLevel3Body"></div>`;
     level3State=null;level3SelectedKey=null;loadLevel3();
   }
-  function selectLevel3(key){level3SelectedKey=key;level3Analysis=null;level3Selecting=false;level3Selection=null;level3Drag=null;level3Preview=null;level3Previewing=false;level3Approving=false;renderLevel3Body()}
+  function selectLevel3(key){level3SelectedKey=key;level3Analysis=null;level3Selecting=false;level3Selections=[];level3Selection=null;level3Drag=null;level3Preview=null;level3Previewing=false;level3Approving=false;renderLevel3Body()}
   function level3SelectionBox(){
-    const b=level3Selection;
-    if(!b)return "";
-    return `<span class="toc-level3-manual-box" style="left:${b.left}%;top:${b.top}%;width:${b.width}%;height:${b.height}%"><i>Manual</i></span>`;
+    return level3Selections.map((b,index)=>`<span class="toc-level3-manual-box" style="left:${b.left}%;top:${b.top}%;width:${b.width}%;height:${b.height}%"><i>Manual ${index+1}</i></span>`).join("");
   }
+
   function syncLevel3SelectionUi(){
     const layer=document.querySelector("#tocLevel3ManualLayer");
     if(!layer)return;
     layer.classList.toggle("is-active",level3Selecting);
     const wrap=layer.closest(".toc-level3-image-wrap");
-    wrap?.querySelector(".toc-level3-manual-box")?.remove();
+    wrap?.querySelectorAll(".toc-level3-manual-box").forEach(box=>box.remove());
     const live=layer.querySelector(".toc-level3-manual-live");
     if(live)live.style.display="none";
-    if(level3Selection&&wrap){
-      const box=document.createElement("span");
-      box.className="toc-level3-manual-box";
-      box.style.left=`${level3Selection.left}%`;
-      box.style.top=`${level3Selection.top}%`;
-      box.style.width=`${level3Selection.width}%`;
-      box.style.height=`${level3Selection.height}%`;
-      box.innerHTML="<i>Manual</i>";
-      wrap.insertBefore(box,layer);
+    if(wrap){
+      level3Selections.forEach((b,index)=>{
+        const box=document.createElement("span");
+        box.className="toc-level3-manual-box";
+        box.style.left=`${b.left}%`;
+        box.style.top=`${b.top}%`;
+        box.style.width=`${b.width}%`;
+        box.style.height=`${b.height}%`;
+        box.innerHTML=`<i>Manual ${index+1}</i>`;
+        wrap.insertBefore(box,layer);
+      });
     }
     const selectBtn=document.querySelector("#tocLevel3SelectArea");
     const previewBtn=document.querySelector("#tocLevel3GeneratePreview");
     const note=document.querySelector("#tocLevel3ManualNote");
-    if(selectBtn)selectBtn.textContent=level3Selecting?"Cancelar seleção":"Selecionar área";
-    if(previewBtn)previewBtn.disabled=!level3Selection||level3Previewing;
+    if(selectBtn)selectBtn.textContent=level3Selecting?"Finalizar seleção":"Selecionar áreas";
+    if(previewBtn)previewBtn.disabled=!level3Selections.length||level3Previewing;
     if(note){
-      const message=level3Selection?"Área manual selecionada. Gere a prévia para comparar Antes × Depois.":(level3Selecting?"Arraste o mouse sobre o resíduo no Resultado atual.":"");
+      const message=level3Selections.length
+        ? `${level3Selections.length} área(s) manual(is) selecionada(s).`
+        : (level3Selecting?"Arraste sobre cada resíduo que deseja corrigir.":"");
       note.textContent=message;
       note.hidden=!message;
     }
   }
+
   function toggleLevel3Selection(){
     level3Selecting=!level3Selecting;
     level3Selection=null;
@@ -219,7 +223,11 @@
       if(layer.hasPointerCapture?.(e.pointerId))layer.releasePointerCapture(e.pointerId);
       level3Drag=null;
       if(level3Selection&&(level3Selection.width<0.3||level3Selection.height<0.3))level3Selection=null;
-      console.log("[NIVEL3][MANUAL] seleção",level3Selection);
+      if(level3Selection){
+        level3Selections.push({...level3Selection});
+        console.log("[NIVEL3][MANUAL] seleção adicionada",level3Selection,"total",level3Selections.length);
+      }
+      level3Selection=null;
       syncLevel3SelectionUi();
     };
     layer.addEventListener("pointerup",finish);
@@ -262,10 +270,10 @@
   }
   async function generateLevel3Preview(){
     const row=level3Current();
-    if(!row||!level3Selection||level3Previewing)return;
+    if(!row||!level3Selections.length||level3Previewing)return;
     level3Previewing=true;level3Preview=null;renderLevel3Body();
     try{
-      const start=await api("/api/action",{method:"POST",body:JSON.stringify({action:"textoff_level3_preview",provider:data.provider,manga:data.manga,chapters:[row.chapter],chapter:row.chapter,source_stage:row.source_stage,source_file:row.source_file,clean_file:row.clean_file,selection:level3Selection})});
+      const start=await api("/api/action",{method:"POST",body:JSON.stringify({action:"textoff_level3_preview",provider:data.provider,manga:data.manga,chapters:[row.chapter],chapter:row.chapter,source_stage:row.source_stage,source_file:row.source_file,clean_file:row.clean_file,selections:level3Selections.map(item=>({...item}))})});
       const jobId=start?.job_id;
       if(!jobId)throw new Error("Job de prévia não foi criado.");
       let result=null;
@@ -289,6 +297,7 @@
   function resetLevel3Preview(){
     if(level3Approving)return;
     level3Preview=null;
+    level3Selections=[];
     level3Selection=null;
     level3Analysis=null;
     level3Drag=null;
@@ -313,7 +322,7 @@
       }
       if(!result)throw new Error("A aprovação não concluiu no tempo esperado.");
       textOffSuccess("Correção aplicada",result.message||"Correção Nível III aprovada.");
-      level3Preview=null;level3Selection=null;level3Analysis=null;level3Selecting=false;
+      level3Preview=null;level3Selections=[];level3Selection=null;level3Analysis=null;level3Selecting=false;
       state=await api(`/api/textoff-compare?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&_=${Date.now()}`);
       await loadLevel3();
     }catch(e){

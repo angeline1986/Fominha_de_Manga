@@ -35,6 +35,32 @@ from processamento.limpeza_baloes.textoff_level3 import (
     pending_for_chapter,
 )
 SCHEMA = "textoff_level3_proposal_v1"
+
+REGIONAL_ROOT = (
+    Path(__file__).resolve().parent
+    / "level3_regional"
+)
+
+REGIONAL_PYTHON = (
+    REGIONAL_ROOT
+    / ".venv"
+    / "bin"
+    / "python"
+)
+
+REGIONAL_WORKER = (
+    REGIONAL_ROOT
+    / "regional.py"
+)
+
+REGIONAL_MODEL = (
+    Path.home()
+    / "Library"
+    / "Caches"
+    / "pcleaner"
+    / "model"
+    / "anime-manga-big-lama.pt"
+)
 STATUS = "PROPOSTA_GERADA"
 STATUS_APPROVED = "APROVADA"
 STATUS_CORRECTED = "CORRIGIDO_NIVEL3"
@@ -148,7 +174,71 @@ def _worker_command(source_path: Path, clean_path: Path, preview_path: Path, rep
     ]
 
 
-def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: str, clean_file: str, selection_raw: object) -> dict:
+
+def _regional_worker_command(
+    source_path: Path,
+    clean_path: Path,
+    preview_path: Path,
+    report_path: Path,
+    bboxes: list[tuple[int, int, int, int]],
+) -> list[str]:
+    if not REGIONAL_PYTHON.is_file():
+        raise RuntimeError(
+            "Python isolado da Correção Assistida Regional "
+            f"não encontrado: {REGIONAL_PYTHON}"
+        )
+
+    if not REGIONAL_WORKER.is_file():
+        raise RuntimeError(
+            "Worker da Correção Assistida Regional "
+            f"não encontrado: {REGIONAL_WORKER}"
+        )
+
+    if not REGIONAL_MODEL.is_file():
+        raise RuntimeError(
+            f"Modelo LaMa não encontrado: {REGIONAL_MODEL}"
+        )
+
+    command = [
+        str(REGIONAL_PYTHON),
+        str(REGIONAL_WORKER),
+        "--source", str(source_path),
+        "--clean", str(clean_path),
+        "--output", str(preview_path),
+        "--report", str(report_path),
+        "--model", str(REGIONAL_MODEL),
+    ]
+
+    for bbox in bboxes:
+        command.extend([
+            "--bbox",
+            ",".join(str(value) for value in bbox),
+        ])
+
+    return command
+
+
+def _selections_percent(value: object) -> list[dict]:
+    if isinstance(value, dict):
+        values = [value]
+    elif isinstance(value, list):
+        values = value
+    else:
+        raise ValueError(
+            "Nenhuma área manual válida foi informada."
+        )
+
+    if not values:
+        raise ValueError(
+            "Nenhuma área manual foi informada."
+        )
+
+    return [
+        _selection_percent(item)
+        for item in values
+    ]
+
+def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: str, clean_file: str, selections_raw: object) -> dict:
     chapter = _chapter_name(chapter)
     stage = _normalize_stage(source_stage)
     source_file = _validate_image_name(source_file, "Imagem original")
@@ -162,7 +252,7 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
         raise ValueError("O resultado atual informado não corresponde à pendência do Nível III.")
 
     source_path, clean_path = _validate_current_pair(manga, chapter, stage, source_file, clean_file)
-    selection = _selection_percent(selection_raw)
+    selections = _selections_percent(selections_raw)
 
     with Image.open(source_path) as src_im, Image.open(clean_path) as clean_im:
         source_size = tuple(src_im.size)
@@ -170,8 +260,10 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
     if source_size != clean_size:
         raise RuntimeError(f"Dimensões divergentes entre fonte e resultado atual: {source_size} != {clean_size}.")
     width, height = clean_size
-    bbox = _bbox_pixels(selection, width, height)
-    mask_bbox, mask_margin = _mask_bbox_pixels(bbox, width, height)
+    bboxes = [
+        _bbox_pixels(selection, width, height)
+        for selection in selections
+    ]
 
     base_sha256 = _sha256(clean_path)
     source_sha256 = _sha256(source_path)
@@ -189,7 +281,13 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
         env = os.environ.copy()
         env["PYTHONPATH"] = str(ROOT) + (os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else "")
         proc = subprocess.run(
-            _worker_command(source_path, clean_path, preview_path, report_path, mask_bbox),
+            _regional_worker_command(
+                source_path,
+                clean_path,
+                preview_path,
+                report_path,
+                bboxes,
+            ),
             cwd=str(ROOT), env=env, text=True, capture_output=True, check=False,
         )
         if proc.returncode != 0:
@@ -212,15 +310,38 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
             "source_file": source_file,
             "clean_file": clean_file,
             "origin": "MANUAL",
-            "selection_percent": selection,
-            "bbox_pixels": {
-                "x": bbox[0], "y": bbox[1], "width": bbox[2] - bbox[0], "height": bbox[3] - bbox[1],
+            "selection_percent": selections[0] if len(selections) == 1 else None,
+            "selections_percent": selections,
+            "bbox_pixels": (
+                {
+                    "x": bboxes[0][0],
+                    "y": bboxes[0][1],
+                    "width": bboxes[0][2] - bboxes[0][0],
+                    "height": bboxes[0][3] - bboxes[0][1],
+                }
+                if len(bboxes) == 1
+                else None
+            ),
+            "bboxes_pixels": [
+                {
+                    "x": bbox[0],
+                    "y": bbox[1],
+                    "width": bbox[2] - bbox[0],
+                    "height": bbox[3] - bbox[1],
+                }
+                for bbox in bboxes
+            ],
+            "regional": {
+                "algorithm": worker.get("algorithm"),
+                "selection_count": worker.get("selection_count"),
+                "mask_pixels": worker.get("mask_pixels"),
+                "outside_mask_changed_pixels": worker.get(
+                    "outside_mask_changed_pixels"
+                ),
+                "work_bbox_pixels": worker.get("work_bbox_pixels"),
+                "regions": worker.get("regions"),
+                "context_padding": worker.get("context_padding"),
             },
-            "mask_bbox_pixels": {"x": mask_bbox[0], "y": mask_bbox[1], "width": mask_bbox[2]-mask_bbox[0], "height": mask_bbox[3]-mask_bbox[1]},
-            "mask_margin_pixels": mask_margin,
-            "mask_margin_policy": {"ratio": MASK_MARGIN_RATIO, "minimum": MASK_MARGIN_MIN, "maximum": MASK_MARGIN_MAX},
-            "crop_pixels": worker.get("crop_pixels"),
-            "padding": worker.get("padding"),
             "status": STATUS,
             "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
             "base_sha256": base_sha256,
@@ -229,12 +350,17 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
             "worker": {
                 "device": worker.get("device"),
                 "model": worker.get("model"),
+                "algorithm": worker.get("algorithm"),
             },
             "safety": {
                 "official_image_modified": False,
                 "source_image_modified": False,
                 "composition_limited_to_mask": True,
-                "mask_expands_manual_selection": True,
+                "mask_expands_manual_selection": False,
+                "regional_mask_inside_manual_selections": True,
+                "outside_mask_changed_pixels": worker.get(
+                    "outside_mask_changed_pixels"
+                ),
             },
         }
         report_path.unlink(missing_ok=True)
@@ -248,12 +374,17 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
             "source_file": source_file,
             "clean_file": clean_file,
             "preview_file": "preview.png",
-            "selection_percent": selection,
+            "selection_percent": manifest["selection_percent"],
+            "selections_percent": selections,
             "bbox_pixels": manifest["bbox_pixels"],
-            "mask_bbox_pixels": manifest["mask_bbox_pixels"],
-            "mask_margin_pixels": mask_margin,
+            "bboxes_pixels": manifest["bboxes_pixels"],
             "base_sha256": base_sha256,
             "device": worker.get("device"),
+            "algorithm": worker.get("algorithm"),
+            "mask_pixels": worker.get("mask_pixels"),
+            "outside_mask_changed_pixels": worker.get(
+                "outside_mask_changed_pixels"
+            ),
             "message": "Prévia do Nível III gerada sem alterar a imagem oficial.",
         }
     except Exception:
@@ -271,7 +402,12 @@ def generate_preview_job(manga: Path, chs, payload: dict) -> dict:
         raise ValueError("Capítulo do payload não corresponde ao capítulo selecionado.")
     return generate_preview(
         manga, ch.name, payload.get("source_stage"), payload.get("source_file"),
-        payload.get("clean_file"), payload.get("selection"),
+        payload.get("clean_file"),
+        (
+            payload.get("selections")
+            if payload.get("selections") is not None
+            else payload.get("selection")
+        ),
     )
 
 
