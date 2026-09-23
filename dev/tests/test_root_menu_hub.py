@@ -8,7 +8,8 @@ from unittest.mock import MagicMock, patch
 from PIL import Image
 
 
-ROOT_MENU_PATH = Path(__file__).resolve().parents[1] / "menu.py"
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+ROOT_MENU_PATH = PROJECT_ROOT / "orquestracao" / "menu.py"
 SPEC = importlib.util.spec_from_file_location("root_menu", ROOT_MENU_PATH)
 root_menu = importlib.util.module_from_spec(SPEC)
 sys.modules["root_menu"] = root_menu
@@ -26,20 +27,41 @@ def write_pdf(path: Path, pages: int = 1) -> None:
 
 class RootMenuHubTests(unittest.TestCase):
     def test_resolves_project_root_dynamically(self):
-        self.assertEqual(root_menu.resolve_root_dir(), Path(__file__).resolve().parents[1])
+        self.assertEqual(root_menu.resolve_root_dir(), PROJECT_ROOT)
 
-    def test_resolves_mangago_output_inside_module(self):
-        expected = Path(__file__).resolve().parents[1] / "mangago_downloader" / "output"
-        self.assertEqual(root_menu.resolve_mangago_output_dir(), expected)
+    def test_resolves_mangago_output_from_shared_data_root(self):
+        self.assertEqual(root_menu.resolve_mangago_output_dir(), root_menu.OUTPUT_ROOT)
 
     def test_menu_does_not_use_absolute_user_path(self):
         source = ROOT_MENU_PATH.read_text(encoding="utf-8")
         self.assertNotIn("/Users/", source)
 
+    def test_sync_mangago_download_location_preserves_settings(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            config_path = Path(tmp) / "gui_config.json"
+            output_dir = Path(tmp) / "FominhaData" / "output"
+
+            config_path.write_text(
+                '{"download_location": "", "max_workers": 7}\n',
+                encoding="utf-8",
+            )
+
+            result = root_menu.sync_mangago_download_location(
+                config_path=config_path,
+                output_dir=output_dir,
+            )
+
+            import json
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+
+            self.assertEqual(result, config_path)
+            self.assertEqual(config["download_location"], str(output_dir))
+            self.assertEqual(config["max_workers"], 7)
+
     def test_build_mangago_web_command_prefers_module_venv_entrypoint(self):
         command, cwd, env = root_menu.build_mangago_web_command()
 
-        self.assertEqual(cwd, Path(__file__).resolve().parents[1] / "mangago_downloader")
+        self.assertEqual(cwd, PROJECT_ROOT / "download" / "mangago_downloader")
         self.assertIn("MANGAGO_LOG_LEVEL", env)
         self.assertTrue(command[0].endswith("mangago-downloader-web") or command[-1] == "webapp.server")
 

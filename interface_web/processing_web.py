@@ -9,11 +9,13 @@ from typing import Any
 from PIL import Image
 
 ROOT=Path(__file__).resolve().parents[1]
-OUTPUT=ROOT/"download"/"mangago_downloader"/"output"
 STATIC=Path(__file__).resolve().parent
 if str(ROOT) not in sys.path: sys.path.insert(0, str(ROOT))
+from config.data_paths import OUTPUT_ROOT
 
 from processamento.unificacao_imagens import image_stitcher as v3
+
+OUTPUT=OUTPUT_ROOT
 HOST="127.0.0.1"
 PORT=int(os.environ.get("FOMINHA_PROCESSING_PORT","8766"))
 IMAGE_EXTS={".png",".jpg",".jpeg",".webp"}

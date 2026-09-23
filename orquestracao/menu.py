@@ -14,6 +14,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from config.data_paths import OUTPUT_ROOT
 from processamento.unificacao_imagens.image_stitcher import run_merge_flow
 from processamento.unificacao_imagens.image_stitcher_review import run_merge_review_flow
 from processamento.limpeza_baloes.bubble_cleaner_flow import run_clean_flow
@@ -31,7 +32,7 @@ from processamento.pdf_original.pdf_batch_validation import (
 
 ROOT_DIR = Path(__file__).resolve().parents[1]
 MANGAGO_DIR = ROOT_DIR / "download" / "mangago_downloader"
-MANGAGO_OUTPUT_DIR = MANGAGO_DIR / "output"
+MANGAGO_OUTPUT_DIR = OUTPUT_ROOT
 HEX = {
     "text": "#2c3e50",
     "separator": "#ffd166",
@@ -116,6 +117,30 @@ def resolve_mangago_output_dir() -> Path:
     return MANGAGO_OUTPUT_DIR
 
 
+def sync_mangago_download_location(
+    config_path: Path | None = None,
+    output_dir: Path | None = None,
+) -> Path:
+    config_path = config_path or (MANGAGO_DIR / "gui_config.json")
+    output_dir = output_dir or MANGAGO_OUTPUT_DIR
+    config = {}
+
+    if config_path.exists():
+        try:
+            config = json.loads(config_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            raise RuntimeError(
+                f"Não foi possível carregar a configuração do Mangago Downloader: {exc}"
+            ) from exc
+
+    config["download_location"] = str(output_dir)
+    config_path.write_text(
+        json.dumps(config, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+    return config_path
+
+
 def build_mangago_web_command() -> tuple[list[str], Path, dict[str, str]]:
     if not MANGAGO_DIR.exists():
         raise FileNotFoundError("Módulo mangago_downloader não encontrado.")
@@ -129,8 +154,9 @@ def build_mangago_web_command() -> tuple[list[str], Path, dict[str, str]]:
 
 def open_mangago_web() -> None:
     try:
+        sync_mangago_download_location()
         command, cwd, env = build_mangago_web_command()
-    except FileNotFoundError as exc:
+    except (FileNotFoundError, RuntimeError) as exc:
         print(c("error", f"Falha: {exc}"))
         return
 

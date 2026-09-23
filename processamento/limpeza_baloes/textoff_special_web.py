@@ -12,6 +12,8 @@ from pathlib import Path
 
 import cv2
 
+from config.data_paths import OUTPUT_ROOT
+
 ROOT = Path(__file__).resolve().parents[2]
 WORK_ROOT = ROOT / "reports" / "experimentos" / "textoff_especiais"
 ALLOWED = {".png", ".jpg", ".jpeg", ".webp"}
@@ -326,7 +328,7 @@ def select_special_image(manga_path: Path) -> dict:
     import subprocess
     manga=Path(manga_path).resolve()
     start=manga if manga.is_dir() else manga.parent
-    if not start.is_dir(): start=ROOT/'download'/'mangago_downloader'/'output'
+    if not start.is_dir(): start=OUTPUT_ROOT
     if not start.is_dir(): start=ROOT
     apple='on run argv\nset startFolder to POSIX file (item 1 of argv) as alias\nset chosenFile to choose file with prompt (item 2 of argv) default location startFolder of type {\"public.image\"}\nreturn POSIX path of chosenFile\nend run'
     proc=subprocess.run(['osascript','-e',apple,str(start),'Escolha a imagem para aplicar o tratamento especial'],capture_output=True,text=True,check=False)
