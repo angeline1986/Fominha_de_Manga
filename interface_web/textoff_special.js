@@ -38,7 +38,8 @@
   let busy = false;
   let previewZoom = 100;
   let compareZoom = 100;
-  let smoothSelection = null;
+  let smoothSelections = [];
+  let smoothSelectionSeq = 0;
   let smoothDrag = null;
 
   const e = s => String(s ?? "").replace(/[&<>"']/g, m => ({
@@ -97,7 +98,7 @@
     const host = document.querySelector("#specialExample");
     if (host) host.innerHTML = exampleHtml(currentPatch());
     resetResult();
-    smoothSelection=null; smoothDrag=null; updateSmoothSelectionMode();
+    smoothSelections=[]; smoothDrag=null; updateSmoothSelectionMode();
   }
 
   function updateFile() {
@@ -106,7 +107,7 @@
     const preview = document.querySelector("#specialPreview");
     const apply = document.querySelector("#specialApply");
     resetResult();
-    smoothSelection=null; smoothDrag=null;
+    smoothSelections=[]; smoothDrag=null;
     revoke(sourceUrl);
     sourceUrl = "";
 
@@ -161,7 +162,7 @@
 
   async function apply() {
     if (!selectedFile || busy) return;
-    if(currentPatch()==="gradiente_suave"&&!smoothSelection){toast("Selecione a região do texto na pré-visualização.");return;}
+    if(currentPatch()==="gradiente_suave"&&!smoothSelections.length){toast("Selecione a região do texto na pré-visualização.");return;}
     busy = true;
     const btn = document.querySelector("#specialApply");
     if (btn) {
@@ -181,7 +182,7 @@
           filename: selectedFile.name,
           source_path: selectedSourcePath,
           content_base64: content,
-          selection: smoothSelection
+          selections: smoothSelections.map(({x,y,width,height})=>({x,y,width,height}))
         })
       });
 
@@ -228,6 +229,7 @@
       images:"#specialPreviewImage",
       label:"#specialPreviewZoom"
     });
+    requestAnimationFrame(renderSmoothSelections);
   }
 
   function setCompareZoom(v){
@@ -237,26 +239,39 @@
     });
   }
 
-  function updateSmoothSelectionMode(){
-    const wrap=document.querySelector("#specialImageWrap"),apply=document.querySelector("#specialApply");
-    if(!wrap)return;
-    const active=currentPatch()==="gradiente_suave";
-    wrap.classList.toggle("is-selectable",active);
-    let help=document.querySelector("#specialRoiHelp");
-    if(!help){help=document.createElement("div");help.id="specialRoiHelp";help.className="special-roi-help";wrap.parentElement?.before(help);}
-    help.textContent=active?(smoothSelection?"Região selecionada. Arraste novamente para substituir.":"Arraste sobre o texto que deve ser reconstruído."):"";
-    if(!active)wrap.querySelector(".special-roi-box")?.remove();
-    if(apply)apply.disabled=!selectedFile||(active&&!smoothSelection);
+  function clearSmoothSelections(){
+    smoothSelections=[];
+    document.querySelector("#specialImageWrap")?.querySelectorAll(".special-roi-box,.special-roi-remove,.special-roi-draft").forEach(el=>el.remove());
+    updateSmoothSelectionMode();
   }
-
-  function wireSmoothSelection(){
+  function removeSmoothSelection(id){smoothSelections=smoothSelections.filter(item=>item.id!==id);renderSmoothSelections();updateSmoothSelectionMode();}
+  function renderSmoothSelections(){
     const img=document.querySelector("#specialPreviewImage"),wrap=document.querySelector("#specialImageWrap");
-    if(!img||!wrap)return;
+    if(!img||!wrap||!img.naturalWidth||!img.naturalHeight)return;
+    wrap.querySelectorAll(".special-roi-box,.special-roi-remove").forEach(el=>el.remove());
+    const ir=img.getBoundingClientRect(),wr=wrap.getBoundingClientRect(),sx=ir.width/img.naturalWidth,sy=ir.height/img.naturalHeight,ox=ir.left-wr.left,oy=ir.top-wr.top;
+    smoothSelections.forEach((item,index)=>{
+      const box=document.createElement("div");box.className="special-roi-box";
+      box.style.left=`${ox+item.x*sx}px`;box.style.top=`${oy+item.y*sy}px`;box.style.width=`${item.width*sx}px`;box.style.height=`${item.height*sy}px`;box.innerHTML=`<span>${index+1}</span>`;wrap.appendChild(box);
+      const remove=document.createElement("button");remove.type="button";remove.className="special-roi-remove";remove.textContent="×";remove.title=`Remover seleção ${index+1}`;remove.setAttribute("aria-label",remove.title);
+      remove.style.left=`${ox+(item.x+item.width)*sx}px`;remove.style.top=`${oy+item.y*sy}px`;remove.onclick=ev=>{ev.preventDefault();ev.stopPropagation();removeSmoothSelection(item.id);};wrap.appendChild(remove);
+    });
+  }
+  function updateSmoothSelectionMode(){
+    const wrap=document.querySelector("#specialImageWrap"),apply=document.querySelector("#specialApply");if(!wrap)return;
+    const active=currentPatch()==="gradiente_suave";wrap.classList.toggle("is-selectable",active);
+    let help=document.querySelector("#specialRoiHelp");if(!help){help=document.createElement("div");help.id="specialRoiHelp";help.className="special-roi-help";wrap.parentElement?.before(help);}
+    if(active){const count=smoothSelections.length;help.innerHTML=`<div><b>Selecione uma ou mais áreas com texto.</b> Clique e arraste o mouse sobre cada texto que deseja remover. Use × para excluir apenas uma seleção.</div><div class="special-roi-summary"><span>${count} ${count===1?"área selecionada":"áreas selecionadas"}</span>${count?'<button id="specialRoiClear" type="button">Limpar todas</button>':""}</div>`;document.querySelector("#specialRoiClear")?.addEventListener("click",clearSmoothSelections);renderSmoothSelections();}
+    else{help.textContent="";wrap.querySelectorAll(".special-roi-box,.special-roi-remove,.special-roi-draft").forEach(el=>el.remove());}
+    if(apply)apply.disabled=!selectedFile||(active&&!smoothSelections.length);
+  }
+  function wireSmoothSelection(){
+    const img=document.querySelector("#specialPreviewImage"),wrap=document.querySelector("#specialImageWrap");if(!img||!wrap)return;
     const point=ev=>{const r=img.getBoundingClientRect();return{x:Math.max(0,Math.min(r.width,ev.clientX-r.left)),y:Math.max(0,Math.min(r.height,ev.clientY-r.top)),r};};
-    const draw=(a,b)=>{let box=wrap.querySelector(".special-roi-box");if(!box){box=document.createElement("div");box.className="special-roi-box";wrap.appendChild(box);}box.style.left=`${Math.min(a.x,b.x)}px`;box.style.top=`${Math.min(a.y,b.y)}px`;box.style.width=`${Math.abs(b.x-a.x)}px`;box.style.height=`${Math.abs(b.y-a.y)}px`;};
-    img.onpointerdown=ev=>{if(currentPatch()!=="gradiente_suave")return;ev.preventDefault();smoothDrag=point(ev);draw(smoothDrag,smoothDrag);};
+    const draw=(a,b)=>{let box=wrap.querySelector(".special-roi-draft");if(!box){box=document.createElement("div");box.className="special-roi-box special-roi-draft";wrap.appendChild(box);}const wr=wrap.getBoundingClientRect(),ir=img.getBoundingClientRect(),ox=ir.left-wr.left,oy=ir.top-wr.top;box.style.left=`${ox+Math.min(a.x,b.x)}px`;box.style.top=`${oy+Math.min(a.y,b.y)}px`;box.style.width=`${Math.abs(b.x-a.x)}px`;box.style.height=`${Math.abs(b.y-a.y)}px`;};
+    img.onpointerdown=ev=>{if(currentPatch()!=="gradiente_suave")return;ev.preventDefault();smoothDrag=point(ev);img.setPointerCapture?.(ev.pointerId);draw(smoothDrag,smoothDrag);};
     img.onpointermove=ev=>{if(smoothDrag&&currentPatch()==="gradiente_suave")draw(smoothDrag,point(ev));};
-    img.onpointerup=ev=>{if(!smoothDrag||currentPatch()!=="gradiente_suave")return;const end=point(ev),start=smoothDrag;smoothDrag=null;const l=Math.min(start.x,end.x),t=Math.min(start.y,end.y),w=Math.abs(end.x-start.x),h=Math.abs(end.y-start.y);if(w<3||h<3){smoothSelection=null;updateSmoothSelectionMode();return;}smoothSelection={x:Math.round(l*img.naturalWidth/end.r.width),y:Math.round(t*img.naturalHeight/end.r.height),width:Math.round(w*img.naturalWidth/end.r.width),height:Math.round(h*img.naturalHeight/end.r.height)};updateSmoothSelectionMode();};
+    img.onpointerup=ev=>{if(!smoothDrag||currentPatch()!=="gradiente_suave")return;const end=point(ev),start=smoothDrag;smoothDrag=null;img.releasePointerCapture?.(ev.pointerId);wrap.querySelector(".special-roi-draft")?.remove();const l=Math.min(start.x,end.x),t=Math.min(start.y,end.y),width=Math.abs(end.x-start.x),height=Math.abs(end.y-start.y);if(width<3||height<3){updateSmoothSelectionMode();return;}smoothSelections.push({id:++smoothSelectionSeq,x:Math.round(l*img.naturalWidth/end.r.width),y:Math.round(t*img.naturalHeight/end.r.height),width:Math.round(width*img.naturalWidth/end.r.width),height:Math.round(height*img.naturalHeight/end.r.height)});updateSmoothSelectionMode();};
   }
 
   function wirePreview(){

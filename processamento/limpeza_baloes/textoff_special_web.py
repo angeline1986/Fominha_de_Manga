@@ -88,16 +88,15 @@ def _run_transparent(source: Path, target: Path) -> Path:
     copied=target/result.name; shutil.copy2(result,copied); return copied
 
 
-def _run_smooth_gradient(source: Path, target: Path, selection) -> tuple[Path, dict]:
-    from processamento.limpeza_baloes.gradiente_suave.gradiente_suave import reconstruct
-    if not isinstance(selection, dict):
-        raise ValueError("Selecione a região do texto para aplicar Gradiente Suave.")
-    try:
-        bbox=tuple(int(round(float(selection[k]))) for k in ("x","y","width","height"))
-    except Exception as exc:
-        raise ValueError("Seleção do Gradiente Suave inválida.") from exc
+def _run_smooth_gradient(source: Path, target: Path, selections) -> tuple[Path, dict]:
+    from processamento.limpeza_baloes.gradiente_suave.gradiente_suave import reconstruct_many
+    if isinstance(selections, dict): selections=[selections]
+    if not isinstance(selections, list) or not selections: raise ValueError("Selecione pelo menos uma região para aplicar Gradiente Suave.")
+    try: bboxes=[tuple(int(round(float(s[k]))) for k in ("x","y","width","height")) for s in selections if isinstance(s,dict)]
+    except Exception as exc: raise ValueError("Seleção do Gradiente Suave inválida.") from exc
+    if len(bboxes)!=len(selections): raise ValueError("Seleção do Gradiente Suave inválida.")
     result=target/"gradiente_suave.png"
-    meta=reconstruct(source,result,bbox,target/"gradiente_suave_report.json")
+    meta=reconstruct_many(source,result,bboxes,target/"gradiente_suave_report.json")
     return result,meta
 
 def _sha256(path: Path) -> str:
@@ -244,7 +243,7 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
     elif patch == "transparente":
         result = _run_transparent(source, target)
     else:
-        result, treatment_meta = _run_smooth_gradient(source, target, payload.get("selection"))
+        result, treatment_meta = _run_smooth_gradient(source, target, payload.get("selections") or payload.get("selection"))
 
     run_meta = {
         "schema_version": 1,
