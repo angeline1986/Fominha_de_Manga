@@ -67,12 +67,9 @@ def _encode_result(path: Path) -> dict:
     }
 
 
-def _run_degrade(source: Path, target: Path) -> Path:
-    from processamento.limpeza_baloes import patch_degrade_experimento as patch
-    patch._run(source.parent, source)
-    result=patch.OUT/source.parent.name/source.stem/"01_local_heal.png"
-    if not result.is_file(): raise RuntimeError("Backend da opção 7 não gerou resultado.")
-    copied=target/result.name; shutil.copy2(result,copied); return copied
+def _run_degrade(source: Path, target: Path, selections) -> tuple[Path, dict]:
+    from processamento.limpeza_baloes.textoff_special_roi import run_degrade_roi
+    return run_degrade_roi(source, target, selections)
 
 def _run_styled(source: Path, target: Path) -> Path:
     from processamento.limpeza_baloes import patch_balao_estilizado_experimento as patch
@@ -237,7 +234,7 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
 
     treatment_meta = None
     if patch == "degrade":
-        result = _run_degrade(source, target)
+        result, treatment_meta = _run_degrade(source, target, payload.get("selections") or payload.get("selection"))
     elif patch == "estilizado":
         result = _run_styled(source, target)
     elif patch == "transparente":
@@ -296,6 +293,8 @@ def promote_special_result(payload: dict, manga_path: Path) -> dict:
     patch = str(meta.get("patch") or "").lower()
     if patch not in PATCHES:
         raise ValueError("Tratamento especial inválido nos metadados da execução.")
+    if patch == "degrade" and (meta.get("treatment") or {}).get("algorithm") == "textoff_special_roi_degrade_v2":
+        raise RuntimeError("ROI Degradê V2 em fase de prova: promoção oficial bloqueada.")
 
     source_path = _validated_original_path(manga_path, str(meta.get("source_path") or ""))
     if source_path is None:
