@@ -209,24 +209,49 @@
     }
   }
 
-  function clampZoom(v){return Math.max(30,Math.min(200,Math.round(v/10)*10));}
   function setPreviewZoom(v){
-    previewZoom=clampZoom(v);
-    const img=document.querySelector("#specialPreviewImage"), label=document.querySelector("#specialPreviewZoom");
-    if(img) img.style.width=`${previewZoom}%`;
-    if(label) label.textContent=`${previewZoom}%`;
+    previewZoom=FominhaViewer.setZoom(v,{
+      images:"#specialPreviewImage",
+      label:"#specialPreviewZoom"
+    });
   }
+
   function setCompareZoom(v){
-    compareZoom=clampZoom(v);
-    ["#specialOriginalImage","#specialResultImage"].forEach(sel=>{const img=document.querySelector(sel);if(img)img.style.width=`${compareZoom}%`;});
-    const label=document.querySelector("#specialCompareZoom");if(label)label.textContent=`${compareZoom}%`;
+    compareZoom=FominhaViewer.setZoom(v,{
+      images:["#specialOriginalImage","#specialResultImage"],
+      label:"#specialCompareZoom"
+    });
   }
+
   function wirePreview(){
-    const img=document.querySelector("#specialPreviewImage");if(!img)return;
-    document.querySelectorAll("[data-z^='preview']").forEach(btn=>btn.onclick=()=>{const z=btn.dataset.z;setPreviewZoom(z.endsWith("in")?previewZoom+10:z.endsWith("out")?previewZoom-10:100);});
-    img.onload=()=>setPreviewZoom(previewZoom);setPreviewZoom(previewZoom);
+    const img=document.querySelector("#specialPreviewImage");
+    if(!img)return;
+
+    FominhaViewer.bindZoomControls({
+      selector:"[data-z^='preview']",
+      getZoom:()=>previewZoom,
+      setZoom:setPreviewZoom
+    });
+
+    img.onload=()=>setPreviewZoom(previewZoom);
+    setPreviewZoom(previewZoom);
   }
-  function wireCompare(){document.querySelectorAll("[data-z^='compare']").forEach(b=>b.onclick=()=>setCompareZoom(b.dataset.z.endsWith("in")?compareZoom+10:b.dataset.z.endsWith("out")?compareZoom-10:100));setCompareZoom(compareZoom);const a=document.querySelector("#specialOriginalStage"),b=document.querySelector("#specialResultStage");if(!a||!b)return;let lock=false;const sync=(f,t)=>{if(lock)return;lock=true;const fx=Math.max(1,f.scrollWidth-f.clientWidth),fy=Math.max(1,f.scrollHeight-f.clientHeight);t.scrollLeft=f.scrollLeft/fx*Math.max(0,t.scrollWidth-t.clientWidth);t.scrollTop=f.scrollTop/fy*Math.max(0,t.scrollHeight-t.clientHeight);requestAnimationFrame(()=>lock=false);};a.addEventListener("scroll",()=>sync(a,b),{passive:true});b.addEventListener("scroll",()=>sync(b,a),{passive:true});}
+
+  function wireCompare(){
+    FominhaViewer.bindZoomControls({
+      selector:"[data-z^='compare']",
+      getZoom:()=>compareZoom,
+      setZoom:setCompareZoom
+    });
+
+    setCompareZoom(compareZoom);
+
+    const a=document.querySelector("#specialOriginalStage");
+    const b=document.querySelector("#specialResultStage");
+    if(!a||!b)return;
+
+    FominhaViewer.syncScroll(a,b);
+  }
 
   async function saveResult(name) {
     if (!resultUrl || !currentRunId || busy) return;

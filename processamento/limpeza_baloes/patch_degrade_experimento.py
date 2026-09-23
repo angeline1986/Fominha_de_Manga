@@ -193,24 +193,24 @@ def _run(chapter,page):
         step_t0=time.perf_counter()
         clean,mask=_run_cleaner(page,target)
         cleaner_s=time.perf_counter()-step_t0
-        print(f"    ⏱ Cleaner: {cleaner_s:.2f}s")
+        print(f"    ⏱ Cleaner: {cleaner_s:.2f}s" if cleaner_s < 60 else f"    ⏱ Cleaner: {int(cleaner_s // 60)}min {cleaner_s % 60:.2f}s")
         print("2/4 Balloon Authorization: Cleaner mask ∩ Balloon mask...")
         step_t0=time.perf_counter()
         auth_report=_authorize_balloon(page,clean,mask,target)
         balloon_s=time.perf_counter()-step_t0
-        print(f"    ⏱ Balloon Authorization: {balloon_s:.2f}s")
+        print(f"    ⏱ Balloon Authorization: {balloon_s:.2f}s" if balloon_s < 60 else f"    ⏱ Balloon Authorization: {int(balloon_s // 60)}min {balloon_s % 60:.2f}s")
         print("3/4 Surface gate: LAB + conectividade...")
         step_t0=time.perf_counter()
         surface_path=target/"01_surface_allowed.png"; _surface(clean,mask,surface_path)
         surface_s=time.perf_counter()-step_t0
-        print(f"    ⏱ Surface Gate: {surface_s:.2f}s")
+        print(f"    ⏱ Surface Gate: {surface_s:.2f}s" if surface_s < 60 else f"    ⏱ Surface Gate: {int(surface_s // 60)}min {surface_s % 60:.2f}s")
         print("4/4 Local Heal: 9x9 · radius 70 · step 2 · source >=92%...")
         step_t0=time.perf_counter()
         components,filled=_local_heal(clean,mask,surface_path,target)
         local_heal_s=time.perf_counter()-step_t0
         total_s=time.perf_counter()-total_t0
-        print(f"    ⏱ Local Heal: {local_heal_s:.2f}s")
-        print(f"    ⏱ TEMPO TOTAL: {total_s:.2f}s")
+        print(f"    ⏱ Local Heal: {local_heal_s:.2f}s" if local_heal_s < 60 else f"    ⏱ Local Heal: {int(local_heal_s // 60)}min {local_heal_s % 60:.2f}s")
+        print(f"    ⏱ TEMPO TOTAL: {total_s:.2f}s" if total_s < 60 else f"    ⏱ TEMPO TOTAL: {int(total_s // 60)}min {total_s % 60:.2f}s")
         timing={"cleaner":round(cleaner_s,3),"balloon_authorization":round(balloon_s,3),"surface_gate":round(surface_s,3),"local_heal":round(local_heal_s,3),"total":round(total_s,3)}
         meta={"source":str(page),"clean":str(clean),"mask":str(mask),"balloon_authorization":str(auth_report),"surface":str(surface_path),"timing_seconds":timing,
               "parameters":{"patch":"9x9","search_radius":70,"search_step":2,"min_context":12,"source_valid":0.92},"components":components,"pixels_filled":filled}

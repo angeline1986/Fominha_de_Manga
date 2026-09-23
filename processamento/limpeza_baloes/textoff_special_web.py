@@ -204,6 +204,21 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
         raise ValueError("Tratamento especial inválido.")
 
     original_path = _validated_original_path(manga_path, str(payload.get("source_path") or ""))
+
+    # Snapshot da base oficial no momento em que a proposta é gerada.
+    # A promoção só será permitida se essa mesma base continuar vigente.
+    base_state = None
+    base_sha256 = None
+    base_official_path = None
+    if original_path is not None:
+        _base_stage, _base_chapter, base_official = _official_target(manga_path, original_path)
+        base_official_path = str(base_official)
+        if base_official.is_file():
+            base_state = "EXISTS"
+            base_sha256 = _sha256(base_official)
+        else:
+            base_state = "ABSENT"
+
     source, run_dir = _decode_image(payload)
     target = run_dir / patch
     target.mkdir(parents=True, exist_ok=True)
@@ -223,6 +238,9 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
         "source_name": str(payload.get("filename") or source.name),
         "source_path": str(original_path) if original_path else None,
         "source_sha256": _sha256(source),
+        "base_state": base_state,
+        "base_sha256": base_sha256,
+        "base_official_path": base_official_path,
         "result_file": str(result.relative_to(run_dir)),
         "result_sha256": _sha256(result),
         "official_files_modified": False,
@@ -276,6 +294,39 @@ def promote_special_result(payload: dict, manga_path: Path) -> dict:
         raise RuntimeError("Integridade do resultado processado não confere.")
 
     stage, chapter, official = _official_target(manga_path, source_path)
+
+    # Controle de concorrência otimista:
+    # a proposta só pode substituir exatamente a base oficial sobre a qual
+    # foi gerada.
+    expected_base_state = str(meta.get("base_state") or "")
+    expected_base_sha = str(meta.get("base_sha256") or "")
+    expected_base_path = str(meta.get("base_official_path") or "")
+
+    if expected_base_state not in {"EXISTS", "ABSENT"}:
+        raise RuntimeError(
+            "PROPOSTA_OBSOLETA: a execução não possui snapshot válido da base oficial."
+        )
+
+    if expected_base_path and Path(expected_base_path).expanduser().resolve() != official.resolve():
+        raise RuntimeError(
+            "PROPOSTA_OBSOLETA: o destino oficial da execução mudou."
+        )
+
+    if expected_base_state == "EXISTS":
+        if not official.is_file():
+            raise RuntimeError(
+                "PROPOSTA_OBSOLETA: o resultado oficial usado como base não existe mais."
+            )
+        if not expected_base_sha or _sha256(official) != expected_base_sha:
+            raise RuntimeError(
+                "PROPOSTA_OBSOLETA: o resultado oficial mudou após a geração da prévia."
+            )
+    else:
+        if official.exists():
+            raise RuntimeError(
+                "PROPOSTA_OBSOLETA: surgiu um resultado oficial após a geração da prévia."
+            )
+
     official.parent.mkdir(parents=True, exist_ok=True)
 
     replaced = official.is_file()
