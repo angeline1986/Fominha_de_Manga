@@ -76,16 +76,16 @@
           </div>
         </summary>
         <div class="special-example-grid">
-          ${key === "degrade" ? `
-          <div class="special-example-visual degrade special-example-real">
+          ${["degrade","estilizado"].includes(key) ? `
+          <div class="special-example-visual ${e(p.exampleClass)} special-example-real">
             <div class="special-mini">
               <span class="special-mini-label">ANTES</span>
-              <div class="special-mini-real"><img src="/assets/textoff/degrade_antes.png" alt="Exemplo real antes do Patch Degradê"></div>
+              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_antes.png" : "estilizado_antes.png"}" alt="Exemplo real antes do ${e(p.title)}"></div>
             </div>
             <span class="special-arrow">→</span>
             <div class="special-mini">
               <span class="special-mini-label">DEPOIS</span>
-              <div class="special-mini-real"><img src="/assets/textoff/degrade_depois.png" alt="Exemplo real depois do Patch Degradê"></div>
+              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_depois.png" : "estilizado_depois.png"}" alt="Exemplo real depois do ${e(p.title)}"></div>
             </div>
           </div>` : `
           <div class="special-example-visual ${e(p.exampleClass)}">
