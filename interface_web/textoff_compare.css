@@ -205,3 +205,44 @@ body:not(.textoff-focus-mode) .toc-level3-action-buttons .btn{margin:0}
 /* === /TEXT OFF · PATCH DEGRADÊ · FILMSTRIP V3 === */
 
 /* === TEXT OFF · PATCH DEGRADÊ · RESULTADO V3.3 === */
+/* === TEXT OFF · QC STUDIO · FASE 1 === */
+.toc-qc-studio{height:calc(100vh - 170px);min-height:620px;margin:0;display:flex;flex-direction:column;overflow:hidden}
+.toc-qc-toolbar{min-height:58px;flex:0 0 auto;display:flex;align-items:center;justify-content:space-between;gap:16px;padding:9px 14px}
+.toc-qc-toolbar-left,.toc-qc-toolbar-right{display:flex;align-items:center;gap:12px;min-width:0}
+.toc-qc-toolbar-left{flex:1 1 auto}.toc-qc-toolbar-right{flex:0 0 auto}
+.toc-qc-identity{min-width:0;display:flex;flex-direction:column;gap:2px}
+.toc-qc-identity .caption{font-size:10px;letter-spacing:.72px}
+.toc-qc-identity strong{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text);font-size:13px}
+.toc-qc-toolbar .toc-correction-row{margin:0}
+.toc-qc-body{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;padding:12px!important}
+.toc-qc-body>.toc-compare-caption{display:none}
+.toc-qc-body>.toc-compare-grid{flex:1 1 auto;min-height:0}
+.toc-qc-body .toc-preview-card{min-height:0;display:flex;flex-direction:column}
+.toc-qc-body .toc-preview-stage{height:auto;min-height:0;flex:1 1 auto}
+.toc-qc-footer{flex:0 0 52px;margin:0 -12px -12px;padding:0 18px;border-top:1px solid var(--color-border,#eadce1);background:var(--color-surface,#fff)}
+.toc-qc-footer span{min-width:82px;padding:4px 12px;border:1px solid var(--color-border,#eadce1);border-radius:999px;background:var(--color-surface-soft,#faf6f7);color:var(--color-text);font-weight:800}
+.toc-qc-empty{display:flex;align-items:center;gap:14px;padding:18px}
+@media(max-width:1100px){.toc-qc-toolbar{align-items:flex-start;flex-wrap:wrap}.toc-qc-toolbar-right{width:100%;justify-content:flex-end}.toc-qc-studio{height:calc(100vh - 190px)}}
+@media(max-width:900px){.toc-qc-studio{height:auto;min-height:0}.toc-qc-toolbar-right{justify-content:flex-start;flex-wrap:wrap}.toc-qc-body>.toc-compare-grid{grid-template-columns:1fr}.toc-qc-body .toc-preview-stage{height:420px}}
+/* === /TEXT OFF · QC STUDIO · FASE 1 === */
+
+/* === TEXT OFF · QC STUDIO · FASE 2 === */
+.toc-view-mode{display:inline-flex;align-items:center;padding:2px;border:1px solid var(--color-border,#d8eef7);border-radius:9px;background:var(--color-primary-soft,#e9f7fc)}
+.toc-view-mode button{border:0;background:transparent;color:var(--color-text-muted,#126887);border-radius:7px;padding:7px 10px;font-size:12px;font-weight:800;cursor:pointer;white-space:nowrap}
+.toc-view-mode button.is-active{background:var(--color-surface,#fff);color:var(--color-text-secondary,#188ab4);box-shadow:0 1px 4px rgba(12,69,90,.12)}
+.toc-zoom-reset-icon{min-width:30px;font-size:16px;line-height:1}
+.toc-single-stage{flex:1 1 auto;min-height:0;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:10px;background:#eef7fa;border:1px solid var(--color-border,#d8eef7);border-radius:10px}
+.toc-slider-frame{position:relative;display:block;max-width:none;overflow:hidden;flex:none;cursor:ew-resize;user-select:none;box-shadow:0 8px 28px rgba(12,69,90,.14);background:#fff}
+.toc-slider-frame>img{display:block;max-width:none;height:auto;-webkit-user-drag:none}
+.toc-slider-clean{position:relative;z-index:1}
+.toc-slider-original{position:absolute;left:0;top:0;z-index:2;pointer-events:none}
+.toc-slider-divider{position:absolute;top:0;bottom:0;width:2px;background:var(--color-text-secondary,#188ab4);z-index:5;pointer-events:none}
+.toc-slider-divider span{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:34px;height:34px;border-radius:50%;display:grid;place-items:center;background:var(--color-text-secondary,#188ab4);color:#fff;border:3px solid #fff;box-shadow:0 3px 10px rgba(12,69,90,.25);font-size:17px;line-height:1}
+.toc-slider-tag{position:absolute;top:12px;z-index:6;padding:4px 8px;border-radius:6px;font-size:10px;font-weight:900;letter-spacing:.04em;color:#fff;pointer-events:none}
+.toc-slider-tag.is-original{left:12px;background:rgba(12,69,90,.78)}
+.toc-slider-tag.is-result{right:12px;background:rgba(24,138,180,.86)}
+.toc-slider-range{position:absolute;inset:0;z-index:7;width:100%;height:100%;margin:0;opacity:0;cursor:ew-resize}
+@media(max-width:1180px){.toc-qc-toolbar-right{flex-wrap:wrap;justify-content:flex-end}}
+@media(max-width:900px){.toc-view-mode{order:-1}.toc-single-stage{min-height:420px}}
+/* === /TEXT OFF · QC STUDIO · FASE 2 === */
+
