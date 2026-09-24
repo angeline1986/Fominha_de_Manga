@@ -17,7 +17,7 @@ from config.data_paths import OUTPUT_ROOT
 ROOT = Path(__file__).resolve().parents[2]
 WORK_ROOT = ROOT / "reports" / "experimentos" / "textoff_especiais"
 ALLOWED = {".png", ".jpg", ".jpeg", ".webp"}
-PATCHES = {"degrade", "estilizado", "transparente", "gradiente_suave"}
+PATCHES = {"degrade", "estilizado", "transparente", "transparente_legacy", "gradiente_suave"}
 
 
 def _decode_image(payload: dict) -> tuple[Path, Path]:
@@ -88,6 +88,15 @@ def _run_transparent(
 ) -> tuple[Path, dict]:
     from processamento.limpeza_baloes.textoff_special_transparent_roi import run_transparent_roi
     return run_transparent_roi(source, target, selections, base_snapshot=base_snapshot)
+
+
+def _run_transparent_legacy(
+    source: Path,
+    target: Path,
+    selections,
+) -> tuple[Path, dict]:
+    from processamento.limpeza_baloes.textoff_special_transparent_legacy_roi import run_transparent_legacy_roi
+    return run_transparent_legacy_roi(source, target, selections)
 
 
 def _run_smooth_gradient(source: Path, target: Path, selections) -> tuple[Path, dict]:
@@ -194,6 +203,7 @@ def _append_special_manifest(target_dir: Path, *, patch: str, run_id: str,
             "degrade": "patch_degrade_experimento",
             "estilizado": "patch_balao_estilizado_experimento",
             "transparente": "patch_balao_transparente_experimento",
+            "transparente_legacy": "textoff_special_transparent_legacy_roi",
             "gradiente_suave": "gradiente_suave_v1",
         }[patch],
         "run_id": run_id,
@@ -271,6 +281,11 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
             payload.get("selections") or payload.get("selection"),
             base_snapshot=base_snapshot,
         )
+    elif patch == "transparente_legacy":
+        result, treatment_meta = _run_transparent_legacy(
+            source, target,
+            payload.get("selections") or payload.get("selection"),
+        )
     else:
         result, treatment_meta = _run_smooth_gradient(source, target, payload.get("selections") or payload.get("selection"))
 
@@ -320,7 +335,7 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
         "run_id": run_dir.name,
         "run_dir": str(run_dir),
         "official_files_modified": False,
-        "can_promote": original_path is not None,
+        "can_promote": original_path is not None and patch != "transparente_legacy",
     }
 
 
@@ -345,6 +360,8 @@ def promote_special_result(payload: dict, manga_path: Path) -> dict:
     treatment = meta.get("treatment") or {}
     if patch == "estilizado" and treatment.get("algorithm") == "textoff_special_roi_styled_v1":
         raise RuntimeError("ROI Estilizado V1 em fase de prova: promoção oficial bloqueada.")
+    if patch == "transparente_legacy":
+        raise RuntimeError("Balão Transparente — Legado está em prova A/B: promoção oficial bloqueada.")
 
     source_path = _validated_original_path(manga_path, str(meta.get("source_path") or ""))
     if source_path is None:
