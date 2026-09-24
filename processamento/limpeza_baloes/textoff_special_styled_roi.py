@@ -60,12 +60,14 @@ def run_styled_roi(source: Path,target: Path,selections,base_snapshot: Path|None
     if technical is None or technical.shape!=original.shape: raise RuntimeError("Resultado técnico inválido.")
     changed=np.any(technical!=original,axis=2); effective=int(np.count_nonzero(changed)); outside=int(np.count_nonzero(changed & ~(restricted>0)))
     mode="source_without_official_base"
+    promotion_result=result
     if base_snapshot is not None:
         official=cv2.imread(str(base_snapshot))
         if official is None or official.shape!=original.shape: raise RuntimeError("Snapshot oficial inválido.")
         composed=official.copy(); composed[changed]=technical[changed]
-        if not cv2.imwrite(str(result),composed): raise RuntimeError("Falha ao salvar composição segura.")
+        promotion_result=target/"promotion_result.png"
+        if not cv2.imwrite(str(promotion_result),composed): raise RuntimeError("Falha ao salvar composição segura.")
         mode="effective_changes_over_official_base"
-    meta={"algorithm":ALGORITHM,"proof_phase":True,"promotion_allowed":False,"selection_count":len(boxes),"selections":[list(b) for b in boxes],"authorization_rule":"styled_authorized_components_intersecting_roi","authorized_pixels_before_roi":int(np.count_nonzero(authorized)),"authorized_pixels_after_roi":int(np.count_nonzero(restricted)),"components_before_count":len(before),"components_selected_count":len(selected),"components_selected_by_roi":selected,"classifier_decisions":decisions,"processed_components":int(processed),"pixels_filled":int(filled),"composition_mode":mode,"effective_changed_pixels":effective,"technical_changed_outside_authorized_pixels":outside,"base_snapshot_used":base_snapshot is not None,"timing_seconds":{"cleaner":round(cleaner,3),"styled_classifier":round(classifier,3),"surface_gate":round(surface_s,3),"local_heal":round(heal,3),"total":round(time.perf_counter()-started,3)},"protected_patch_modified":False}
+    meta={"algorithm":ALGORITHM,"proof_phase":True,"promotion_allowed":False,"selection_count":len(boxes),"selections":[list(b) for b in boxes],"authorization_rule":"styled_authorized_components_intersecting_roi","authorized_pixels_before_roi":int(np.count_nonzero(authorized)),"authorized_pixels_after_roi":int(np.count_nonzero(restricted)),"components_before_count":len(before),"components_selected_count":len(selected),"components_selected_by_roi":selected,"classifier_decisions":decisions,"processed_components":int(processed),"pixels_filled":int(filled),"composition_mode":mode,"effective_changed_pixels":effective,"technical_changed_outside_authorized_pixels":outside,"base_snapshot_used":base_snapshot is not None,"preview_result":result.name,"promotion_result":promotion_result.name,"timing_seconds":{"cleaner":round(cleaner,3),"styled_classifier":round(classifier,3),"surface_gate":round(surface_s,3),"local_heal":round(heal,3),"total":round(time.perf_counter()-started,3)},"protected_patch_modified":False}
     (target/"roi_report.json").write_text(json.dumps(meta,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
     return result,meta

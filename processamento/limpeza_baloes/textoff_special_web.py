@@ -287,6 +287,8 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
         "base_official_path": base_official_path,
         "result_file": str(result.relative_to(run_dir)),
         "result_sha256": _sha256(result),
+        "promotion_file": str((target / treatment_meta["promotion_result"]).relative_to(run_dir)) if treatment_meta and treatment_meta.get("promotion_result") else str(result.relative_to(run_dir)),
+        "promotion_sha256": _sha256(target / treatment_meta["promotion_result"]) if treatment_meta and treatment_meta.get("promotion_result") else _sha256(result),
         "official_files_modified": False,
         "treatment": treatment_meta,
     }
@@ -334,13 +336,13 @@ def promote_special_result(payload: dict, manga_path: Path) -> dict:
     if source_path is None:
         raise ValueError("Esta execução não preservou o caminho original.")
 
-    result = (run_dir / Path(str(meta.get("result_file") or ""))).resolve()
+    result = (run_dir / Path(str(meta.get("promotion_file") or meta.get("result_file") or ""))).resolve()
     if not result.is_relative_to(run_dir) or not result.is_file():
-        raise ValueError("Resultado da execução não encontrado.")
+        raise ValueError("Resultado promovível da execução não encontrado.")
 
-    expected_result_sha = str(meta.get("result_sha256") or "")
+    expected_result_sha = str(meta.get("promotion_sha256") or meta.get("result_sha256") or "")
     if not expected_result_sha or _sha256(result) != expected_result_sha:
-        raise RuntimeError("Integridade do resultado processado não confere.")
+        raise RuntimeError("Integridade do resultado promovível não confere.")
 
     stage, chapter, official = _official_target(manga_path, source_path)
 

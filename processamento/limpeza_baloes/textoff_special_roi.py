@@ -97,10 +97,13 @@ def run_degrade_roi(
                 "ROI Degradê alterou pixels fora da composição efetiva autorizada."
             )
 
-        if not cv2.imwrite(str(result),composed):
+        promotion_result=target/"promotion_result.png"
+        if not cv2.imwrite(str(promotion_result),composed):
             raise RuntimeError("Falha ao salvar composição segura do ROI Degradê.")
 
         composition_mode="effective_changes_over_official_base"
+    else:
+        promotion_result=result
 
     meta={"algorithm":ALGORITHM,"proof_phase":False,"promotion_allowed":True,
           "selection_count":len(boxes),"selections":[list(b) for b in boxes],
@@ -114,6 +117,8 @@ def run_degrade_roi(
           "effective_changed_pixels":effective_changed_pixels,
           "outside_effective_change_pixels":outside_effective_change_pixels,
           "base_snapshot_used":base_snapshot is not None,
+          "preview_result":result.name,
+          "promotion_result":promotion_result.name,
           "timing_seconds":{"cleaner":round(cleaner,3),"balloon_authorization":round(auth,3),
                             "surface_gate":round(surface_s,3),"local_heal":round(heal,3),
                             "total":round(time.perf_counter()-started,3)},

@@ -97,7 +97,8 @@ def run_transparent_roi(source: Path, target: Path, selections, base_snapshot: P
     if outside_count:
         raise RuntimeError(f"Falha de segurança: {outside_count} pixel(s) alterado(s) fora da máscara ROI autorizada.")
 
-    result = target / "04_lama_text_only.png"
+    result = technical_path
+    promotion_result = technical_path
     composition_mode = "technical_result_from_source"
     base_used = False
     if base_snapshot is not None:
@@ -106,13 +107,11 @@ def run_transparent_roi(source: Path, target: Path, selections, base_snapshot: P
             raise RuntimeError("Snapshot da base oficial inválido ou incompatível.")
         composed = official.copy()
         composed[changed] = technical[changed]
-        if not cv2.imwrite(str(result), composed):
-            raise RuntimeError(f"Falha ao gravar {result}")
+        promotion_result = target / "04_lama_text_only.png"
+        if not cv2.imwrite(str(promotion_result), composed):
+            raise RuntimeError(f"Falha ao gravar {promotion_result}")
         composition_mode = "effective_changes_over_official_base"
         base_used = True
-    else:
-        if not cv2.imwrite(str(result), technical):
-            raise RuntimeError(f"Falha ao gravar {result}")
 
     lama_meta = json.loads(lama_meta_path.read_text(encoding="utf-8"))
     meta = {
@@ -137,13 +136,16 @@ def run_transparent_roi(source: Path, target: Path, selections, base_snapshot: P
         "effective_changed_pixels": int(np.count_nonzero(changed)),
         "technical_changed_outside_authorized_pixels": outside_count,
         "base_snapshot_used": base_used,
+        "preview_result": result.name,
+        "promotion_result": promotion_result.name,
         "protected_patch_modified": False,
         "artifacts": {
             "restricted_text_mask": base_path.name,
             "authorized_mask": authorized_path.name,
             "overlay": overlay_path.name,
             "technical_result": technical_path.name,
-            "result": result.name,
+            "preview_result": result.name,
+            "promotion_result": promotion_result.name,
         },
         "elapsed_seconds": round(time.monotonic() - started, 3),
     }
