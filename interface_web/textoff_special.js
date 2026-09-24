@@ -137,6 +137,8 @@
     const apply = document.querySelector("#specialApply");
     resetResult();
     smoothSelections=[]; smoothDrag=null;
+    const dim = document.querySelector("#specialContextDimensions");
+    if (dim) dim.textContent = "-- × -- px";
     revoke(sourceUrl);
     sourceUrl = "";
 
@@ -297,11 +299,32 @@
     const active=["gradiente_suave","degrade","estilizado","transparente","transparente_legacy"].includes(currentPatch());wrap.classList.toggle("is-selectable",active);
     let help=document.querySelector("#specialRoiHelp");if(!help){
       help=document.createElement("div");help.id="specialRoiHelp";help.className="special-roi-help";
+      const roiContainer=document.querySelector("#specialRoiContainer");
       const inspectorBody=document.querySelector(".special-inspector-body");
-      const fileField=inspectorBody?.querySelector(".special-field:nth-child(2)");
-      if(fileField)fileField.after(help);else inspectorBody?.prepend(help);
+      if(roiContainer)roiContainer.appendChild(help);else inspectorBody?.prepend(help);
     }
-    if(active){const count=smoothSelections.length;help.innerHTML=`<div><b>Selecione uma ou mais áreas com texto.</b> Clique e arraste o mouse sobre cada texto que deseja remover. Use × para excluir apenas uma seleção.</div><div class="special-roi-summary"><span>${count} ${count===1?"área selecionada":"áreas selecionadas"}</span>${count?'<button id="specialRoiClear" type="button">Limpar todas</button>':""}</div>`;document.querySelector("#specialRoiClear")?.addEventListener("click",clearSmoothSelections);renderSmoothSelections();}
+    if(active){
+      const count=smoothSelections.length;
+      help.innerHTML=`
+        <div class="special-selection-copy">
+          <b>SELEÇÃO</b>
+          <span>Clique e arraste sobre os textos.</span>
+        </div>
+        <div class="special-layers-box">
+          <div class="special-layers-head"><span>Áreas selecionadas</span><strong>${count}</strong></div>
+          <div class="special-layers-list">
+            ${smoothSelections.map((item,index)=>`
+              <div class="special-layer-chip">
+                <span><b>${index+1}</b> região ${index+1}</span>
+                <button type="button" data-roi-remove="${item.id}" title="Remover região ${index+1}" aria-label="Remover região ${index+1}">×</button>
+              </div>`).join("")}
+          </div>
+          ${count?'<button id="specialRoiClear" class="special-clear-all" type="button">Limpar todas</button>':""}
+        </div>`;
+      help.querySelectorAll("[data-roi-remove]").forEach(btn=>btn.addEventListener("click",()=>removeSmoothSelection(Number(btn.dataset.roiRemove))));
+      document.querySelector("#specialRoiClear")?.addEventListener("click",clearSmoothSelections);
+      renderSmoothSelections();
+    }
     else{help.textContent="";wrap.querySelectorAll(".special-roi-box,.special-roi-remove,.special-roi-draft").forEach(el=>el.remove());}
     if(apply)apply.disabled=!selectedFile||(active&&!smoothSelections.length);
   }
@@ -324,7 +347,15 @@
       setZoom:setPreviewZoom
     });
 
-    img.onload=()=>{setPreviewZoom(previewZoom);wireSmoothSelection();updateSmoothSelectionMode();};
+    img.onload=()=>{
+      const dim = document.querySelector("#specialContextDimensions");
+      if (dim && img.naturalWidth && img.naturalHeight) {
+        dim.textContent = `${img.naturalWidth} × ${img.naturalHeight} px`;
+      }
+      setPreviewZoom(previewZoom);
+      wireSmoothSelection();
+      updateSmoothSelectionMode();
+    };
     setPreviewZoom(previewZoom);
     wireSmoothSelection();
   }
@@ -518,11 +549,18 @@
         <div id="specialStudio" class="special-studio">
           <div class="special-studio-canvas">
             <div id="specialPreview" class="special-preview"><div class="special-empty">Selecione uma imagem para iniciar</div></div>
+          </div>
           <aside class="special-inspector">
             <div class="special-inspector-head"><div><span class="special-kicker">STUDIO</span><h2>Configuração</h2></div><span class="special-badge">ESPECIAL</span></div>
             <div class="special-inspector-body">
-              <div class="special-field"><label for="specialPatch">Tipo de tratamento</label><select id="specialPatch"><option value="degrade">Patch Degradê</option><option value="estilizado">Patch Balão Estilizado</option><option value="transparente">Patch Balão Transparente</option><option value="transparente_legacy">Balão Transparente — Legado</option><option value="gradiente_suave">Gradiente Suave</option></select></div>
+              <div class="special-context-card">
+                <span class="special-context-label">OBRA</span>
+                <div id="specialContextManga" class="special-context-title">${e(data?.manga || "Obra atual")}</div>
+                <div class="special-context-meta"><span id="specialContextDimensions">-- × -- px</span></div>
+              </div>
               <div class="special-field"><label>Arquivo</label><div class="special-file-row"><input id="specialFileName" placeholder="Nenhuma imagem selecionada" readonly><button id="specialChoose" class="btn" type="button">Escolher</button><input id="specialFileInput" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden></div></div>
+              <div class="special-field"><label for="specialPatch">Tipo de tratamento</label><select id="specialPatch"><option value="degrade">Patch Degradê</option><option value="estilizado">Patch Balão Estilizado</option><option value="transparente">Patch Balão Transparente</option><option value="transparente_legacy">Balão Transparente — Legado</option><option value="gradiente_suave">Gradiente Suave</option></select></div>
+              <div id="specialRoiContainer"></div>
               <div id="specialExample">${exampleHtml("degrade")}</div>
             </div>
             <div class="special-inspector-footer"><button id="specialApply" class="btn primary" type="button" disabled>Processar página</button></div>
