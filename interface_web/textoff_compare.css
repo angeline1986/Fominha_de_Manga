@@ -268,3 +268,12 @@ body.textoff-focus-mode .compare-thumb-popover,body.textoff-focus-compare .toc-p
 body.textoff-focus-compare .toc-qc-workspace{display:block;height:100%}body.textoff-focus-compare .toc-qc-canvas{height:100%}
 @media(max-width:900px){.toc-qc-workspace{grid-template-columns:1fr}.toc-page-sidebar{max-height:180px}.compare-thumb-popover{display:none!important}}
 /* === /TEXT OFF · QC STUDIO · FASE 3 === */
+
+/* === TEXT OFF · HUB QC · FASE 4 === */
+.compare-hero-card{background:var(--color-background,#f5fbfe);border:1px solid var(--color-border,#d8eef7);border-radius:12px;padding:18px 22px;display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:16px}
+.compare-hero-info{display:flex;flex-direction:column;gap:4px;min-width:0}.compare-hero-kicker{font-size:11px;font-weight:800;letter-spacing:.05em;color:var(--color-text-secondary,#188ab4)}.compare-hero-title{font-size:16px;font-weight:800;color:var(--color-text,#0c455a)}.compare-hero-desc{font-size:12px;color:var(--color-text-muted,#126887)}.compare-hero-action{flex:0 0 auto;white-space:nowrap}
+.compare-hub-section-label{margin:12px 2px 7px;font-size:10px;font-weight:900;letter-spacing:.72px;color:var(--color-text-muted,#126887)}.compare-hub-filterbar{margin-bottom:14px}
+.qc-status-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 8px;border-radius:999px;font-size:11px;font-weight:800;white-space:nowrap}.qc-status-badge.pending{background:var(--color-primary-soft,#e9f7fc);color:var(--color-text-secondary,#188ab4)}.qc-status-badge.flagged{background:#fee2e2;color:#991b1b}
+.compare-table-row{cursor:pointer;transition:background .15s ease}.compare-table-row:hover{background:var(--color-background,#f5fbfe)}.compare-table-action{text-align:right!important;white-space:nowrap}.compare-hub-table td:last-child,.compare-hub-table th:last-child{width:118px}
+@media(max-width:760px){.compare-hero-card{align-items:flex-start;flex-direction:column}.compare-hero-action{width:100%}.compare-hub-table{min-width:760px}.toc-table-panel{overflow:auto}}
+/* === /TEXT OFF · HUB QC · FASE 4 === */

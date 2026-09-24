@@ -19,19 +19,20 @@
     if(q)rows=rows.filter(x=>String(x.chapter).toLowerCase().includes(q));
     return rows;
   }
+  function qcPendingCount(row){const items=Array.isArray(row?.items)?row.items:[];return items.filter(x=>x?.level3_status==="PENDENTE_NIVEL3").length}
+  function qcStatusBadge(row){const n=qcPendingCount(row);return n>0?`<span class="qc-status-badge flagged">🚩 ${n} ${n===1?"pendência":"pendências"}</span>`:`<span class="qc-status-badge pending">⏳ Aguardando revisão</span>`}
+  function renderHeroNextChapter(rows){
+    if(!Array.isArray(rows)||!rows.length)return "";
+    const x=rows[0],n=Array.isArray(x.items)?x.items.length:Number(x.pages||0);
+    return `<div class="compare-hero-card"><div class="compare-hero-info"><span class="compare-hero-kicker">PRÓXIMO NA FILA DE REVISÃO</span><div class="compare-hero-title">Cap. ${escLocal(x.chapter)} · ${escLocal(x.source||x.source_stage||"—")}</div><div class="compare-hero-desc">${n} página(s) pronta(s) para conferência do Texto Off.</div></div><button class="btn primary compare-hero-action" type="button" onclick="TextOffCompareUI.selectChapter('${escLocal(x.key)}')">▶ Iniciar Revisão</button></div>`;
+  }
   function tableSection(){
-    const all=filteredRows();
-    const pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));
-    pageIndex=Math.min(Math.max(1,pageIndex),pages);
+    const all=filteredRows(),pages=Math.max(1,Math.ceil(all.length/PAGE_SIZE));pageIndex=Math.min(Math.max(1,pageIndex),pages);
     const visible=all.slice((pageIndex-1)*PAGE_SIZE,pageIndex*PAGE_SIZE);
-    const rows=visible.map(x=>`<tr class="${String(x.key)===String(selectedKey)?"toc-row-active":""}" onclick="TextOffCompareUI.selectChapter('${escLocal(x.key)}')">
-      <td><button class="toc-chapter-link" type="button">${escLocal(x.chapter)}</button></td><td>${escLocal(x.source)}</td><td>${Number(x.pages||0)}</td><td>${escLocal(formatDate(x.processed_at))}</td><td><span class="toc-status">Concluído</span></td>
-    </tr>`).join("");
+    const rows=visible.map(x=>`<tr class="compare-table-row" onclick="TextOffCompareUI.selectChapter('${escLocal(x.key)}')"><td><b>${escLocal(x.chapter)}</b></td><td>${escLocal(x.source||x.source_stage||"—")}</td><td>${Number(x.pages||x.items?.length||0)}</td><td>${escLocal(formatDate(x.processed_at))}</td><td>${qcStatusBadge(x)}</td><td class="compare-table-action"><button class="btn" type="button" onclick="event.stopPropagation();TextOffCompareUI.selectChapter('${escLocal(x.key)}')">Revisar →</button></td></tr>`).join("");
     const pager=`<div class="table-pager toc-table-pager"><div class="toc-table-pager-inner"><button class="btn" type="button" ${pageIndex<=1?"disabled":""} onclick="TextOffCompareUI.changePage(-1)">&lt;&lt;</button><span class="page-indicator">${pageIndex} / ${pages}</span><button class="btn" type="button" ${pageIndex>=pages?"disabled":""} onclick="TextOffCompareUI.changePage(1)">&gt;&gt;</button></div></div>`;
-    const rowsBody=resultsOpen?`<tbody>${rows||'<tr><td colspan="6" class="toc-empty">Nenhum resultado do Cleaner V2 encontrado.</td></tr>'}</tbody>`:"";
-    const pagerBody=resultsOpen?pager:"";
-    const resultsBody=`<div class="toolbar standard-filterbar toc-filterbar"><input class="search" placeholder="Buscar capítulo..." value="${escLocal(query)}" oninput="TextOffCompareUI.setQuery(this.value)"><div class="status-filter" role="group" aria-label="Filtrar fonte"><button class="tab ${sourceFilter==="all"?"active":""}" onclick="TextOffCompareUI.setSource('all')">Todas</button><button class="tab ${sourceFilter==="original"?"active":""}" onclick="TextOffCompareUI.setSource('original')">Original</button><button class="tab ${sourceFilter==="merged"?"active":""}" onclick="TextOffCompareUI.setSource('merged')">Merged</button></div></div><div class="panel toc-table-panel"><table class="toc-table"><thead><tr><th>CAP.</th><th>FONTE</th><th>PÁGINAS</th><th>PROCESSADO EM</th><th>STATUS</th><th class="toc-table-toggle-cell"><button class="toc-table-toggle" type="button" onclick="event.stopPropagation();TextOffCompareUI.toggleResults()" aria-expanded="${resultsOpen}" aria-label="${resultsOpen?"Recolher resultados":"Expandir resultados"}" title="${resultsOpen?"Recolher resultados":"Expandir resultados"}"><i class="bal-chevron">${resultsOpen?"▼":"▶"}</i></button></th></tr></thead>${rowsBody}</table>${pagerBody}</div>`;
-    return resultsBody;
+    const rowsBody=resultsOpen?`<tbody>${rows||'<tr><td colspan="6" class="toc-empty">Nenhum resultado do Cleaner V2 encontrado.</td></tr>'}</tbody>`:"",pagerBody=resultsOpen?pager:"";
+    return `${renderHeroNextChapter(all)}<div class="compare-hub-section-label">FILTROS E BUSCA</div><div class="toolbar standard-filterbar toc-filterbar compare-hub-filterbar"><input class="search" placeholder="Buscar capítulo..." value="${escLocal(query)}" oninput="TextOffCompareUI.setQuery(this.value)"><div class="status-filter" role="group" aria-label="Filtrar fonte"><button class="tab ${sourceFilter==="all"?"active":""}" onclick="TextOffCompareUI.setSource('all')">Todas</button><button class="tab ${sourceFilter==="original"?"active":""}" onclick="TextOffCompareUI.setSource('original')">Original</button><button class="tab ${sourceFilter==="merged"?"active":""}" onclick="TextOffCompareUI.setSource('merged')">Merged</button></div></div><div class="compare-hub-section-label">CAPÍTULOS PROCESSADOS</div><div class="panel toc-table-panel"><table class="toc-table compare-hub-table"><thead><tr><th>CAP.</th><th>FONTE</th><th>PÁGINAS</th><th>PROCESSADO EM</th><th>STATUS QC</th><th class="compare-table-action">AÇÃO</th></tr></thead>${rowsBody}</table>${pagerBody}</div>`;
   }
   function chapterSection(){
     const row=currentRow();
