@@ -35,12 +35,16 @@
   let currentRunId = "";
   let sourceUrl = "";
   let resultUrl = "";
+  let reviewBeforeUrl = "";
+  let reviewAfterUrl = "";
   let busy = false;
   let previewZoom = 100;
   let compareZoom = 100;
   let smoothSelections = [];
   let smoothSelectionSeq = 0;
   let smoothDrag = null;
+  let reviewMode = "single";
+  let sliderPosition = 50;
 
   const e = s => String(s ?? "").replace(/[&<>"']/g, m => ({
     "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
@@ -56,7 +60,11 @@
 
   function resetResult() {
     revoke(resultUrl);
+    revoke(reviewBeforeUrl);
+    revoke(reviewAfterUrl);
     resultUrl = "";
+    reviewBeforeUrl = "";
+    reviewAfterUrl = "";
     currentRunId = "";
     const box = document.querySelector("#specialResult");
     if (box) box.innerHTML = "";
@@ -174,6 +182,13 @@
     });
   }
 
+  function encodedImageUrl(encoded) {
+    const binary = atob(encoded?.content_base64 || "");
+    const bytes = new Uint8Array(binary.length);
+    for (let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return URL.createObjectURL(new Blob([bytes], {type: encoded?.mime || "image/png"}));
+  }
+
   async function apply() {
     if (!selectedFile || busy) return;
     if(["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch())&&!smoothSelections.length){toast("Selecione uma ou mais regiões do texto na pré-visualização.");return;}
@@ -201,31 +216,16 @@
       });
 
       currentRunId = response.run_id || "";
-      const binary = atob(response.content_base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i=0; i<binary.length; i++) bytes[i] = binary.charCodeAt(i);
       revoke(resultUrl);
-      resultUrl = URL.createObjectURL(new Blob([bytes], {type: response.mime || "image/png"}));
+      revoke(reviewBeforeUrl);
+      revoke(reviewAfterUrl);
+      resultUrl = encodedImageUrl(response);
+      reviewBeforeUrl = encodedImageUrl(response.review_before);
+      reviewAfterUrl = encodedImageUrl(response.review_after);
 
       const p = PATCHES[currentPatch()];
-      document.querySelector("#specialResult").innerHTML = `
-        <div class="special-result-head">
-          <div><span class="special-kicker">RESULTADO</span><h2>Comparação</h2></div>
-          <span class="special-success">✓ Processamento concluído</span>
-        </div>
-        <div class="special-compare-toolbar"><span>Zoom sincronizado</span><div class="special-zoom"><button data-z="compare-out">−</button><button data-z="compare-reset"><span id="specialCompareZoom">100%</span></button><button data-z="compare-in">+</button></div></div>
-        <div class="special-result-grid">
-          <article><b>ORIGINAL</b><div id="specialOriginalStage" class="special-result-stage special-sync-stage"><img id="specialOriginalImage" src="${sourceUrl}" alt="Original"></div></article>
-          <article><b>RESULTADO</b><div id="specialResultStage" class="special-result-stage special-sync-stage"><img id="specialResultImage" src="${resultUrl}" alt="Resultado"></div></article>
-        </div>
-        <div class="special-result-footer">
-          <span>O arquivo original não foi alterado.</span>
-          <div>
-            <button class="btn" type="button" onclick="TextOffSpecialUI.clearFile()">Escolher outra imagem</button>
-            <button class="btn primary" type="button" onclick="TextOffSpecialUI.saveResult('${e(response.result_name)}')">Salvar resultado</button>
-          </div>
-        </div>`;
-      wireCompare();
+      renderReview(response.result_name || "");
+      showReview();
       toast(`${p.title} concluído.`);
     } catch (err) {
       toast(err.message || "Não foi possível aplicar o tratamento.");
@@ -251,6 +251,20 @@
       images:["#specialOriginalImage","#specialResultImage"],
       label:"#specialCompareZoom"
     });
+    applySliderZoom();
+  }
+
+  function applySliderZoom(){
+    const frame=document.querySelector("#specialSliderFrame");
+    const result=document.querySelector("#specialSliderResult");
+    const original=document.querySelector("#specialSliderOriginal");
+    if(!frame||!result||!original)return;
+    const naturalWidth=result.naturalWidth||original.naturalWidth;
+    if(!naturalWidth)return;
+    const width=Math.max(1,Math.round(naturalWidth*compareZoom/100));
+    frame.style.width=`${width}px`;
+    result.style.width=`${width}px`;
+    original.style.width=`${width}px`;
   }
 
   function clearSmoothSelections(){
@@ -274,7 +288,12 @@
   function updateSmoothSelectionMode(){
     const wrap=document.querySelector("#specialImageWrap"),apply=document.querySelector("#specialApply");if(!wrap)return;
     const active=["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch());wrap.classList.toggle("is-selectable",active);
-    let help=document.querySelector("#specialRoiHelp");if(!help){help=document.createElement("div");help.id="specialRoiHelp";help.className="special-roi-help";wrap.parentElement?.before(help);}
+    let help=document.querySelector("#specialRoiHelp");if(!help){
+      help=document.createElement("div");help.id="specialRoiHelp";help.className="special-roi-help";
+      const inspectorBody=document.querySelector(".special-inspector-body");
+      const fileField=inspectorBody?.querySelector(".special-field:nth-child(2)");
+      if(fileField)fileField.after(help);else inspectorBody?.prepend(help);
+    }
     if(active){const count=smoothSelections.length;help.innerHTML=`<div><b>Selecione uma ou mais áreas com texto.</b> Clique e arraste o mouse sobre cada texto que deseja remover. Use × para excluir apenas uma seleção.</div><div class="special-roi-summary"><span>${count} ${count===1?"área selecionada":"áreas selecionadas"}</span>${count?'<button id="specialRoiClear" type="button">Limpar todas</button>':""}</div>`;document.querySelector("#specialRoiClear")?.addEventListener("click",clearSmoothSelections);renderSmoothSelections();}
     else{help.textContent="";wrap.querySelectorAll(".special-roi-box,.special-roi-remove,.special-roi-draft").forEach(el=>el.remove());}
     if(apply)apply.disabled=!selectedFile||(active&&!smoothSelections.length);
@@ -319,6 +338,131 @@
     FominhaViewer.syncScroll(a,b);
   }
 
+
+  function showStudio() {
+    document.querySelector(".special-studio-shell")?.classList.remove("is-reviewing");
+    document.querySelector(".special-page-head")?.classList.remove("is-reviewing");
+    document.querySelector("#specialStudio")?.removeAttribute("hidden");
+    const review = document.querySelector("#specialReview");
+    if (review) review.hidden = true;
+    requestAnimationFrame(() => {
+      setPreviewZoom(previewZoom);
+      renderSmoothSelections();
+    });
+  }
+
+  function showReview() {
+    document.querySelector(".special-studio-shell")?.classList.add("is-reviewing");
+    document.querySelector(".special-page-head")?.classList.add("is-reviewing");
+    const studio = document.querySelector("#specialStudio");
+    if (studio) studio.hidden = true;
+    document.querySelector("#specialReview")?.removeAttribute("hidden");
+    setReviewMode(reviewMode);
+  }
+
+  function setReviewMode(mode) {
+    reviewMode = mode === "side" ? "side" : "single";
+    document.querySelector("#specialReviewSingle")?.classList.toggle("is-active", reviewMode === "single");
+    document.querySelector("#specialReviewSide")?.classList.toggle("is-active", reviewMode === "side");
+    document.querySelectorAll("[data-review-mode]").forEach(btn => {
+      btn.classList.toggle("active", btn.dataset.reviewMode === reviewMode);
+    });
+    setCompareZoom(compareZoom);
+  }
+
+  function setSliderPosition(value) {
+    sliderPosition = Math.max(0, Math.min(100, Number(value) || 0));
+    const original = document.querySelector("#specialSliderOriginal");
+    const divider = document.querySelector("#specialSliderDivider");
+    if (original) original.style.clipPath = `inset(0 ${100 - sliderPosition}% 0 0)`;
+    if (divider) divider.style.left = `${sliderPosition}%`;
+  }
+
+  function wireSlider() {
+    const frame = document.querySelector("#specialSliderFrame");
+    const stage = document.querySelector("#specialSliderStage");
+    const handle = document.querySelector("#specialSliderHandle");
+    if (!frame) return;
+    const positionHandle = () => {
+      if (!stage || !handle) return;
+      const frameRect = frame.getBoundingClientRect();
+      const stageRect = stage.getBoundingClientRect();
+      const visibleTop = Math.max(frameRect.top, stageRect.top);
+      const visibleBottom = Math.min(frameRect.bottom, stageRect.bottom);
+      if (visibleBottom <= visibleTop) return;
+      handle.style.top = `${visibleTop + (visibleBottom - visibleTop) / 2 - frameRect.top}px`;
+    };
+    let dragging = false;
+    const move = ev => {
+      if (!dragging) return;
+      const rect = frame.getBoundingClientRect();
+      if (!rect.width) return;
+      setSliderPosition(((ev.clientX - rect.left) / rect.width) * 100);
+    };
+    frame.onpointerdown = ev => {
+      dragging = true;
+      frame.setPointerCapture?.(ev.pointerId);
+      move(ev);
+    };
+    frame.onpointermove = move;
+    frame.onpointerup = ev => {
+      dragging = false;
+      frame.releasePointerCapture?.(ev.pointerId);
+    };
+    frame.onpointercancel = () => { dragging = false; };
+    if (stage) stage.onscroll = positionHandle;
+    setSliderPosition(sliderPosition);
+    requestAnimationFrame(positionHandle);
+  }
+
+  function renderReview(resultName) {
+    const host = document.querySelector("#specialReview");
+    if (!host) return;
+    host.innerHTML = `
+      <div class="special-review-toolbar">
+        <div class="special-review-file"><b>${e(selectedFile?.name || resultName || "Resultado")}</b><span class="special-success">✓ Concluído</span></div>
+        <div class="special-review-center">
+          <div class="special-view-toggle" role="group" aria-label="Modo de comparação">
+            <button type="button" data-review-mode="single">◐ Visão única</button>
+            <button type="button" data-review-mode="side">◫ Lado a lado</button>
+          </div>
+          <div class="special-zoom"><button data-z="compare-out">−</button><button data-z="compare-reset"><span id="specialCompareZoom">100%</span></button><button data-z="compare-in">+</button></div>
+        </div>
+        <div class="special-review-actions">
+          <button id="specialRedo" class="btn" type="button">← Refazer seleção</button>
+          <button id="specialSave" class="btn primary" type="button">Salvar resultado</button>
+        </div>
+      </div>
+      <div class="special-review-workspace">
+        <section id="specialReviewSingle" class="special-review-view">
+          <div id="specialSliderStage" class="special-slider-stage">
+            <div id="specialSliderFrame" class="special-slider-frame">
+              <img id="specialSliderResult" src="${reviewAfterUrl}" alt="Resultado">
+              <div id="specialSliderOriginalLayer" class="special-slider-original-layer"><img id="specialSliderOriginal" src="${reviewBeforeUrl}" alt="Original"></div>
+              <span class="special-slider-tag original">ORIGINAL</span><span class="special-slider-tag result">RESULTADO</span>
+              <div id="specialSliderDivider" class="special-slider-divider"><span id="specialSliderHandle">⇄</span></div>
+            </div>
+          </div>
+        </section>
+        <section id="specialReviewSide" class="special-review-view">
+          <div class="special-result-grid">
+            <article><b>ORIGINAL</b><div id="specialOriginalStage" class="special-result-stage special-sync-stage"><img id="specialOriginalImage" src="${reviewBeforeUrl}" alt="Original"></div></article>
+            <article><b>RESULTADO</b><div id="specialResultStage" class="special-result-stage special-sync-stage"><img id="specialResultImage" src="${reviewAfterUrl}" alt="Resultado"></div></article>
+          </div>
+        </section>
+      </div>`;
+    document.querySelectorAll("[data-review-mode]").forEach(btn => btn.onclick = () => setReviewMode(btn.dataset.reviewMode));
+    document.querySelector("#specialRedo").onclick = showStudio;
+    document.querySelector("#specialSave").onclick = () => saveResult(resultName);
+    wireCompare();
+    wireSlider();
+    const sliderResult=document.querySelector("#specialSliderResult");
+    const sliderOriginal=document.querySelector("#specialSliderOriginal");
+    if(sliderResult)sliderResult.onload=()=>{applySliderZoom();setSliderPosition(sliderPosition);};
+    if(sliderOriginal)sliderOriginal.onload=()=>{applySliderZoom();setSliderPosition(sliderPosition);};
+    setReviewMode(reviewMode);
+  }
+
   async function saveResult(name) {
     if (!resultUrl || !currentRunId || busy) return;
     if (!selectedSourcePath) {
@@ -359,48 +503,35 @@
     currentRunId = "";
     revoke(sourceUrl); sourceUrl = "";
     revoke(resultUrl); resultUrl = "";
+    revoke(reviewBeforeUrl); reviewBeforeUrl = "";
+    revoke(reviewAfterUrl); reviewAfterUrl = "";
     root.innerHTML = `
       ${head("Tratamentos especiais","Aplique tratamentos específicos quando o Texto Off convencional não produzir o resultado esperado.")}
-      <section class="special-card">
-        <div class="special-input-grid">
-          <div class="special-field">
-            <label for="specialPatch">Tipo de tratamento</label>
-            <select id="specialPatch">
-              <option value="degrade">Patch Degradê</option>
-              <option value="estilizado">Patch Balão Estilizado</option>
-              <option value="transparente">Patch Balão Transparente</option>
-              <option value="gradiente_suave">Gradiente Suave</option>
-            </select>
+      <section class="special-studio-shell">
+        <div id="specialStudio" class="special-studio">
+          <div class="special-studio-canvas">
+            <div id="specialPreview" class="special-preview"><div class="special-empty">Selecione uma imagem para iniciar</div></div>
           </div>
-          <div class="special-field">
-            <label>Imagem</label>
-            <div class="special-file-row">
-              <input id="specialFileName" placeholder="Nenhuma imagem selecionada" readonly>
-              <button id="specialChoose" class="btn" type="button">Escolher</button>
-              <input id="specialFileInput" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden>
+          <aside class="special-inspector">
+            <div class="special-inspector-head"><div><span class="special-kicker">STUDIO</span><h2>Configuração</h2></div><span class="special-badge">ESPECIAL</span></div>
+            <div class="special-inspector-body">
+              <div class="special-field"><label for="specialPatch">Tipo de tratamento</label><select id="specialPatch"><option value="degrade">Patch Degradê</option><option value="estilizado">Patch Balão Estilizado</option><option value="transparente">Patch Balão Transparente</option><option value="gradiente_suave">Gradiente Suave</option></select></div>
+              <div class="special-field"><label>Arquivo</label><div class="special-file-row"><input id="specialFileName" placeholder="Nenhuma imagem selecionada" readonly><button id="specialChoose" class="btn" type="button">Escolher</button><input id="specialFileInput" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden></div></div>
+              <div id="specialExample">${exampleHtml("degrade")}</div>
             </div>
-            <small>Selecione uma imagem PNG, JPG, JPEG ou WEBP diretamente do computador.</small>
-          </div>
+            <div class="special-inspector-footer"><button id="specialApply" class="btn primary" type="button" disabled>Processar página</button></div>
+          </aside>
         </div>
-
-        <div id="specialExample">${exampleHtml("degrade")}</div>
-
-        <div id="specialPreview" class="special-preview">
-          <div class="special-empty">Nenhuma imagem selecionada</div>
-        </div>
-
-        <div class="special-actions">
-          <button id="specialApply" class="btn primary" type="button" disabled>Aplicar tratamento</button>
-        </div>
-
-        <section id="specialResult" class="special-result"></section>
+        <section id="specialReview" class="special-review" hidden></section>
+        <section id="specialResult" class="special-result" hidden></section>
       </section>`;
 
     document.querySelector("#specialPatch").onchange = updatePatch;
     document.querySelector("#specialChoose").onclick = choose;
     document.querySelector("#specialFileInput").onchange = ev => fileChanged(ev.target);
     document.querySelector("#specialApply").onclick = apply;
+    root.querySelector(":scope > .head")?.classList.add("special-page-head");
   }
 
-  window.TextOffSpecialUI = {render, apply, saveResult, clearFile};
+  window.TextOffSpecialUI = {render, apply, saveResult, clearFile, showStudio, setReviewMode};
 })();

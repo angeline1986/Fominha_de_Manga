@@ -295,6 +295,18 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
     _atomic_json(run_dir / "run.json", run_meta)
 
     encoded = _encode_result(result)
+
+    # Artefatos exclusivos da revisão visual.
+    # O preview técnico permanece no contrato existente; a revisão compara
+    # a base oficial usada pela proposta com o artefato que seria promovido.
+    promotion_result = (
+        target / treatment_meta["promotion_result"]
+        if treatment_meta and treatment_meta.get("promotion_result")
+        else result
+    )
+    review_before = _encode_result(base_snapshot if base_snapshot is not None else source)
+    review_after = _encode_result(promotion_result)
+
     return {
         "ok": True,
         "patch": patch,
@@ -303,6 +315,8 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
         "result_name": encoded["filename"],
         "mime": encoded["mime"],
         "content_base64": encoded["content_base64"],
+        "review_before": review_before,
+        "review_after": review_after,
         "run_id": run_dir.name,
         "run_dir": str(run_dir),
         "official_files_modified": False,
