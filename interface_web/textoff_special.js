@@ -76,16 +76,16 @@
           </div>
         </summary>
         <div class="special-example-grid">
-          ${["degrade","estilizado"].includes(key) ? `
+          ${["degrade","estilizado","transparente"].includes(key) ? `
           <div class="special-example-visual ${e(p.exampleClass)} special-example-real">
             <div class="special-mini">
               <span class="special-mini-label">ANTES</span>
-              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_antes.png" : "estilizado_antes.png"}" alt="Exemplo real antes do ${e(p.title)}"></div>
+              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_antes.png" : key === "estilizado" ? "estilizado_antes.png" : "transparente_antes.png"}" alt="Exemplo real antes do ${e(p.title)}"></div>
             </div>
             <span class="special-arrow">→</span>
             <div class="special-mini">
               <span class="special-mini-label">DEPOIS</span>
-              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_depois.png" : "estilizado_depois.png"}" alt="Exemplo real depois do ${e(p.title)}"></div>
+              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_depois.png" : key === "estilizado" ? "estilizado_depois.png" : "transparente_depois.png"}" alt="Exemplo real depois do ${e(p.title)}"></div>
             </div>
           </div>` : `
           <div class="special-example-visual ${e(p.exampleClass)}">
@@ -139,7 +139,7 @@
       <div id="specialPreviewStage" class="special-preview-stage"><div id="specialImageWrap" class="special-image-wrap"><img id="specialPreviewImage" src="${sourceUrl}" alt="Imagem selecionada"></div></div>`;
     wirePreview();
     updateSmoothSelectionMode();
-    if (apply) apply.disabled = ["gradiente_suave","degrade","estilizado"].includes(currentPatch());
+    if (apply) apply.disabled = ["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch());
   }
 
   async function choose() {
@@ -176,7 +176,7 @@
 
   async function apply() {
     if (!selectedFile || busy) return;
-    if(["gradiente_suave","degrade","estilizado"].includes(currentPatch())&&!smoothSelections.length){toast("Selecione uma ou mais regiões do texto na pré-visualização.");return;}
+    if(["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch())&&!smoothSelections.length){toast("Selecione uma ou mais regiões do texto na pré-visualização.");return;}
     busy = true;
     const btn = document.querySelector("#specialApply");
     if (btn) {
@@ -273,7 +273,7 @@
   }
   function updateSmoothSelectionMode(){
     const wrap=document.querySelector("#specialImageWrap"),apply=document.querySelector("#specialApply");if(!wrap)return;
-    const active=["gradiente_suave","degrade","estilizado"].includes(currentPatch());wrap.classList.toggle("is-selectable",active);
+    const active=["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch());wrap.classList.toggle("is-selectable",active);
     let help=document.querySelector("#specialRoiHelp");if(!help){help=document.createElement("div");help.id="specialRoiHelp";help.className="special-roi-help";wrap.parentElement?.before(help);}
     if(active){const count=smoothSelections.length;help.innerHTML=`<div><b>Selecione uma ou mais áreas com texto.</b> Clique e arraste o mouse sobre cada texto que deseja remover. Use × para excluir apenas uma seleção.</div><div class="special-roi-summary"><span>${count} ${count===1?"área selecionada":"áreas selecionadas"}</span>${count?'<button id="specialRoiClear" type="button">Limpar todas</button>':""}</div>`;document.querySelector("#specialRoiClear")?.addEventListener("click",clearSmoothSelections);renderSmoothSelections();}
     else{help.textContent="";wrap.querySelectorAll(".special-roi-box,.special-roi-remove,.special-roi-draft").forEach(el=>el.remove());}
@@ -283,9 +283,9 @@
     const img=document.querySelector("#specialPreviewImage"),wrap=document.querySelector("#specialImageWrap");if(!img||!wrap)return;
     const point=ev=>{const r=img.getBoundingClientRect();return{x:Math.max(0,Math.min(r.width,ev.clientX-r.left)),y:Math.max(0,Math.min(r.height,ev.clientY-r.top)),r};};
     const draw=(a,b)=>{let box=wrap.querySelector(".special-roi-draft");if(!box){box=document.createElement("div");box.className="special-roi-box special-roi-draft";wrap.appendChild(box);}const wr=wrap.getBoundingClientRect(),ir=img.getBoundingClientRect(),ox=ir.left-wr.left,oy=ir.top-wr.top;box.style.left=`${ox+Math.min(a.x,b.x)}px`;box.style.top=`${oy+Math.min(a.y,b.y)}px`;box.style.width=`${Math.abs(b.x-a.x)}px`;box.style.height=`${Math.abs(b.y-a.y)}px`;};
-    img.onpointerdown=ev=>{if(!["gradiente_suave","degrade","estilizado"].includes(currentPatch()))return;ev.preventDefault();smoothDrag=point(ev);img.setPointerCapture?.(ev.pointerId);draw(smoothDrag,smoothDrag);};
-    img.onpointermove=ev=>{if(smoothDrag&&["gradiente_suave","degrade","estilizado"].includes(currentPatch()))draw(smoothDrag,point(ev));};
-    img.onpointerup=ev=>{if(!smoothDrag||!["gradiente_suave","degrade","estilizado"].includes(currentPatch()))return;const end=point(ev),start=smoothDrag;smoothDrag=null;img.releasePointerCapture?.(ev.pointerId);wrap.querySelector(".special-roi-draft")?.remove();const l=Math.min(start.x,end.x),t=Math.min(start.y,end.y),width=Math.abs(end.x-start.x),height=Math.abs(end.y-start.y);if(width<3||height<3){updateSmoothSelectionMode();return;}smoothSelections.push({id:++smoothSelectionSeq,x:Math.round(l*img.naturalWidth/end.r.width),y:Math.round(t*img.naturalHeight/end.r.height),width:Math.round(width*img.naturalWidth/end.r.width),height:Math.round(height*img.naturalHeight/end.r.height)});updateSmoothSelectionMode();};
+    img.onpointerdown=ev=>{if(!["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch()))return;ev.preventDefault();smoothDrag=point(ev);img.setPointerCapture?.(ev.pointerId);draw(smoothDrag,smoothDrag);};
+    img.onpointermove=ev=>{if(smoothDrag&&["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch()))draw(smoothDrag,point(ev));};
+    img.onpointerup=ev=>{if(!smoothDrag||!["gradiente_suave","degrade","estilizado","transparente"].includes(currentPatch()))return;const end=point(ev),start=smoothDrag;smoothDrag=null;img.releasePointerCapture?.(ev.pointerId);wrap.querySelector(".special-roi-draft")?.remove();const l=Math.min(start.x,end.x),t=Math.min(start.y,end.y),width=Math.abs(end.x-start.x),height=Math.abs(end.y-start.y);if(width<3||height<3){updateSmoothSelectionMode();return;}smoothSelections.push({id:++smoothSelectionSeq,x:Math.round(l*img.naturalWidth/end.r.width),y:Math.round(t*img.naturalHeight/end.r.height),width:Math.round(width*img.naturalWidth/end.r.width),height:Math.round(height*img.naturalHeight/end.r.height)});updateSmoothSelectionMode();};
   }
 
   function wirePreview(){

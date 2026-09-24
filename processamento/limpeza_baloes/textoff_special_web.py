@@ -80,11 +80,14 @@ def _run_styled(source: Path, target: Path, selections, base_snapshot: Path | No
     from processamento.limpeza_baloes.textoff_special_styled_roi import run_styled_roi
     return run_styled_roi(source, target, selections, base_snapshot=base_snapshot)
 
-def _run_transparent(source: Path, target: Path) -> Path:
-    from processamento.limpeza_baloes import patch_balao_transparente_experimento as patch
-    result=patch._run_page(source)
-    if not result.is_file(): raise RuntimeError("Backend da opção 9 não gerou resultado.")
-    copied=target/result.name; shutil.copy2(result,copied); return copied
+def _run_transparent(
+    source: Path,
+    target: Path,
+    selections,
+    base_snapshot: Path | None = None,
+) -> tuple[Path, dict]:
+    from processamento.limpeza_baloes.textoff_special_transparent_roi import run_transparent_roi
+    return run_transparent_roi(source, target, selections, base_snapshot=base_snapshot)
 
 
 def _run_smooth_gradient(source: Path, target: Path, selections) -> tuple[Path, dict]:
@@ -236,7 +239,7 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
     # O ROI Degradê usa o SOURCE para executar o algoritmo, mas compõe
     # somente suas alterações efetivas sobre esta base.
     base_snapshot = None
-    if patch in {"degrade", "estilizado"} and base_state == "EXISTS":
+    if patch in {"degrade", "estilizado", "transparente"} and base_state == "EXISTS":
         base_snapshot = run_dir / "base_official_snapshot.png"
         shutil.copy2(base_official, base_snapshot)
         if _sha256(base_snapshot) != base_sha256:
@@ -263,7 +266,11 @@ def process_special_image(payload: dict, manga_path: Path) -> dict:
             base_snapshot=base_snapshot,
         )
     elif patch == "transparente":
-        result = _run_transparent(source, target)
+        result, treatment_meta = _run_transparent(
+            source, target,
+            payload.get("selections") or payload.get("selection"),
+            base_snapshot=base_snapshot,
+        )
     else:
         result, treatment_meta = _run_smooth_gradient(source, target, payload.get("selections") or payload.get("selection"))
 
