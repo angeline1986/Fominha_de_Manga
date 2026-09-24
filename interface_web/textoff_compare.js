@@ -1,5 +1,5 @@
 (() => {
-  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,compareMode="single",sliderPosition=50,flagging=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false,level3Selecting=false,level3Selections=[],level3Selection=null,level3Drag=null,level3Preview=null,level3Previewing=false,level3Approving=false,resultsOpen=true;
+  let state=null,sourceFilter="all",query="",pageIndex=1,selectedKey=null,selectedPage=-1,chapterOpen=false,compareOpen=false,zoom=100,compareMode="single",sliderPosition=50,pageListQuery="",flagging=false,level3State=null,level3SelectedKey=null,level3Loading=false,level3Zoom=100,level3Analysis=null,level3Analyzing=false,level3Syncing=false,level3Selecting=false,level3Selections=[],level3Selection=null,level3Drag=null,level3Preview=null,level3Previewing=false,level3Approving=false,resultsOpen=true;
   const PAGE_SIZE=15;
   const escLocal=s=>String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[m]));
   const currentRow=()=>state?.rows?.find(x=>String(x.key)===String(selectedKey))||null;
@@ -80,6 +80,7 @@
   }
 
   function wireQcStudio(){
+    wirePageList();
     if(compareMode==="single"){
       const clean=document.querySelector("#tocSliderClean");
       const original=document.querySelector("#tocSliderOriginal");
@@ -90,6 +91,34 @@
       return;
     }
     bindSynchronizedScroll();
+  }
+
+  function hideThumbnailPreview(){const p=document.querySelector("#compareThumbPopover");if(p)p.style.display="none"}
+  function filterPageList(value){
+    pageListQuery=String(value||"");const q=pageListQuery.trim().toLowerCase();
+    document.querySelectorAll("#tocPageList .toc-page-list-btn").forEach(b=>{b.hidden=!!q&&!String(b.dataset.filename||"").toLowerCase().includes(q)})
+  }
+  function wireThumbnailHover(){
+    const row=currentRow(),items=Array.isArray(row?.items)?row.items:[],sidebar=document.querySelector("#tocPageSidebar");
+    const pop=document.querySelector("#compareThumbPopover"),img=document.querySelector("#compareThumbImg"),name=document.querySelector("#compareThumbFileName"),idx=document.querySelector("#compareThumbIndex");
+    if(!row||!sidebar||!pop||!img||!name||!idx)return;
+    document.querySelectorAll("#tocPageList .toc-page-list-btn").forEach(btn=>{
+      const i=Number(btn.dataset.index),item=items[i];if(!item)return;
+      btn.addEventListener("mouseenter",()=>{
+        const sr=sidebar.getBoundingClientRect(),br=btn.getBoundingClientRect();
+        const left=Math.max(12,Math.min(sr.right+10,window.innerWidth-330));
+        name.textContent=item.source_file||"";idx.textContent=`${i+1} / ${items.length}`;img.alt=`Prévia · ${item.source_file||""}`;
+        img.src=mediaUrl("textoff_source",row,item.source_file);pop.style.left=`${left}px`;pop.style.display="flex";
+        const h=pop.offsetHeight||455,maxTop=Math.max(12,window.innerHeight-h-16);
+        pop.style.top=`${Math.max(12,Math.min(br.top-20,maxTop))}px`;
+      });
+      btn.addEventListener("mouseleave",hideThumbnailPreview);
+    })
+  }
+  function wirePageList(){
+    filterPageList(pageListQuery);wireThumbnailHover();
+    const active=document.querySelector("#tocPageList .toc-page-list-btn.active");
+    if(active)requestAnimationFrame(()=>active.scrollIntoView({block:"nearest"}));
   }
 
   function qcStudioSection(){
@@ -103,9 +132,11 @@
     const zoomControls=`<span class="bal-zoom-control toc-header-zoom" aria-label="Controle de zoom sincronizado"><button id="tocCompareZoomOut" type="button" class="bal-zoom-action" onclick="event.stopPropagation();TextOffCompareUI.changeZoom(-10)" ${zoom<=30?"disabled":""} aria-label="Diminuir zoom">−</button><b id="tocCompareZoomValue" class="bal-zoom-value">${zoom}%</b><button id="tocCompareZoomIn" type="button" class="bal-zoom-action" onclick="event.stopPropagation();TextOffCompareUI.changeZoom(10)" ${zoom>=200?"disabled":""} aria-label="Aumentar zoom">+</button><button id="tocCompareZoomReset" type="button" class="bal-zoom-reset toc-zoom-reset-icon" onclick="event.stopPropagation();TextOffCompareUI.resetZoom()" ${zoom===100?"disabled":""} aria-label="Restaurar zoom para 100%" title="Restaurar zoom para 100%">↺</button></span>`;
     const modeControl=`<span class="toc-view-mode" role="group" aria-label="Modo de comparação"><button type="button" class="${compareMode==="single"?"is-active":""}" onclick="TextOffCompareUI.setCompareMode('single')" aria-pressed="${compareMode==="single"}">◐ Visão única</button><button type="button" class="${compareMode==="side"?"is-active":""}" onclick="TextOffCompareUI.setCompareMode('side')" aria-pressed="${compareMode==="side"}">◫ Lado a lado</button></span>`;
     const correctionAction=`<div class="toc-correction-row"><button class="btn toc-correction-btn ${flagged?"is-flagged":""}" type="button" onclick="TextOffCompareUI.flagCorrection()" ${flagged||flagging?"disabled":""}>${flagged?"✓ Correção sinalizada":(flagging?"Sinalizando…":"Sinalizar correção")}</button></div>`;
+    const pageButtons=items.map((x,i)=>`<button type="button" class="toc-page-list-btn ${i===selectedPage?"active":""}" data-index="${i}" data-filename="${escLocal(x.source_file)}" onclick="TextOffCompareUI.selectImage(${i})" title="${escLocal(x.source_file)}"><span>${escLocal(x.source_file)}</span><small>${i+1}</small></button>`).join("");
+    const sidebar=`<aside id="tocPageSidebar" class="toc-page-sidebar"><div class="toc-page-sidebar-head"><strong>PÁGINAS</strong><span>${items.length}</span></div><div class="toc-page-search"><input type="search" placeholder="Buscar página..." value="${escLocal(pageListQuery)}" oninput="TextOffCompareUI.filterPageList(this.value)" aria-label="Buscar página"></div><div id="tocPageList" class="toc-page-list">${pageButtons}</div></aside>`;
     const singleView=`<div class="toc-single-stage"><div id="tocSliderFrame" class="toc-slider-frame"><img id="tocSliderClean" class="toc-slider-clean" src="${mediaUrl("textoff_clean",row,item.clean_file)}" alt="Texto Off · ${escLocal(item.clean_file)}"><img id="tocSliderOriginal" class="toc-slider-original" src="${mediaUrl("textoff_source",row,item.source_file)}" alt="Original · ${escLocal(item.source_file)}" style="clip-path:inset(0 ${100-sliderPosition}% 0 0)"><span class="toc-slider-tag is-original">ORIGINAL</span><span class="toc-slider-tag is-result">TEXTO OFF</span><span id="tocSliderDivider" class="toc-slider-divider" style="left:${sliderPosition}%"><span>⇄</span></span><input id="tocSliderRange" class="toc-slider-range" type="range" min="0" max="100" value="${sliderPosition}" aria-label="Comparar Original e Texto Off" oninput="TextOffCompareUI.setSliderPosition(this.value)"></div></div>`;
     const sideView=`<div class="toc-compare-grid"><article class="toc-preview-card"><div class="toc-preview-head"><strong>ORIGINAL</strong><span>${escLocal(row.source==="Merged"?"Fonte: MERGE":"Fonte: IMG")}</span></div><div class="toc-preview-stage"><img src="${mediaUrl("textoff_source",row,item.source_file)}" alt="Original · ${escLocal(item.source_file)}" style="width:${zoom}%;max-width:none;height:auto"></div></article><article class="toc-preview-card"><div class="toc-preview-head"><strong>TEXTO OFF</strong><span>Cleaner V2</span></div><div class="toc-preview-stage"><img src="${mediaUrl("textoff_clean",row,item.clean_file)}" alt="Texto Off · ${escLocal(item.clean_file)}" style="width:${zoom}%;max-width:none;height:auto"></div></article></div>`;
-    return `<section class="bal-section toc-section toc-qc-studio"><div class="bal-section-head toc-section-head toc-qc-toolbar"><div class="toc-qc-toolbar-left"><button class="btn toc-qc-back" type="button" onclick="TextOffCompareUI.backToChapters()">← Capítulos</button><div class="toc-qc-identity"><span class="caption">COMPARAÇÃO DAS IMAGENS</span><strong>Cap. ${escLocal(row.chapter)} › ${escLocal(item.source_file)}</strong></div></div><span class="bal-section-head-right toc-qc-toolbar-right">${modeControl}${zoomControls}${correctionAction}</span></div><div class="bal-section-body toc-qc-body"><div class="toc-compare-caption">Cap. ${escLocal(row.chapter)} · ${escLocal(item.source_file)}</div>${compareMode==="single"?singleView:sideView}<div class="toc-pager toc-qc-footer"><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(-1)" ${selectedPage<=0?"disabled":""}>◀ Anterior</button><span>${selectedPage+1} / ${items.length}</span><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(1)" ${selectedPage>=items.length-1?"disabled":""}>Próxima ▶</button></div></div></section>`;
+    return `<section class="bal-section toc-section toc-qc-studio"><div class="bal-section-head toc-section-head toc-qc-toolbar"><div class="toc-qc-toolbar-left"><button class="btn toc-qc-back" type="button" onclick="TextOffCompareUI.backToChapters()">← Capítulos</button><div class="toc-qc-identity"><span class="caption">COMPARAÇÃO DAS IMAGENS</span><strong>Cap. ${escLocal(row.chapter)} › ${escLocal(item.source_file)}</strong></div></div><span class="bal-section-head-right toc-qc-toolbar-right">${modeControl}${zoomControls}${correctionAction}</span></div><div class="bal-section-body toc-qc-body"><div class="toc-compare-caption">Cap. ${escLocal(row.chapter)} · ${escLocal(item.source_file)}</div><div class="toc-qc-workspace">${sidebar}<main class="toc-qc-canvas">${compareMode==="single"?singleView:sideView}</main></div><div class="toc-pager toc-qc-footer"><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(-1)" ${selectedPage<=0?"disabled":""}>◀ Anterior</button><span>${selectedPage+1} / ${items.length}</span><button class="btn" type="button" onclick="TextOffCompareUI.moveImage(1)" ${selectedPage>=items.length-1?"disabled":""}>Próxima ▶</button></div><div id="compareThumbPopover" class="compare-thumb-popover"><img id="compareThumbImg" class="compare-thumb-img" alt="Prévia"><div class="compare-thumb-meta"><b id="compareThumbFileName"></b><span id="compareThumbIndex"></span></div></div></div></section>`;
   }
 
   function bindSynchronizedScroll(){
@@ -132,9 +163,9 @@
   async function load(){try{state=await api(`/api/textoff-compare?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&_=${Date.now()}`);renderBody()}catch(e){toast(e.message||"Não foi possível carregar os resultados do Texto Off.")}}
   function render(root){root.innerHTML=head("Comparar resultados","Compare as imagens antes e depois da limpeza realizada pelo Cleaner V2.")+`<div id="textOffCompareBody"><div class="muted">Carregando resultados do Texto Off…</div></div>`;state=null;sourceFilter="all";query="";pageIndex=1;selectedKey=null;selectedPage=-1;chapterOpen=false;compareOpen=false;zoom=100;resultsOpen=true;load()}
   function selectChapter(key){selectedKey=String(key);selectedPage=0;chapterOpen=false;compareOpen=true;zoom=100;renderBody()}
-  function backToChapters(){if(textOffFocus.mode==="compare")exitFocus();selectedKey=null;selectedPage=-1;chapterOpen=false;compareOpen=false;zoom=100;renderBody()}
-  function selectImage(index){const items=Array.isArray(currentRow()?.items)?currentRow().items:[];selectedPage=Math.max(0,Math.min(Number(index)||0,items.length-1));compareOpen=true;renderBody();requestAnimationFrame(()=>document.querySelector(".toc-detail-stack .toc-section:last-child")?.scrollIntoView({behavior:"smooth",block:"start"}))}
-  function moveImage(delta){const items=Array.isArray(currentRow()?.items)?currentRow().items:[];if(!items.length)return;selectedPage=Math.max(0,Math.min(items.length-1,selectedPage+Number(delta||0)));renderBody()}
+  function backToChapters(){hideThumbnailPreview();if(textOffFocus.mode==="compare")exitFocus();selectedKey=null;selectedPage=-1;chapterOpen=false;compareOpen=false;zoom=100;renderBody()}
+  function selectImage(index){hideThumbnailPreview();const items=Array.isArray(currentRow()?.items)?currentRow().items:[];selectedPage=Math.max(0,Math.min(Number(index)||0,items.length-1));compareOpen=true;renderBody();requestAnimationFrame(()=>document.querySelector(".toc-detail-stack .toc-section:last-child")?.scrollIntoView({behavior:"smooth",block:"start"}))}
+  function moveImage(delta){hideThumbnailPreview();const items=Array.isArray(currentRow()?.items)?currentRow().items:[];if(!items.length)return;selectedPage=Math.max(0,Math.min(items.length-1,selectedPage+Number(delta||0)));renderBody()}
   function toggleChapter(){if(currentRow()){chapterOpen=!chapterOpen;renderBody()}}
   function toggleCompare(){if(currentRow()&&selectedPage>=0){compareOpen=!compareOpen;renderBody()}}
   function updateCompareZoomUi(){
@@ -452,7 +483,7 @@
       flagging=false;renderBody();
     }
   }
-  window.TextOffCompareUI={render,renderCorrection,selectChapter,backToChapters,setCompareMode,setSliderPosition,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,toggleResults,flagCorrection,selectLevel3,setLevel3Zoom,changeLevel3Zoom,analyzeLevel3,toggleLevel3Selection,generateLevel3Preview,resetLevel3Preview,approveLevel3Preview};
+  window.TextOffCompareUI={render,renderCorrection,selectChapter,backToChapters,setCompareMode,setSliderPosition,filterPageList,selectImage,moveImage,toggleChapter,toggleCompare,changeZoom,resetZoom,setQuery,setSource,changePage,toggleResults,flagCorrection,selectLevel3,setLevel3Zoom,changeLevel3Zoom,analyzeLevel3,toggleLevel3Selection,generateLevel3Preview,resetLevel3Preview,approveLevel3Preview};
 
   /* === TEXT OFF · MODO FOCO (UI only) === */
   const textOffFocus={mode:null,scheduled:false};
@@ -553,6 +584,7 @@
   }
 
   function enterFocus(mode){
+    hideThumbnailPreview();
     const actual=mode||focusContext();
     if(!actual)return;
     textOffFocus.mode=actual;

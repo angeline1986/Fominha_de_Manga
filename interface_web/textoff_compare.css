@@ -246,3 +246,25 @@ body:not(.textoff-focus-mode) .toc-level3-action-buttons .btn{margin:0}
 @media(max-width:900px){.toc-view-mode{order:-1}.toc-single-stage{min-height:420px}}
 /* === /TEXT OFF · QC STUDIO · FASE 2 === */
 
+
+
+/* === TEXT OFF · QC STUDIO · FASE 3 === */
+.toc-qc-workspace{flex:1 1 auto;min-height:0;display:grid;grid-template-columns:230px minmax(0,1fr);gap:10px}
+.toc-qc-canvas{min-width:0;min-height:0;display:flex;flex-direction:column}
+.toc-qc-canvas>.toc-single-stage,.toc-qc-canvas>.toc-compare-grid{flex:1 1 auto;min-height:0}
+.toc-page-sidebar{min-height:0;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--color-border,#d8eef7);border-radius:10px;background:var(--color-surface,#fff)}
+.toc-page-sidebar-head{display:flex;align-items:center;justify-content:space-between;padding:10px 11px 7px;color:var(--color-text,#0c455a)}
+.toc-page-sidebar-head strong{font-size:10px;letter-spacing:.72px}.toc-page-sidebar-head span{padding:2px 7px;border-radius:999px;background:var(--color-primary-soft,#e9f7fc);color:var(--color-text-secondary,#188ab4);font-size:10px;font-weight:900}
+.toc-page-search{padding:0 8px 8px}.toc-page-search input{box-sizing:border-box;width:100%;height:32px;padding:0 9px;border:1px solid var(--color-border,#d8eef7);border-radius:8px;background:var(--color-surface,#fff);color:var(--color-text,#0c455a);font:inherit;font-size:11px;outline:none}
+.toc-page-list{flex:1 1 auto;min-height:0;overflow:auto;padding:0 6px 7px}
+.toc-page-list-btn{width:100%;height:34px;display:flex;align-items:center;justify-content:space-between;gap:8px;border:0;border-radius:7px;background:transparent;color:var(--color-text,#0c455a);padding:0 8px;cursor:pointer;text-align:left}
+.toc-page-list-btn:hover,.toc-page-list-btn.active{background:var(--color-primary-soft,#e9f7fc)}.toc-page-list-btn.active{color:var(--color-text-secondary,#188ab4);font-weight:900}
+.toc-page-list-btn span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:11px}.toc-page-list-btn small{flex:0 0 auto;color:var(--color-text-muted,#126887);font-size:9px;font-weight:800}.toc-page-list-btn[hidden]{display:none}
+.compare-thumb-popover{position:fixed;width:300px;background:var(--color-surface,#fff);border:1px solid var(--color-border,#d8eef7);border-radius:10px;padding:8px;box-shadow:0 12px 36px rgba(12,69,90,.22);display:none;flex-direction:column;gap:6px;z-index:1000;pointer-events:none;animation:compareFadeIn .12s ease-out}
+@keyframes compareFadeIn{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:translateY(0)}}
+.compare-thumb-img{width:100%;height:420px;box-sizing:border-box;background:var(--color-background,#f5fbfe);border-radius:6px;border:1px solid var(--color-border,#d8eef7);object-fit:contain;display:block}
+.compare-thumb-meta{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:11px;font-family:monospace;font-weight:700;color:var(--color-text-muted,#126887);padding:2px 4px}.compare-thumb-meta b{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--color-text,#0c455a)}
+body.textoff-focus-mode .compare-thumb-popover,body.textoff-focus-compare .toc-page-sidebar{display:none!important}
+body.textoff-focus-compare .toc-qc-workspace{display:block;height:100%}body.textoff-focus-compare .toc-qc-canvas{height:100%}
+@media(max-width:900px){.toc-qc-workspace{grid-template-columns:1fr}.toc-page-sidebar{max-height:180px}.compare-thumb-popover{display:none!important}}
+/* === /TEXT OFF · QC STUDIO · FASE 3 === */
