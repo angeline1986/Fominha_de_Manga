@@ -29,3 +29,11 @@ gui_config.json
 
 # Cleaner V2 local environment
 processamento/limpeza_baloes/cleaner_v2/.venv/
+
+# Cleaner V2 — snapshots locais de ambiente
+processamento/limpeza_baloes/cleaner_v2/environment_snapshots/
+
+# Text Off — backups locais históricos do patch Balão Transparente
+processamento/limpeza_baloes/patch_balao_transparente_experimento.py.before_fluid_menu_v1
+processamento/limpeza_baloes/patch_balao_transparente_experimento.py.before_fluid_menu_v2
+processamento/limpeza_baloes/patch_balao_transparente_experimento.py.before_lama_text_mask_v1
