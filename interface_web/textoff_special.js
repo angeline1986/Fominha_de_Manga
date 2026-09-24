@@ -65,15 +65,29 @@
   function exampleHtml(key) {
     const p = PATCHES[key];
     return `
-      <div class="special-example-card">
-        <div class="special-example-top">
+      <details class="special-example-card">
+        <summary class="special-example-top">
           <div>
             <span class="special-kicker">${e(p.title)}</span>
-            <h2>${e(p.title)}</h2>
           </div>
-          <span class="special-badge">${e(p.badge)}</span>
-        </div>
+          <div class="special-example-summary-side">
+            <span class="special-badge">${e(p.badge)}</span>
+            <span class="special-example-chevron" aria-hidden="true">⌄</span>
+          </div>
+        </summary>
         <div class="special-example-grid">
+          ${key === "degrade" ? `
+          <div class="special-example-visual degrade special-example-real">
+            <div class="special-mini">
+              <span class="special-mini-label">ANTES</span>
+              <div class="special-mini-real"><img src="/assets/textoff/degrade_antes.png" alt="Exemplo real antes do Patch Degradê"></div>
+            </div>
+            <span class="special-arrow">→</span>
+            <div class="special-mini">
+              <span class="special-mini-label">DEPOIS</span>
+              <div class="special-mini-real"><img src="/assets/textoff/degrade_depois.png" alt="Exemplo real depois do Patch Degradê"></div>
+            </div>
+          </div>` : `
           <div class="special-example-visual ${e(p.exampleClass)}">
             <div class="special-mini">
               <span class="special-mini-label">ANTES</span>
@@ -84,14 +98,14 @@
               <span class="special-mini-label">DEPOIS</span>
               <div class="special-mini-scene clean"><i></i></div>
             </div>
-          </div>
+          </div>`}
           <div class="special-example-copy">
             <b>Quando usar</b>
             <p>${e(p.description)}</p>
             <small>${e(p.pipeline)}</small>
           </div>
         </div>
-      </div>`;
+      </details>`;
   }
 
   function updatePatch() {
@@ -348,27 +362,28 @@
     root.innerHTML = `
       ${head("Tratamentos especiais","Aplique tratamentos específicos quando o Texto Off convencional não produzir o resultado esperado.")}
       <section class="special-card">
-        <div class="special-field">
-          <label for="specialPatch">Tipo de tratamento</label>
-          <select id="specialPatch">
-            <option value="degrade">Patch Degradê</option>
-            <option value="estilizado">Patch Balão Estilizado</option>
-            <option value="transparente">Patch Balão Transparente</option>
-            <option value="gradiente_suave">Gradiente Suave</option>
-          </select>
+        <div class="special-input-grid">
+          <div class="special-field">
+            <label for="specialPatch">Tipo de tratamento</label>
+            <select id="specialPatch">
+              <option value="degrade">Patch Degradê</option>
+              <option value="estilizado">Patch Balão Estilizado</option>
+              <option value="transparente">Patch Balão Transparente</option>
+              <option value="gradiente_suave">Gradiente Suave</option>
+            </select>
+          </div>
+          <div class="special-field">
+            <label>Imagem</label>
+            <div class="special-file-row">
+              <input id="specialFileName" placeholder="Nenhuma imagem selecionada" readonly>
+              <button id="specialChoose" class="btn" type="button">Escolher</button>
+              <input id="specialFileInput" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden>
+            </div>
+            <small>Selecione uma imagem PNG, JPG, JPEG ou WEBP diretamente do computador.</small>
+          </div>
         </div>
 
         <div id="specialExample">${exampleHtml("degrade")}</div>
-
-        <div class="special-field">
-          <label>Imagem</label>
-          <div class="special-file-row">
-            <input id="specialFileName" placeholder="Nenhuma imagem selecionada" readonly>
-            <button id="specialChoose" class="btn" type="button">Escolher</button>
-            <input id="specialFileInput" type="file" accept=".png,.jpg,.jpeg,.webp,image/png,image/jpeg,image/webp" hidden>
-          </div>
-          <small>Selecione uma imagem PNG, JPG, JPEG ou WEBP diretamente do computador.</small>
-        </div>
 
         <div id="specialPreview" class="special-preview">
           <div class="special-empty">Nenhuma imagem selecionada</div>

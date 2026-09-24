@@ -5,3 +5,33 @@
 .special-roi-box>span{position:absolute;left:-2px;top:-22px;min-width:20px;height:20px;padding:0 5px;display:grid;place-items:center;border-radius:6px 6px 0 0;background:#1688b5;color:#fff;font-size:11px;font-weight:900;box-sizing:border-box}
 .special-roi-remove{position:absolute;z-index:4;transform:translate(-50%,-50%);width:22px;height:22px;border:2px solid #fff;border-radius:50%;background:#1688b5;color:#fff;font-size:16px;font-weight:900;display:grid;place-items:center;cursor:pointer}
 .special-roi-draft{border-style:dashed}
+
+/* TEXT OFF · TRATAMENTOS ESPECIAIS · EXEMPLO REAL DEGRADÊ */
+.special-example-real .special-mini-real {
+  width: 100%;
+  min-height: 118px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #fff;
+}
+.special-example-real .special-mini-real img {
+  display: block;
+  width: 100%;
+  height: 118px;
+  object-fit: contain;
+}
+
+/* TEXT OFF · TRATAMENTOS ESPECIAIS · LAYOUT COMPACTO V1 */
+.special-input-grid{display:grid;grid-template-columns:minmax(260px,.85fr) minmax(420px,1.15fr);gap:18px;align-items:start}
+.special-input-grid .special-field select{width:100%}
+.special-example-card{padding:0;overflow:hidden}
+.special-example-card>summary{list-style:none;cursor:pointer;padding:16px 18px;user-select:none}
+.special-example-card>summary::-webkit-details-marker{display:none}
+.special-example-summary-side{display:flex;align-items:center;gap:10px}
+.special-example-chevron{color:var(--color-text-secondary,#188ab4);font-size:20px;font-weight:900;line-height:1;transition:transform .18s ease}
+.special-example-card[open] .special-example-chevron{transform:rotate(180deg)}
+.special-example-card .special-example-grid{margin:0;padding:0 18px 18px}
+@media(max-width:860px){.special-input-grid{grid-template-columns:1fr}}
