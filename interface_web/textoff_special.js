@@ -83,16 +83,18 @@
           </div>
         </summary>
         <div class="special-example-grid">
-          ${["degrade","estilizado","transparente","transparente_legacy"].includes(key) ? `
+          ${["degrade","estilizado","transparente","transparente_legacy","gradiente_suave"].includes(key) ? `
           <div class="special-example-visual ${e(p.exampleClass)} special-example-real">
             <div class="special-mini">
               <span class="special-mini-label">ANTES</span>
-              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_antes.png" : key === "estilizado" ? "estilizado_antes.png" : "transparente_antes.png"}" alt="Exemplo real antes do ${e(p.title)}"></div>
+              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_antes.png" : key === "estilizado" ? "estilizado_antes.png" : key === "gradiente_suave" ? "gradiente_suave_antes.png"
+              : "transparente_antes.png"}" alt="Exemplo real antes do ${e(p.title)}"></div>
             </div>
             <span class="special-arrow">→</span>
             <div class="special-mini">
               <span class="special-mini-label">DEPOIS</span>
-              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_depois.png" : key === "estilizado" ? "estilizado_depois.png" : "transparente_depois.png"}" alt="Exemplo real depois do ${e(p.title)}"></div>
+              <div class="special-mini-real"><img src="/assets/textoff/${key === "degrade" ? "degrade_depois.png" : key === "estilizado" ? "estilizado_depois.png" : key === "gradiente_suave" ? "gradiente_suave_depois.png"
+              : "transparente_depois.png"}" alt="Exemplo real depois do ${e(p.title)}"></div>
             </div>
           </div>` : `
           <div class="special-example-visual ${e(p.exampleClass)}">
