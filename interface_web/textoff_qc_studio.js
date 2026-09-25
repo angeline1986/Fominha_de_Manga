@@ -27,11 +27,11 @@
 
   function render(model){
     if(!model || model.empty){
-      return `<section class="toc-qc-studio"><header class="toc-qc-studio-toolbar"><div class="toc-qc-zone toc-qc-zone-left"><button class="btn" type="button" onclick="TextOffCompareUI.backToHub()">← Capítulos</button></div></header><div class="toc-empty">Este capítulo não possui páginas para comparar.</div></section>`;
+      return `<section class="toc-qc-studio"><header class="toc-qc-studio-toolbar"><div class="toc-qc-zone toc-qc-zone-left"><button class="btn" type="button" onclick="TextOffCompareUI.backToHub()">← Cap.</button></div></header><div class="toc-empty">Este capítulo não possui páginas para comparar.</div></section>`;
     }
     const item=model.items[model.selectedPage];
     const pages=model.items.map((x,i)=>`<button type="button" class="toc-qc-page ${i===model.selectedPage?"active":""}" data-page-name="${esc(String(x.source_file).toLowerCase())}" onclick="TextOffCompareUI.selectImage(${i})" onmouseenter="TextOffCompareUI.showThumb(event,${i})" onmouseleave="TextOffCompareUI.hideThumb()"><span>${esc(x.source_file)}</span><b>${i+1}</b></button>`).join("");
-    return `<section class="toc-qc-studio"><header class="toc-qc-studio-toolbar"><div class="toc-qc-zone toc-qc-zone-left"><button class="btn" type="button" onclick="TextOffCompareUI.backToHub()">← Capítulos</button><div class="toc-qc-breadcrumb">${esc(model.manga)} › ${esc(model.chapter)} › ${esc(item.source_file)}</div></div><div class="toc-qc-zone toc-qc-zone-center"><div class="toc-qc-mode"><button class="tab ${model.studioMode==="single"?"active":""}" onclick="TextOffCompareUI.setStudioMode('single')">◐ Visão única</button><button class="tab ${model.studioMode==="side"?"active":""}" onclick="TextOffCompareUI.setStudioMode('side')">◫ Lado a lado</button></div>${zoomControls(model)}</div><div class="toc-qc-zone toc-qc-zone-right"><button class="btn toc-correction-btn ${model.flagged?"is-flagged":""}" type="button" onclick="TextOffCompareUI.flagCorrection()" ${model.flagged||model.flagging?"disabled":""}>${model.flagged?"✓ Correção sinalizada":(model.flagging?"Sinalizando…":"🚩 Sinalizar correção")}</button></div></header><div class="toc-qc-workspace"><aside id="tocQcSidebar" class="toc-qc-sidebar"><div class="toc-qc-sidebar-head"><strong>${esc(model.chapter)}</strong><span>${model.items.length} páginas</span></div><div class="toc-qc-sidebar-search"><input class="search" placeholder="Buscar página..." value="${esc(model.pageQuery)}" oninput="TextOffCompareUI.filterStudioPages(this.value)"></div><div class="toc-qc-pages">${pages}</div></aside><main class="toc-qc-canvas">${canvas(model)}</main></div><footer class="toc-qc-pager"><button class="btn" onclick="TextOffCompareUI.moveImage(-1)" ${model.selectedPage<=0?"disabled":""}>◀ Anterior</button><strong>${model.selectedPage+1} / ${model.items.length}</strong><button class="btn" onclick="TextOffCompareUI.moveImage(1)" ${model.selectedPage>=model.items.length-1?"disabled":""}>Próxima ▶</button></footer><div id="compareThumbPopover" class="toc-qc-thumb" hidden><strong id="compareThumbTitle"></strong><span class="toc-qc-thumb-count"></span><div class="toc-qc-thumb-state">Carregando prévia…</div><img alt="Prévia da página" hidden></div></section>`;
+    return `<section class="toc-qc-studio"><header class="toc-qc-studio-toolbar"><div class="toc-qc-zone toc-qc-zone-left"><button class="btn" type="button" onclick="TextOffCompareUI.backToHub()">← Cap.</button><div class="toc-qc-breadcrumb">${esc(model.manga)} › ${esc(model.chapter)} › ${esc(item.source_file)}</div></div><div class="toc-qc-zone toc-qc-zone-center"><div class="toc-qc-mode"><button class="tab ${model.studioMode==="single"?"active":""}" onclick="TextOffCompareUI.setStudioMode('single')">◐ Visão única</button><button class="tab ${model.studioMode==="side"?"active":""}" onclick="TextOffCompareUI.setStudioMode('side')">◫ Lado a lado</button></div>${zoomControls(model)}</div><div class="toc-qc-zone toc-qc-zone-right"><button class="btn toc-correction-btn ${model.flagged?"is-flagged":""}" type="button" onclick="TextOffCompareUI.flagCorrection()" ${model.flagged||model.flagging?"disabled":""}>${model.flagged?"✓ Correção sinalizada":(model.flagging?"Sinalizando…":"🚩 Sinalizar correção")}</button></div></header><div class="toc-qc-workspace"><aside id="tocQcSidebar" class="toc-qc-sidebar"><div class="toc-qc-sidebar-head"><strong>${esc(model.chapter)}</strong><span>${model.items.length} páginas</span></div><div class="toc-qc-sidebar-search"><input class="search" placeholder="Buscar página..." value="${esc(model.pageQuery)}" oninput="TextOffCompareUI.filterStudioPages(this.value)"></div><div class="toc-qc-pages">${pages}</div></aside><main class="toc-qc-canvas">${canvas(model)}</main></div><footer class="toc-qc-pager"><button class="btn" onclick="TextOffCompareUI.moveImage(-1)" ${model.selectedPage<=0?"disabled":""}>◀ Anterior</button><strong>${model.selectedPage+1} / ${model.items.length}</strong><button class="btn" onclick="TextOffCompareUI.moveImage(1)" ${model.selectedPage>=model.items.length-1?"disabled":""}>Próxima ▶</button></footer><div id="compareThumbPopover" class="toc-qc-thumb" hidden><strong id="compareThumbTitle"></strong><span class="toc-qc-thumb-count"></span><div class="toc-qc-thumb-state">Carregando prévia…</div><img alt="Prévia da página" hidden></div></section>`;
   }
 
   function setImageState(img, stateName){
@@ -94,7 +94,36 @@
     if(sliderStage&&board){
       let dragging=false;
       let pointerId=null;
+      const SLIDER_CURSOR_HITBOX=18;
+      const isNearSliderDivider=e=>{
+        const board=document.querySelector(
+          "#textOffCompareBody .toc-qc-compare-board"
+        );
+        if(!board)return false;
+
+        const rect=board.getBoundingClientRect();
+        const dividerX=rect.left+(rect.width*(model.sliderPos/100));
+
+        return (
+          e.clientY>=rect.top &&
+          e.clientY<=rect.bottom &&
+          Math.abs(e.clientX-dividerX)<=SLIDER_CURSOR_HITBOX
+        );
+      };
+
+      const updateSliderCursor=e=>{
+        sliderStage.style.cursor=
+          isNearSliderDivider(e) ? "ew-resize" : "auto";
+      };
+
+      sliderStage.addEventListener("pointermove",updateSliderCursor);
+      sliderStage.addEventListener("pointerleave",()=>{
+        if(!sliderDragging)sliderStage.style.cursor="auto";
+      });
+
       sliderStage.addEventListener("pointerdown",e=>{
+        if(!isNearSliderDivider(e))return;
+        sliderStage.style.cursor="ew-resize";
         dragging=true;
         pointerId=e.pointerId;
         sliderStage.setPointerCapture?.(e.pointerId);
@@ -109,6 +138,7 @@
         if(!dragging||e.pointerId!==pointerId)return;
         dragging=false;
         if(sliderStage.hasPointerCapture?.(e.pointerId)) sliderStage.releasePointerCapture?.(e.pointerId);
+        sliderStage.style.cursor=isNearSliderDivider(e)?"ew-resize":"auto";
         pointerId=null;
       };
       sliderStage.addEventListener("pointerup",stopSliderDrag);

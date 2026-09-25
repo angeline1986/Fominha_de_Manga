@@ -18,3 +18,17 @@ body.textoff-focus-mode.textoff-focus-compare #textOffCompareBody .toc-qc-studio
 @media(max-width:900px){.toc-qc-studio{height:auto;min-height:0}.toc-qc-studio-toolbar{grid-template-columns:minmax(0,1fr);grid-template-areas:"left" "center" "right";align-items:start}.toc-qc-zone-center,.toc-qc-zone-right{justify-content:flex-start}.toc-qc-workspace{display:flex;flex-direction:column}.toc-qc-sidebar{width:100%;flex:0 0 auto;max-height:190px;border-right:0;border-bottom:1px solid var(--border)}.toc-qc-side{grid-template-columns:1fr}.toc-qc-thumb{display:none!important}}
 .toc-qc-slider img,.toc-qc-compare-board img{-webkit-user-drag:none;user-select:none}
 .toc-qc-slider-divider span,#tocQcSliderHandle{position:absolute;left:50%;transform:translate(-50%,-50%);width:32px;height:32px;border-radius:50%;background:var(--color-text-secondary,#188ab4);border:3px solid #fff;color:#fff;display:grid;place-items:center;font-size:13px;line-height:1;box-shadow:0 4px 10px rgba(0,0,0,.22);user-select:none}
+
+/* QC Studio 3.2.7 · acabamento */
+.toc-qc-zone-left > .btn{
+  white-space:nowrap;
+  flex:0 0 auto;
+}
+
+/*
+ * O slider continua sendo o Single Owner da interação.
+ * O cursor é controlado pelo JS somente na zona da régua/handle.
+ */
+#tocQcSlider{
+  cursor:auto;
+}

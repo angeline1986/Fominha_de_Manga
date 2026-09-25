@@ -216,3 +216,27 @@ body:not(.textoff-focus-mode) .toc-level3-action-buttons .btn{margin:0}
 /* QC Studio geometry moved to textoff_qc_studio.css (3.2.3 modular). */
 @media(max-width:1100px){.toc-qc-filtergroup{white-space:normal}}
 /* === /TEXT OFF · HUB QC ⇄ QC STUDIO · 3.2.3 MODULAR === */
+
+/* QC Hub 3.2.6 · distribuição das colunas */
+.toc-qc-table{
+  width:100%;
+  table-layout:fixed;
+}
+
+.toc-qc-table th:nth-child(1),
+.toc-qc-table td:nth-child(1){width:13%;}
+
+.toc-qc-table th:nth-child(2),
+.toc-qc-table td:nth-child(2){width:15%;}
+
+.toc-qc-table th:nth-child(3),
+.toc-qc-table td:nth-child(3){width:12%;}
+
+.toc-qc-table th:nth-child(4),
+.toc-qc-table td:nth-child(4){width:22%;}
+
+.toc-qc-table th:nth-child(5),
+.toc-qc-table td:nth-child(5){width:23%;}
+
+.toc-qc-table th:nth-child(6),
+.toc-qc-table td:nth-child(6){width:15%;}
