@@ -14,7 +14,7 @@
   }
   /* === TEXT OFF · HUB QC ⇄ QC STUDIO · 3.2.1 === */
   /* === TEXT OFF · HUB QC ⇄ QC STUDIO · 3.2.2 VISUAL === */
-  let qcStatusFilter="all",studioMode="single",sliderPos=50,pageQuery="",studioKeyBound=false,thumbTimer=null;
+  let qcStatusFilter="all",studioMode="single",sliderPos=50,pageQuery="";
 
   function baseFilteredRows(){
     let rows=Array.isArray(state?.rows)?state.rows:[];
@@ -52,19 +52,26 @@
     return `<section class="toc-qc-hub"><div class="toc-qc-title"><h1>Comparar resultados</h1><span class="toc-qc-manga">📖 ${escLocal(data?.manga||"")}</span></div>${hero}<div class="toc-qc-filterbar"><input class="search" placeholder="Buscar capítulo..." value="${escLocal(query)}" oninput="TextOffCompareUI.setQuery(this.value)"><div class="toc-qc-filtergroup"><span>Fonte:</span><button class="tab ${sourceFilter==="all"?"active":""}" onclick="TextOffCompareUI.setSource('all')">Todas</button><button class="tab ${sourceFilter==="original"?"active":""}" onclick="TextOffCompareUI.setSource('original')">Original</button><button class="tab ${sourceFilter==="merged"?"active":""}" onclick="TextOffCompareUI.setSource('merged')">Merged</button></div><div class="toc-qc-filtergroup"><span>Status:</span><button class="tab ${qcStatusFilter==="all"?"active":""}" onclick="TextOffCompareUI.setQcStatus('all')">Todos</button><button class="tab ${qcStatusFilter==="pending"?"active":""}" onclick="TextOffCompareUI.setQcStatus('pending')">🚩 Com pendências (${pendingCount})</button><button class="tab ${qcStatusFilter==="waiting"?"active":""}" onclick="TextOffCompareUI.setQcStatus('waiting')">⏳ Aguardando (${waitingCount})</button></div></div><div class="panel toc-qc-table-panel"><table class="toc-table toc-qc-table"><thead><tr><th>CAP.</th><th>FONTE</th><th>PÁGINAS</th><th>PROCESSADO EM</th><th>STATUS QC</th><th>AÇÃO</th></tr></thead><tbody>${rows||'<tr><td colspan="6" class="toc-empty">Nenhum resultado encontrado para os filtros atuais.</td></tr>'}</tbody></table>${pager}</div></section>`;
   }
 
-  function studioZoomControls(){return `<span class="bal-zoom-control toc-qc-zoom"><button type="button" class="bal-zoom-action" onclick="TextOffCompareUI.changeZoom(-10)" ${zoom<=30?"disabled":""}>−</button><b id="tocCompareZoomValue" class="bal-zoom-value">${zoom}%</b><button type="button" class="bal-zoom-action" onclick="TextOffCompareUI.changeZoom(10)" ${zoom>=200?"disabled":""}>+</button><button type="button" class="bal-zoom-reset" onclick="TextOffCompareUI.resetZoom()" ${zoom===100?"disabled":""}>↺</button></span>`}
-  function studioSection(){
-    const row=currentRow(); if(!row)return hubSection();
+  function studioModel(){
+    const row=currentRow(); if(!row)return null;
     const items=Array.isArray(row.items)?row.items:[];
-    if(!items.length)return `<section class="toc-qc-studio"><button class="btn" onclick="TextOffCompareUI.backToHub()">← Capítulos</button><div class="toc-empty">Este capítulo não possui páginas para comparar.</div></section>`;
+    if(!items.length)return {empty:true};
     selectedPage=Math.max(0,Math.min(selectedPage<0?0:selectedPage,items.length-1));
-    const item=items[selectedPage]; const flagged=item?.level3_status==="PENDENTE_NIVEL3";
-    const pageButtons=items.map((x,i)=>`<button type="button" class="toc-qc-page ${i===selectedPage?"active":""}" data-page-name="${escLocal(String(x.source_file).toLowerCase())}" onclick="TextOffCompareUI.selectImage(${i})" onmouseenter="TextOffCompareUI.showThumb(event,${i})" onmouseleave="TextOffCompareUI.hideThumb()"><span>${escLocal(x.source_file)}</span><b>${i+1}</b></button>`).join("");
-    const original=mediaUrl("textoff_source",row,item.source_file), clean=mediaUrl("textoff_clean",row,item.clean_file);
-    const canvas=studioMode==="side"?`<div class="toc-qc-side"><figure><figcaption>ORIGINAL</figcaption><div class="toc-qc-image-scroll"><div class="toc-qc-image-shell is-loading"><span class="toc-qc-image-state">Carregando imagem…</span><img class="toc-qc-scale-img" src="${original}" alt="Original · ${escLocal(item.source_file)}"></div></div></figure><figure><figcaption>TEXTO OFF</figcaption><div class="toc-qc-image-scroll"><div class="toc-qc-image-shell is-loading"><span class="toc-qc-image-state">Carregando imagem…</span><img class="toc-qc-scale-img" src="${clean}" alt="Texto Off · ${escLocal(item.clean_file)}"></div></div></figure></div>`:`<div id="tocQcSlider" class="toc-qc-slider" style="--toc-slider:${sliderPos}%"><div class="toc-qc-slider-stage"><div class="toc-qc-image-shell is-loading"><span class="toc-qc-image-state">Carregando imagem…</span><img id="tocQcClean" class="toc-qc-scale-img" src="${clean}" alt="Texto Off · ${escLocal(item.clean_file)}"></div><div class="toc-qc-slider-overlay"><div class="toc-qc-image-shell is-loading"><span class="toc-qc-image-state">Carregando imagem…</span><img id="tocQcOriginal" class="toc-qc-scale-img" src="${original}" alt="Original · ${escLocal(item.source_file)}"></div></div><div class="toc-qc-slider-divider"><span>⇄</span></div></div></div>`;
-    return `<section class="toc-qc-studio"><header class="toc-qc-studio-toolbar"><div class="toc-qc-zone toc-qc-zone-left"><button class="btn" type="button" onclick="TextOffCompareUI.backToHub()">← Capítulos</button><div class="toc-qc-breadcrumb">${escLocal(data?.manga||"")} › ${chapterLabel(row)} › ${escLocal(item.source_file)}</div></div><div class="toc-qc-zone toc-qc-zone-center"><div class="toc-qc-mode"><button class="tab ${studioMode==="single"?"active":""}" onclick="TextOffCompareUI.setStudioMode('single')">◐ Visão única</button><button class="tab ${studioMode==="side"?"active":""}" onclick="TextOffCompareUI.setStudioMode('side')">◫ Lado a lado</button></div>${studioZoomControls()}</div><div class="toc-qc-zone toc-qc-zone-right"><button class="btn toc-correction-btn ${flagged?"is-flagged":""}" type="button" onclick="TextOffCompareUI.flagCorrection()" ${flagged||flagging?"disabled":""}>${flagged?"✓ Correção sinalizada":(flagging?"Sinalizando…":"🚩 Sinalizar correção")}</button></div></header><div class="toc-qc-workspace"><aside id="tocQcSidebar" class="toc-qc-sidebar"><div class="toc-qc-sidebar-head"><strong>${chapterLabel(row)}</strong><span>${items.length} páginas</span></div><input class="search" placeholder="Buscar página..." value="${escLocal(pageQuery)}" oninput="TextOffCompareUI.filterStudioPages(this.value)"><div class="toc-qc-pages">${pageButtons}</div></aside><main class="toc-qc-canvas">${canvas}</main></div><footer class="toc-qc-pager"><button class="btn" onclick="TextOffCompareUI.moveImage(-1)" ${selectedPage<=0?"disabled":""}>◀ Anterior</button><strong>${selectedPage+1} / ${items.length}</strong><button class="btn" onclick="TextOffCompareUI.moveImage(1)" ${selectedPage>=items.length-1?"disabled":""}>Próxima ▶</button></footer><div id="compareThumbPopover" class="toc-qc-thumb" hidden><strong id="compareThumbTitle"></strong><span class="toc-qc-thumb-count"></span><div class="toc-qc-thumb-state">Carregando prévia…</div><img alt="Prévia da página" hidden></div></section>`;
+    const item=items[selectedPage];
+    return {
+      manga:data?.manga||"", chapter:chapterLabel(row), items, selectedPage, zoom, studioMode, sliderPos, pageQuery,
+      flagged:item?.level3_status==="PENDENTE_NIVEL3", flagging,
+      originalUrl:mediaUrl("textoff_source",row,item.source_file), cleanUrl:mediaUrl("textoff_clean",row,item.clean_file),
+      sourceFile:item.source_file, cleanFile:item.clean_file,
+      thumbUrl:index=>{const x=items[index];return x?mediaUrl("textoff_source",row,x.source_file):""}
+    };
   }
-
+  function studioSection(){
+    const model=studioModel();
+    if(!model)return hubSection();
+    if(!window.TextOffQcStudio?.render)return `<section class="toc-qc-studio"><div class="toc-empty">Módulo QC Studio indisponível.</div></section>`;
+    return window.TextOffQcStudio.render(model);
+  }
   function renderBody(){const host=document.querySelector("#textOffCompareBody");if(!host)return;hideThumb();host.innerHTML=currentRow()?studioSection():hubSection();if(currentRow())bindStudioEvents();}
   async function load(){try{state=await api(`/api/textoff-compare?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&_=${Date.now()}`);renderBody()}catch(e){toast(e.message||"Não foi possível carregar os resultados do Texto Off.")}}
   function render(root){root.innerHTML=`<div id="textOffCompareBody"><div class="muted">Carregando resultados do Texto Off…</div></div>`;state=null;sourceFilter="all";qcStatusFilter="all";query="";pageQuery="";pageIndex=1;selectedKey=null;selectedPage=-1;zoom=100;studioMode="single";sliderPos=50;load()}
@@ -72,7 +79,7 @@
   function backToHub(){hideThumb();selectedKey=null;selectedPage=-1;pageQuery="";zoom=100;studioMode="single";sliderPos=50;renderBody()}
   function selectImage(index){const items=Array.isArray(currentRow()?.items)?currentRow().items:[];if(!items.length)return;hideThumb();selectedPage=Math.max(0,Math.min(Number(index)||0,items.length-1));sliderPos=50;renderBody()}
   function moveImage(delta){const items=Array.isArray(currentRow()?.items)?currentRow().items:[];if(!items.length)return;hideThumb();selectedPage=Math.max(0,Math.min(items.length-1,selectedPage+Number(delta||0)));sliderPos=50;renderBody()}
-  function updateCompareZoomUi(){document.querySelectorAll(".toc-qc-scale-img").forEach(img=>applyStudioImageScale(img));const value=document.querySelector("#tocCompareZoomValue");if(value)value.textContent=`${zoom}%`;}
+  function updateCompareZoomUi(){window.TextOffQcStudio?.applyZoom?.(zoom);const value=document.querySelector("#tocCompareZoomValue");if(value)value.textContent=`${zoom}%`;}
   function changeZoom(delta){zoom=Math.max(30,Math.min(200,zoom+Number(delta||0)));updateCompareZoomUi()}
   function resetZoom(){zoom=100;updateCompareZoomUi()}
   function setQuery(value){query=String(value||"");pageIndex=1;renderBody()}
@@ -80,18 +87,12 @@
   function setQcStatus(value){qcStatusFilter=String(value||"all");pageIndex=1;renderBody()}
   function changePage(delta){pageIndex=Math.max(1,pageIndex+Number(delta||0));renderBody()}
   function setStudioMode(value){hideThumb();studioMode=value==="side"?"side":"single";renderBody()}
-  function filterStudioPages(value){pageQuery=String(value||"").trim().toLowerCase();document.querySelectorAll(".toc-qc-page").forEach(btn=>{btn.hidden=pageQuery&&!String(btn.dataset.pageName||"").includes(pageQuery)})}
-  function setImageState(img,stateName){if(!img)return;const shell=img.closest(".toc-qc-image-shell")||img.parentElement;shell?.classList.remove("is-loading","is-ready","is-error");shell?.classList.add(`is-${stateName}`);const msg=shell?.querySelector(".toc-qc-image-state");if(msg)msg.textContent=stateName==="error"?"Não foi possível carregar esta imagem.":stateName==="loading"?"Carregando imagem…":"";}
-  function applyStudioImageScale(img){if(!img)return;const apply=()=>{if(img.naturalWidth){img.style.width=`${Math.round(img.naturalWidth*zoom/100)}px`;img.style.maxWidth="none";img.style.height="auto";}setImageState(img,"ready")};const fail=()=>setImageState(img,"error");setImageState(img,"loading");img.addEventListener("load",apply,{once:true});img.addEventListener("error",fail,{once:true});if(img.complete){if(img.naturalWidth)apply();else fail();}}
-  function setSliderFromPointer(ev){const slider=document.querySelector("#tocQcSlider");if(!slider)return;const r=slider.getBoundingClientRect();sliderPos=Math.max(0,Math.min(100,(ev.clientX-r.left)/Math.max(1,r.width)*100));slider.style.setProperty("--toc-slider",`${sliderPos}%`)}
-  function bindStudioEvents(){
-    document.querySelectorAll(".toc-qc-scale-img").forEach(applyStudioImageScale);filterStudioPages(pageQuery);
-    const slider=document.querySelector("#tocQcSlider");if(slider){let dragging=false;slider.addEventListener("pointerdown",e=>{dragging=true;slider.setPointerCapture?.(e.pointerId);setSliderFromPointer(e)});slider.addEventListener("pointermove",e=>{if(dragging)setSliderFromPointer(e)});slider.addEventListener("pointerup",()=>dragging=false);slider.addEventListener("pointercancel",()=>dragging=false)}
-    if(!studioKeyBound){studioKeyBound=true;document.addEventListener("keydown",e=>{if(!currentRow()||e.metaKey||e.ctrlKey||e.altKey)return;const tag=document.activeElement?.tagName;if(tag==="INPUT"||tag==="TEXTAREA")return;if(e.key==="ArrowLeft"){e.preventDefault();hideThumb();moveImage(-1)}else if(e.key==="ArrowRight"){e.preventDefault();hideThumb();moveImage(1)}})}
-  }
-  function showThumb(ev,index){clearTimeout(thumbTimer);const btn=ev.currentTarget;thumbTimer=setTimeout(()=>{const row=currentRow(),items=Array.isArray(row?.items)?row.items:[],item=items[index],pop=document.querySelector("#compareThumbPopover"),sidebar=document.querySelector("#tocQcSidebar");if(!row||!item||!pop||!sidebar||!btn?.isConnected)return;const br=btn.getBoundingClientRect(),sr=sidebar.getBoundingClientRect();pop.querySelector("strong").textContent=item.source_file;pop.querySelector(".toc-qc-thumb-count").textContent=`${index+1}/${items.length}`;const img=pop.querySelector("img"),stateEl=pop.querySelector(".toc-qc-thumb-state");img.removeAttribute("src");img.hidden=true;stateEl.textContent="Carregando prévia…";pop.style.left=`${sr.right+12}px`;pop.style.top=`${Math.max(12,Math.min(br.top-20,window.innerHeight-460))}px`;pop.hidden=false;img.onload=()=>{stateEl.textContent="";img.hidden=false};img.onerror=()=>{img.hidden=true;stateEl.textContent="Prévia indisponível."};img.src=mediaUrl("textoff_source",row,item.source_file);},100);}
-  function hideThumb(){clearTimeout(thumbTimer);thumbTimer=null;const pop=document.querySelector("#compareThumbPopover");if(pop){pop.hidden=true;const img=pop.querySelector("img");if(img){img.onload=null;img.onerror=null;img.removeAttribute("src")}}}
-  /* === /TEXT OFF · HUB QC ⇄ QC STUDIO · 3.2.1 === */
+  function filterStudioPages(value){pageQuery=String(value||"").trim().toLowerCase();window.TextOffQcStudio?.filterPages?.(pageQuery)}
+  function setSliderPosition(value){sliderPos=Math.max(0,Math.min(100,Number(value)||0));return sliderPos}
+  function bindStudioEvents(){window.TextOffQcStudio?.bind?.(studioModel(),{onSliderPosition:setSliderPosition,moveImage})}
+  function showThumb(ev,index){window.TextOffQcStudio?.showThumb?.(ev,index,studioModel())}
+  function hideThumb(){window.TextOffQcStudio?.hideThumb?.()}
+  /* === /TEXT OFF · HUB QC ⇄ QC STUDIO · 3.2.3 MODULAR === */
 
   const level3Current=()=>level3State?.rows?.find(x=>String(x.key)===String(level3SelectedKey))||null;
   function level3MediaUrl(kind,row,file){return `/media?provider=${encodeURIComponent(data.provider)}&manga=${encodeURIComponent(data.manga)}&kind=${encodeURIComponent(kind)}&source=${encodeURIComponent(row.source_stage)}&chapter=${encodeURIComponent(row.chapter)}&file=${encodeURIComponent(file)}`;}
