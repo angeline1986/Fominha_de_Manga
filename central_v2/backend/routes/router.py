@@ -7,6 +7,7 @@ from config.data_paths import OUTPUT_ROOT
 from central_v2.backend.routes.catalog import catalog_response
 from central_v2.backend.routes.health import health_response
 from central_v2.backend.routes.state import state_response
+from central_v2.backend.routes.static import static_response
 
 
 @dataclass(frozen=True)
@@ -68,6 +69,15 @@ def dispatch_get(
         return RouteResponse(
             status=200,
             body=body,
+        )
+
+    static = static_response(request.path)
+
+    if static is not None:
+        return RouteResponse(
+            status=200,
+            body=static.body,
+            content_type=static.content_type,
         )
 
     return None
