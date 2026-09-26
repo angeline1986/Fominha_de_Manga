@@ -214,22 +214,27 @@ Devem permanecer protegidos:
 
 ### GAP-TEST-AM45
 
-Foi identificada lacuna real de cobertura:
+A lacuna original de caracterização algorítmica dos Níveis IV/V foi
+reduzida:
 
--   Nível IV não possui caracterização dedicada proporcional à
-    criticidade;
--   Nível V possui apenas referências incidentais, não caracterização
-    suficiente.
+-   Nível IV possui caracterização algorítmica dedicada: **8/8 OK**;
+-   Nível V possui caracterização algorítmica dedicada: **9/9 OK**;
+-   a baseline relacionada foi reexecutada sem nova regressão atribuída
+    às caracterizações;
+-   permanece pendente a caracterização dedicada da
+    **autoridade/integração IV → V → MERGE/Review**, incluindo
+    predecessor, manifests, SHA, recomposição residual e promoção/rota
+    final.
 
 ### Gate obrigatório
 
 Antes de refatorar qualquer código que possa afetar IV/V:
 
 ``` text
-[ ] caracterização dedicada do Auto-Merge IV
-[ ] caracterização dedicada do Auto-Merge V
-[ ] testes de autoridade/manifests/SHA/residual aplicáveis
-[ ] baseline relacionada reexecutada
+[x] caracterização algorítmica dedicada do Auto-Merge IV — 8/8
+[x] caracterização algorítmica dedicada do Auto-Merge V — 9/9
+[ ] caracterização de autoridade/integração IV → V → MERGE/Review
+[x] baseline relacionada reexecutada
 ```
 
 ## 3.5 Dívida documental do Nível V
@@ -319,7 +324,7 @@ A Fase 0 somente termina quando:
 [x] baseline de testes registrada
 [x] reds preexistentes classificados
 [x] contratos Auto-Merge I–V identificados
-[ ] GAP-TEST-AM45 coberto
+[~] GAP-TEST-AM45 parcialmente coberto — algoritmos IV/V protegidos; autoridade/integração pendente
 [ ] inventário estrutural formalizado
 [ ] catálogo de fluxos críticos formalizado
 [ ] smoke baseline mínimo registrado
@@ -751,7 +756,7 @@ A refatoração termina quando:
 
 ------------------------------------------------------------------------
 
-# 15. Estado atual do plano --- 2026-09-25
+# 15. Estado atual do plano --- 2026-09-26
 
 ``` text
 FASE 0 — BASELINE E PROTEÇÃO
@@ -761,8 +766,9 @@ FASE 0 — BASELINE E PROTEÇÃO
   [x] baseline de testes
   [x] classificação dos reds
   [x] contratos críticos I–V identificados
-  [ ] caracterização dedicada IV
-  [ ] caracterização dedicada V
+  [x] caracterização algorítmica dedicada IV — 8/8
+  [x] caracterização algorítmica dedicada V — 9/9
+  [ ] autoridade/integração IV → V → MERGE/Review
   [ ] inventário estrutural formal
   [ ] catálogo de fluxos críticos
   [ ] smoke baseline mínimo
@@ -788,14 +794,13 @@ O próximo trabalho **não é refatorar `processing_web.py`**.
 A prioridade imediata é fechar o gate de proteção do Auto-Merge:
 
 ``` text
-1. caracterizar Auto-Merge IV;
-2. validar;
-3. caracterizar Auto-Merge V;
-4. validar;
-5. formalizar inventário estrutural;
-6. catalogar fluxos/smokes;
-7. fechar Fase 0;
-8. somente então iniciar Fase 1.
+1. caracterizar autoridade/integração IV → V → MERGE/Review;
+2. validar a caracterização e reexecutar baseline relacionada;
+3. formalizar inventário estrutural;
+4. concluir catálogo de fluxos/smokes;
+5. consolidar riscos/lacunas e documentação da Fase 0;
+6. fechar Fase 0;
+7. somente então iniciar oficialmente a Fase 1.
 ```
 
 A execução continua incremental: **uma ação por vez**, com evidência
