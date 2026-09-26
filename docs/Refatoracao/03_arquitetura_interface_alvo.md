@@ -1,32 +1,208 @@
-# Arquitetura de Interface --- Refactor V4
+# Arquitetura-alvo --- Central V2
 
-## Diretrizes
+**Status:** arquitetura-alvo aprovada para migração progressiva\
+**Estratégia:** construir a Central V2 em paralelo à Central atual e
+descontinuar a implementação legada somente após equivalência funcional
+validada.
 
--   `interface_web/` será organizado por item de menu e, abaixo dele,
-    por grupo/página.
--   O alvo é manter a maioria dos arquivos em aproximadamente 200 linhas
-    ou menos.
--   Ao ultrapassar \~200 linhas, a unidade entra obrigatoriamente em
-    revisão arquitetural; havendo mais de uma responsabilidade, deve ser
-    decomposta.
--   O limite não autoriza divisão arbitrária: SRP, coesão e contratos
-    prevalecem.
--   Evitar nomes redundantes com o contexto da pasta; usar nomes
-    compostos e abreviações claras.
--   Componentes recorrentes (`table`, `zoom`, `viewer`, `pager`,
-    `toolbar`, `filter`, `focus`, `modal`, `feedback`) ficam em
-    `_shared/`.
--   `_shared/` também deve permanecer modular; não criar um novo arquivo
-    central monolítico.
--   Páginas compõem/configuram componentes compartilhados e mantêm
-    localmente apenas comportamento específico.
--   A mesma regra vale para CSS: tokens/layout/componentes
-    compartilhados + CSS específico mínimo.
--   `orquestracao/` coordena; `processamento/` mantém os domínios de
-    execução. Evitar `orquestracao/processamento/` para não repetir
-    nomes e responsabilidades.
+## 1. Decisão arquitetural
 
-## Navegação-alvo
+A estratégia principal deixa de ser desmontar progressivamente
+`interface_web/processing_web.py`.
+
+A Central atual passa a ser a **baseline operacional e referência
+comportamental** durante a migração. A nova aplicação nasce isolada em
+`central_v2/`, consumindo os domínios existentes sem copiar algoritmos,
+thresholds, manifests ou regras de autoridade.
+
+Não criar `processing_web_v2.py` nem copiar o monólito atual para
+refatorá-lo depois.
+
+``` text
+Central atual (legada)
+        │
+        │ referência comportamental
+        │ migração por fluxo
+        ▼
+Central V2
+        │
+        ├── transporte / UI / jobs / projeções
+        ▼
+orquestracao/
+        │
+        ▼
+processamento/
+        │
+        ▼
+manifests / SHA / artefatos autoritativos
+```
+
+## 2. Fronteiras da solução
+
+### 2.1 Central legada
+
+`interface_web/` permanece operacional durante a migração.
+
+-   `processing_web.py` não é desmontado como pré-requisito da V2.
+-   Correções indispensáveis podem continuar ocorrendo.
+-   Não adicionar novas responsabilidades quando a feature puder nascer
+    na V2.
+-   A implementação atual serve como referência de comportamento e
+    contratos durante a migração.
+
+### 2.2 Central V2
+
+A V2 fica fisicamente isolada:
+
+``` text
+central_v2/
+├── backend/
+│   ├── server.py
+│   ├── routes/
+│   ├── jobs/
+│   └── state/
+└── frontend/
+    ├── _app/
+    │   ├── api/
+    │   ├── state/
+    │   └── router/
+    ├── _shared/
+    ├── _shell/
+    ├── visao_geral/
+    ├── processamento/
+    ├── balanceamento/
+    ├── gerar_pdf/
+    ├── texto_off/
+    └── exportar_arquivos/
+```
+
+### 2.3 Orquestração
+
+`orquestracao/` representa casos de uso e coordenação entre domínios.
+
+``` text
+orquestracao/
+├── menu.py
+├── proc_merge.py
+├── proc_textoff.py
+├── proc_balance.py
+├── proc_pdf.py
+└── proc_export.py
+```
+
+A orquestração pode decidir sequência, pré-condições e qual serviço
+chamar, mas não deve duplicar algoritmos do domínio.
+
+### 2.4 Domínios existentes
+
+`processamento/` continua sendo a camada que executa regras
+especializadas:
+
+``` text
+processamento/
+├── unificacao_imagens/
+├── merge_manual/
+├── balanceamento/
+├── limpeza_baloes/
+├── validacao_imagens/
+├── pdf_original/
+└── exportacao/
+```
+
+Os algoritmos e contratos protegidos permanecem nesses módulos.
+
+### 2.5 Artefatos e autoridade
+
+Manifests, hashes, artefatos oficiais e relações de predecessor fazem
+parte do contrato funcional.
+
+A V2 deve **consumir e preservar** a autoridade existente. Não deve
+criar uma segunda interpretação concorrente para determinar conclusão,
+residual, promoção ou elegibilidade.
+
+## 3. Fluxo de dependências
+
+``` text
+┌─────────────────────────────────────┐
+│            CENTRAL V2               │
+│ HTTP · UI · DTO · Jobs · navegação  │
+└──────────────────┬──────────────────┘
+                   ▼
+┌─────────────────────────────────────┐
+│            ORQUESTRAÇÃO             │
+│ casos de uso · sequência · decisão  │
+└──────────────────┬──────────────────┘
+                   ▼
+┌─────────────────────────────────────┐
+│              DOMÍNIO                │
+│ merge · textoff · balance · PDF ... │
+└──────────────────┬──────────────────┘
+                   ▼
+┌─────────────────────────────────────┐
+│       ARTEFATOS / AUTORIDADE        │
+│ manifests · SHA · filesystem        │
+└─────────────────────────────────────┘
+```
+
+Dependências apontam para baixo. O domínio não conhece HTTP, frontend ou
+componentes da Central.
+
+## 4. Frontend V2
+
+### 4.1 Infraestrutura da aplicação
+
+`_app/` contém infraestrutura transversal da aplicação, não componentes
+visuais reutilizáveis:
+
+``` text
+frontend/_app/
+├── api/
+│   └── client.js
+├── state/
+│   └── store.js
+└── router/
+```
+
+API client, roteamento e estado global **não pertencem a `_shared/`**.
+
+### 4.2 Componentes compartilhados
+
+`_shared/` contém componentes reutilizáveis e independentes:
+
+``` text
+frontend/_shared/
+├── table/
+├── zoom/
+├── viewer/
+├── pager/
+├── toolbar/
+├── filter/
+├── focus/
+├── modal/
+├── feedback/
+├── layout/
+└── tokens/
+```
+
+`_shared/` não pode virar um novo monólito.
+
+### 4.3 Regra das páginas
+
+A página compõe componentes e mantém apenas comportamento específico.
+
+``` text
+am3_page.js
+├── usa _shared/table/
+├── usa _shared/filter/
+├── usa _shared/pager/
+├── usa _shared/toolbar/
+└── contém somente comportamento específico do Nível III
+```
+
+A mesma regra vale para CSS: tokens, layout e componentes compartilhados
+primeiro; CSS local apenas para particularidades reais da página.
+
+## 5. Navegação-alvo
 
 ### Visão Geral
 
@@ -70,18 +246,78 @@
 
 -   Exportar
 
-## Convenção de nomes
+## 6. Regras de engenharia
 
-Exemplos: - `am3_page.js`: Auto-Merge Nível III. - `rvw_page.js`:
-Review. - `mm_val_page.js`: Merge Manual / Validar. -
-`bal_cut_editor.js`: Balanceamento / Novos Cortes / editor. -
-`to_cmp_view.js`: Texto Off / Comparar / visualização. -
-`pdf_mrg_page.js`: PDF / Merge. - `exp_preview.js`: Exportação / prévia.
+1.  **\~200 linhas é gatilho de revisão, não limite mecânico.** Revisar
+    responsabilidade, coesão e contratos antes de decompor.
+2.  **Sem nomes redundantes.** O contexto da pasta já comunica parte do
+    domínio.
+3.  **Shared não vira monólito.** Table, zoom, viewer, pager, focus,
+    modal, toolbar e feedback permanecem independentes.
+4.  **Página compõe.** Não reimplementar componentes recorrentes em cada
+    página.
+5.  **Orquestração coordena; processamento executa.** Não duplicar
+    responsabilidades.
+6.  **V2 não duplica domínio.** Algoritmos, thresholds e regras
+    protegidas continuam nas implementações autoritativas existentes.
+7.  **Autoridade é preservada.** Manifests, SHA e artefatos continuam
+    definindo o contrato persistido.
+8.  **Central legada permanece estável.** Não desmontá-la enquanto a V2
+    ainda depender dela como baseline.
 
-A abreviação deve continuar reconhecível dentro do contexto da pasta e
-não repetir desnecessariamente todo o caminho.
+## 7. Estratégia de migração
 
-## Princípio de evolução
+A migração é **vertical por fluxo**, não uma reescrita completa antes da
+validação.
 
-Não mover tudo de uma vez. Caracterizar → mapear → proteger → extrair
-uma responsabilidade → delegar → validar → só então avançar.
+``` text
+contrato atual
+→ rota V2
+→ orquestração
+→ domínio existente
+→ autoridade/artefatos existentes
+→ projeção de estado V2
+→ página V2
+→ validação funcional
+→ fluxo considerado migrado
+```
+
+Uma feature nova pode nascer diretamente na V2 quando isso não exigir
+duplicar regras de domínio.
+
+## 8. Critério de descontinuação da Central atual
+
+A Central legada só poderá ser descontinuada após equivalência funcional
+validada dos fluxos aplicáveis:
+
+-   seleção de obra/capítulo;
+-   Auto-Merge I--V;
+-   Review;
+-   Merge Manual;
+-   Balanceamento;
+-   PDF;
+-   Texto Off;
+-   Tratamentos Especiais;
+-   Exportação;
+-   jobs, progresso e erros;
+-   mídia e previews;
+-   autoridade dos manifests preservada;
+-   casos reais críticos validados.
+
+A descontinuação deve ser uma decisão explícita. Até esse ponto, V1 e V2
+coexistem, mas **não possuem implementações concorrentes dos algoritmos
+de domínio**.
+
+## 9. Princípio de evolução
+
+``` text
+preservar V1
+→ implementar uma fatia vertical na V2
+→ reutilizar domínio existente
+→ validar equivalência/contrato
+→ migrar o próximo fluxo
+→ descontinuar V1 somente ao final
+```
+
+O objetivo é reduzir acoplamento sem regressão funcional e permitir a
+entrega de features durante a migração.
