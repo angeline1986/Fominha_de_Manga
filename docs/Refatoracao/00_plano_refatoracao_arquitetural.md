@@ -328,8 +328,8 @@ A Fase 0 somente termina quando:
 [x] contratos Auto-Merge I–V identificados
 [x] GAP-TEST-AM45 fechado — algoritmos IV/V e autoridade/integração protegidos por caracterização
 [x] inventário estrutural formalizado
-[ ] catálogo de fluxos críticos formalizado
-[ ] smoke baseline mínimo registrado
+[x] catálogo de fluxos críticos formalizado
+[x] **smoke baseline mínimo** registrado
 [ ] riscos/lacunas consolidados
 [ ] documentação da Fase 0 revisada
 ```
@@ -773,9 +773,9 @@ FASE 0 — BASELINE E PROTEÇÃO
   [x] autoridade/integração IV → V → MERGE/Review — 6/6
   [x] regressão relacionada IV/V/autoridade — 23/23
   [x] baseline completa — 185 testes; 20 failures, 2 errors, 1 skipped
-  [ ] inventário estrutural formal
-  [ ] catálogo de fluxos críticos
-  [ ] smoke baseline mínimo
+  [x] inventário estrutural formal
+  [x] catálogo de fluxos críticos
+  [x] **smoke baseline mínimo**
   [ ] fechamento documental da Fase 0
 
 FASE 1 — MAPEAMENTO ARQUITETURAL
