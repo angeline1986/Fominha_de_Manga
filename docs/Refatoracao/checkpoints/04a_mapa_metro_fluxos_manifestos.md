@@ -692,16 +692,41 @@ Resultado:
 
 Cobertura: caracterização algorítmica do Nível V.
 
-A baseline completa passa a incluir os 9 novos testes do Nível V, sem nova regressão atribuída a essa caracterização.
+### Autoridade/integração IV → V → MERGE/Review
 
-A busca dedicada em `dev/tests` não localizou testes diretos para `_level5_review_pending`, `process_merge_level5_pending`, `source_level4_sha256` ou a transição V → MERGE/Review.
+Novo teste de caracterização:
+`dev/tests/test_merge_level5_authority_contract.py`
+
+Resultado:
+**6/6 OK**
+
+Cobertura comprovada:
+
+- residual do Nível V como autoridade para Review;
+- stale detection por `source_level4_sha256`;
+- fail-closed quando a recomposição do residual do Nível IV possui GAP;
+- promoção do Nível V completo para MERGE oficial;
+- bloqueio da promoção direta quando permanece residual no Nível V;
+- Review recebe somente o residual autoritativo do Nível V.
+
+A regressão conjunta de IV + V + autoridade executou **23/23 OK**.
+
+A baseline completa posterior executou **185 testes**, com
+**20 failures, 2 errors e 1 skipped**, preservando os grupos históricos
+de reds já catalogados e sem nova regressão atribuível às
+caracterizações adicionadas.
 
 Portanto:
-- algoritmo V: **caracterizado**;
-- autoridade IV → V: contrato comprovado em produção, porém **sem teste dedicado localizado**;
-- stale detection por SHA do IV: **sem teste dedicado localizado**;
-- recomposição residual IV → V: **sem teste dedicado localizado**;
-- V → MERGE/Review: ainda requer caracterização dedicada de integração/autoridade.
+
+- algoritmo IV: **caracterizado — 8/8 OK**;
+- algoritmo V: **caracterizado — 9/9 OK**;
+- autoridade/integração IV → V → MERGE/Review:
+  **caracterizada — 6/6 OK**;
+- regressão conjunta: **23/23 OK**;
+- `GAP-TEST-AM45`: **FECHADO**.
+
+A caracterização da autoridade não transforma o módulo algorítmico em
+autoridade de estágio. Essa separação arquitetural permanece obrigatória.
 
 ---
 
@@ -764,7 +789,7 @@ Ainda precisam ser mapeados antes da versão final:
 - [ ] catálogo final de produtores e consumidores;
 - [ ] tabela final de autoridade, predecessor, SHA/fingerprint e stale detection;
 - [ ] mapa visual consolidado;
-- [ ] caracterização dedicada da autoridade/integração IV → V → MERGE/Review.
+- [x] caracterização dedicada da autoridade/integração IV → V → MERGE/Review — **6/6 OK**.
 
 ---
 

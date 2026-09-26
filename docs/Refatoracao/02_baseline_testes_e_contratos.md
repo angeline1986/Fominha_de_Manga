@@ -199,24 +199,45 @@ O comportamento de **partial SAFE progress** é contrato protegido.
 
 ------------------------------------------------------------------------
 
-## 8. GAP-TEST-AM45 --- lacuna crítica
+## 8. GAP-TEST-AM45 --- fechado
+
+### Lacuna identificada na auditoria inicial
 
 Auto-Merge IV e V participam diretamente da cadeia de autoridade,
-segurança, residual e promoção, mas não possuem testes dedicados
-proporcionais à criticidade.
+segurança, residual e promoção. Na fotografia inicial da baseline não
+havia caracterização dedicada proporcional à criticidade desses
+estágios.
 
-Para IV não foi encontrada caracterização especializada equivalente à
-existente para II/III. Para V existem referências incidentais em Merge
-Manual, mas elas não caracterizam algoritmo, manifest, autoridade,
-residual, segurança ou promoção.
-
-**Risco:** uma refatoração poderia alterar thresholds, estratégia
+O risco registrado era uma refatoração alterar thresholds, estratégia
 directed/global, autoridade, SHA predecessor, SAFE-only, partial
 progress, composição ou promoção sem detecção adequada.
 
-**Ação obrigatória antes de refatorar IV/V:** criar testes de
-caracterização específicos capturando o comportamento atual, sem
-redesenhá-lo.
+### Resolução
+
+A lacuna foi fechada incrementalmente, sem alteração de produção:
+
+- `dev/tests/test_merge_level4_contract.py` — **8/8 OK**;
+- `dev/tests/test_merge_level5_contract.py` — **9/9 OK**;
+- `dev/tests/test_merge_level5_authority_contract.py` — **6/6 OK**.
+
+A caracterização de autoridade cobre a integração
+**IV → V → MERGE/Review**, incluindo:
+
+- residual do Nível V como autoridade para Review;
+- stale detection por SHA entre Nível IV e Nível V;
+- fail-closed para recomposição inválida do residual;
+- promoção de Nível V completo para MERGE oficial;
+- bloqueio de promoção direta quando o Nível V mantém residual;
+- entrega ao Review somente do residual autoritativo do Nível V.
+
+A regressão conjunta dos contratos IV/V executou **23/23 OK**.
+
+Na baseline completa posterior foram executados **185 testes**, com
+**20 failures, 2 errors e 1 skipped**. Os reds observados permanecem nos
+grupos históricos já catalogados e não foi identificada nova regressão
+atribuível às caracterizações adicionadas.
+
+**Status:** `GAP-TEST-AM45` **FECHADO**.
 
 ------------------------------------------------------------------------
 
@@ -526,29 +547,31 @@ Os reds auditados concentram-se em:
 Não foi encontrada evidência suficiente para usar esses reds como
 justificativa para alterar algoritmos protegidos.
 
-A principal descoberta estrutural é:
+A principal descoberta estrutural da auditoria inicial foi a ausência
+de caracterização dedicada dos Níveis IV/V e de sua cadeia de
+autoridade. Essa lacuna foi posteriormente tratada pelo
+`GAP-TEST-AM45`.
 
-> **Auto-Merge IV e V são críticos para a cadeia atual, mas não possuem
-> caracterização dedicada equivalente à proteção existente para
-> II/III.**
+O gate encontra-se agora protegido por:
 
-A Fase 0.2 pode ser considerada documentalmente encerrada com uma
-pendência obrigatória antes da refatoração de IV/V:
+- Nível IV — **8/8 OK**;
+- Nível V — **9/9 OK**;
+- autoridade/integração IV → V → MERGE/Review — **6/6 OK**;
+- regressão conjunta — **23/23 OK**.
 
-**resolver GAP-TEST-AM45 por meio de testes de caracterização do
-comportamento atual.**
+A baseline completa posterior executou **185 testes**, preservando os
+reds históricos catalogados sem nova regressão atribuível à
+caracterização.
+
+**GAP-TEST-AM45: FECHADO.**
 
 ------------------------------------------------------------------------
 
 ## 26. Próximo checkpoint recomendado
 
-Antes de extrações/refatorações de produção:
+Com o `GAP-TEST-AM45` fechado, o próximo checkpoint da Fase 0 é
+**formalizar o inventário estrutural**, sem iniciar ainda extrações ou
+refatorações de produção.
 
--   criar testes de caracterização de Auto-Merge IV;
--   criar testes de caracterização de Auto-Merge V;
--   migrar testes de infraestrutura simples que não exigem mudança
-    funcional;
--   reexecutar a baseline;
--   registrar nova fotografia da suíte.
-
-Essas ações devem ocorrer separadamente e com validação incremental.
+A execução permanece incremental, com evidência e validação antes da
+próxima mudança.
