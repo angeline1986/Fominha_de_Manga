@@ -327,7 +327,7 @@ A Fase 0 somente termina quando:
 [x] reds preexistentes classificados
 [x] contratos Auto-Merge I–V identificados
 [x] GAP-TEST-AM45 fechado — algoritmos IV/V e autoridade/integração protegidos por caracterização
-[ ] inventário estrutural formalizado
+[x] inventário estrutural formalizado
 [ ] catálogo de fluxos críticos formalizado
 [ ] smoke baseline mínimo registrado
 [ ] riscos/lacunas consolidados
