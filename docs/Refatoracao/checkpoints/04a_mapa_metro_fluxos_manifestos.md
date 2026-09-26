@@ -193,18 +193,64 @@ Manifesto:
 Algoritmo:
 `merge_level5_global_structural_safe_v1`
 
-Contrato comprovado:
+### Contrato de autoridade comprovado
+
 - somente residual de Nível IV **directed** atual entra no V;
-- manifesto IV precisa existir;
-- algoritmo IV precisa ser o esperado;
-- grava `source_level4_sha256`;
-- valida recomposição exata do residual;
-- suporta SAFE completo;
-- suporta **prefixo SAFE parcial + residual**;
-- se não encontrar composição SAFE, mantém residual;
-- residual final segue para Review.
+- `_level5_review_pending()` exige autoridade válida do Nível IV;
+- o algoritmo IV autoritativo deve ser `merge_level4_directed_structural_safe_v1`;
+- Nível IV legacy segue para Review e não é promovido artificialmente ao V;
+- o manifesto V deve declarar `merge_level5_global_structural_safe_v1`;
+- `total_height` do V deve coincidir com o IV;
+- o V registra `source_level4_manifest` e `source_level4_sha256`;
+- SHA divergente do manifesto IV invalida a autoridade do V em modo fail-closed;
+- `safe_artifacts` + `residual_pending_segments` devem recompor exatamente o residual autoritativo do IV;
+- GAP, OVERLAP, intervalo fora do pai ou sobra de segmento invalidam a cadeia;
+- sem residual V, o estágio fica elegível para promoção ao MERGE oficial;
+- com residual V, a autoridade pendente segue para Review.
 
 Isso confirma que documentação antiga que descrevia o V como apenas “tudo ou nada” está desatualizada.
+
+### Comportamento algorítmico caracterizado
+
+O algoritmo especializado em `processamento/unificacao_imagens/image_stitcher_level5.py` foi caracterizado sem alteração de produção:
+
+- intervalo já dentro de `max_chunk_height` resolve diretamente, sem classificador;
+- somente candidatos `SAFE` participam da composição;
+- composição completa respeita `min_chunk_height` e `max_chunk_height`;
+- o score prioriza proximidade do `target_height`, depois equilíbrio e quantidade de chunks;
+- com `scan_step == 2`, a busca ocorre em duas passagens de paridade;
+- a primeira paridade pode encerrar antecipadamente a busca;
+- a segunda paridade complementa a cobertura dos candidatos elegíveis quando necessária;
+- na ausência de composição completa, o algoritmo preserva o prefixo SAFE mais distante;
+- sem prefixo SAFE utilizável, mantém o intervalo não resolvido.
+
+### Separação algoritmo × autoridade
+
+```text
+merge-level4-manifest.json
+        │ autoridade IV + residual
+        ▼
+processing_web.py
+        │ predecessor / algoritmo / SHA
+        │ residual autoritativo de entrada
+        ▼
+image_stitcher_level5.py
+        │ busca global SAFE
+        │ paridades
+        │ composição / prefixo SAFE
+        ▼
+resultado algorítmico
+        │
+        ▼
+processing_web.py
+        │ materialização
+        │ source_level4_sha256
+        │ persistência do manifesto V
+        │ recomposição residual IV → V
+        │ decisão MERGE × Review
+        ▼
+merge-level5-manifest.json
+```
 
 ---
 
@@ -638,7 +684,24 @@ Cobertura: caracterização algorítmica do Nível IV.
 Não deve ser descrita como proteção integral de toda a autoridade/integração do estágio.
 
 ### Nível V
-Ainda falta caracterização dedicada.
+Novo teste de caracterização:
+`dev/tests/test_merge_level5_contract.py`
+
+Resultado:
+**9/9 OK**
+
+Cobertura: caracterização algorítmica do Nível V.
+
+A baseline completa passa a incluir os 9 novos testes do Nível V, sem nova regressão atribuída a essa caracterização.
+
+A busca dedicada em `dev/tests` não localizou testes diretos para `_level5_review_pending`, `process_merge_level5_pending`, `source_level4_sha256` ou a transição V → MERGE/Review.
+
+Portanto:
+- algoritmo V: **caracterizado**;
+- autoridade IV → V: contrato comprovado em produção, porém **sem teste dedicado localizado**;
+- stale detection por SHA do IV: **sem teste dedicado localizado**;
+- recomposição residual IV → V: **sem teste dedicado localizado**;
+- V → MERGE/Review: ainda requer caracterização dedicada de integração/autoridade.
 
 ---
 
@@ -677,6 +740,12 @@ OBSERVABILITY JOURNAL
 
 Já existe embrião de observabilidade no runtime, com eventos de job/transição e inventário de manifests/SHA. A solução futura deve evoluir esse mecanismo, não criar uma segunda infraestrutura paralela sem necessidade.
 
+### Fronteira arquitetural do Nível V
+
+`image_stitcher_level5.py` contém o algoritmo especializado. A autoridade do estágio, validação do predecessor, persistência do manifesto, materialização e decisão de rota permanecem hoje em `processing_web.py`.
+
+No refactor, essas responsabilidades de autoridade/orquestração devem sair progressivamente da camada Web para módulo próprio, sem serem reincorporadas ao módulo algorítmico. **Algoritmo especializado não é autoridade de estágio.**
+
 ---
 
 ## 17. Pendências do mapa
@@ -695,7 +764,7 @@ Ainda precisam ser mapeados antes da versão final:
 - [ ] catálogo final de produtores e consumidores;
 - [ ] tabela final de autoridade, predecessor, SHA/fingerprint e stale detection;
 - [ ] mapa visual consolidado;
-- [ ] caracterização dedicada do Nível V.
+- [ ] caracterização dedicada da autoridade/integração IV → V → MERGE/Review.
 
 ---
 
