@@ -1,0 +1,2 @@
+1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb  comictextdetector.pt
+479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823  anime-manga-big-lama.pt

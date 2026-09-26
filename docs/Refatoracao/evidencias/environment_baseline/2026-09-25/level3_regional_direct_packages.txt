@@ -1,0 +1,5 @@
+easyocr==1.7.2
+huggingface_hub==2.0.0
+pip==26.2.1
+simple-lama-inpainting==0.1.0
+ultralytics==8.4.162
