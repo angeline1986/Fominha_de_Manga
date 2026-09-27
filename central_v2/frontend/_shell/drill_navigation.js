@@ -183,9 +183,17 @@ export function createDrillNavigation() {
 
     if (actionButton) {
       const sectionId = navigation.find((section) =>
-        section.groups.some((group) =>
-          group.items.some((item) => item.id === actionButton.dataset.action)
-        )
+        section.groups.some((group) => {
+          const itemMatch = (group.items ?? []).some(
+            (item) => item.id === actionButton.dataset.action,
+          );
+
+          const controlMatch = (group.control?.options ?? []).some(
+            (option) => option.action === actionButton.dataset.action,
+          );
+
+          return itemMatch || controlMatch;
+        })
       )?.id;
 
       element.dispatchEvent(
