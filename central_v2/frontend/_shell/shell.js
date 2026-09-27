@@ -1,23 +1,20 @@
+import { createDrillNavigation } from "/_shell/drill_navigation.js";
+
 export function mountShell(root) {
   root.innerHTML = `
     <div class="app-shell">
-      <header class="app-header">
-        <div class="app-brand">
-          <strong>Fominha de Mangá</strong>
-          <span>Central de Processamento</span>
-        </div>
-      </header>
-
       <div class="app-body">
-        <aside class="app-sidebar" aria-label="Navegação principal">
-          <nav class="app-nav">
-            <button type="button" data-route="visao-geral">Visão Geral</button>
-            <button type="button" data-route="processamento">Processamento</button>
-            <button type="button" data-route="balanceamento">Balanceamento</button>
-            <button type="button" data-route="gerar-pdf">Gerar PDF</button>
-            <button type="button" data-route="texto-off">Texto Off</button>
-            <button type="button" data-route="exportar-arquivos">Exportar Arquivos</button>
-          </nav>
+        <aside
+          class="app-sidebar"
+          id="app-sidebar"
+          aria-label="Navegação principal"
+        >
+          <div class="app-sidebar-brand">
+            <strong>Fominha de Mangá</strong>
+            <span>Central de Processamento</span>
+          </div>
+
+          <div id="app-navigation"></div>
         </aside>
 
         <main class="app-content" id="page-content" tabindex="-1">
@@ -27,4 +24,7 @@ export function mountShell(root) {
       </div>
     </div>
   `;
+
+  const navigation = root.querySelector("#app-navigation");
+  navigation.append(createDrillNavigation());
 }
