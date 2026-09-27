@@ -1,7 +1,7 @@
 # Plano de Refatoração Arquitetural --- Fominha_de_Manga
 
-**Versão:** 3.0\
-**Atualizado em:** 2026-09-26\
+**Versão:** 2.0\
+**Atualizado em:** 2026-09-25\
 **Branch de referência:** `develop`\
 **Baseline de referência:** `c6adae7efacf289f4ca3894c1abe0dd96364f32a`
 
@@ -760,19 +760,6 @@ A refatoração termina quando:
 
 # 15. Estado atual do plano --- 2026-09-26
 
-A execução posterior à versão 2.0 alterou deliberadamente a estratégia de
-migração. Em vez de iniciar o desmonte incremental de
-`interface_web/processing_web.py`, foi aprovada a criação de uma **Central
-V2 isolada**, mantendo a Central atual operacional como baseline funcional e
-referência de contratos durante a transição.
-
-Essa decisão **não autoriza reimplementação de algoritmos ou regras de
-domínio**. A Central V2 substitui progressivamente a casca arquitetural
-(HTTP, roteamento, projeções de estado, jobs e frontend) e deve consumir os
-módulos de domínio já existentes em `orquestracao/` e `processamento/`.
-
-## 15.1 Situação das fases formais
-
 ``` text
 FASE 0 — BASELINE E PROTEÇÃO
   [x] Git / estado inicial
@@ -788,229 +775,36 @@ FASE 0 — BASELINE E PROTEÇÃO
   [x] baseline completa — 185 testes; 20 failures, 2 errors, 1 skipped
   [x] inventário estrutural formal
   [x] catálogo de fluxos críticos
-  [x] smoke baseline mínimo
-  [~] fechamento documental — este plano passa a incorporar a estratégia V2
+  [x] **smoke baseline mínimo**
+  [ ] fechamento documental da Fase 0
 
 FASE 1 — MAPEAMENTO ARQUITETURAL
-  [~] realizado materialmente durante as auditorias da Central e dos fluxos
-  [x] hotspot processing_web.py dimensionado e responsabilidades principais mapeadas
-  [x] fronteiras existentes entre interface, orquestração e processamento identificadas
-  [x] autoridade crítica Auto-Merge IV → V → MERGE/Review caracterizada
-  [ ] consolidar formalmente os resultados no artefato da Fase 1, se ainda necessário
+  [ ] não iniciada
 
 FASE 2 — MATRIZ DE CONTRATOS
-  [~] parcialmente realizada/antecipada
-  [x] contratos críticos de Auto-Merge IV/V e autoridade protegidos
-  [x] baseline e smokes relevantes registrados
-  [ ] completar a matriz formal por fluxo durante a migração vertical para V2
+  [ ] não iniciada formalmente
+  [~] parte da caracterização já antecipada na Fase 0
 
-FASE 3 — ARQUITETURA ALVO
-  [~] EM EXECUÇÃO — estratégia Central V2 aprovada e materializada
-  [x] Central legada preservada como baseline operacional
-  [x] Central V2 isolada fisicamente de interface_web/
-  [x] backend e frontend V2 separados
-  [x] fronteiras _app / _shared / _shell / páginas definidas
-  [x] consumo de domínio existente definido como regra arquitetural
-  [ ] registrar ADR específico da estratégia Central V2
-
-FASE 4 — HIGIENIZAÇÃO ESTRUTURAL
-  [ ] não iniciada como frente de remoção/movimentação
-  [!] não remover legado enquanto a V2 não alcançar equivalência comprovada
-
-FASE 5 — REFATORAÇÃO INCREMENTAL DO BACKEND
-  [~] substituída parcialmente por migração paralela para o backend da Central V2
-  [x] bootstrap HTTP V2 isolado
-  [x] roteamento HTTP V2
-  [x] /health
-  [x] /api/catalog
-  [x] /api/state estrutural
-  [x] entrega segura de arquivos estáticos
-  [ ] migrar contratos funcionais verticalmente, um fluxo por vez
-  [!] processing_web.py permanece legado operacional; não desmontar neste momento
-
-FASE 6 — FRONTEND
-  [~] EM EXECUÇÃO na Central V2
-  [x] shell inicial
-  [x] navegação drill-down
-  [x] catálogo e seleção Provider → Obra
-  [x] API client separado
-  [x] store de contexto separado
-  [x] store de estado estrutural separado
-  [x] controller de contexto separado
-  [x] integração /api/state validada com caso real (65 capítulos)
-  [x] resolução da navegação compatível com items e control.options
-  [~] router/page layer iniciado
-  [x] registro inicial da rota resumo-operacao
-  [ ] implementar primeira página real: Visão Geral / Resumo da Operação
-  [ ] migrar demais páginas/fluxos verticalmente
-
-FASE 7 — CONFIGURAÇÃO E RUNTIMES
-  [ ] não iniciada como frente própria
-  [!] runtimes especializados continuam protegidos
-
-FASE 8 — REMOÇÃO DE LEGADO
-  [ ] não iniciada
-  [!] somente após equivalência funcional e operacional da Central V2
+FASES 3–8
+  [ ] não iniciadas
 ```
-
-## 15.2 Arquitetura de transição aprovada
-
-``` text
-Central atual (interface_web/)
-  = baseline operacional + referência de contratos
-
-Central V2 (central_v2/)
-  frontend/
-    _app/       API, estado, controllers e router
-    _shared/    componentes reutilizáveis
-    _shell/     composição e navegação
-    páginas/    comportamento específico por domínio/tela
-  backend/
-    server.py   bootstrap HTTP
-    routes/     transporte HTTP → aplicação
-    state/      projeções/DTOs da Central
-    jobs/       execução/progresso
-        ↓
-orquestracao/
-        ↓
-processamento/
-        ↓
-manifests / SHA / artefatos oficiais
-```
-
-Regras da transição:
-
-1. não copiar `processing_web.py` para a V2;
-2. não duplicar algoritmos ou regras de negócio existentes;
-3. migrar verticalmente um fluxo por vez;
-4. manter a Central atual utilizável durante a migração;
-5. novas responsabilidades de interface devem preferir a V2 quando não
-   exigirem duplicação de domínio;
-6. manifests, hashes e artefatos continuam sendo fronteira de autoridade;
-7. a V2 só substitui a Central atual após equivalência funcional comprovada.
-
-## 15.3 Estado técnico atual da Central V2
-
-Backend implementado e validado:
-
-``` text
-central_v2/backend/server.py
-central_v2/backend/routes/router.py
-central_v2/backend/routes/health.py
-central_v2/backend/routes/catalog.py
-central_v2/backend/routes/static.py
-central_v2/backend/state/catalog.py
-central_v2/backend/state/manga_state.py
-```
-
-Contratos disponíveis:
-
-``` text
-GET /health
-GET /api/catalog
-GET /api/state?provider=<provider>&manga=<obra>
-GET arquivos estáticos do frontend
-```
-
-O estado estrutural atual contém somente dados comprovadamente disponíveis na
-V2: provider, obra, capítulos e quantidade de capítulos. Estados funcionais
-de Auto-Merge, Review, PDF, Texto Off etc. **não devem ser simulados** no
-frontend antes de seus respectivos contratos serem migrados.
-
-Frontend atual:
-
-``` text
-_app/api/catalog.js
-_app/api/manga_state.js
-_app/state/context.js
-_app/state/manga_state.js
-_app/context/context_controller.js
-_app/router/routes.js
-_shell/context_selector.js
-_shell/navigation.js
-_shell/drill_navigation.js
-_shell/shell.js
-```
-
-Fluxo validado:
-
-``` text
-Provider
-  → context_controller
-  → context store
-  → Obra
-  → /api/state
-  → manga_state store
-  → projeção estrutural disponível para páginas
-```
-
-Caso real já validado: `comix / Gazing at you`, com 65 capítulos carregados
-no store estrutural.
-
-## 15.4 Próximo trabalho autorizado
-
-O ponto atual da execução é o **router/page layer do frontend da Central V2**.
-O registro inicial `resumo-operacao → /visao_geral/resumo_operacao.js` já foi
-criado.
-
-A sequência imediata é:
-
-``` text
-1. implementar Visão Geral / Resumo da Operação usando somente estado estrutural;
-2. conectar menu:action ao router sem transferir lógica de página para shell.js;
-3. validar navegação e reação à troca de Provider/Obra;
-4. fechar a unidade com diff, sintaxe/smoke e documentação;
-5. somente então selecionar o primeiro fluxo funcional para migração vertical.
-```
-
-A primeira página não deve antecipar estados de workflow ainda ausentes na
-V2. O objetivo é provar a fronteira:
-
-``` text
-navegação → router → página → stores/API
-```
-
-antes de migrar fluxos críticos.
-
-## 15.5 Critério atualizado para descontinuação da Central atual
-
-A Central legada somente poderá ser descontinuada quando a V2 demonstrar
-equivalência observável, conforme aplicável, para:
-
-``` text
-seleção de obra/capítulo
-jobs / progresso / erros
-Auto-Merge I–V
-Review / Revisão Estrutural
-Merge Manual
-Balanceamento
-PDF
-Texto Off
-Tratamentos Especiais
-Exportação
-media / previews
-manifests / SHA / autoridade
-casos reais críticos
-```
-
-Até esse gate, `interface_web/` permanece parte operacional do sistema.
 
 ------------------------------------------------------------------------
 
-# 16. Regra de continuidade
+# 16. Próximo trabalho autorizado
 
-A execução permanece incremental e baseada em evidência:
+O próximo trabalho **não é refatorar `processing_web.py`**.
+
+O gate de proteção do Auto-Merge está fechado. A prioridade imediata
+passa a ser a formalização estrutural da Fase 0:
 
 ``` text
-AUDITAR / INSPECIONAR
-→ PROVAR O ESTADO
-→ IMPLEMENTAR A MENOR UNIDADE COESA
-→ VALIDAR
-→ COMPARAR COM A BASELINE QUANDO APLICÁVEL
-→ DOCUMENTAR
-→ COMMIT ISOLADO
+1. formalizar inventário estrutural;
+2. concluir catálogo de fluxos/smokes;
+3. consolidar riscos/lacunas e documentação da Fase 0;
+4. fechar Fase 0;
+5. somente então iniciar oficialmente a Fase 1.
 ```
 
-**Uma ação por vez.** Não avançar para o próximo fluxo crítico apenas porque
-a infraestrutura existe. Cada migração vertical deve preservar contratos e
-autoridade já comprovados.
+A execução continua incremental: **uma ação por vez**, com evidência
+antes da próxima decisão.
