@@ -45,6 +45,33 @@ export function mountShell(root, context) {
 
   const navigation = root.querySelector("#app-navigation");
   const contextRoot = root.querySelector("#app-context");
+  const stopButton = root.querySelector('[data-action="stop-server"]');
+
+  if (stopButton) {
+    stopButton.addEventListener("click", async () => {
+      const confirmed = window.confirm("Deseja realmente finalizar o servidor da Central?");
+      if (!confirmed) return;
+
+      try {
+        stopButton.disabled = true;
+        stopButton.innerText = "Finalizando...";
+
+        await fetch("/api/shutdown", { method: "POST" });
+
+        document.body.innerHTML = `
+          <div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;flex-direction:column;">
+            <h2>Central V2 finalizada com sucesso.</h2>
+            <p>Você já pode fechar esta aba.</p>
+          </div>
+        `;
+      } catch (error) {
+        console.error("[Central V2] Falha ao finalizar servidor:", error);
+        stopButton.disabled = false;
+        stopButton.innerText = "Finalizar servidor";
+        alert("Erro ao finalizar o servidor.");
+      }
+    });
+  }
 
   navigation.append(createDrillNavigation());
 
