@@ -1,0 +1,13 @@
+.ui-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  pointer-events: none;
+}

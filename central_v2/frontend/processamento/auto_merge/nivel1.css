@@ -1,0 +1,133 @@
+.auto-merge-page {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.auto-merge-page header h1 {
+  margin: 0 0 4px;
+  font-size: var(--font-size-title);
+  line-height: 1.25;
+}
+
+.auto-merge-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.auto-merge-search {
+  flex: 0 1 280px;
+  min-width: 190px;
+}
+
+.auto-merge-toolbar input,
+.auto-merge-toolbar > button {
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  background: var(--color-surface);
+}
+
+.auto-merge-search input {
+  width: 100%;
+}
+
+.auto-merge-filters {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-primary-soft);
+}
+
+.auto-merge-toolbar .auto-merge-filters button {
+  min-height: 30px;
+  padding: 5px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-small);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.auto-merge-toolbar .auto-merge-filters button.active {
+  background: var(--color-surface);
+  box-shadow: 0 1px 3px rgba(6, 69, 90, .1);
+}
+
+.auto-merge-toolbar .auto-merge-execute {
+  margin-left: auto;
+  background: var(--color-primary);
+  color: var(--color-surface);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.auto-merge-toolbar button:disabled {
+  opacity: .55;
+  cursor: default;
+}
+
+.auto-merge-ok {
+  color: #35b98b;
+  font-weight: var(--font-weight-semibold);
+}
+
+.auto-merge-results {
+  overflow-x: auto;
+  border-radius: var(--radius-control);
+  border: 1px solid var(--color-border);
+}
+
+.auto-merge-results .pagination {
+  border-top: 1px solid var(--color-border);
+}
+
+.auto-merge-results summary {
+  cursor: pointer;
+}
+
+.auto-merge-results ul {
+  padding-left: 16px;
+  min-width: 170px;
+  overflow-wrap: anywhere;
+}
+
+.auto-merge-note {
+  font-size: var(--font-size-small);
+}
+
+@media (max-width: 900px) {
+  .auto-merge-toolbar .auto-merge-execute {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 650px) {
+  .auto-merge-search {
+    flex-basis: 100%;
+  }
+
+  .auto-merge-filters {
+    max-width: 100%;
+    overflow-x: auto;
+  }
+}

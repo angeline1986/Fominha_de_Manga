@@ -1,20 +1,14 @@
 import json
-from dataclasses import dataclass
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from config.data_paths import OUTPUT_ROOT
+from central_v2.backend.routes.auto_merge import level1_response
 from central_v2.backend.routes.catalog import catalog_response
 from central_v2.backend.routes.health import health_response
 from central_v2.backend.routes.state import state_response
 from central_v2.backend.routes.static import static_response
-
-
-@dataclass(frozen=True)
-class RouteResponse:
-    status: int
-    body: bytes
-    content_type: str = "application/json; charset=utf-8"
+from central_v2.backend.routes.response import RouteResponse
 
 
 def dispatch_get(
@@ -34,6 +28,9 @@ def dispatch_get(
             status=200,
             body=catalog_response(output_root),
         )
+
+    if request.path == "/api/auto-merge/level1":
+        return level1_response(parse_qs(request.query), output_root)
 
     if request.path == "/api/state":
         query = parse_qs(request.query)

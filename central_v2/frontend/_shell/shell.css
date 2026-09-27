@@ -1,294 +1,56 @@
 .app-shell {
   min-height: 100vh;
-  display: grid;
-  grid-template-rows: 72px minmax(0, 1fr);
-}
-
-.app-header {
-  display: flex;
-  align-items: center;
-  padding: 0 24px;
-  background: var(--color-surface);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.app-brand {
-  display: grid;
-  gap: 2px;
-}
-
-.app-brand strong {
-  color: var(--color-text);
-  font-size: 16px;
-}
-
-.app-brand span {
-  color: var(--color-text-muted);
-  font-size: 12px;
-}
-
-.app-body {
-  min-height: 0;
-  display: grid;
-  grid-template-columns: 240px minmax(0, 1fr);
-}
-
-.app-sidebar {
-  padding: 20px 14px;
-  background: var(--color-surface);
-  border-right: 1px solid var(--color-border);
-}
-
-.app-nav {
-  display: grid;
-  gap: 6px;
-}
-
-.app-nav button {
-  width: 100%;
-  padding: 11px 12px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
-  color: var(--color-text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.app-nav button:hover {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-hover);
-}
-
-.app-content {
-  min-width: 0;
-  overflow: auto;
-  padding: 28px;
-}
-
-.app-content h1 {
-  margin: 0 0 8px;
-  font-size: 24px;
-}
-
-.app-content p {
-  margin: 0;
-  color: var(--color-text-muted);
-}
-
-@media (max-width: 760px) {
-  .app-body {
-    grid-template-columns: 190px minmax(0, 1fr);
-  }
-
-  .app-content {
-    padding: 20px;
-  }
-}
-
-/* Drill-down navigation */
-
-.drill-navigation {
-  height: 100%;
-  min-height: 0;
-}
-
-.drill-stage {
-  position: relative;
-  height: 100%;
-  min-height: 0;
-  overflow: hidden;
-}
-
-.drill-layer {
-  position: absolute;
-  inset: 0;
-  overflow-y: auto;
-  transition:
-    transform 340ms ease,
-    opacity 260ms ease,
-    filter 340ms ease;
-}
-
-.drill-layer-root {
-  transform: translateX(0);
-  opacity: 1;
-  filter: blur(0);
-}
-
-.drill-layer-detail {
-  transform: translateX(110%);
-  opacity: 0;
-  filter: blur(3px);
-  visibility: hidden;
-}
-
-.drill-navigation.is-detail .drill-layer-root {
-  transform: translateX(-110%);
-  opacity: 0;
-  filter: blur(3px);
-  visibility: hidden;
-}
-
-.drill-navigation.is-detail .drill-layer-detail {
-  transform: translateX(0);
-  opacity: 1;
-  filter: blur(0);
-  visibility: visible;
-}
-
-.drill-heading {
-  min-height: 42px;
-  display: flex;
-  align-items: center;
-  padding: 0 8px 10px;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.drill-heading strong {
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  color: var(--color-text-muted);
-}
-
-.drill-detail-heading {
-  gap: 10px;
-}
-
-.drill-back {
-  padding: 5px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: transparent;
-  color: var(--color-primary);
-  cursor: pointer;
-}
-
-.drill-back:hover {
-  background: var(--color-primary-soft);
-}
-
-.drill-list,
-.drill-group-items {
-  display: grid;
-  gap: 2px;
-}
-
-.drill-list {
-  padding-top: 10px;
-}
-
-.drill-item {
-  min-height: 38px;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 7px 10px;
-  border: 0;
-  border-radius: 7px;
-  background: transparent;
-  color: var(--color-text);
-  text-align: left;
-  cursor: pointer;
-}
-
-.drill-item:hover {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-hover);
-}
-
-.drill-arrow {
-  color: var(--color-text-muted);
-  font-size: 20px;
-  line-height: 1;
-}
-
-.drill-detail-content {
-  padding-top: 8px;
-}
-
-.drill-group {
-  padding: 10px 0;
-}
-
-.drill-group + .drill-group {
-  border-top: 1px solid var(--color-border);
-}
-
-.drill-group-title {
-  padding: 0 10px 5px;
-  color: var(--color-text-muted);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-}
-
-.drill-group-items .drill-item {
-  animation: drill-item-in 220ms ease both;
-}
-
-.drill-group-items .drill-item:nth-child(2) {
-  animation-delay: 25ms;
-}
-
-.drill-group-items .drill-item:nth-child(3) {
-  animation-delay: 50ms;
-}
-
-.drill-group-items .drill-item:nth-child(4) {
-  animation-delay: 75ms;
-}
-
-.drill-group-items .drill-item:nth-child(5) {
-  animation-delay: 100ms;
-}
-
-@keyframes drill-item-in {
-  from {
-    opacity: 0;
-    transform: translateX(8px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .drill-layer,
-  .drill-group-items .drill-item {
-    transition: none;
-    animation: none;
-  }
-}
-
-/* Shell V2 — navegação vertical sem barra superior global */
-
-.app-shell {
-  min-height: 100vh;
   display: block;
 }
 
 .app-body {
   min-height: 100vh;
   height: 100vh;
-  grid-template-columns: 190px minmax(0, 1fr);
+  display: grid;
+  grid-template-columns: var(--sidebar-width) minmax(0, 1fr);
+  background: var(--color-background);
 }
 
 .app-sidebar {
   min-height: 0;
   display: flex;
   flex-direction: column;
+  padding: 20px 14px;
+  background: var(--color-primary-soft);
+  border-right: 1px solid var(--color-border);
 }
 
 .app-sidebar-brand {
   flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   padding: 14px 12px;
   border-bottom: 1px solid var(--color-border);
+  background: transparent;
+}
+
+.sidebar-toggle {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 9px;
+  background: var(--color-surface);
+  color: var(--color-primary);
+  cursor: pointer;
+}
+
+.sidebar-toggle .ui-icon {
+  width: 16px;
+  height: 16px;
+}
+
+.sidebar-brand-copy {
+  min-width: 0;
 }
 
 .app-sidebar-brand strong,
@@ -297,294 +59,82 @@
 }
 
 .app-sidebar-brand strong {
-  font-size: 13px;
+  font-size: var(--font-size-base);
   line-height: 1.25;
+  color: var(--color-text);
 }
 
 .app-sidebar-brand span {
   margin-top: 3px;
-  font-size: 10px;
+  font-size: var(--font-size-label);
   color: var(--color-text-secondary);
 }
 
 #app-navigation {
-  flex: 0 0 455px;
-  height: 325px;
+  flex: 1 0 380px;
+  height: 380px;
   min-height: 0;
-}
-
-#app-navigation .drill-navigation {
-  height: 100%;
-}
-
-/* Aplicação da paleta V3 — alinhada à Central atual */
-
-.app-body {
-  background: var(--color-background);
-}
-
-.app-sidebar {
-  background: var(--color-primary-soft);
-  border-right: 1px solid var(--color-border);
-}
-
-.app-sidebar-brand {
-  background: transparent;
-}
-
-.app-sidebar-brand strong {
-  color: var(--color-text);
-}
-
-.app-sidebar-brand span {
-  color: var(--color-text-secondary);
-}
-
-#app-navigation,
-.drill-navigation,
-.drill-stage,
-.drill-layer {
   background: var(--color-primary-soft);
 }
 
 .app-content {
+  min-width: 0;
+  overflow: auto;
+  padding: 28px;
   background: var(--color-background);
   color: var(--color-text);
 }
 
-.drill-heading {
-  background: var(--color-primary-soft);
+.app-content h1 {
+  margin: 0 0 8px;
+  font-size: var(--font-size-title);
 }
 
-.drill-item {
-  color: var(--color-text);
-}
-
-.drill-item:hover,
-.drill-item:focus-visible {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-hover);
-}
-
-.drill-group-title {
-  color: var(--color-text-secondary);
-}
-
-.drill-arrow {
-  color: var(--color-primary);
-}
-
-/* Drill-down — controle de retorno */
-
-.drill-back {
-  flex: 0 0 28px;
-  width: 28px;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  border-radius: 6px;
-  color: var(--color-primary);
-  font-size: 20px;
-  font-weight: 500;
-  line-height: 1;
-}
-
-.drill-back:hover,
-.drill-back:focus-visible {
-  background: var(--color-primary-soft);
-  color: var(--color-primary-hover);
-}
-
-.drill-detail-heading {
-  min-height: 42px;
-  padding-left: 4px;
-  gap: 5px;
-}
-
-/* Segmented control — Auto Merge */
-
-.segmented-card {
-  margin: 2px 4px 4px;
-  padding: 9px 10px 10px;
-  background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  border-radius: 10px;
-  box-shadow: 0 1px 3px rgba(6, 69, 90, 0.04);
-}
-
-.segmented-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 8px;
-}
-
-.segmented-header strong {
-  color: var(--color-text);
-  font-size: 13px;
-  font-weight: 700;
-}
-
-.segmented-badge {
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: var(--color-primary-soft);
-  color: var(--color-primary-hover);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-
-.segmented-control {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  border-radius: 6px;
-  background: var(--color-surface-soft);
-}
-
-.segmented-button {
-  flex: 1 1 0;
-  min-width: 0;
-  padding: 5px 0;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
+.app-content p {
+  margin: 0;
   color: var(--color-text-muted);
-  font: inherit;
-  font-size: 12px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-  transition:
-    background 150ms ease,
-    color 150ms ease,
-    box-shadow 150ms ease;
 }
 
-.segmented-button:hover {
-  color: var(--color-text);
+@media (max-width: 760px) {
+  .app-content {
+    padding: 20px;
+  }
 }
 
-.segmented-button.active {
-  background: var(--color-surface);
-  color: var(--color-primary);
-  font-weight: 700;
-  box-shadow: 0 1px 3px rgba(6, 69, 90, 0.10);
+.app-sidebar.is-collapsed {
+  padding-right: 10px;
+  padding-left: 10px;
 }
 
-.segmented-button:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
+.app-body:has(.app-sidebar.is-collapsed) {
+  grid-template-columns: 76px minmax(0, 1fr);
 }
 
-/* Contexto operacional */
-
-#app-context {
-  flex: 0 0 auto;
-  padding: 12px 12px 32px;
-  border-top: 1px solid var(--color-border);
-  border-bottom: 1px solid var(--color-border);
-  background: transparent;
-}
-
-.context-selector {
-  display: grid;
-  gap: 9px;
-}
-
-.context-selector-heading {
-  color: var(--color-primary-hover);
-  font-size: 10px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-}
-
-.context-selector label {
-  display: grid;
-  gap: 5px;
-}
-
-.context-selector label > span {
-  color: var(--color-text-muted);
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.context-selector select {
-  width: 100%;
-  min-width: 0;
-  min-height: 34px;
-  padding: 0 8px;
-  border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
-  background: var(--color-surface);
-  color: var(--color-text);
-  font: inherit;
-  font-size: 11px;
-}
-
-.context-selector select:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
-}
-
-.context-selector select:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Ações operacionais da Central */
-
-.app-sidebar-actions {
-  flex: 0 0 auto;
-  display: grid;
-  gap: 10px;
-  padding: 28px 10px 10px;
-}
-
-.sidebar-action {
-  width: 100%;
-  min-height: 34px;
-  display: flex;
-  align-items: center;
+.app-sidebar.is-collapsed .app-sidebar-brand {
   justify-content: center;
-  gap: 8px;
-  padding: 0 10px;
-  border: 1px solid var(--color-border-primary);
-  border-radius: 8px;
-  background: var(--color-surface);
-  color: var(--color-primary-hover);
-  font: inherit;
-  font-size: 11px;
-  font-weight: 700;
-  text-align: center;
-  cursor: pointer;
+  padding: 14px 0;
 }
 
-.sidebar-action:hover {
-  border-color: var(--color-primary);
-  background: var(--color-primary-soft-strong);
+.app-sidebar.is-collapsed .sidebar-brand-copy,
+.app-sidebar.is-collapsed #app-navigation,
+.app-sidebar.is-collapsed #app-context,
+.app-sidebar.is-collapsed .app-sidebar-actions > span {
+  display: none;
 }
 
-.sidebar-action:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 1px;
+.app-sidebar.is-collapsed .app-sidebar-actions {
+  padding-right: 0;
+  padding-left: 0;
 }
 
-.sidebar-action-danger {
-  margin-top: 8px;
-  border-color: var(--color-primary);
-  background: var(--color-primary);
-  color: #fff;
+.app-sidebar.is-collapsed .sidebar-action {
+  width: 54px;
+  height: 40px;
+  margin: 0 auto;
+  font-size: 0;
 }
 
-.sidebar-action-danger:hover {
-  border-color: var(--color-primary-hover);
-  background: var(--color-primary-hover);
-  color: #fff;
+.app-sidebar.is-collapsed .sidebar-action .ui-icon {
+  width: 18px;
+  height: 18px;
 }

@@ -1,0 +1,76 @@
+.segmented-card {
+  margin: 2px 4px 4px;
+  padding: 9px 10px 10px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(6, 69, 90, 0.04);
+}
+
+.segmented-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  margin-bottom: 8px;
+}
+
+.segmented-header strong {
+  color: var(--color-text);
+  font-size: var(--font-size-control);
+  font-weight: var(--font-weight-bold);
+}
+
+.segmented-badge {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.segmented-control {
+  display: flex;
+  gap: 2px;
+  padding: 3px;
+  border-radius: 6px;
+  background: var(--color-surface-soft);
+}
+
+.segmented-button {
+  flex: 1 1 0;
+  min-width: 0;
+  padding: 5px 0;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--color-text-muted);
+  font: inherit;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background 150ms ease,
+    color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.segmented-button:hover {
+  color: var(--color-text);
+}
+
+.segmented-button.active {
+  background: var(--color-surface);
+  color: var(--color-primary);
+  font-weight: var(--font-weight-bold);
+  box-shadow: 0 1px 3px rgba(6, 69, 90, 0.10);
+}
+
+.segmented-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 1px;
+}

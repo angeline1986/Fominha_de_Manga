@@ -7,6 +7,17 @@ const mangaState = {
   },
 };
 
+const listeners = new Set();
+
+export function subscribeMangaState(listener) {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+function notifyMangaState() {
+  listeners.forEach((listener) => listener(getMangaState()));
+}
+
 export function setMangaState(state) {
   mangaState.provider = state?.provider ?? null;
   mangaState.manga = state?.manga ?? null;
@@ -14,6 +25,7 @@ export function setMangaState(state) {
   mangaState.summary = {
     chapters: state?.summary?.chapters ?? 0,
   };
+  notifyMangaState();
 }
 
 export function clearMangaState() {
@@ -23,6 +35,7 @@ export function clearMangaState() {
   mangaState.summary = {
     chapters: 0,
   };
+  notifyMangaState();
 }
 
 export function getMangaState() {

@@ -1,0 +1,73 @@
+.drill-layer {
+  transition:
+    transform 340ms ease,
+    opacity 260ms ease,
+    filter 340ms ease;
+}
+
+.drill-layer-root {
+  transform: translateX(0);
+  opacity: 1;
+  filter: blur(0);
+}
+
+.drill-layer-detail {
+  transform: translateX(110%);
+  opacity: 0;
+  filter: blur(3px);
+  visibility: hidden;
+}
+
+.drill-navigation.is-detail .drill-layer-root {
+  transform: translateX(-110%);
+  opacity: 0;
+  filter: blur(3px);
+  visibility: hidden;
+}
+
+.drill-navigation.is-detail .drill-layer-detail {
+  transform: translateX(0);
+  opacity: 1;
+  filter: blur(0);
+  visibility: visible;
+}
+
+.drill-group-items .drill-item {
+  animation: drill-item-in 220ms ease both;
+}
+
+.drill-group-items .drill-item:nth-child(2) {
+  animation-delay: 25ms;
+}
+
+.drill-group-items .drill-item:nth-child(3) {
+  animation-delay: 50ms;
+}
+
+.drill-group-items .drill-item:nth-child(4) {
+  animation-delay: 75ms;
+}
+
+.drill-group-items .drill-item:nth-child(5) {
+  animation-delay: 100ms;
+}
+
+@keyframes drill-item-in {
+  from {
+    opacity: 0;
+    transform: translateX(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drill-layer,
+  .drill-group-items .drill-item {
+    transition: none;
+    animation: none;
+  }
+}

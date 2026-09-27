@@ -1,7 +1,4 @@
-import { getMangaState } from "/_app/state/manga_state.js";
-import { subscribeContext } from "/_app/state/context.js";
-
-const subscriptions = new WeakMap();
+import { getMangaState, subscribeMangaState } from "/_app/state/manga_state.js";
 
 export function render(container) {
   const renderPage = () => {
@@ -44,10 +41,7 @@ export function render(container) {
 
   renderPage();
 
-  if (!subscriptions.has(container)) {
-    const unsubscribe = subscribeContext(() => renderPage());
-    subscriptions.set(container, unsubscribe);
-  }
+  return subscribeMangaState(renderPage);
 }
 
 function escapeHtml(value) {

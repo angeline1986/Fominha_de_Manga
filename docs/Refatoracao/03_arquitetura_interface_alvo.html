@@ -140,8 +140,9 @@ ARTEFATOS / AUTORIDADE</div>
 <div class="rule"><strong>_app ≠ _shared</strong><span>API client, store e router são infraestrutura da aplicação, não componentes visuais.</span></div>
 <div class="rule"><strong>Shared não vira monólito</strong><span>Tabela, zoom, viewer, pager, focus, modal, toolbar e feedback continuam independentes.</span></div>
 <div class="rule"><strong>Página compõe</strong><span>A página configura componentes compartilhados e mantém somente comportamento específico.</span></div>
-<div class="rule"><strong>~200 linhas</strong><span>É gatilho de revisão arquitetural, nunca regra para cortar código arbitrariamente.</span></div>
+<div class="rule"><strong>Máximo de 200 linhas</strong><span>Limite obrigatório por arquivo de código da V2, revisado em 2026-09-27. Separar por responsabilidade e feature, sem compactação artificial.</span></div>
 </div>
+<div class="callout"><strong>Ciclo de vida e features:</strong> páginas observam os stores dos dados apresentados e devolvem sua limpeza ao router. O shell compõe features com módulos próprios; chamadas HTTP ficam em <code>_app/api/</code>.</div>
 <div class="flow">am3_page.js
 ├── usa _shared/table/
 ├── usa _shared/filter/

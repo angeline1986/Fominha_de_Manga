@@ -1,0 +1,23 @@
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-surface);
+}
+
+.data-table th,
+.data-table td {
+  padding: 12px;
+  border-bottom: 1px solid var(--color-border);
+  text-align: left;
+  vertical-align: top;
+}
+
+.data-table th {
+  background: var(--color-surface-soft);
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-small);
+}
+
+.data-table tbody tr:last-child td {
+  border-bottom: 0;
+}

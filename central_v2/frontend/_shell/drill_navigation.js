@@ -1,3 +1,5 @@
+import { iconMarkup } from "/_shared/icons/icons.js";
+import { segmentedMarkup, selectMergeLevel } from "/_shell/merge_levels.js";
 import { navigation } from "/_shell/navigation.js";
 
 function rootItem(section) {
@@ -7,44 +9,10 @@ function rootItem(section) {
       type="button"
       data-section="${section.id}"
     >
-      <span>${section.label}</span>
-      <span class="drill-arrow" aria-hidden="true">›</span>
+      ${iconMarkup(section.id)}
+      <span class="drill-item-label">${section.label}</span>
+      <span class="drill-arrow">${iconMarkup("next")}</span>
     </button>
-  `;
-}
-
-function segmentedMarkup(control) {
-  return `
-    <div
-      class="segmented-card"
-      data-segmented="${control.id}"
-      data-value="${control.defaultValue}"
-    >
-      <div class="segmented-header">
-        <strong>${control.label}</strong>
-        <span class="segmented-badge">
-          NÍVEL ${control.defaultValue}
-        </span>
-      </div>
-
-      <div
-        class="segmented-control"
-        role="group"
-        aria-label="Seletor de nível de ${control.label}"
-      >
-        ${control.options.map((option) => `
-          <button
-            class="segmented-button${option.value === control.defaultValue ? " active" : ""}"
-            type="button"
-            data-segment-value="${option.value}"
-            data-action="${option.action}"
-            aria-pressed="${option.value === control.defaultValue}"
-          >
-            ${option.label}
-          </button>
-        `).join("")}
-      </div>
-    </div>
   `;
 }
 
@@ -96,7 +64,7 @@ export function createDrillNavigation() {
             type="button"
             aria-label="Voltar ao menu principal"
           >
-            ‹
+            ${iconMarkup("back")}
           </button>
 
           <strong class="drill-section-title"></strong>
@@ -161,22 +129,7 @@ export function createDrillNavigation() {
     const segmentButton = event.target.closest("[data-segment-value]");
 
     if (segmentButton) {
-      const segmented = segmentButton.closest("[data-segmented]");
-      const buttons = segmented.querySelectorAll("[data-segment-value]");
-      const value = segmentButton.dataset.segmentValue;
-      const badge = segmented.querySelector(".segmented-badge");
-
-      buttons.forEach((button) => {
-        const active = button === segmentButton;
-        button.classList.toggle("active", active);
-        button.setAttribute("aria-pressed", String(active));
-      });
-
-      segmented.dataset.value = value;
-
-      if (badge) {
-        badge.textContent = `NÍVEL ${value}`;
-      }
+      selectMergeLevel(segmentButton);
     }
 
     const actionButton = event.target.closest("[data-action]");

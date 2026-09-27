@@ -22,7 +22,7 @@ class CentralV2SmokeTests(unittest.TestCase):
         ).encode("utf-8")
 
         with patch(
-            "central_v2.backend.server.dispatch_get",
+            "central_v2.backend.http_handler.dispatch_get",
             return_value=RouteResponse(status=200, body=body),
         ) as dispatch:
             server = ThreadingHTTPServer(
@@ -113,7 +113,7 @@ class CentralV2SmokeTests(unittest.TestCase):
         ).encode("utf-8")
 
         with patch(
-            "central_v2.backend.server.dispatch_get",
+            "central_v2.backend.http_handler.dispatch_get",
             return_value=RouteResponse(status=200, body=body),
         ) as dispatch:
             server = ThreadingHTTPServer(

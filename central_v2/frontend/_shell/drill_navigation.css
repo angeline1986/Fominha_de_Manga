@@ -1,0 +1,137 @@
+.drill-navigation {
+  height: 100%;
+  min-height: 0;
+}
+
+.drill-stage {
+  position: relative;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.drill-layer {
+  position: absolute;
+  inset: 0;
+  overflow-y: auto;
+}
+
+.drill-navigation,
+.drill-stage,
+.drill-layer,
+.drill-heading {
+  background: var(--color-primary-soft);
+}
+
+.drill-heading {
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  padding: 0 8px 10px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.drill-heading strong {
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-label);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: var(--color-primary);
+}
+
+.drill-detail-heading {
+  padding-left: 4px;
+  gap: 5px;
+}
+
+.drill-back {
+  flex: 0 0 28px;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-primary);
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.drill-back:hover,
+.drill-back:focus-visible {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+.drill-list,
+.drill-group-items {
+  display: grid;
+  gap: 2px;
+}
+
+.drill-list {
+  padding-top: 10px;
+}
+
+.drill-item {
+  min-height: var(--menu-row-height);
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-sm);
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--color-menu-text);
+  font-size: var(--font-size-menu);
+  text-align: left;
+  cursor: pointer;
+}
+
+.drill-item:hover,
+.drill-item:focus-visible {
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+.drill-item-label {
+  flex: 1;
+}
+
+.drill-root-item > .ui-icon {
+  width: var(--icon-size-menu);
+  height: var(--icon-size-menu);
+}
+
+.drill-arrow {
+  display: inline-flex;
+  color: var(--color-menu-text);
+  opacity: .6;
+}
+
+.drill-detail-content {
+  padding-top: 8px;
+}
+
+.drill-group {
+  padding: 10px 0;
+}
+
+.drill-group + .drill-group {
+  border-top: 1px solid var(--color-border);
+}
+
+.drill-group-title {
+  padding: 0 10px 5px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+  letter-spacing: 0.08em;
+}

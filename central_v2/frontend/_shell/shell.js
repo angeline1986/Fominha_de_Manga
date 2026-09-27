@@ -1,11 +1,9 @@
-import {
-  changeManga,
-  changeProvider,
-} from "/_app/context/context_controller.js";
-import { createContextSelector } from "/_shell/context_selector.js";
+import { iconMarkup } from "/_shared/icons/icons.js";
+import { mountContext } from "/_shell/context.js";
 import { createDrillNavigation } from "/_shell/drill_navigation.js";
+import { bindShutdown } from "/_shell/shutdown.js";
 
-export function mountShell(root, context) {
+export function mountShell(root, onStopped) {
   root.innerHTML = `
     <div class="app-shell">
       <div class="app-body">
@@ -15,8 +13,13 @@ export function mountShell(root, context) {
           aria-label="Navegação principal"
         >
           <div class="app-sidebar-brand">
-            <strong>Fominha de Mangá</strong>
-            <span>Central de Processamento</span>
+            <button class="sidebar-toggle" type="button" aria-label="Recolher menu" aria-expanded="true">
+              ${iconMarkup("menu")}
+            </button>
+            <div class="sidebar-brand-copy">
+              <strong>Fominha de Mangá</strong>
+              <span>Central de Processamento</span>
+            </div>
           </div>
 
           <div id="app-navigation"></div>
@@ -24,12 +27,12 @@ export function mountShell(root, context) {
 
           <div class="app-sidebar-actions" aria-label="Ações da Central">
             <button type="button" class="sidebar-action" data-action="sync">
-              <span aria-hidden="true">↻</span>
+              ${iconMarkup("sync")}
               <span>Sincronizar</span>
             </button>
 
             <button type="button" class="sidebar-action sidebar-action-danger" data-action="stop-server">
-              <span aria-hidden="true">⏻</span>
+              ${iconMarkup("power")}
               <span>Finalizar servidor</span>
             </button>
           </div>
@@ -44,61 +47,24 @@ export function mountShell(root, context) {
   `;
 
   const navigation = root.querySelector("#app-navigation");
-  const contextRoot = root.querySelector("#app-context");
-  const stopButton = root.querySelector('[data-action="stop-server"]');
-
-  if (stopButton) {
-    stopButton.addEventListener("click", async () => {
-      const confirmed = window.confirm("Deseja realmente finalizar o servidor da Central?");
-      if (!confirmed) return;
-
-      try {
-        stopButton.disabled = true;
-        stopButton.innerText = "Finalizando...";
-
-        await fetch("/api/shutdown", { method: "POST" });
-
-        document.body.innerHTML = `
-          <div style="display:flex;height:100vh;align-items:center;justify-content:center;font-family:sans-serif;flex-direction:column;">
-            <h2>Central V2 finalizada com sucesso.</h2>
-            <p>Você já pode fechar esta aba.</p>
-          </div>
-        `;
-      } catch (error) {
-        console.error("[Central V2] Falha ao finalizar servidor:", error);
-        stopButton.disabled = false;
-        stopButton.innerText = "Finalizar servidor";
-        alert("Erro ao finalizar o servidor.");
-      }
-    });
+  const sidebar = root.querySelector("#app-sidebar");
+  const toggle = root.querySelector(".sidebar-toggle");
+  function toggleSidebar() {
+    const collapsed = sidebar.classList.toggle("is-collapsed");
+    toggle.setAttribute("aria-expanded", String(!collapsed));
+    toggle.setAttribute("aria-label", collapsed ? "Expandir menu" : "Recolher menu");
   }
-
+  toggle.addEventListener("click", toggleSidebar);
+  const disposeContext = mountContext(root.querySelector("#app-context"));
+  const disposeShutdown = bindShutdown(
+    root.querySelector('[data-action="stop-server"]'),
+    onStopped,
+  );
   navigation.append(createDrillNavigation());
 
-  function renderContext(currentContext) {
-    contextRoot.replaceChildren(
-      createContextSelector(currentContext, {
-        onProviderChange(provider) {
-          const nextContext = changeProvider(provider);
-          renderContext(nextContext);
-        },
-
-        async onMangaChange(manga) {
-          try {
-            const { context: nextContext } =
-              await changeManga(manga);
-
-            renderContext(nextContext);
-          } catch (error) {
-            console.error(
-              "[Central V2] Falha ao carregar estado da obra.",
-              error,
-            );
-          }
-        },
-      }),
-    );
-  }
-
-  renderContext(context);
+  return () => {
+    toggle.removeEventListener("click", toggleSidebar);
+    disposeContext();
+    disposeShutdown();
+  };
 }

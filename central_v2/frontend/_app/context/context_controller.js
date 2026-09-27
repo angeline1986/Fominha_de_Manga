@@ -19,8 +19,8 @@ let mangaRequestSequence = 0;
 export async function initializeContext() {
   const catalog = await fetchCatalog();
 
-  setCatalog(catalog);
   clearMangaState();
+  setCatalog(catalog);
 
   return getContext();
 }
@@ -33,8 +33,8 @@ export function changeProvider(provider) {
   }
 
   mangaRequestSequence += 1;
-  selectProvider(provider);
   clearMangaState();
+  selectProvider(provider);
 
   return getContext();
 }
@@ -52,19 +52,17 @@ export async function changeManga(manga) {
     );
   }
 
-  selectManga(manga);
+  const requestSequence = ++mangaRequestSequence;
   clearMangaState();
+  selectManga(manga);
 
   if (!manga) {
-    mangaRequestSequence += 1;
-
     return {
       context: getContext(),
       mangaState: getMangaState(),
     };
   }
 
-  const requestSequence = ++mangaRequestSequence;
   const state = await fetchMangaState(provider, manga);
 
   if (requestSequence !== mangaRequestSequence) {

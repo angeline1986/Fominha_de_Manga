@@ -248,8 +248,10 @@ primeiro; CSS local apenas para particularidades reais da página.
 
 ## 6. Regras de engenharia
 
-1.  **\~200 linhas é gatilho de revisão, não limite mecânico.** Revisar
-    responsabilidade, coesão e contratos antes de decompor.
+1.  **Máximo de 200 linhas por arquivo de código da Central V2.**
+    Limite obrigatório definido na revisão de 2026-09-27. Separar por
+    responsabilidade e feature, preservando coesão e contratos; não
+    compactar código artificialmente para cumprir o limite.
 2.  **Sem nomes redundantes.** O contexto da pasta já comunica parte do
     domínio.
 3.  **Shared não vira monólito.** Table, zoom, viewer, pager, focus,
@@ -264,6 +266,11 @@ primeiro; CSS local apenas para particularidades reais da página.
     definindo o contrato persistido.
 8.  **Central legada permanece estável.** Não desmontá-la enquanto a V2
     ainda depender dela como baseline.
+9.  **Ciclo de vida explícito.** Páginas observam os stores dos dados que
+    apresentam e devolvem sua função de limpeza ao router. Assinaturas
+    são encerradas ao sair da página.
+10. **Features possuem módulos próprios.** O shell compõe a interface;
+    transporte HTTP do frontend pertence a `_app/api/`.
 
 ## 7. Estratégia de migração
 
