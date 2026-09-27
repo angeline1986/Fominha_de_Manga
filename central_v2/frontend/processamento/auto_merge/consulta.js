@@ -1,10 +1,10 @@
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
-import { showMessage } from "/_shared/messages/messages.js";
+import { createJobProgress } from "/_shared/progress/progress.js";
 import { createColumns, needsAttention } from "/processamento/auto_merge/registros.js";
 
-export function createLevel1View() {
+export function createLevel1View({ onExecute } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page";
   element.innerHTML = `
@@ -26,12 +26,14 @@ export function createLevel1View() {
     </div>
     <p class="auto-merge-status" role="status" aria-live="polite"></p>
     <div class="auto-merge-results"></div>
-    <p class="auto-merge-note">Consulta somente leitura. O residual é o valor salvo no Nível I e pode ter sido tratado nas etapas seguintes; as imagens não são revalidadas.</p>
+    <p class="auto-merge-note">A tabela mostra os registros salvos. A execução usa somente cortes seguros e preserva estágios ou destinos MERGE já existentes.</p>
   `;
   const query = element.querySelector("[data-query]");
   const filters = [...element.querySelectorAll("[data-filter]")];
   const execute = element.querySelector("[data-execute]");
   const status = element.querySelector(".auto-merge-status");
+  const progress = createJobProgress();
+  element.querySelector(".auto-merge-toolbar").after(progress.element);
   const results = element.querySelector(".auto-merge-results");
   const pagination = createPagination();
   const selectedChapters = new Set();
@@ -106,11 +108,7 @@ export function createLevel1View() {
     resetAndDraw();
   }
   async function requestExecution() {
-    const count = selectedChapters.size;
-    const message = count
-      ? `A execução do Auto-Merge pela Central V2 ainda não está disponível. ${count} capítulo(s) permanecem selecionados.`
-      : "Selecione ao menos um capítulo para executar.";
-    await showMessage({ title: count ? "Execução indisponível" : "Nenhum capítulo selecionado", message });
+    await onExecute?.([...selectedChapters]);
   }
   filters.forEach((button) => button.addEventListener("click", selectFilter));
   execute.addEventListener("click", requestExecution);
@@ -124,6 +122,14 @@ export function createLevel1View() {
         pagination.reset();
       }
       state = next;
+      draw();
+    },
+    setExecution(next) {
+      execute.disabled = next.busy;
+      progress.update(next);
+    },
+    clearSelection() {
+      selectedChapters.clear();
       draw();
     },
     dispose() {

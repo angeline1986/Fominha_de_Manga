@@ -107,7 +107,7 @@
 }
 
 .app-body:has(.app-sidebar.is-collapsed) {
-  grid-template-columns: 76px minmax(0, 1fr);
+  grid-template-columns: var(--sidebar-width-collapsed) minmax(0, 1fr);
 }
 
 .app-sidebar.is-collapsed .app-sidebar-brand {

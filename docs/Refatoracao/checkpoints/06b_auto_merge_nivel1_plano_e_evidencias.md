@@ -1,10 +1,12 @@
 # Auto-Merge Nível I — fronteiras, lacunas e primeira unidade V2
 
 Data: 2026-09-27. Base: [contrato observado](06a_auto_merge_nivel1_contrato.md).
-Status: auditoria concluída; nenhuma execução de Auto-Merge implementada na V2.
+Status original: auditoria concluída antes da implementação de execução V2.
 
-Atualização: a consulta AM1-A foi implementada e validada; ver
-[checkpoint 07](07_auto_merge_nivel1_consulta_v2.md). A execução segue pendente.
+Atualização posterior: a consulta AM1-A (checkpoint 07) e as unidades AM1-B,
+AM1-C e AM1-D foram implementadas. O caso real controlado da obra de teste
+continua pendente; estado atualizado, testes e política operacional estão no
+[checkpoint 08](08_auto_merge_nivel1_estrategia_v2.md).
 
 ## Restrições confirmadas
 
@@ -157,4 +159,10 @@ monitorado foi comparada por SHA-256 antes/depois, sem alterações.
 - [ ] Validar fluxo completo e parcial, erro e conservação dos artefatos.
 - [ ] Comparar resultado em caso real controlado.
 
-Nenhuma alteração de produção foi realizada nesta auditoria.
+## Estado posterior da implementação
+
+Este arquivo preserva a análise inicial. A implementação posterior está
+descrita no checkpoint 08. A validação sintética cobriu planejamento,
+materialização, promoção, endpoint/job, recusa da V1 ativa, seleção inválida e
+interface; não alterou a obra `Gazing at you_centrav2`. A V1 e o domínio V3
+permaneceram sem alterações.

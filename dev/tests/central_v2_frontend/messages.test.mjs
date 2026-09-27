@@ -9,7 +9,9 @@ async function setup() {
     const listeners = {};
     return {
       isConnected: true,
+      children: [],
       setAttribute() {},
+      append(...children) { this.children.push(...children); },
       addEventListener(name, handler) { listeners[name] = handler; },
       fire(name) { listeners[name]?.({ preventDefault() {} }); },
       focus() { focused = this; },
@@ -66,4 +68,30 @@ test('Escape dismisses confirmation and queued messages open one at a time', asy
   assert.equal(ui.focused(), dialog.querySelector('[data-accept]'));
   dialog.querySelector('[data-close]').fire('click');
   assert.equal(await second, false);
+});
+
+test('operation summary uses the shared dialog and renders chapter details as text', async () => {
+  const ui = await setup();
+  const result = ui.api.showOperationSummary({
+    summary: {
+      headline: '1 capítulo processado',
+      breakdown: '1 parcial',
+      items: [{
+        chapter: '11', status: 'Concluído parcialmente', count: '12 merges', warning: true,
+        details: [['Residual', '6200–20200 px']],
+      }],
+    },
+  });
+  await tick();
+  const dialog = ui.dialogs[0];
+  assert.match(dialog.className, /message-summary-dialog/);
+  assert.equal(dialog.querySelector('[data-caption]').hidden, false);
+  assert.equal(dialog.querySelector('[data-headline]').textContent, '1 capítulo processado');
+  assert.equal(dialog.querySelector('[data-breakdown]').textContent, '1 parcial');
+  const row = dialog.querySelector('[data-items]').children[0];
+  assert.equal(row.children[0].children[0].textContent, 'Cap. 11');
+  assert.equal(row.children[0].children[1].textContent, 'Concluído parcialmente');
+  assert.equal(dialog.querySelector('[data-accept]').textContent, 'Fechar');
+  dialog.querySelector('[data-accept]').fire('click');
+  assert.equal(await result, true);
 });

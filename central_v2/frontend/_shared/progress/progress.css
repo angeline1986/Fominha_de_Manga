@@ -1,0 +1,56 @@
+.job-progress {
+  position: fixed;
+  z-index: 20;
+  right: var(--space-lg);
+  bottom: var(--space-lg);
+  left: calc(var(--sidebar-width) + var(--space-lg));
+  display: grid;
+  gap: var(--space-xs);
+  padding: var(--space-md);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-progress);
+}
+
+.job-progress[hidden] {
+  display: none;
+}
+
+.job-progress-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-md);
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-small);
+}
+
+.job-progress-heading span {
+  white-space: nowrap;
+}
+
+.job-progress p {
+  margin: 0;
+  color: var(--color-text);
+  font-size: var(--font-size-small);
+}
+
+.job-progress progress {
+  display: block;
+  width: 100%;
+  height: var(--progress-height);
+  accent-color: var(--color-primary);
+}
+
+.app-body:has(.app-sidebar.is-collapsed) .job-progress {
+  left: calc(var(--sidebar-width-collapsed) + var(--space-lg));
+}
+
+@media (max-width: 760px) {
+  .job-progress,
+  .app-body:has(.app-sidebar.is-collapsed) .job-progress {
+    right: var(--space-sm);
+    bottom: var(--space-sm);
+    left: var(--space-sm);
+  }
+}

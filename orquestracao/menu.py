@@ -15,6 +15,7 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from config.data_paths import OUTPUT_ROOT
+from orquestracao.central_session import run_central
 from processamento.unificacao_imagens.image_stitcher import run_merge_flow
 from processamento.unificacao_imagens.image_stitcher_review import run_merge_review_flow
 from processamento.limpeza_baloes.bubble_cleaner_flow import run_clean_flow
@@ -173,7 +174,10 @@ def open_processing_web() -> None:
         return
     print(c("success", "Abrindo Central de Processamento Web..."))
     print(c("muted", "└─ http://127.0.0.1:8766"))
-    subprocess.run([sys.executable, str(server)], cwd=ROOT_DIR, check=False)
+    try:
+        run_central([sys.executable, str(server)], cwd=ROOT_DIR)
+    except RuntimeError as exc:
+        print(c("warning", str(exc)))
 
 
 def open_central_v2() -> None:
@@ -183,7 +187,10 @@ def open_central_v2() -> None:
         return
     print(c("success", "Abrindo Central V2..."))
     print(c("muted", "└─ http://127.0.0.1:8090"))
-    subprocess.run([sys.executable, "-m", "central_v2.backend.server"], cwd=ROOT_DIR, check=False)
+    try:
+        run_central([sys.executable, "-m", "central_v2.backend.server"], cwd=ROOT_DIR)
+    except RuntimeError as exc:
+        print(c("warning", str(exc)))
 
 def _natural_key(path: Path) -> list[object]:
     return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", path.name)]

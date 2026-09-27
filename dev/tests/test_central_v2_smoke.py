@@ -45,6 +45,7 @@ class CentralV2SmokeTests(unittest.TestCase):
                     timeout=5,
                 ) as response:
                     self.assertEqual(response.status, 200)
+                    self.assertEqual(response.headers.get("Cache-Control"), "no-store")
                     result = json.loads(response.read().decode("utf-8"))
 
                 self.assertEqual(result, payload)

@@ -9,3 +9,22 @@ export async function fetchLevel1(provider, manga, signal) {
   }
   return payload;
 }
+
+export async function submitLevel1(provider, manga, chapters) {
+  return requestJson("/api/auto-merge/level1/execute", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ provider, manga, chapters }),
+  });
+}
+
+export async function fetchJob(jobId, signal) {
+  return requestJson(`/api/jobs/${encodeURIComponent(jobId)}`, { signal, cache: "no-store" });
+}
+
+async function requestJson(url, options) {
+  const response = await fetch(url, options);
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || `Falha na solicitação (${response.status}).`);
+  return payload;
+}
