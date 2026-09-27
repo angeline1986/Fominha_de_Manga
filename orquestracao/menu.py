@@ -175,6 +175,16 @@ def open_processing_web() -> None:
     print(c("muted", "└─ http://127.0.0.1:8766"))
     subprocess.run([sys.executable, str(server)], cwd=ROOT_DIR, check=False)
 
+
+def open_central_v2() -> None:
+    server = ROOT_DIR / "central_v2" / "backend" / "server.py"
+    if not server.is_file():
+        print(c("error", "Central V2 não encontrada."))
+        return
+    print(c("success", "Abrindo Central V2..."))
+    print(c("muted", "└─ http://127.0.0.1:8090"))
+    subprocess.run([sys.executable, "-m", "central_v2.backend.server"], cwd=ROOT_DIR, check=False)
+
 def _natural_key(path: Path) -> list[object]:
     return [int(part) if part.isdigit() else part.lower() for part in re.split(r"(\d+)", path.name)]
 
@@ -621,31 +631,34 @@ def print_header(title: str = "FOMINHA DE MANGA") -> None:
 def build_menu() -> tuple[MenuSection, ...]:
     return (
         MenuSection(
-            "DOWNLOAD DE MANGÁS",
-            (MenuItem(1, "Mangago Downloader", "Abrir servidor Web", open_mangago_web, "item_download"),),
-            "sec_download",
-        ),
-        MenuSection(
-            "PROCESSAMENTO",
+            "CENTRAIS",
             (
-                MenuItem(6, "Central de Processamento", "Abrir servidor Web", open_processing_web, "item_pdf"),
-                MenuItem(7, "Patch Degradê", "Teste isolado em imagens IMG", run_patch_degrade_experiment, "item_pdf"),
-                MenuItem(8, "Patch Balão Estilizado", "Fallback assistido para balões estilizados", run_styled_balloon_experiment, "item_pdf"),
-                MenuItem(9, "Patch Balão Transparente", "LaMa restrito à máscara de texto", run_transparent_balloon_experiment, "item_pdf"),
+                MenuItem(1, "Central V1", "Interface atual", open_processing_web, "item_pdf"),
+                MenuItem(2, "Central V2", "Nova interface em migração", open_central_v2, "item_pdf"),
             ),
             "sec_pdf",
         ),
         MenuSection(
-            "PDF",
-            (MenuItem(2, "Gerar PDFs", "Gerar PDFs de capítulos baixados", manual_pdf_flow, "item_pdf"),),
+            "DOWNLOAD",
+            (MenuItem(3, "Mangago Downloader", "Abrir servidor Web", open_mangago_web, "item_download"),),
+            "sec_download",
+        ),
+        MenuSection(
+            "FERRAMENTAS AVULSAS",
+            (
+                MenuItem(4, "Gerar PDFs", "PDFs de capítulos baixados", manual_pdf_flow, "item_pdf"),
+                MenuItem(5, "Unificar imagens", "Merge V3", manual_merge_flow, "item_pdf"),
+                MenuItem(6, "Limpar balões", "Bubble Cleaner V3.5", manual_clean_flow, "item_pdf"),
+                MenuItem(7, "Tratar merges pendentes", "Revisar exceções de merge", manual_merge_review_flow, "item_pdf"),
+            ),
             "sec_pdf",
         ),
         MenuSection(
-            "FLUXO SECUNDÁRIO",
+            "PATCHES DE BALÕES",
             (
-                MenuItem(3, "Unificar imagens", "Gerar imagens verticais pelo Merge V3", manual_merge_flow, "item_pdf"),
-                MenuItem(4, "Limpar balões", "Limpar textos de balões com Bubble Cleaner V3.5", manual_clean_flow, "item_pdf"),
-                MenuItem(5, "Tratar merges pendentes", "Propor e revisar exceções sem alterar o Merge V3", manual_merge_review_flow, "item_pdf"),
+                MenuItem(8, "Degradê", "Teste isolado em imagens IMG", run_patch_degrade_experiment, "item_pdf"),
+                MenuItem(9, "Estilizado", "Fallback assistido", run_styled_balloon_experiment, "item_pdf"),
+                MenuItem(10, "Transparente", "LaMa com máscara de texto", run_transparent_balloon_experiment, "item_pdf"),
             ),
             "sec_pdf",
         ),
@@ -659,8 +672,9 @@ def print_main_menu(sections: Sequence[MenuSection]) -> None:
         print(c(section.color_key, f"● {section.title}", bold=True))
         print()
         for item in section.items:
-            print_option(item.number, item.label, item.description, item.color_key)
-            print()
+            number = c("number", f"{item.number:>2}.", bold=True)
+            label = c(item.color_key, f"{item.label:<26}")
+            print(f" {number} {label} {item.description}")
         print()
     print(c("separator", "━" * 50))
     print(f"  {c('number', '0.', bold=True)} Sair")
