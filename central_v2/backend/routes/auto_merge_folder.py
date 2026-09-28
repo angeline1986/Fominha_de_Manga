@@ -12,6 +12,7 @@ STAGES = {
     2: ("MERGE_LEVEL2",),
     3: ("MERGE_LEVEL3",),
     4: ("MERGE_LEVEL4",),
+    5: ("MERGE_LEVEL5",),
 }
 
 

@@ -89,3 +89,37 @@ test('Level IV confirms execution and links its own stage in the summary', async
   assert.equal(JSON.parse(requests.at(-1).options.body).level, 4);
   runner.dispose();
 });
+
+test('Level V confirms the exhaustive pass and sends a remaining residual to review', async () => {
+  const requests = [], summaries = [];
+  const load = browserModules({
+    fetch: async (url, options = {}) => {
+      requests.push({ url, options });
+      if (url === '/api/auto-merge/level5/execute') return { ok: true, json: async () => ({ job: { id: 'job-5' } }) };
+      if (url === '/api/jobs/job-5') return { ok: true, json: async () => ({ job: {
+        id: 'job-5', status: 'completed', progress: {}, results: [{
+          chapter: '6', status: 'partial', resolved_segments: 1,
+          pending_segments: 1, next_stage: 'Revisão Merge',
+        }],
+      } }) };
+      return { ok: true, json: async () => ({ ok: true }) };
+    },
+    setTimeout: (callback) => { callback(); return 1; },
+    confirmations: [], summaries,
+  }, {
+    '/_app/state/context.js': 'export function getContext() { return { provider: "ridi", manga: "Teste" }; }',
+    '/_shared/messages/messages.js': `
+      export async function confirmMessage(value) { globalThis.confirmations.push(value); return true; }
+      export async function showMessage() {}
+      export async function showOperationSummary(value) { globalThis.summaries.push(value); }
+    `,
+  });
+  const { createLevel5Execution } = await load('/processamento/auto_merge/execucao_nivel5.js');
+  const runner = createLevel5Execution({ onStatus() {}, async onComplete() {} });
+  await runner.execute(['6']);
+  assert.equal(JSON.parse(requests[0].options.body).chapters[0], '6');
+  assert.equal(summaries[0].summary.items[0].details.at(-1).value, 'Revisão Merge');
+  await summaries[0].onAction(summaries[0].summary.items[0], { level: 5 });
+  assert.equal(JSON.parse(requests.at(-1).options.body).level, 5);
+  runner.dispose();
+});
