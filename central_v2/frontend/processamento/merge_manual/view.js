@@ -72,9 +72,9 @@ export function createMergeManualView() {
     const current = sessions.get(row.chapter);
     const shouldExpand = !current || !current.expanded;
     if (shouldExpand) for (const [chapter, session] of sessions) {
-      sessions.set(chapter, { ...session, expanded: false });
+      sessions.set(chapter, { ...session, expanded: false, focusMode: false });
     }
-    sessions.set(row.chapter, current ? { ...current, expanded: shouldExpand } : initialSession(row));
+    sessions.set(row.chapter, current ? { ...current, expanded: shouldExpand, focusMode: false } : initialSession(row));
     tableExpanded = false;
     draw();
   }
@@ -82,6 +82,7 @@ export function createMergeManualView() {
   function toggleTable() { tableExpanded = !tableExpanded; drawTable(); }
 
   function drawSessions() {
+    [...sessionsHost.children].forEach((session) => session.disposeFocusMode?.());
     sessionsHost.replaceChildren();
     for (const row of filteredRows()) {
       if (sessions.has(row.chapter)) sessionsHost.append(createSession(row));
@@ -93,12 +94,13 @@ export function createMergeManualView() {
       row, session: sessions.get(row.chapter), provider: state.provider, manga: state.manga,
       onToggle: () => {
         const current = sessions.get(row.chapter);
-        sessions.set(row.chapter, { ...current, expanded: !current.expanded });
+        sessions.set(row.chapter, { ...current, expanded: !current.expanded, focusMode: false });
         draw();
       },
       onChange: (next) => {
         sessions.set(row.chapter, next);
         const current = [...sessionsHost.children].find((item) => item.dataset.chapter === row.chapter);
+        current?.disposeFocusMode?.();
         current?.replaceWith(createSession(row));
       },
       onOpenCuts: (detail) => sessionsHost.dispatchEvent(new CustomEvent("merge-manual:open-cuts", { bubbles: true, detail })),
@@ -129,6 +131,7 @@ export function createMergeManualView() {
       draw();
     },
     dispose() {
+      [...sessionsHost.children].forEach((session) => session.disposeFocusMode?.());
       search.removeEventListener("input", onSearch);
       element.querySelectorAll("[data-filter]").forEach((button) => button.removeEventListener("click", onFilter));
     },

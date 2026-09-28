@@ -185,3 +185,9 @@
 .manual-merge-controls select { width: auto; min-width: 128px; max-width: 190px; color: var(--color-text); }
 .manual-merge-arrow { color: var(--color-primary); font-size: 20px; }
 .manual-merge-zoom { padding-left: var(--space-sm); }
+.manual-merge-focus-toggle { white-space: nowrap; cursor: pointer; }
+.manual-merge-config.is-focus-mode { display: flex; flex-direction: column; padding: var(--space-lg); }
+.manual-merge-config.is-focus-mode .manual-merge-session-body { display: flex; min-height: 0; flex: 1; flex-direction: column; }
+.manual-merge-config.is-focus-mode .manual-merge-thumbnails { min-height: 0; max-height: none; flex: 1; grid-template-columns: repeat(auto-fill, minmax(max(180px, var(--thumbnail-min-width, 116px)), 1fr)); }
+.manual-merge-config.is-focus-mode .manual-merge-thumbnail-frame { height: min(45vh, var(--thumbnail-height, 132px)); }
+.manual-merge-config.is-focus-mode .manual-merge-footer { flex: none; margin-top: var(--space-md); }

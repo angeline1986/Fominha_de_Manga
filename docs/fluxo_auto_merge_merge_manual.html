@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fluxo Auto-Merge e Merge Manual — Fominha de Mangá</title>
+  <style>
+    :root { color-scheme: light; --ink:#173b4d; --muted:#587184; --brand:#0c455a; --line:#c9e4ef; --soft:#eef8fb; --accent:#188ab4; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:#f5fafc; color:var(--ink); font:16px/1.65 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    header { padding:48px max(24px,calc((100% - 1120px)/2)); background:var(--brand); color:white; }
+    header h1 { max-width:900px; margin:0 0 8px; font-size:clamp(2rem,5vw,3rem); line-height:1.15; }
+    header p { margin:0; color:#d9eef5; }
+    main { max-width:1120px; margin:28px auto 64px; padding:0 24px; }
+    nav, section { margin:18px 0; padding:22px 26px; border:1px solid var(--line); border-radius:16px; background:white; }
+    nav { background:var(--soft); }
+    nav ul { display:flex; flex-wrap:wrap; gap:8px 24px; margin:8px 0 0; padding-left:20px; }
+    a { color:#08749a; }
+    h2 { margin:0 0 12px; color:var(--brand); font-size:1.6rem; }
+    h3 { margin:24px 0 8px; color:var(--brand); font-size:1.15rem; }
+    p { margin:10px 0; }
+    table { width:100%; border-collapse:collapse; margin:14px 0; font-size:.94rem; }
+    th,td { padding:10px 12px; border:1px solid var(--line); text-align:left; vertical-align:top; }
+    th { background:var(--soft); color:var(--brand); }
+    pre { overflow:auto; padding:18px; border-radius:10px; background:#f0f7fa; color:#244b5e; line-height:1.45; }
+    code { overflow-wrap:anywhere; color:#164e67; }
+    .callout { padding:14px 16px; border-left:4px solid var(--accent); background:var(--soft); }
+    footer { max-width:1120px; margin:auto; padding:0 24px 32px; color:var(--muted); font-size:.9rem; }
+    @media(max-width:700px) { header { padding:32px 22px; } main { padding:0 14px; } nav,section { padding:18px; overflow-wrap:anywhere; } table { display:block; overflow-x:auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Auto-Merge e Merge Manual</h1>
+    <p>Fluxo operacional da Central V2: níveis automáticos I–V, resíduos, propostas manuais e promoção do MERGE oficial.</p>
+  </header>
+  <main>
+    <nav aria-label="Conteúdo">
+      <strong>Nesta página</strong>
+      <ul>
+        <li><a href="#fluxo">Visão do fluxo</a></li><li><a href="#execucao">Execução</a></li>
+        <li><a href="#niveis">Níveis I–V</a></li><li><a href="#artefatos">Estágios e manifestos</a></li>
+        <li><a href="#manual">Merge Manual</a></li><li><a href="#proposta">Resultado e aplicação</a></li>
+        <li><a href="#diagnostico">Diagnóstico</a></li><li><a href="#testes">Testes</a></li>
+        <li><a href="#especificacao">Especificação para implementar</a></li>
+      </ul>
+    </nav>
+
+    <section id="fluxo">
+      <h2>Visão do fluxo</h2>
+      <p>Os níveis posteriores recebem apenas os resíduos autorizados pelo manifesto válido da etapa anterior. Uma composição completa e validada pode ser promovida ao MERGE oficial. Se o Nível V terminar com resíduos, a fila do Merge Manual os apresenta com base no estado autoritativo da Revisão Merge.</p>
+      <pre>IMG/&lt;capítulo&gt;/page-*.png
+        │
+        ▼
+Auto-Merge I → II → III → IV → V
+        │                    │
+        │ completo           └─ residual → Revisão Merge → Validar Faixa
+        ▼                                             │
+   MERGE oficial                                     ▼
+                                          Novos Merges → Proposta
+                                                            │
+                                                   Visualizar resultado
+                                                            │
+                                                 Aplicar composição final</pre>
+      <p>Os arquivos originais são preservados. Os resultados intermediários ficam em diretórios de estágio, separados do MERGE oficial.</p>
+    </section>
+
+    <section id="execucao">
+      <h2>Como executar pela Central V2</h2>
+      <ol>
+        <li>Inicie a Central pelo menu do projeto e selecione a Central V2.</li>
+        <li>Escolha provider e obra no contexto da aplicação.</li>
+        <li>Em <strong>Processamento → Auto Merge</strong>, selecione o nível I–V.</li>
+        <li>Confira os capítulos elegíveis, selecione os que deseja processar e confirme a execução.</li>
+        <li>Acompanhe o job e leia o resumo por capítulo: estado, arquivos salvos, pendências, motivo, residual e próxima etapa.</li>
+        <li>Continue no nível indicado enquanto houver residual; ao final do V, use <strong>Merge Manual → Validar Faixa</strong> para os capítulos pendentes.</li>
+      </ol>
+      <p>Cada nível possui consulta e execução próprias. I processa até três capítulos em paralelo; II–IV usam até dois workers; V processa capítulos sequencialmente para limitar memória. A V2 implementa sua própria interface, transporte e orquestração, delegando decisões de corte aos módulos de domínio. Ela não executa níveis chamando a Central V1. Não abra as duas Centrais sobre a mesma obra ao mesmo tempo.</p>
+    </section>
+
+    <section id="niveis">
+      <h2>O que cada nível faz</h2>
+      <table>
+        <thead><tr><th>Nível</th><th>Entrada</th><th>Estratégia</th><th>Quando sobra residual</th></tr></thead>
+        <tbody>
+          <tr><th>I</th><td>Imagens-fonte do capítulo.</td><td>Usa a análise e os limites seguros do image stitcher V3. Grava segmentos seguros sem forçar limites.</td><td>Registra intervalos pendentes para II.</td></tr>
+          <tr><th>II</th><td>Somente pendências do manifesto I.</td><td>Busca caminho seguro no residual, considerando faixas brancas e de cor uniforme; prefere divisões equilibradas entre alternativas seguras.</td><td>Persiste trechos resolvidos e envia o restante para III.</td></tr>
+          <tr><th>III</th><td>Somente pendências do manifesto II.</td><td>Busca estrutural local com decisões SAFE/UNSAFE/INCONCLUSIVE do classificador existente; materializa apenas SAFE.</td><td>Preserva o trecho sem limite seguro para IV.</td></tr>
+          <tr><th>IV</th><td>Somente pendências do manifesto III.</td><td>Procura composição global dirigida e estruturalmente segura por residual.</td><td>Guarda os trechos comprovados e encaminha o restante para V.</td></tr>
+          <tr><th>V</th><td>Somente pendências do manifesto IV.</td><td>Busca global exaustiva SAFE. Pode salvar um prefixo seguro e deixar o sufixo restante pendente.</td><td>O residual autoritativo fica disponível para o Merge Manual.</td></tr>
+        </tbody>
+      </table>
+      <p>Altura, cor, número de páginas ou equilíbrio não provam segurança por si só. Se o classificador não confirma um limite permitido, o trecho continua pendente.</p>
+    </section>
+
+    <section id="artefatos">
+      <h2>Estágios, manifestos e promoção</h2>
+      <p>As páginas são ordenadas naturalmente e representadas em um eixo Y global. Os intervalos usam a convenção semiaberta <code>[início, fim)</code>, que mantém a partição sem repetir pixels nas fronteiras.</p>
+      <table>
+        <thead><tr><th>Estágio</th><th>Diretório</th><th>Manifesto</th><th>Algoritmo registrado</th></tr></thead>
+        <tbody>
+          <tr><th>I</th><td><code>01_MERGE_PROCESSAMENTO/AUTO_MERGE/&lt;capítulo&gt;</code></td><td><code>auto-merge-manifest.json</code></td><td><code>auto_merge_level1_complete</code> ou <code>auto_merge_level1_resolved_segments</code></td></tr>
+          <tr><th>II</th><td><code>01_MERGE_PROCESSAMENTO/MERGE_LEVEL2/&lt;capítulo&gt;</code></td><td><code>merge-level2-manifest.json</code></td><td><code>merge_level2_bounded_safe_path_v1</code></td></tr>
+          <tr><th>III</th><td><code>01_MERGE_PROCESSAMENTO/MERGE_LEVEL3/&lt;capítulo&gt;</code></td><td><code>merge-level3-manifest.json</code></td><td><code>merge_level3_structural_safe_v1</code></td></tr>
+          <tr><th>IV</th><td><code>01_MERGE_PROCESSAMENTO/MERGE_LEVEL4/&lt;capítulo&gt;</code></td><td><code>merge-level4-manifest.json</code></td><td><code>merge_level4_directed_structural_safe_v1</code></td></tr>
+          <tr><th>V</th><td><code>01_MERGE_PROCESSAMENTO/MERGE_LEVEL5/&lt;capítulo&gt;</code></td><td><code>merge-level5-manifest.json</code></td><td><code>merge_level5_global_structural_safe_v1</code></td></tr>
+        </tbody>
+      </table>
+      <p>Manifestos registram algoritmo/schema, capítulo, dimensões, altura total, intervalos, arquivos, resíduos, diagnósticos e proveniência. Os níveis II–V conferem a entrada da etapa anterior, inclusive hashes SHA-256 nos pontos definidos pelo contrato. Uma entrada ausente, inválida ou alterada bloqueia a execução seguinte.</p>
+      <p>Um estágio parcial não é um MERGE oficial completo. A promoção para <code>FLUXO_SECUNDARIO/02_MERGE/&lt;capítulo&gt;</code> exige cobertura total, contínua e compatível em dimensões. A promoção combina artefatos existentes sem renderizar novamente os níveis anteriores. Estágios e destinos ocupados não são sobrescritos automaticamente.</p>
+    </section>
+
+    <section id="manual">
+      <h2>Merge Manual: da fila ao editor</h2>
+      <p><strong>Validar Faixa</strong> consulta capítulos com residual autoritativo elegível. Não executa novamente Auto-Merge nem recalcula a pendência. A geometria dos blocos é reconstruída sobre as páginas originais, respeitando os offsets de pixels; por isso, um bloco pode começar ou terminar no meio de uma página.</p>
+      <ol>
+        <li>Expanda a tabela e selecione um capítulo com status pendente.</li>
+        <li>Na sessão de intervalo, selecione início e fim pertencentes ao mesmo bloco; o fim deve ser igual ou posterior ao início.</li>
+        <li>Confira a faixa e acione <strong>Submeter a Novos Cortes</strong>.</li>
+        <li>No editor, adicione quantas réguas forem necessárias. Clique na imagem ou arraste linhas para definir cortes no eixo Y da faixa recomposta; a paleta padrão de cores se repete ciclicamente.</li>
+        <li>Opcionalmente altere as cores das réguas e use o marca-texto para destacar páginas ímpares.</li>
+        <li>Clique numa página na lista para rolar até o trecho correspondente; passe o cursor para abrir sua miniatura.</li>
+        <li>Revise as posições. A proposta exige ao menos uma régua e coordenadas internas, válidas e sem duplicatas.</li>
+      </ol>
+    </section>
+
+    <section id="proposta">
+      <h2>Gerar, visualizar e aplicar</h2>
+      <p>Gerar proposta cria arquivos e <code>merge-manual-manifest.json</code> sob <code>FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/MERGE_MANUAL_PROPOSALS/&lt;capítulo&gt;/&lt;proposta&gt;/</code>. O manifesto, em estado <code>PROPOSTA_GERADA</code>, registra fontes, offsets, fingerprint da revisão, cortes e saídas. A etapa não altera os originais nem o MERGE oficial.</p>
+      <p>A página Resultado mostra todas as saídas da faixa cortada lado a lado dentro de um único quadro de composição. Sob cada segmento aparece somente o intervalo de páginas que o delimita, por exemplo <code>page-226.png → page-232.png</code>; a tela não repete o rótulo “Páginas” nem lista todos os arquivos intermediários. Um limite que coincide com o fim de uma página usa essa página como fronteira e pode aparecer nos intervalos dos dois segmentos adjacentes. Zoom e Modo foco ajudam a revisar. Voltar aos cortes preserva as réguas e posições atuais; gerar novamente produz uma nova proposta.</p>
+      <p class="callout"><strong>Aplicar composição final</strong> é separado de gerar e exige confirmação. O backend revalida fontes, fingerprint da revisão e cobertura. Combina artefatos automáticos fora da faixa escolhida com os blocos manuais dentro dela. Se houver outra pendência fora da faixa, recusa aplicar até que ela também seja resolvida.</p>
+      <p>Com todos os critérios atendidos, os arquivos candidatos são preparados em área temporária e promovidos transacionalmente para o diretório MERGE oficial. O manifesto oficial referencia a proposta; o manifesto manual passa a <code>EFETIVADO</code>. Falhas revertem a tentativa e recuperam a composição anterior. Propostas cujas fontes ou estado de revisão mudaram ficam obsoletas e devem ser geradas novamente.</p>
+    </section>
+
+    <section id="diagnostico">
+      <h2>Diagnóstico rápido</h2>
+      <table>
+        <thead><tr><th>Situação</th><th>O que conferir</th></tr></thead>
+        <tbody>
+          <tr><th>Capítulo não aparece em Validar Faixa</th><td>Não há residual manual elegível no estado atual. Confira resultados e manifestos dos níveis automáticos.</td></tr>
+          <tr><th>Nível seguinte não lista o capítulo</th><td>O manifesto anterior pode estar completo, ausente, inválido, obsoleto ou não conter resíduos autorizados para a etapa.</td></tr>
+          <tr><th>Execução bloqueada por estágio existente</th><td>O sistema evita substituição automática. Inspecione o manifesto e os arquivos antes de decidir uma limpeza.</td></tr>
+          <tr><th>Execução parcial</th><td>Os intervalos seguros foram guardados e o residual segue para a etapa indicada no resumo.</td></tr>
+          <tr><th>Aplicação recusada por pendência fora da faixa</th><td>Resolva também os demais intervalos pendentes do capítulo, depois gere/valide as propostas.</td></tr>
+          <tr><th>Proposta obsoleta</th><td>Recarregue o estado e gere uma nova proposta a partir das fontes atuais.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="testes">
+      <h2>Testes dos contratos</h2>
+      <p>Execute na raiz do repositório:</p>
+      <pre>python3 -m unittest discover -s dev/tests -p 'test_central_v2_*.py'
+python3 -m unittest dev.tests.test_merge_manual_readonly dev.tests.test_merge_manual_proposal dev.tests.test_merge_manual_apply_final
+node --experimental-vm-modules --test dev/tests/central_v2_frontend/*.test.mjs</pre>
+      <p>Testes HTTP podem precisar de permissão para abrir uma porta local. Os testes de domínio e em memória não processam obras reais.</p>
+    </section>
+
+    <section id="especificacao">
+      <h2>Especificação para implementação independente</h2>
+      <p>Esta seção descreve as responsabilidades e os contratos necessários para reconstruir o fluxo sem depender de detalhes visuais implícitos. A interface não é a fonte da verdade: o backend lê a Revisão Merge, valida as fontes e grava manifestos antes de liberar qualquer aplicação oficial.</p>
+      <h3>Responsabilidades por camada</h3>
+      <table>
+        <thead><tr><th>Camada</th><th>Responsabilidade</th><th>Não deve fazer</th></tr></thead>
+        <tbody>
+          <tr><th>Shell / roteador</th><td>Resolver contexto provider/obra, abrir páginas de Auto Merge, Validar Faixa, Novos Merges e Resultado; limpar listeners ao sair.</td><td>Implementar regras de corte ou acessar arquivos locais diretamente.</td></tr>
+          <tr><th>Frontend da feature</th><td>Renderizar dados, manter estado temporário de seleção e réguas, chamar API e apresentar estados de carregamento/erro/sucesso.</td><td>Inferir pendências autoritativas, gerar arquivos ou declarar composição segura.</td></tr>
+          <tr><th>Rotas e jobs V2</th><td>Validar parâmetros, resolver provider/obra/capítulo, chamar serviços de domínio e serializar respostas.</td><td>Duplicar algoritmos de classificação, regras do residual ou código da Central V1.</td></tr>
+          <tr><th>Domínio e filesystem</th><td>Validar manifestos e fingerprints, ler fontes, construir candidatos, gravar proposta isolada e promover composição transacionalmente.</td><td>Sobrescrever originais ou tratar estágio parcial como merge oficial.</td></tr>
+        </tbody>
+      </table>
+      <h3>Contratos HTTP observáveis</h3>
+      <table>
+        <thead><tr><th>Método / rota</th><th>Entrada</th><th>Saída / efeito</th></tr></thead>
+        <tbody>
+          <tr><th>GET <code>/api/merge-manual</code></th><td><code>provider</code>, <code>manga</code></td><td>Capítulos elegíveis e blocos pendentes derivados do estado de Revisão Merge; leitura apenas.</td></tr>
+          <tr><th>GET <code>/api/merge-manual/image</code></th><td>Provider, obra, capítulo e arquivo fonte permitidos</td><td>Bytes da imagem original; nomes são validados e caminhos não podem escapar do capítulo.</td></tr>
+          <tr><th>POST <code>/api/merge-manual/proposal</code></th><td>Provider, obra, capítulo, <code>block_id</code>, início, fim e lista de coordenadas Y</td><td>Manifesto da proposta e nomes/medidas das saídas; status HTTP 201. Não altera o merge oficial.</td></tr>
+          <tr><th>GET <code>/api/merge-manual/proposal/image</code></th><td>Provider, obra, capítulo, <code>proposal_id</code> e arquivo de saída</td><td>Bytes somente se o arquivo estiver listado no manifesto daquela proposta.</td></tr>
+          <tr><th>POST <code>/api/merge-manual/apply</code></th><td>Provider, obra, capítulo e <code>proposal_id</code></td><td>Revalida proposta/revisão e tenta aplicar; erros retornam mensagem sem ocultar bloqueios.</td></tr>
+        </tbody>
+      </table>
+      <h3>Modelo mínimo e invariantes</h3>
+      <p>O estado de leitura contém capítulo, elegibilidade, status, fonte autoritativa e blocos. Cada bloco tem identificador estável no estado lido, <code>global_start</code>/<code>global_end</code> semiabertos, contagem, primeira/última página e páginas com dimensões, intervalo global e offsets de recorte. A geração revalida esse identificador contra o estado atual.</p>
+      <p>O manifesto manual tem schema <code>manual_merge_proposal_v1</code>, identificador, capítulo, criação, status, fingerprint da revisão, bloco de origem, lista ordenada <code>source_files</code>, fingerprint das fontes, cortes e <code>outputs</code>. Cada saída registra arquivo, número do merge, dimensões, limites relativos ao bloco e limites globais. O identificador técnico serve para recuperar/auditar a proposta e fica no manifesto e nas chamadas internas; não precisa aparecer como texto na tela Resultado.</p>
+      <p>Para exibir a origem de cada saída sem uma lista extensa de arquivos: percorra <code>source_files</code> na ordem do manifesto e acumule <code>pending_height</code> a partir de <code>source_block.global_start</code>. Mapeie <code>global_start</code> e <code>global_end</code> da saída para os nomes das páginas correspondentes e mostre apenas <code>primeira página → última página</code>. Quando um limite coincide exatamente com o fim de uma página, associe-o à página anterior; assim, dois segmentos adjacentes podem compartilhar o nome da página usada como fronteira. Não exiba coordenadas de pixels nem o rótulo “Páginas”.</p>
+      <h3>Estados e comportamento de tela</h3>
+      <ol>
+        <li><strong>Fila:</strong> carregar estado da obra; distinguir sem pendência, elegível, bloqueado e erro de leitura. Expandir capítulo revela blocos, sem recalcular Auto-Merge.</li>
+        <li><strong>Intervalo:</strong> início e fim devem pertencer ao mesmo bloco e respeitar ordem. Atualizar a prévia e a lista de páginas quando os limites mudarem.</li>
+        <li><strong>Editor:</strong> construir a faixa com somente os recortes autorizados; guardar coordenadas Y relativas à faixa, cores e quantidade de réguas no estado de tela. Navegação de página rola a prévia até a posição global correspondente.</li>
+        <li><strong>Geração:</strong> desabilitar envio duplicado, mostrar progresso e erro retornado. O servidor recusa faixa obsoleta, fonte ausente/alterada, corte fora da faixa, coordenada duplicada ou ausência de corte.</li>
+        <li><strong>Resultado:</strong> uma única moldura contém a faixa completa; dentro dela, os segmentos de saída ficam ordenados lado a lado, sem cartões independentes. Cada segmento tem sua imagem e legenda com somente o intervalo da primeira à última página de origem; limites coincidentes podem ser compartilhados. A legenda não traz “Páginas”. Zoom altera a largura do quadro de conteúdo dentro de uma área rolável. Voltar mantém a seleção e os cortes.</li>
+        <li><strong>Aplicação:</strong> confirmação, sucesso e falha usam o popup compartilhado da Central V2 (<code>confirmMessage</code>/<code>showMessage</code>), nunca <code>alert</code> ou <code>window.confirm</code>. Indicar validação durante o pedido e bloquear cliques repetidos. Após sucesso, atualizar estado da proposta para efetivada; em falha transacional, preservar/restaurar a composição anterior.</li>
+      </ol>
+      <p>As três visualizações com zoom (prévia do intervalo, editor de cortes e resultado) oferecem Modo Foco: o botão ou <kbd>F</kbd> expande a visualização para a janela, e <kbd>Esc</kbd> retorna. A tecla Esc não aparece como rótulo no dock. O dock vertical não deve criar rolagem horizontal; no editor, mantém réguas ativas, adição ilimitada de cortes, marca-texto, zoom e geração de proposta sincronizados com os controles normais.</p>
+      <h3>Critérios de aceite</h3>
+      <ul>
+        <li>Nenhuma etapa manual muda arquivos em <code>IMG/</code> ou o MERGE oficial antes da ação explícita Aplicar.</li>
+        <li>Cada pixel da faixa selecionada pertence exatamente a uma saída, sem lacuna, sobreposição ou saída vazia.</li>
+        <li>A legenda sob cada segmento mostra apenas o intervalo delimitador da primeira à última página-fonte; em limites exatos, a página de fronteira pode ser compartilhada por segmentos adjacentes.</li>
+        <li>Uma mudança de fonte ou de fingerprint da revisão invalida a proposta antes de aplicar.</li>
+        <li>Uma pendência autorizada fora da faixa impede promoção até ser resolvida.</li>
+        <li>Após a aplicação, todas as imagens candidatas da composição (artefatos automáticos preservados fora da faixa e recortes manuais dentro dela) ficam em <code>FLUXO_SECUNDARIO/02_MERGE/&lt;capítulo&gt;/</code>, junto ao <code>merge-manifest.json</code>; a pasta anterior é substituída somente após validação e com rollback em caso de falha.</li>
+        <li>Rotas de imagem aceitam somente arquivos declarados no manifesto e não permitem traversal de diretório.</li>
+      </ul>
+    </section>
+  </main>
+  <footer>Documentação do fluxo atual da Central V2. O README.md na raiz do repositório contém a mesma referência em Markdown.</footer>
+</body>
+</html>

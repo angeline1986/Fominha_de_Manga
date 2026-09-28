@@ -81,5 +81,13 @@
 .manual-cut-ruler-line { position: absolute; z-index: 3; left: -18%; width: 126%; border-top: 3px dashed var(--ruler-color); }
 .manual-cut-ruler-line b { position: absolute; top: -12px; left: 0; padding: 2px 5px; border-radius: 3px; background: var(--ruler-color); color: #102A39; font: 700 9px sans-serif; text-transform: uppercase; }
 .manual-cut-hint { margin: 0; padding: 9px var(--space-md); border-top: 1px solid var(--color-border); color: var(--color-text-muted); font-size: var(--font-size-small); }
+.manual-cut-toolbar-button { display: inline-flex; align-items: center; gap: 5px; min-height: 32px; padding: 4px 9px; border: 1px solid var(--color-border-primary); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-primary-hover); cursor: pointer; }
+.manual-cut-toolbar-button .ui-icon { width: 14px; height: 14px; }
+.manual-cut-toolbar-button kbd { padding: 1px 4px; border: 1px solid var(--color-border); border-radius: 4px; font: 10px ui-monospace, monospace; }
+.manual-cut-page.is-focus-mode { display: block; padding: 0; }
+.manual-cut-page.is-focus-mode .manual-cut-header, .manual-cut-page.is-focus-mode .manual-cut-panel, .manual-cut-page.is-focus-mode .manual-cut-viewer-toolbar, .manual-cut-page.is-focus-mode .manual-cut-hint { display: none; }
+.manual-cut-page.is-focus-mode .manual-cut-workspace { display: block; width: 100%; height: 100%; }
+.manual-cut-page.is-focus-mode .manual-cut-viewer { width: 100%; height: 100%; border: 0; border-radius: 0; }
+.manual-cut-page.is-focus-mode .manual-cut-canvas-wrap { height: 100%; padding: var(--space-xl) 190px; }
 @media (max-width: 900px) { .manual-cut-workspace { grid-template-columns: minmax(0, 1fr); } .manual-cut-panel { height: auto; } .manual-cut-viewer { height: 78vh; min-height: 520px; } .manual-cut-page-list { flex: none; max-height: 240px; } }
 @media (max-width: 560px) { .manual-cut-header { flex-wrap: wrap; } .manual-cut-isolated { margin-left: 0; } .manual-cut-canvas-wrap { min-height: 0; padding: var(--space-md) 190px; } }

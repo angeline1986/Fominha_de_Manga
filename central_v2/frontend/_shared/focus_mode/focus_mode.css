@@ -1,0 +1,26 @@
+body.has-image-focus { overflow: hidden; }
+body.has-image-focus .app-body { grid-template-columns: minmax(0, 1fr); }
+body .app-body { transition: grid-template-columns .25s cubic-bezier(.4, 0, .2, 1); }
+body #app-sidebar { transition: transform .25s cubic-bezier(.4, 0, .2, 1), opacity .25s ease, width .25s ease; }
+body.has-image-focus #app-sidebar { position: absolute; width: 0; height: 0; transform: translateX(-100%); overflow: hidden; opacity: 0; pointer-events: none; }
+body.has-image-focus #page-content { overflow: hidden; padding: 0; }
+.focus-mode-root.is-focus-mode { position: fixed; z-index: 1200; inset: 0; width: 100vw; height: 100vh; height: 100dvh; margin: 0; border: 0; border-radius: 0; background: var(--color-background); }
+.focus-mode-dock { position: fixed; z-index: 1300; top: 50%; right: 24px; display: none; box-sizing: border-box; width: 60px; max-height: calc(100dvh - 32px); transform: translateY(-50%); flex-direction: column; align-items: center; gap: 8px; overflow-x: hidden; overflow-y: auto; padding: 8px; border: 1px solid #344759; border-radius: 16px; background: rgba(12, 23, 43, .96); box-shadow: 0 16px 36px rgba(0, 0, 0, .32); color: #fff; backdrop-filter: blur(12px); scrollbar-width: none; }
+.is-focus-mode > .focus-mode-dock { display: flex; }
+.focus-mode-dock button { display: grid; width: 36px; min-height: 36px; flex: none; place-items: center; padding: 4px; border: 1px solid transparent; border-radius: 10px; background: #26394d; color: #d5e2ed; font: inherit; cursor: pointer; }
+.focus-mode-dock button:hover { background: #36516a; color: #fff; }
+.focus-mode-dock button:disabled { opacity: .4; cursor: not-allowed; }
+.focus-mode-dock button[data-focus-exit] { display: flex; flex-direction: column; gap: 1px; font-size: 9px; }
+.focus-mode-dock button[data-focus-exit] .ui-icon { width: 15px; height: 15px; }
+.focus-mode-dock [data-focus-divider] { width: 24px; height: 1px; flex: none; background: #526275; }
+.focus-mode-dock [data-focus-rulers] { display: flex; max-height: 30dvh; flex-direction: column; gap: 5px; overflow-y: auto; }
+.focus-mode-dock [data-focus-rulers] button { color: var(--ruler-color); font-size: 13px; font-weight: 700; }
+.focus-mode-dock [data-focus-rulers] button.is-active { border-color: var(--ruler-color); background: var(--ruler-color); color: #102333; }
+.focus-mode-dock .focus-mode-zoom { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 4px; border-radius: 10px; background: #26394d; }
+.focus-mode-dock .focus-mode-zoom button { width: 32px; min-height: 28px; border: 0; background: transparent; }
+.focus-mode-dock .focus-mode-zoom output { color: #73d7f3; font: 700 10px/1.2 ui-monospace, monospace; }
+.focus-mode-dock .focus-mode-primary { background: #18a1c5; color: #092337; }
+.focus-mode-dock .focus-mode-marker { color: #f4cb52; }
+.focus-mode-dock .focus-mode-marker .fa-highlighter { display: block; width: 18px; height: 18px; background: currentColor; -webkit-mask: url("/_shared/icons/highlighter-solid-full.svg") center / contain no-repeat; mask: url("/_shared/icons/highlighter-solid-full.svg") center / contain no-repeat; }
+.focus-mode-dock .focus-mode-marker:not(.is-active) { color: #9aabba; }
+.focus-mode-compact { width: 60px; right: 16px; }

@@ -11,6 +11,7 @@ const paths = Object.freeze({
   next: 'M9 5l7 7-7 7',
   back: 'M15 5l-7 7 7 7',
   close: 'M6 6l12 12 M18 6 6 18',
+  'focus-exit': 'M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5',
   expand: 'M9 6v12l9-6z',
   collapse: 'M6 9h12l-6 9z',
   menu: 'M4 6h16 M4 12h16 M4 18h16',

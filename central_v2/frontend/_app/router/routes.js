@@ -27,6 +27,10 @@ export const routes = {
     context: "processamento",
     module: "/processamento/merge_manual/novos_merges.js",
   },
+  "merge-manual-result": {
+    context: "processamento",
+    module: "/processamento/merge_manual/resultado_proposta.js",
+  },
   "resumo-operacao": {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",

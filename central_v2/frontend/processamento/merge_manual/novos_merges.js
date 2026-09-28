@@ -1,6 +1,10 @@
-import { getMergeManualSelection } from "/_app/state/merge_manual.js";
-import { generateMergeManualProposal, mergeManualImageUrl } from "/_app/api/merge_manual.js";
-import { defaultRulerColors, drawPageList, drawPageTags, escapeHtml, rulerPalette, rulerIconMarkup, updatePageCutLabels } from "/processamento/merge_manual/novos_merges_view.js";
+import { getMergeManualSelection, setMergeManualProposal, setMergeManualSelection } from "/_app/state/merge_manual.js";
+import { generateMergeManualProposal } from "/_app/api/merge_manual.js";
+import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
+import { iconMarkup } from "/_shared/icons/icons.js";
+import { showMessage } from "/_shared/messages/messages.js";
+import { defaultRulerColors, escapeHtml, rulerPalette, rulerIconMarkup, updatePageCutLabels } from "/processamento/merge_manual/novos_merges_view.js";
+import { createManualCutPreview } from "/processamento/merge_manual/novos_merges_preview.js";
 
 export function render(container) {
   const selection = getMergeManualSelection();
@@ -18,12 +22,11 @@ export function render(container) {
   const chosen = pages.slice(first, last + 1);
   const width = chosen[0]?.width || 1;
   const totalHeight = chosen.reduce((sum, item) => sum + item.pending_height, 0);
-  const cuts = [];
-  const rulerColors = [...defaultRulerColors];
-  let activeRuler = 0;
-  let zoom = 50;
-  let baseReady = false;
-  let basePromise;
+  const cuts = [...(selection.cuts || [])];
+  const rulerColors = [...(selection.rulerColors || defaultRulerColors)];
+  while (rulerColors.length < cuts.length) rulerColors.push(defaultRulerColors[rulerColors.length % defaultRulerColors.length]);
+  let activeRuler = Math.max(0, cuts.length - 1);
+  let zoom = selection.editorZoom || 50;
   let dragging = false;
   let highlightOdd = true;
   let focusedPageFile = null;
@@ -50,64 +53,40 @@ export function render(container) {
         <div class="manual-cut-actions"><p role="status" aria-live="polite" data-status></p><button type="button" data-submit>✂ Gerar proposta</button></div>
       </aside>
       <section class="manual-cut-viewer">
-        <div class="manual-cut-viewer-toolbar"><strong>Visualizador de emendas</strong><div class="zoom-control"><button data-zoom="-" aria-label="Diminuir zoom">−</button><output data-zoom-value>50%</output><button data-zoom="+" aria-label="Aumentar zoom">+</button><button class="zoom-control-reset" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div></div>
+        <div class="manual-cut-viewer-toolbar"><strong>Visualizador de emendas</strong><div><div class="zoom-control"><button data-zoom="-" aria-label="Diminuir zoom">−</button><output data-zoom-value>50%</output><button data-zoom="+" aria-label="Aumentar zoom">+</button><button class="zoom-control-reset" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div><button type="button" class="manual-cut-toolbar-button" data-focus-toggle aria-pressed="false">${iconMarkup("focus-exit")} Modo Foco <kbd>F</kbd></button></div></div>
         <div class="manual-cut-canvas-wrap"><div class="manual-cut-strip"><canvas aria-label="Prévia vertical para posicionar as réguas de corte"></canvas><div class="manual-cut-page-tags" data-page-tags></div></div></div>
         <p class="manual-cut-hint">Clique na prévia para posicionar a régua selecionada. Arraste uma régua para ajustá-la.</p>
       </section>
-    </div>`;
+    </div>
+    <aside class="focus-mode-dock" data-focus-dock aria-label="Ferramentas do modo foco">
+      <button type="button" data-focus-exit aria-label="Sair do Modo Foco" title="Sair do Modo Foco">${iconMarkup("focus-exit")}</button>
+      <span data-focus-divider></span><div data-focus-rulers aria-label="Réguas ativas"></div>
+      <button type="button" data-focus-add-ruler aria-label="Adicionar régua" title="Adicionar régua">+</button>
+      <span data-focus-divider></span><button type="button" class="focus-mode-marker is-active" data-focus-highlight aria-label="Alternar marca-texto" aria-pressed="true"><i class="fa-solid fa-highlighter text-xs" aria-hidden="true"></i></button>
+      <span data-focus-divider></span><div class="focus-mode-zoom"><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><output data-focus-zoom>50%</output><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><button type="button" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div>
+      <span data-focus-divider></span><button type="button" class="focus-mode-primary" data-focus-submit aria-label="Gerar proposta" title="Gerar proposta">✂</button>
+    </aside>`;
 
   const canvas = page.querySelector("canvas");
-  const ctx = canvas.getContext("2d");
-  const baseCanvas = document.createElement("canvas");
-  const baseContext = baseCanvas.getContext("2d");
   const status = page.querySelector("[data-status]");
-  canvas.width = baseCanvas.width = width;
-  canvas.height = baseCanvas.height = totalHeight;
-  drawPageTags(page, chosen, width, totalHeight, zoom, cuts, highlightOdd, rulerColors, focusedPageFile);
-  drawPageList(page, chosen, selection, cuts, rulerColors, (selectedPage) => {
-    focusedPageFile = selectedPage.file;
-    const pageOffset = chosen.slice(0, chosen.indexOf(selectedPage))
-      .reduce((sum, item) => sum + item.pending_height, 0);
-    drawPageTags(page, chosen, width, totalHeight, zoom, cuts, highlightOdd, rulerColors, focusedPageFile);
-    const viewer = page.querySelector(".manual-cut-canvas-wrap");
-    viewer.scrollTo({ top: pageOffset * zoom / 100, behavior: "smooth" });
+  const disposeFocusMode = bindFocusMode(page, { button: page.querySelector("[data-focus-toggle]") });
+  const preview = createManualCutPreview({ page, canvas, selection, chosen, width, totalHeight,
+    getState: () => ({ zoom, cuts, highlightOdd, rulerColors, focusedPageFile }),
+    onSelectPage: (selectedPage) => { focusedPageFile = selectedPage.file; },
   });
+  const draw = preview.draw;
   const colorPopover = page.querySelector("[data-color-popover]");
   document.body.append(colorPopover);
-
-  async function loadBase() {
-    if (baseReady) return;
-    if (!basePromise) basePromise = (async () => {
-      let y = 0;
-      for (const item of chosen) {
-        const image = new Image();
-        image.src = mergeManualImageUrl(selection.provider, selection.manga, selection.chapter, item.file);
-        await image.decode();
-        baseContext.drawImage(image, 0, item.source_y_start, width, item.pending_height, 0, y, width, item.pending_height);
-        y += item.pending_height;
-      }
-      baseReady = true;
-    })();
-    return basePromise;
-  }
-
-  function draw() {
-    canvas.style.width = `${width * zoom / 100}px`;
-    page.querySelector("[data-zoom-value]").textContent = `${zoom}%`;
-    drawPageTags(page, chosen, width, totalHeight, zoom, cuts, highlightOdd, rulerColors, focusedPageFile);
-    loadBase().then(() => {
-      ctx.clearRect(0, 0, width, totalHeight);
-      ctx.drawImage(baseCanvas, 0, 0);
-    }).catch((error) => { status.textContent = `Não foi possível carregar a prévia: ${error.message}`; });
-  }
 
   function updateRulers() {
     page.querySelector("[data-ruler-count]").textContent = String(cuts.length);
     page.querySelector("[data-rulers]").innerHTML = cuts.map((_, index) => `<button type="button" data-ruler="${index}" class="manual-cut-ruler-button ${index === activeRuler ? "active" : ""}" style="--ruler-color:${rulerColors[index]}">${rulerIconMarkup(rulerColors[index])}<strong>${index + 1}</strong><i></i></button>`).join("");
+    page.querySelector("[data-focus-rulers]").innerHTML = cuts.map((_, index) => `<button type="button" data-focus-ruler="${index}" class="${index === activeRuler ? "is-active" : ""}" style="--ruler-color:${rulerColors[index]}" aria-label="Selecionar régua ${index + 1}" aria-pressed="${index === activeRuler}">${index + 1}</button>`).join("");
     page.querySelectorAll("[data-ruler]").forEach((button) => button.addEventListener("click", () => {
       activeRuler = Number(button.dataset.ruler); updateRulers(); draw();
-      openColorPicker(page.querySelector(`[data-ruler="${activeRuler}"]`), activeRuler);
+      openColorPicker(page.querySelector(`.manual-cut-ruler-select [data-ruler="${activeRuler}"]`), activeRuler);
     }));
+    page.querySelectorAll("[data-focus-ruler]").forEach((button) => button.addEventListener("click", () => { activeRuler = Number(button.dataset.focusRuler); updateRulers(); draw(); }));
     updatePageCutLabels(page, chosen, cuts, rulerColors);
     draw();
   }
@@ -122,7 +101,10 @@ export function render(container) {
     const tolerance = Math.max(24, canvas.height * 12 / canvas.getBoundingClientRect().height);
     const nearest = cuts.findIndex((cut) => cut != null && Math.abs(cut - y) <= tolerance);
     if (nearest >= 0) activeRuler = nearest;
-    if (!cuts.length) { status.textContent = "Adicione uma régua antes de posicionar o corte."; return; }
+    if (!cuts.length) {
+      showMessage({ title: "Nenhuma régua ativa", message: "Adicione uma régua antes de posicionar o corte." });
+      return;
+    }
     cuts[activeRuler] = Math.max(1, Math.min(totalHeight - 1, y));
     dragging = true; canvas.setPointerCapture(event.pointerId); updateRulers();
   }
@@ -134,18 +116,29 @@ export function render(container) {
   canvas.addEventListener("pointerup", onPointerUp);
   page.querySelector("[data-back]").addEventListener("click", () => navigate(container, "validar-faixa"));
   page.querySelector("[data-highlight]").addEventListener("click", (event) => {
-    highlightOdd = !highlightOdd;
-    event.currentTarget.classList.toggle("is-active", highlightOdd);
-    event.currentTarget.setAttribute("aria-pressed", String(highlightOdd));
-    draw();
+    toggleHighlight(event.currentTarget);
   });
+  page.querySelector("[data-focus-highlight]").addEventListener("click", (event) => toggleHighlight(event.currentTarget));
   page.querySelectorAll("[data-count]").forEach((button) => button.addEventListener("click", () => changeRulerCount(Number(button.dataset.count))));
-  page.querySelectorAll("[data-zoom]").forEach((button) => button.addEventListener("click", () => { zoom = Math.max(30, Math.min(150, zoom + (button.dataset.zoom === "+" ? 10 : -10))); draw(); }));
-  page.querySelector("[data-reset]").addEventListener("click", () => { zoom = 100; draw(); });
+  page.querySelectorAll("[data-zoom]").forEach((button) => button.addEventListener("click", () => adjustZoom(button.dataset.zoom === "+" ? 10 : -10)));
+  page.querySelectorAll("[data-reset]").forEach((button) => button.addEventListener("click", () => { zoom = 100; draw(); }));
   page.querySelector("[data-submit]").addEventListener("click", submitProposal);
+  page.querySelector("[data-focus-add-ruler]").addEventListener("click", () => changeRulerCount(1));
+  page.querySelector("[data-focus-submit]").addEventListener("click", submitProposal);
   colorPopover.querySelector("[data-color-close]").addEventListener("click", closeColorPicker);
   document.addEventListener("pointerdown", onOutsideColorPicker);
+  updateRulers();
   draw();
+
+  function toggleHighlight(button) {
+    highlightOdd = !highlightOdd;
+    page.querySelectorAll("[data-highlight], [data-focus-highlight]").forEach((item) => {
+      item.classList.toggle("is-active", highlightOdd);
+      item.setAttribute("aria-pressed", String(highlightOdd));
+    });
+    draw();
+  }
+  function adjustZoom(delta) { zoom = Math.max(30, Math.min(150, zoom + delta)); draw(); }
 
   function openColorPicker(anchor, index) {
     colorPopover.querySelector("[data-color-title]").textContent = `Cor da Régua ${index + 1}`;
@@ -164,36 +157,43 @@ export function render(container) {
   function onOutsideColorPicker(event) {
     if (!colorPopover.contains(event.target) && !event.target.closest("[data-ruler]")) closeColorPicker();
   }
-
   function changeRulerCount(delta) {
-    if (delta > 0 && cuts.length < rulerColors.length) {
+    if (delta > 0) {
+      const colorIndex = cuts.length;
+      while (rulerColors.length <= colorIndex) rulerColors.push(defaultRulerColors[colorIndex % defaultRulerColors.length]);
       cuts.push(Math.round(totalHeight * (cuts.length + 1) / (cuts.length + 2)));
-      rulerColors.push(defaultRulerColors[rulerColors.length]);
       activeRuler = cuts.length - 1;
     } else if (delta < 0 && cuts.length) {
-      cuts.splice(activeRuler, 1); rulerColors.splice(activeRuler, 1);
+      cuts.splice(activeRuler, 1);
+      rulerColors.splice(activeRuler, 1);
       activeRuler = Math.max(0, Math.min(activeRuler, cuts.length - 1));
     }
     updateRulers();
   }
 
   async function submitProposal(event) {
-    const button = event.currentTarget;
+    const button = event.currentTarget || event;
     button.disabled = true; status.textContent = "Gerando proposta e validando as fontes…";
     try {
       const result = await generateMergeManualProposal({ provider: selection.provider, manga: selection.manga,
         chapter: selection.chapter, block_id: selection.blockId, start: selection.start, end: selection.end }, cuts.filter(Number.isInteger));
-      status.textContent = `Proposta ${result.proposal_id} gerada com ${result.outputs?.length || 0} bloco(s).`;
-    } catch (error) { status.textContent = error.message; }
+      setMergeManualSelection({ ...selection, cuts: [...cuts], rulerColors: [...rulerColors], editorZoom: zoom });
+      setMergeManualProposal(result);
+      navigate(container, "merge-manual-result");
+    } catch (error) {
+      status.textContent = "";
+      await showMessage({ title: "Falha ao gerar proposta", message: error.message });
+    }
     finally { button.disabled = false; }
   }
+
   return () => {
     canvas.removeEventListener("pointerdown", onPointerDown);
     canvas.removeEventListener("pointermove", onPointerMove);
     canvas.removeEventListener("pointerup", onPointerUp);
     document.removeEventListener("pointerdown", onOutsideColorPicker);
+    disposeFocusMode();
     colorPopover.remove();
   };
 }
-
 function navigate(container, action) { container.dispatchEvent(new CustomEvent("menu:action", { bubbles: true, detail: { action } })); }

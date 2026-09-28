@@ -7,3 +7,7 @@ export function setMergeManualSelection(value) {
 export function getMergeManualSelection() {
   return selection ? { ...selection } : null;
 }
+
+export function setMergeManualProposal(value) {
+  selection = selection ? { ...selection, proposal: value } : null;
+}

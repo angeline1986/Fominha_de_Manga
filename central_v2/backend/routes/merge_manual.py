@@ -5,7 +5,12 @@ from urllib.parse import parse_qs
 
 from config.data_paths import OUTPUT_ROOT
 from central_v2.backend.routes.response import RouteResponse
-from processamento.merge_manual.api import get_merge_manual_state, generate_merge_manual_proposal_job
+from processamento.merge_manual.api import (
+    apply_merge_manual_proposal_job,
+    generate_merge_manual_proposal_job,
+    get_merge_manual_state,
+)
+from processamento.merge_manual.proposal import MANIFEST_NAME, proposal_dir
 from processamento.unificacao_imagens.auto_merge.documentos import read_document
 from central_v2.backend.state.manga_state import resolve_manga
 
@@ -102,6 +107,55 @@ def merge_manual_proposal_response(payload: object, output_root: Path = OUTPUT_R
         )
         body = json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode()
         return RouteResponse(201, body)
+    except (OSError, ValueError) as exc:
+        body = json.dumps({"error": str(exc)}, ensure_ascii=False).encode()
+        return RouteResponse(400, body)
+
+
+def merge_manual_proposal_image_response(query: dict, output_root: Path = OUTPUT_ROOT) -> RouteResponse:
+    provider = (query.get("provider") or [""])[0]
+    name = (query.get("manga") or [""])[0]
+    chapter = (query.get("chapter") or [""])[0]
+    proposal_id = (query.get("proposal_id") or [""])[0]
+    filename = (query.get("file") or [""])[0]
+    if not all((provider, name, chapter, proposal_id, filename)) or Path(chapter).name != chapter or Path(filename).name != filename:
+        return RouteResponse(400, b'{"error":"parametros invalidos"}')
+    try:
+        manga = resolve_manga(output_root, provider, name)
+        directory = proposal_dir(manga, chapter, proposal_id).resolve()
+        manifest_path = directory / MANIFEST_NAME
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        if not isinstance(manifest, dict) or not isinstance(manifest.get("outputs"), list):
+            return RouteResponse(404, b'{"error":"imagem da proposta nao encontrada"}')
+        allowed = {str(item.get("file")) for item in manifest["outputs"] if isinstance(item, dict)}
+        target = (directory / filename).resolve()
+        if manifest.get("proposal_id") != proposal_id or manifest.get("chapter") != chapter:
+            raise ValueError("Proposta incompatível.")
+        if filename not in allowed or not target.is_relative_to(directory) or not target.is_file():
+            return RouteResponse(404, b'{"error":"imagem da proposta nao encontrada"}')
+        if target.suffix.lower() not in {".png", ".jpg", ".jpeg", ".webp"}:
+            return RouteResponse(404, b'{"error":"imagem da proposta nao encontrada"}')
+        import mimetypes
+        return RouteResponse(200, target.read_bytes(), mimetypes.guess_type(target.name)[0] or "application/octet-stream")
+    except (OSError, ValueError, TypeError, json.JSONDecodeError):
+        return RouteResponse(404, b'{"error":"imagem da proposta nao encontrada"}')
+
+
+def merge_manual_apply_response(payload: object, output_root: Path = OUTPUT_ROOT) -> RouteResponse:
+    if not isinstance(payload, dict):
+        return RouteResponse(400, b'{"error":"payload invalido"}')
+    provider, name = str(payload.get("provider") or ""), str(payload.get("manga") or "")
+    try:
+        manga = resolve_manga(output_root, provider, name)
+        root = manga / "IMG"
+        chapters = [item for item in root.iterdir() if item.is_dir()] if root.is_dir() else []
+        result = apply_merge_manual_proposal_job(
+            manga, chapters,
+            review_state_loader=lambda chapter: _review_row(manga, chapter.name),
+            payload=payload,
+        )
+        body = json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode()
+        return RouteResponse(200, body)
     except (OSError, ValueError) as exc:
         body = json.dumps({"error": str(exc)}, ensure_ascii=False).encode()
         return RouteResponse(400, body)

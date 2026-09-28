@@ -1,8 +1,9 @@
 import { mergeManualImageUrl } from "/_app/api/merge_manual.js";
+import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
 
 export function renderMergeManualSession({ row, session, provider, manga, onToggle, onChange, onOpenCuts }) {
-  const section = document.createElement("section");
+    const section = document.createElement("section");
   section.className = "manual-merge-config";
   section.dataset.chapter = row.chapter;
   if (!session.expanded) section.classList.add("is-collapsed");
@@ -28,7 +29,7 @@ export function renderMergeManualSession({ row, session, provider, manga, onTogg
         ${row.pending_blocks.length > 1 ? `<label>Bloco<select data-block>${row.pending_blocks.map((item, index) => `<option value="${index}" ${index === session.blockIndex ? "selected" : ""}>${index + 1} de ${row.pending_blocks.length} · ${item.page_count} páginas</option>`).join("")}</select></label>` : ""}
         <label><span>Início</span><select data-start>${options(session.start)}</select></label><span class="manual-merge-arrow" aria-hidden="true">→</span>
         <label><span>Fim</span><select data-end>${options(session.end)}</select></label>
-        <div class="zoom-control manual-merge-zoom"><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><output>${session.zoom}%</output><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><button type="button" class="zoom-control-reset" data-zoom-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div>
+        <div class="zoom-control manual-merge-zoom"><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><output>${session.zoom}%</output><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><button type="button" class="zoom-control-reset" data-zoom-reset aria-label="Visualizar em escala 1 para 1">1:1</button><button type="button" class="manual-merge-focus-toggle" data-focus-toggle aria-pressed="${Boolean(session.focusMode)}">Modo Foco <kbd>F</kbd></button></div>
       </div>
       <button type="button" class="manual-merge-collapse" aria-expanded="${session.expanded}" aria-label="${session.expanded ? "Minimizar" : "Expandir"} sessão">${iconMarkup(session.expanded ? "collapse" : "expand")}</button>
     </div>
@@ -36,10 +37,20 @@ export function renderMergeManualSession({ row, session, provider, manga, onTogg
       <div class="manual-merge-thumbnails" style="--thumbnail-min-width:${116 * thumbnailScale}px;--thumbnail-height:${132 * thumbnailScale}px">${selected.map((page) => `<figure><div class="manual-merge-thumbnail-frame"><img loading="lazy" src="${mergeManualImageUrl(provider, manga, row.chapter, page.file)}" alt="Prévia de ${escapeHtml(page.file)}"></div><figcaption>${escapeHtml(page.file)}</figcaption></figure>`).join("")}</div>
       <div class="manual-merge-footer"><p>Faixa selecionada · ${selected.length} ${selected.length === 1 ? "imagem" : "imagens"}</p><div><button type="button" class="manual-merge-cancel" data-cancel>Cancelar</button><button type="button" class="manual-merge-next" data-next>Submeter a Novos Cortes →</button></div></div>
     </div>
+    <aside class="focus-mode-dock focus-mode-compact" data-focus-dock aria-label="Controles da prévia em foco">
+      <button type="button" data-focus-exit aria-label="Sair do Modo Foco" title="Sair do Modo Foco"><span>×</span></button>
+      <span data-focus-divider></span><div class="focus-mode-zoom"><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><output>${session.zoom}%</output><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><button type="button" data-zoom-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div>
+    </aside>
   `;
 
   section.querySelector(".manual-merge-collapse").addEventListener("click", onToggle);
   if (!session.expanded) return section;
+  const disposeFocusMode = bindFocusMode(section, {
+    button: section.querySelector("[data-focus-toggle]"),
+    active: Boolean(session.focusMode),
+    onChange: (focusMode) => onChange({ ...session, focusMode }),
+  });
+  section.disposeFocusMode = disposeFocusMode;
   section.querySelector("[data-cancel]").addEventListener("click", onToggle);
   section.querySelector("[data-start]").addEventListener("change", (event) => {
     const next = { ...session, start: event.target.value };
@@ -60,10 +71,11 @@ export function renderMergeManualSession({ row, session, provider, manga, onTogg
     const delta = button.dataset.zoom === "+" ? 10 : -10;
     onChange({ ...session, zoom: Math.max(30, Math.min(200, session.zoom + delta)) });
   }));
-  section.querySelector("[data-zoom-reset]").addEventListener("click", () => onChange({ ...session, zoom: 100 }));
-  section.querySelector("[data-next]").addEventListener("click", () => onOpenCuts({
-    chapter: row.chapter, blockId: block.id, start: session.start, end: session.end, pendingBlock: block,
-  }));
+  section.querySelectorAll("[data-zoom-reset]").forEach((button) => button.addEventListener("click", () => onChange({ ...session, zoom: 100 })));
+  section.querySelector("[data-next]").addEventListener("click", () => {
+    if (session.focusMode) onChange({ ...session, focusMode: false });
+    onOpenCuts({ chapter: row.chapter, blockId: block.id, start: session.start, end: session.end, pendingBlock: block });
+  });
   return section;
 }
 

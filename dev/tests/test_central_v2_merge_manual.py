@@ -70,6 +70,25 @@ class CentralV2MergeManualTests(unittest.TestCase):
         proposal_dir = self.manga / "FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/MERGE_MANUAL_PROPOSALS/6" / payload["proposal_id"]
         self.assertTrue((proposal_dir / "merge-manual-manifest.json").is_file())
 
+    def test_proposal_image_endpoint_serves_only_declared_output_files(self):
+        response = dispatch_post("/api/merge-manual/proposal", {
+            "provider": "comix", "manga": "Synthetic", "chapter": "6",
+            "block_id": "pending-1", "start": "page-001.png", "end": "page-001.png",
+            "cuts": [30],
+        }, self.root)
+        proposal = json.loads(response.body)
+        output = proposal["outputs"][0]["file"]
+        image = dispatch_get(
+            f"/api/merge-manual/proposal/image?provider=comix&manga=Synthetic&chapter=6&proposal_id={proposal['proposal_id']}&file={output}",
+            self.root,
+        )
+        denied = dispatch_get(
+            f"/api/merge-manual/proposal/image?provider=comix&manga=Synthetic&chapter=6&proposal_id={proposal['proposal_id']}&file=private.png",
+            self.root,
+        )
+        self.assertEqual((image.status, image.content_type), (200, "image/png"))
+        self.assertEqual(denied.status, 404)
+
 
 if __name__ == "__main__":
     unittest.main()
