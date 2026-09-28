@@ -18,18 +18,27 @@
   letter-spacing: 0.08em;
 }
 
-.context-selector label {
+.context-field {
   display: grid;
   gap: 5px;
 }
 
-.context-selector label > span {
+.context-field > span {
   color: var(--color-text-muted);
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-bold);
 }
 
-.context-selector select {
+.context-combobox {
+  position: relative;
+  min-width: 0;
+}
+
+.context-combobox-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   width: 100%;
   min-width: 0;
   min-height: var(--control-height);
@@ -38,16 +47,80 @@
   border-radius: var(--radius-control);
   background: var(--color-surface);
   color: var(--color-text);
-  font: inherit;
-  font-size: var(--font-size-label);
+  font: var(--font-weight-regular) var(--font-size-control)/var(--line-height) var(--font-family);
+  text-align: left;
+  cursor: pointer;
 }
 
-.context-selector select:focus-visible {
+.context-combobox-trigger::after {
+  content: "";
+  flex: 0 0 7px;
+  width: 7px;
+  height: 7px;
+  border-right: 1.5px solid currentColor;
+  border-bottom: 1.5px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+}
+
+.context-combobox-trigger:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 1px;
 }
 
-.context-selector select:disabled {
+.context-combobox-trigger:disabled {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.context-combobox-options {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 4px);
+  left: 0;
+  width: max(100%, 190px);
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 5px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-progress);
+}
+
+.context-combobox-options[hidden] {
+  display: none;
+}
+
+.context-combobox-option {
+  position: relative;
+  min-height: 30px;
+  padding: 5px 9px 5px 25px;
+  overflow: hidden;
+  border-radius: 6px;
+  color: var(--color-text);
+  font: var(--font-weight-regular) var(--font-size-control)/1.4 var(--font-family);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.context-combobox-option[aria-selected="true"]::before {
+  content: "✓";
+  position: absolute;
+  left: 8px;
+  color: var(--color-primary-hover);
+  font-weight: var(--font-weight-bold);
+}
+
+.context-combobox-option:hover,
+.context-combobox-option:focus-visible {
+  outline: none;
+  background: var(--color-primary-soft);
+  color: var(--color-primary-hover);
+}
+
+.context-combobox-option[aria-selected="true"] {
+  font-weight: var(--font-weight-semibold);
+}
+
+/* Keep native form control typography consistent if another shell adds one. */

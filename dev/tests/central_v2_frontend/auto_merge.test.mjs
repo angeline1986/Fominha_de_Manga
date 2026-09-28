@@ -104,3 +104,30 @@ test('record labels do not treat missing artifacts as completed work', async () 
   assert.equal(level1Label({ status: 'absent' }), 'Sem registro');
   controller.dispose();
 });
+
+test('Level II route uses its dedicated residual consultation page', async () => {
+  const boxes = [];
+  const load = browserModules({ document: { createElement() {
+    const node = { setAttribute() {}, addEventListener(_name, callback) { node.change = callback; } };
+    boxes.push(node);
+    return node;
+  } } });
+  const { resolveRoute } = await load('/_app/router/routes.js');
+  assert.equal(resolveRoute('auto-merge-2').module, '/processamento/auto_merge/nivel2.js');
+  const { createLevel2Columns } = await load('/processamento/auto_merge/residuos.js');
+  const selected = new Set();
+  const columns = createLevel2Columns({ selected: { chapters: selected, pageSelected: false },
+    onSelect: (chapter, checked) => checked ? selected.add(chapter) : selected.delete(chapter),
+    onSelectPage() {} });
+  assert.deepEqual(JSON.parse(JSON.stringify(columns.map((column) => column.label))), [
+    'Seleção', 'CAP.', 'RESIDUAL RECEBIDO', 'REGIÃO DO RESIDUAL',
+  ]);
+  assert.equal(columns.some((column) => /PIXEL|ALTURA/i.test(column.label)), false);
+  columns[0].render({ chapter: '6' });
+  boxes.at(-1).change();
+  assert.equal(boxes.at(-1).checked, false);
+  assert.equal(selected.has('6'), false);
+  boxes.at(-1).checked = true;
+  boxes.at(-1).change();
+  assert.equal(selected.has('6'), true);
+});

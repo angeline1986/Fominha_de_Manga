@@ -1,20 +1,80 @@
-function options(items, selectedValue) {
-  return items
-    .map((item) => {
-      const selected = item === selectedValue ? " selected" : "";
-      return `<option value="${escapeAttribute(item)}"${selected}>${escapeHtml(item)}</option>`;
-    })
-    .join("");
-}
+function createField({ id, label, items, value, disabled, onChange }) {
+  const field = document.createElement("label");
+  field.className = "context-field";
+  const caption = document.createElement("span");
+  caption.textContent = label;
+  const control = document.createElement("div");
+  control.className = "context-combobox";
+  const trigger = document.createElement("button");
+  trigger.type = "button";
+  trigger.className = "context-combobox-trigger";
+  trigger.setAttribute("aria-haspopup", "listbox");
+  trigger.setAttribute("aria-expanded", "false");
+  trigger.setAttribute("aria-controls", `${id}-options`);
+  trigger.disabled = disabled;
+  const current = items.find((item) => item.value === value);
+  trigger.textContent = current?.label ?? "Selecionar";
 
-function escapeHtml(value) {
-  const element = document.createElement("div");
-  element.textContent = value;
-  return element.innerHTML;
-}
+  const list = document.createElement("div");
+  list.id = `${id}-options`;
+  list.className = "context-combobox-options";
+  list.setAttribute("role", "listbox");
+  list.setAttribute("aria-label", label);
+  list.hidden = true;
+  const options = items.map((item) => {
+    const option = document.createElement("div");
+    option.className = "context-combobox-option";
+    option.setAttribute("role", "option");
+    option.setAttribute("aria-selected", String(item.value === value));
+    option.tabIndex = -1;
+    option.textContent = item.label;
+    option.addEventListener("click", () => {
+      onChange(item.value);
+      close();
+    });
+    list.append(option);
+    return option;
+  });
 
-function escapeAttribute(value) {
-  return escapeHtml(value);
+  function close(restoreFocus = false) {
+    list.hidden = true;
+    trigger.setAttribute("aria-expanded", "false");
+    if (restoreFocus) trigger.focus();
+  }
+  function open() {
+    if (trigger.disabled) return;
+    list.hidden = false;
+    trigger.setAttribute("aria-expanded", "true");
+    (options.find((option) => option.getAttribute("aria-selected") === "true")
+      ?? options[0])?.focus();
+  }
+  trigger.addEventListener("click", () => list.hidden ? open() : close());
+  trigger.addEventListener("keydown", (event) => {
+    if (["ArrowDown", "ArrowUp", "Enter", " "].includes(event.key)) {
+      event.preventDefault();
+      open();
+    }
+  });
+  list.addEventListener("keydown", (event) => {
+    const index = options.indexOf(document.activeElement);
+    let next = index;
+    if (event.key === "ArrowDown") next = Math.min(index + 1, options.length - 1);
+    else if (event.key === "ArrowUp") next = Math.max(index - 1, 0);
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = options.length - 1;
+    else if (event.key === "Escape") { event.preventDefault(); close(true); return; }
+    else if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      options[index]?.click();
+      return;
+    } else return;
+    event.preventDefault();
+    options[next]?.focus();
+  });
+
+  control.append(trigger, list);
+  field.append(caption, control);
+  return field;
 }
 
 export function createContextSelector(
@@ -26,45 +86,17 @@ export function createContextSelector(
 ) {
   const element = document.createElement("div");
   element.className = "context-selector";
+  const heading = document.createElement("div");
+  heading.className = "context-selector-heading";
+  heading.textContent = "CONTEXTO";
 
-  const providers = Object.keys(context.catalog);
-  const mangas = context.provider
-    ? context.catalog[context.provider] ?? []
-    : [];
-
-  element.innerHTML = `
-    <div class="context-selector-heading">CONTEXTO</div>
-
-    <label>
-      <span>Provider</span>
-      <select data-context-provider>
-        <option value="">Selecionar</option>
-        ${options(providers, context.provider)}
-      </select>
-    </label>
-
-    <label>
-      <span>Obra</span>
-      <select
-        data-context-manga
-        ${context.provider ? "" : "disabled"}
-      >
-        <option value="">Selecionar</option>
-        ${options(mangas, context.manga)}
-      </select>
-    </label>
-  `;
-
-  const providerSelect = element.querySelector("[data-context-provider]");
-  const mangaSelect = element.querySelector("[data-context-manga]");
-
-  providerSelect.addEventListener("change", () => {
-    onProviderChange(providerSelect.value);
-  });
-
-  mangaSelect.addEventListener("change", () => {
-    onMangaChange(mangaSelect.value);
-  });
-
+  const providers = Object.keys(context.catalog).map((item) => ({ value: item, label: item }));
+  const mangas = (context.provider ? context.catalog[context.provider] ?? [] : [])
+    .map((item) => ({ value: item, label: item }));
+  element.append(
+    heading,
+    createField({ id: "context-provider", label: "Provider", items: [{ value: "", label: "Selecionar" }, ...providers], value: context.provider, onChange: onProviderChange }),
+    createField({ id: "context-manga", label: "Obra", items: [{ value: "", label: "Selecionar" }, ...mangas], value: context.manga, disabled: !context.provider, onChange: onMangaChange }),
+  );
   return element;
 }

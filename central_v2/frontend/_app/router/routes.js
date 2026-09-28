@@ -3,6 +3,10 @@ export const routes = {
     context: "processamento",
     module: "/processamento/auto_merge/nivel1.js",
   },
+  "auto-merge-2": {
+    context: "processamento",
+    module: "/processamento/auto_merge/nivel2.js",
+  },
   "resumo-operacao": {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",
