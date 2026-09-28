@@ -89,6 +89,21 @@ def page_range_output_name_from_spans(spans, start_y=None, end_y=None) -> str:
     return page_range_output_name_from_sources(selected)
 
 
+def unique_merge_output_name(spans, start_y, end_y, used_names=None) -> str:
+    """Use page-range names, falling back to the established merged-N form on collision."""
+    used = used_names if used_names is not None else set()
+    name = page_range_output_name_from_spans(spans, start_y, end_y)
+    if name not in used:
+        used.add(name)
+        return name
+    index = 1
+    while f"merged-{index:03d}.png" in used:
+        index += 1
+    name = f"merged-{index:03d}.png"
+    used.add(name)
+    return name
+
+
 def merge_artifact_files(directory: Path) -> list[Path]:
     directory = Path(directory)
     files = []

@@ -1,0 +1,18 @@
+.manual-merge-thumbnails {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  gap: var(--space-sm);
+  max-height: min(48vh, 520px);
+  overflow-y: auto;
+  padding: var(--space-sm);
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-background);
+}
+.manual-merge-thumbnails figure { min-width: 0; margin: 0; padding: 5px; border: 1px solid var(--color-border); border-radius: 7px; background: var(--color-surface); }
+.manual-merge-thumbnails img { display: block; width: 100%; object-fit: contain; background: var(--color-surface-soft); border-radius: 4px; }
+.manual-merge-thumbnails figcaption { overflow: hidden; padding-top: 4px; color: var(--color-text-muted); font-size: 11px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+.manual-merge-footer { justify-content: space-between; margin-top: var(--space-md); }
+.manual-merge-footer > div { justify-content: flex-end; }
+.manual-merge-footer .manual-merge-next { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-surface); font-weight: var(--font-weight-semibold); cursor: pointer; }
+.manual-merge-footer .manual-merge-cancel { cursor: pointer; }

@@ -1,0 +1,18 @@
+.manual-cut-page { display: grid; gap: var(--space-md); }
+.manual-cut-page header h1 { margin: 0 0 4px; font-size: var(--font-size-title); }
+.manual-cut-page header p, .manual-cut-status { margin: 0; color: var(--color-text-muted); }
+.manual-cut-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-sm); }
+.manual-cut-toolbar span { margin-right: auto; color: var(--color-text-muted); }
+.manual-cut-toolbar button {
+  min-height: var(--control-height); padding: 6px 12px;
+  border: 1px solid var(--color-border-primary); border-radius: var(--radius-control);
+  background: var(--color-surface); color: var(--color-text); cursor: pointer;
+}
+.manual-cut-toolbar [data-submit] { border-color: var(--color-primary); background: var(--color-primary); color: white; }
+.manual-cut-toolbar button:disabled { opacity: .6; cursor: wait; }
+.manual-cut-canvas-wrap {
+  max-height: calc(100vh - 260px); overflow: auto; padding: var(--space-md);
+  border: 1px solid var(--color-border-primary); border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+.manual-cut-canvas-wrap canvas { display: block; width: min(100%, 900px); height: auto; margin: auto; cursor: crosshair; }

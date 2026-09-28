@@ -19,6 +19,14 @@ export const routes = {
     context: "processamento",
     module: "/processamento/auto_merge/nivel5.js",
   },
+  "validar-faixa": {
+    context: "processamento",
+    module: "/processamento/merge_manual/validar_faixa.js",
+  },
+  "novos-merges": {
+    context: "processamento",
+    module: "/processamento/merge_manual/novos_merges.js",
+  },
   "resumo-operacao": {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",

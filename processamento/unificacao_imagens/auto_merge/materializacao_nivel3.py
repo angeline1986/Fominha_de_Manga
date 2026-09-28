@@ -58,13 +58,12 @@ def _save(image: Image.Image, path: Path) -> None:
 
 def materialize_level3(chapter: Path, infos: list, intervals: list, stage: Path) -> list[dict]:
     stage.mkdir(parents=True, exist_ok=False)
-    artifacts, created = [], []
+    artifacts, created, used_names = [], [], set()
     try:
         for item in intervals:
             start, end = int(item["global_start"]), int(item["global_end"])
             spans = source_spans(infos, start, end)
-            base = Path(v3.page_range_output_name_from_spans(spans, start, end)).stem
-            name = f"{base}-l3-{start}-{end}.png"
+            name = v3.unique_merge_output_name(spans, start, end, used_names)
             path = stage / name
             _save(render_source_interval(chapter, infos, start, end), path)
             created.append(path)

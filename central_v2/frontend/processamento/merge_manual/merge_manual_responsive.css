@@ -1,0 +1,12 @@
+@media (max-width: 720px) {
+  .manual-merge-count { flex-basis: 100%; margin-left: 0; }
+  .manual-merge-table th,
+  .manual-merge-table td { padding: 9px 8px; }
+  .manual-merge-controls { justify-content: flex-start; }
+  .manual-merge-controls { flex-wrap: wrap; }
+  .manual-merge-config-heading { flex-wrap: wrap; }
+  .manual-merge-controls { width: 100%; margin-left: 0; }
+  .manual-merge-title p { display: none; }
+  .manual-merge-footer { align-items: flex-start; flex-direction: column; }
+  .manual-merge-footer > div { width: 100%; justify-content: flex-end; }
+}

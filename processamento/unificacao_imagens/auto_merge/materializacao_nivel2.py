@@ -56,14 +56,12 @@ def _save(image: Image.Image, path: Path) -> None:
 
 def materialize_level2(chapter: Path, infos: list, plans: list, stage: Path) -> list[dict]:
     stage.mkdir(parents=True, exist_ok=False)
-    artifacts, created = [], []
+    artifacts, created, used_names = [], [], set()
     try:
         for entry in plans:
             for start, end in entry["plan"].get("resolved_intervals") or []:
                 spans = _spans(infos, int(start), int(end))
-                base = v3.page_range_output_name_from_spans(spans, int(start), int(end))
-                stem = Path(base).stem
-                name = f"{stem}-l2-{int(start)}-{int(end)}.png"
+                name = v3.unique_merge_output_name(spans, int(start), int(end), used_names)
                 path = stage / name
                 _save(_render(chapter, infos, int(start), int(end)), path)
                 created.append(path)
@@ -79,6 +77,7 @@ def materialize_level2(chapter: Path, infos: list, plans: list, stage: Path) -> 
                     "width": saved.width,
                     "source_segment_id": entry["segment_id"],
                     "source_spans": spans,
+                    "stage": "level2",
                 })
     except Exception:
         for path in created:

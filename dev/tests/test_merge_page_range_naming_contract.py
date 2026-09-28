@@ -35,6 +35,12 @@ class MergePageRangeNamingContractTests(unittest.TestCase):
             "page-069-070.png",
         )
 
+    def test_stage_names_are_standard_and_collisions_use_merged_sequence(self):
+        spans = [{"file": "page-002.png", "global_start": 0, "global_end": 100}]
+        used = set()
+        self.assertEqual(stitcher.unique_merge_output_name(spans, 10, 40, used), "page-002.png")
+        self.assertEqual(stitcher.unique_merge_output_name(spans, 40, 80, used), "merged-001.png")
+
     def test_collision_fails_closed(self):
         with tempfile.TemporaryDirectory() as td:
             d = Path(td)

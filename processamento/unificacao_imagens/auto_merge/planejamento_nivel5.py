@@ -48,7 +48,7 @@ def plan_level5(chapter: Path, progress=None) -> dict:
     parents = level4.data["residuals"]
     estimated = sum(max(0, item["global_end"] - item["global_start"] - 2 * DEFAULT_MIN_CHUNK_HEIGHT + 1)
                     for item in parents)
-    artifacts, residuals, diagnostics, completed = [], [], [], 0
+    artifacts, residuals, diagnostics, completed, used_names = [], [], [], 0, set()
     for index, parent in enumerate(parents, 1):
         start, end = parent["global_start"], parent["global_end"]
         image = render_source_interval(chapter, infos, start, end)
@@ -75,7 +75,7 @@ def plan_level5(chapter: Path, progress=None) -> dict:
                 if item.get("selected_y") is not None}
         for chunk, (low, high) in enumerate(zip(boundaries, boundaries[1:]), 1):
             spans = source_spans(infos, low, high)
-            name_out = f"{Path(v3.page_range_output_name_from_spans(spans, low, high)).stem}-l5-{low}-{high}.png"
+            name_out = v3.unique_merge_output_name(spans, low, high, used_names)
             artifacts.append({"file": name_out, "global_start": low, "global_end": high,
                               "height": high - low, "width": infos[0].width,
                               "source_spans": spans, "source_stage": "level5",

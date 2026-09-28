@@ -52,7 +52,7 @@ def plan_level4(chapter: Path, progress=None) -> dict:
     estimated = sum(estimate_directed_validation_count(
         item["global_start"], item["global_end"], min_chunk_height=DEFAULT_MIN_CHUNK_HEIGHT,
     ) for item in parents)
-    diagnostics, artifacts, residuals = [], [], []
+    diagnostics, artifacts, residuals, used_names = [], [], [], set()
     completed = 0
     for index, parent in enumerate(parents, 1):
         start, end = parent["global_start"], parent["global_end"]
@@ -80,8 +80,7 @@ def plan_level4(chapter: Path, progress=None) -> dict:
             continue
         for chunk_index, (low, high) in enumerate(zip(result["boundaries"], result["boundaries"][1:]), 1):
             spans = source_spans(infos, low, high)
-            base = Path(v3.page_range_output_name_from_spans(spans, low, high)).stem
-            name_out = f"{base}-l4-{low}-{high}.png"
+            name_out = v3.unique_merge_output_name(spans, low, high, used_names)
             artifacts.append({"file": name_out, "global_start": low,
                               "global_end": high, "height": high - low,
                               "width": image.width, "source_spans": spans,
