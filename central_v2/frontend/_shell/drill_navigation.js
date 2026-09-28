@@ -3,14 +3,10 @@ import { segmentedMarkup, selectMergeLevel } from "/_shell/merge_levels.js";
 import { navigation } from "/_shell/navigation.js";
 
 function itemIconMarkup(action) {
-  const paths = {
-    "validar-faixa": "M8 3H4v4m0-4h4m12 14v4h-4m4-4h-4M8 7h9v9m-9-9v9h9",
-    "novos-merges": "M6 4a2 2 0 1 0 0 4 2 2 0 0 0 0-4Zm12 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4ZM7.5 7.5l9 9m-9 0 3.3-3.3m3.4-3.4L17 7m-9.5 9.5 3.3 3.3M15 9l2-2",
-  };
   const iconClass = action === "validar-faixa"
     ? "fa-solid fa-crop-simple text-xs text-slate-400"
     : "fa-solid fa-scissors text-xs text-sky-600";
-  return `<svg class="drill-subitem-icon ${iconClass}" viewBox="0 0 24 24" aria-hidden="true"><path d="${paths[action] || "M5 12h14"}"/></svg>`;
+  return `<i class="drill-subitem-icon ${iconClass}" aria-hidden="true"></i>`;
 }
 
 function rootItem(section) {
