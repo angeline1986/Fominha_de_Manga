@@ -7,7 +7,7 @@ export function createBalanceMergeList({ onEvent }) {
   element.className = "balance-validation-sidebar";
   element.innerHTML = `<div class="balance-sidebar-heading"><div class="balance-sidebar-title"><h2>Merges do capítulo</h2><label class="balance-chapter-picker"><span class="visually-hidden">Capítulo</span><select data-chapter aria-label="Selecionar capítulo"></select></label></div><button class="btn" type="button" data-refresh>Atualizar</button></div>
     <div class="balance-list-controls"><div data-filters></div><div data-view-mode aria-label="Modo de distribuição"><button type="button" data-mode="bars" aria-label="Exibir barras" aria-pressed="true"><img src="/_shared/icons/chart-simple-solid-full.svg" alt="" aria-hidden="true"></button><button type="button" data-mode="pixels" aria-label="Exibir pixels" aria-pressed="false">px</button></div></div>
-    <div class="balance-list-heading"><strong>Distribuição proporcional</strong><button type="button" data-select-all>Marcar todos</button></div>
+    <div class="balance-list-heading"><strong>Distribuição proporcional</strong><label><input type="checkbox" data-select-all aria-label="Selecionar todos os merges">Marcar todos</label></div>
     <div class="balance-merge-list" data-list></div><div data-pagination></div>
     <footer class="balance-list-footer"><span data-count></span><button class="btn primary" type="button" data-submit disabled>Submeter a Novos Cortes →</button></footer>
     <div class="balance-hover-preview" role="tooltip" hidden><img alt=""></div>`;
@@ -51,12 +51,15 @@ export function createBalanceMergeList({ onEvent }) {
     const pager = element.querySelector("[data-pagination]");
     pager.replaceChildren(createPaginationControls(page, (delta) => { pagination.move(delta); draw(); }));
     const contiguous = isContiguous(merges, selected);
+    const selectAll = element.querySelector("[data-select-all]");
+    selectAll.checked = merges.length > 0 && merges.every((item) => selected.has(item.file));
+    selectAll.indeterminate = selected.size > 0 && !selectAll.checked;
+    selectAll.disabled = !merges.length;
     element.querySelector("[data-count]").textContent = `${selected.size} merge${selected.size === 1 ? "" : "s"} selecionado${selected.size === 1 ? "" : "s"}`;
     const submit = element.querySelector("[data-submit]");
     submit.disabled = selected.size < 2 || !contiguous;
     submit.title = selected.size < 2 ? "Selecione pelo menos dois merges" : contiguous ? "Abrir Novos Cortes" : "Selecione merges contíguos";
     element.classList.toggle("is-pixel-mode", mode === "pixels");
-    element.querySelector("[data-select-all]").disabled = !merges.length;
   }
 
   function onClick(event) {
@@ -64,12 +67,16 @@ export function createBalanceMergeList({ onEvent }) {
     if (filterButton) { filter = filterButton.dataset.filter; pagination.reset(); draw(); return; }
     const modeButton = event.target.closest("[data-mode]");
     if (modeButton) { mode = modeButton.dataset.mode; draw(); return; }
-    if (event.target.closest("[data-select-all]")) { selected = new Set((state.chapter?.merges || []).map((item) => item.file)); draw(); onEvent("selection", selected); return; }
     if (event.target.closest("[data-refresh]")) onEvent("refresh");
     if (event.target.closest("[data-submit]")) onEvent("submit", [...selected]);
   }
 
   function onChange(event) {
+    const selectAll = event.target.closest("[data-select-all]");
+    if (selectAll) {
+      selected = selectAll.checked ? new Set((state.chapter?.merges || []).map((item) => item.file)) : new Set();
+      draw(); onEvent("selection", selected); return;
+    }
     const checkbox = event.target.closest("[data-merge]");
     if (!checkbox) return;
     if (checkbox.checked) selected.add(checkbox.dataset.merge); else selected.delete(checkbox.dataset.merge);

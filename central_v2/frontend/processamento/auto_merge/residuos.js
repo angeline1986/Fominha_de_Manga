@@ -1,7 +1,10 @@
+import { renderStatusBadge } from "/processamento/auto_merge/filtros_estado.js";
+
 function chapterCheckbox(row, selected, onSelect) {
   const input = document.createElement("input");
   input.type = "checkbox";
   input.checked = selected.has(row.chapter);
+  input.disabled = row.eligible === false;
   input.setAttribute("aria-label", `Selecionar capítulo ${row.chapter}`);
   input.addEventListener("change", () => onSelect(row.chapter, input.checked));
   return input;
@@ -23,5 +26,6 @@ export function createLevel2Columns({ selected, onSelect, onSelectPage }) {
     { label: "CAP.", render: (row) => row.chapter },
     { label: "RESIDUAL RECEBIDO", render: (row) => row.residual_segments },
     { label: "REGIÃO DO RESIDUAL", render: (row) => (row.residual_regions || []).join("; ") || "—" },
+    { label: "ESTADO", render: renderStatusBadge },
   ];
 }

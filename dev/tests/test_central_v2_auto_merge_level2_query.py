@@ -95,7 +95,10 @@ class Level2ResidualQueryTests(QueryFixtures, unittest.TestCase):
         level2.mkdir(parents=True)
         (level2 / 'keep.txt').write_text('existing stage')
         rows = json.loads(self.query().body)['chapters']
-        self.assertEqual(rows, [])
+        self.assertEqual(len(rows), 1)
+        self.assertEqual(rows[0]["chapter"], "1")
+        self.assertFalse(rows[0]["eligible"])
+        self.assertEqual(rows[0]["status"], "Registro inválido")
         self.assertEqual((level2 / 'keep.txt').read_text(), 'existing stage')
 
 

@@ -6,6 +6,7 @@ from processamento.unificacao_imagens.auto_merge.nivel1 import (
     read_level1,
     read_official,
 )
+from processamento.unificacao_imagens.auto_merge.nivel2 import read_level2
 from processamento.unificacao_imagens.image_stitcher import list_pages
 from processamento.unificacao_imagens.image_stitcher import page_range_output_name
 
@@ -42,7 +43,7 @@ def _regions(chapter: Path, residuals: list[dict]) -> list[str]:
     return regions
 
 
-def query_level2(manga: Path, chapters: list[str]) -> list[dict]:
+def query_level2(manga: Path, chapters: list[str], *, include_history: bool = False) -> list[dict]:
     rows = []
     root = (manga / "IMG").resolve()
     if not root.is_relative_to(manga.resolve()):
@@ -54,6 +55,24 @@ def query_level2(manga: Path, chapters: list[str]) -> list[dict]:
         level1 = read_level1(manga, name)
         official = read_official(manga, name)
         level2_directory = manga / "FLUXO_SECUNDARIO" / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL2" / name
+        if include_history and level2_directory.exists():
+            record = read_level2(manga, name)
+            if record.status == "recorded":
+                residuals = record.data["residuals"]
+                rows.append({
+                    "chapter": name, "pages": len(list_pages(chapter)),
+                    "residual_segments": len(residuals),
+                    "residual_height": sum(item["global_end"] - item["global_start"] for item in residuals),
+                    "residuals": residuals, "residual_regions": _regions(chapter, residuals),
+                    "level1_artifacts": len(level1.data.get("artifacts", [])) if level1.data else 0,
+                    "level2_artifacts": len(record.data["artifacts"]),
+                    "eligible": False, "status": "Parcial" if residuals else "Resolvido",
+                })
+            else:
+                rows.append({"chapter": name, "pages": len(list_pages(chapter)),
+                             "residual_segments": 0, "residual_regions": [], "eligible": False,
+                             "status": "Registro inválido", "error": record.error or "Manifesto do Nível II inválido."})
+            continue
         if not _eligible(level1, official, level2_directory):
             continue
         data = level1.data
@@ -68,5 +87,6 @@ def query_level2(manga: Path, chapters: list[str]) -> list[dict]:
             "residuals": residuals,
             "residual_regions": _regions(chapter, residuals),
             "level1_artifacts": len(data["artifacts"]),
+            "eligible": True, "status": "Disponível",
         })
     return rows

@@ -87,14 +87,13 @@ export function createLevel1View({ onExecute } = {}) {
         draw();
       },
     });
-    if (rows.length) results.append(
-      createTable(columns, selection.rows, "Resultados registrados do Auto-Merge Nível I"),
-      createPaginationControls(selection, (delta) => {
+    results.append(createTable(columns, selection.rows, "Resultados registrados do Auto-Merge Nível I", {
+      emptyMessage: state.chapters.length ? "Nenhum resultado para este filtro." : "Nenhum capítulo com imagens encontrado.",
+    }));
+    if (rows.length) results.append(createPaginationControls(selection, (delta) => {
         pagination.move(delta);
         draw();
-      }),
-    );
-    else if (state.chapters.length) status.textContent = "Nenhum resultado para este filtro.";
+      }));
   }
 
   function resetAndDraw() {

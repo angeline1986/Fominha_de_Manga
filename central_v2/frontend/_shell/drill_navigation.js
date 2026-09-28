@@ -24,13 +24,14 @@ function rootItem(section) {
 }
 
 function groupMarkup(group) {
+  const hasSubitems = (group.items ?? []).length > 0;
   const content = group.control?.type === "segmented"
     ? segmentedMarkup(group.control)
     : `
-      <div class="drill-group-items">
+      <div class="drill-group-items${hasSubitems ? " drill-subitem-list" : ""}">
         ${(group.items ?? []).map((item) => `
           <button
-            class="drill-item${group.linear ? " drill-subitem" : ""}"
+            class="drill-item${hasSubitems ? " drill-subitem" : ""}"
             type="button"
             data-action="${item.id}"
           >
@@ -42,7 +43,7 @@ function groupMarkup(group) {
 
   const title = group.control?.type === "segmented"
     ? ""
-    : `<div class="drill-group-title${group.linear ? " drill-group-title-linear" : ""}">${group.linear ? `${iconMarkup("collapse")}<span>${group.label}</span>` : group.label}</div>`;
+    : `<div class="drill-group-title${hasSubitems ? " drill-group-title-subitems" : ""}">${group.label}</div>`;
 
   return `
     <section class="drill-group">

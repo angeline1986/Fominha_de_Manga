@@ -17,7 +17,7 @@ def level2_response(query: dict, output_root: Path) -> RouteResponse:
         if name not in build_catalog(output_root).get(provider, []):
             raise ValueError("Obra fora do catálogo.")
         context = build_structural_state(output_root, provider, name)
-        rows = query_level2(manga, context["chapters"])
+        rows = query_level2(manga, context["chapters"], include_history=True)
         payload = {
             "provider": provider,
             "manga": name,

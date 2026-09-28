@@ -1,23 +1,55 @@
-.data-table {
+.data-table,
+.manual-merge-table,
+.balance-table {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
   background: var(--color-surface);
 }
 
 .data-table th,
-.data-table td {
-  padding: 12px;
+.data-table td,
+.manual-merge-table th,
+.manual-merge-table td,
+.balance-table th,
+.balance-table td {
+  padding: 5px 12px;
   border-bottom: 1px solid var(--color-border);
   text-align: left;
   vertical-align: top;
+  overflow-wrap: anywhere;
 }
 
-.data-table th {
+.data-table th,
+.manual-merge-table th,
+.balance-table th {
   background: var(--color-surface-soft);
   color: var(--color-primary-hover);
   font-size: var(--font-size-small);
 }
 
-.data-table tbody tr:last-child td {
+.data-table tbody tr:last-child td,
+.manual-merge-table tbody tr:last-child td,
+.balance-table tbody tr:last-child td {
   border-bottom: 0;
 }
+
+.data-table tbody tr:nth-child(odd) { background: #fff; }
+.data-table tbody tr:nth-child(even) { background: #f7fbfd; }
+.data-table tbody tr:hover { background: var(--color-primary-soft); }
+.data-table .data-table-empty { padding: 5px 12px; color: var(--color-text-muted); text-align: center; }
+.data-table tfoot th,
+.data-table tfoot td { padding-block: 5px; }
+
+.auto-merge-results .pagination,
+.manual-merge-table-card .pagination { padding-block: 5px; }
+
+.auto-merge-page .data-table[data-column-count="7"] th:first-child,
+.auto-merge-page .data-table[data-column-count="7"] td:first-child { width: 64px; text-align: center; }
+.auto-merge-page .data-table[data-column-count="7"] th:nth-child(2),
+.auto-merge-page .data-table[data-column-count="7"] td:nth-child(2) { width: 72px; }
+.auto-merge-page .data-table:not([data-column-count="7"]) th:first-child,
+.auto-merge-page .data-table:not([data-column-count="7"]) td:first-child { width: 64px; text-align: center; }
+.auto-merge-page .data-table:not([data-column-count="7"]) th:nth-child(2),
+.auto-merge-page .data-table:not([data-column-count="7"]) td:nth-child(2) { width: 86px; }
+.auto-merge-page .data-table input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--color-primary); }

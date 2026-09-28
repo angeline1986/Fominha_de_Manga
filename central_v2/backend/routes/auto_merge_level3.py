@@ -1,5 +1,6 @@
 """Read the validated Level II residual queue for Auto-Merge Level III."""
 import json
+import logging
 from pathlib import Path
 
 from central_v2.backend.routes.response import RouteResponse
@@ -19,10 +20,13 @@ def level3_response(query: dict, output_root: Path) -> RouteResponse:
             raise ValueError("Obra fora do catálogo.")
         context = build_structural_state(output_root, provider, name)
         payload = {"provider": provider, "manga": name,
-                   "chapters": query_level3(manga, context["chapters"])}
+                   "chapters": query_level3(manga, context["chapters"], include_history=True)}
         status = 200
     except ValueError as exc:
         payload, status = {"error": str(exc)}, 400
     except OSError:
         payload, status = {"error": "Não foi possível consultar os resíduos do Nível III."}, 500
+    except Exception:
+        logging.exception("Falha inesperada ao consultar Auto-Merge Nível III")
+        payload, status = {"error": "Falha inesperada ao consultar os resíduos do Nível III."}, 500
     return RouteResponse(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"))

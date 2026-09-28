@@ -44,15 +44,15 @@ export function render(container) {
     }
   }
 
-  async function onPrepare() {
+  async function onPrepare(rulerColors) {
     await run("prepare", {}, "Preparando editor de cortes…", (result) => {
-      draft = result; view.update({ draft });
+      draft = { ...result, ruler_colors: rulerColors }; view.update({ draft });
     });
   }
 
-  async function onGenerate(cuts) {
+  async function onGenerate(cuts, rulerColors) {
     await run("proposal", { cuts }, "Gerando proposta manual…", (result) => {
-      draft = { ...draft, ...result, source_preview: draft.source_preview, source_slices: draft.source_slices, region: draft.region };
+      draft = { ...draft, ...result, ruler_colors: rulerColors, source_preview: draft.source_preview, source_slices: draft.source_slices, region: draft.region };
       view.update({ draft });
     });
   }

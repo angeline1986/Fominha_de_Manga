@@ -1,6 +1,7 @@
-export function createTable(columns, rows, label) {
+export function createTable(columns, rows, label, { emptyMessage } = {}) {
   const table = document.createElement("table");
   table.className = "data-table";
+  table.dataset.columnCount = String(columns.length);
   table.setAttribute("aria-label", label);
   const head = table.createTHead().insertRow();
   for (const column of columns) {
@@ -20,6 +21,13 @@ export function createTable(columns, rows, label) {
       if (value instanceof Node) cell.append(value);
       else cell.textContent = value == null ? "—" : String(value);
     }
+  }
+  if (!rows.length && emptyMessage) {
+    const tr = body.insertRow();
+    const cell = tr.insertCell();
+    cell.colSpan = columns.length;
+    cell.className = "data-table-empty";
+    cell.textContent = emptyMessage;
   }
   return table;
 }

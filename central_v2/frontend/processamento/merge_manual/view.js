@@ -7,7 +7,7 @@ export function createMergeManualView() {
   const element = document.createElement("section");
   element.className = "manual-merge-page";
   element.innerHTML = `
-    <header><h1>Merge Manual</h1><p>Selecione capítulos para configurar as faixas de páginas.</p></header>
+    <header><h1 title="Selecione capítulos para configurar as faixas de páginas.">Merge Manual</h1></header>
     <div class="manual-merge-toolbar">
       <label><span class="visually-hidden">Buscar capítulo</span><input type="search" data-search placeholder="Buscar capítulo..."></label>
       <div class="manual-merge-filters" role="group" aria-label="Filtrar capítulos">

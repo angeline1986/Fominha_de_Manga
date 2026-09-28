@@ -14,6 +14,8 @@
   font-size: var(--font-size-small);
 }
 
+.auto-merge-results .pagination { padding-block: 5px; }
+
 .pagination button {
   min-width: 40px;
   min-height: 36px;

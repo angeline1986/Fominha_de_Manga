@@ -6,6 +6,7 @@ from PIL import Image
 from processamento.unificacao_imagens import image_stitcher as v3
 from processamento.unificacao_imagens.auto_merge.nivel1 import read_official
 from processamento.unificacao_imagens.auto_merge.nivel3 import read_level3
+from processamento.unificacao_imagens.auto_merge.nivel4 import read_level4
 
 
 def _pages(chapter: Path, residuals: list[dict]) -> tuple[int, list[str]]:
@@ -26,7 +27,7 @@ def _pages(chapter: Path, residuals: list[dict]) -> tuple[int, list[str]]:
     return len(files), ranges
 
 
-def query_level4(manga: Path, chapters: list[str]) -> list[dict]:
+def query_level4(manga: Path, chapters: list[str], *, include_history: bool = False) -> list[dict]:
     rows = []
     root = (manga / "IMG").resolve()
     if not root.is_relative_to(manga.resolve()):
@@ -36,6 +37,20 @@ def query_level4(manga: Path, chapters: list[str]) -> list[dict]:
         if chapter.parent != root or not chapter.is_dir():
             raise ValueError("Capítulo fora do diretório de imagens da obra.")
         stage = manga / "FLUXO_SECUNDARIO" / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL4" / name
+        if include_history and stage.exists():
+            record = read_level4(manga, name)
+            if record.status == "recorded":
+                residuals = record.data["residuals"]
+                count, regions = _pages(chapter, residuals) if residuals else (0, [])
+                rows.append({"chapter": name, "pages": len(v3.list_pages(chapter)),
+                             "residual_segments": len(residuals), "residual_images": count,
+                             "residual_regions": regions, "safe_artifacts": len(record.data["safe_artifacts"]),
+                             "eligible": False, "status": "Parcial" if residuals else "Resolvido"})
+            else:
+                rows.append({"chapter": name, "pages": len(v3.list_pages(chapter)),
+                             "residual_segments": 0, "residual_images": 0, "residual_regions": [],
+                             "safe_artifacts": 0, "eligible": False, "status": "Registro inválido"})
+            continue
         if stage.exists() or v3.merge_output_dir(chapter).exists():
             continue
         level3, official = read_level3(manga, name), read_official(manga, name)
@@ -47,5 +62,6 @@ def query_level4(manga: Path, chapters: list[str]) -> list[dict]:
         count, regions = _pages(chapter, residuals)
         rows.append({"chapter": name, "pages": len(v3.list_pages(chapter)),
                      "residual_segments": len(residuals), "residual_images": count,
-                     "residual_regions": regions, "safe_artifacts": len(level3.data["safe_artifacts"])})
+                     "residual_regions": regions, "safe_artifacts": len(level3.data["safe_artifacts"]),
+                     "eligible": True, "status": "Disponível"})
     return rows

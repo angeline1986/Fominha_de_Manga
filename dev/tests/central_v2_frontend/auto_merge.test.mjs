@@ -120,7 +120,7 @@ test('Level II route uses its dedicated residual consultation page', async () =>
     onSelect: (chapter, checked) => checked ? selected.add(chapter) : selected.delete(chapter),
     onSelectPage() {} });
   assert.deepEqual(JSON.parse(JSON.stringify(columns.map((column) => column.label))), [
-    'Seleção', 'CAP.', 'RESIDUAL RECEBIDO', 'REGIÃO DO RESIDUAL',
+    'Seleção', 'CAP.', 'RESIDUAL RECEBIDO', 'REGIÃO DO RESIDUAL', 'ESTADO',
   ]);
   assert.equal(columns.some((column) => /PIXEL|ALTURA/i.test(column.label)), false);
   columns[0].render({ chapter: '6' });
@@ -130,4 +130,6 @@ test('Level II route uses its dedicated residual consultation page', async () =>
   boxes.at(-1).checked = true;
   boxes.at(-1).change();
   assert.equal(selected.has('6'), true);
+  columns[0].render({ chapter: '5', eligible: false });
+  assert.equal(boxes.at(-1).disabled, true);
 });

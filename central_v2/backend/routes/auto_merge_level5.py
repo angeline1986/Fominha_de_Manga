@@ -18,7 +18,7 @@ def level5_response(query: dict, output_root: Path) -> RouteResponse:
             raise ValueError("Obra fora do catálogo.")
         context = build_structural_state(output_root, provider, name)
         payload = {"provider": provider, "manga": name,
-                   "chapters": query_level5(manga, context["chapters"])}
+                   "chapters": query_level5(manga, context["chapters"], include_history=True)}
         status = 200
     except ValueError as exc:
         payload, status = {"error": str(exc)}, 400

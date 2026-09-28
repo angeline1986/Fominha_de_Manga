@@ -1,39 +1,35 @@
 .drill-layer {
   transition:
-    transform 340ms ease,
-    opacity 260ms ease,
-    filter 340ms ease;
+    transform 460ms cubic-bezier(.22, 1, .36, 1),
+    opacity 360ms ease-out;
+  will-change: transform, opacity;
 }
 
 .drill-layer-root {
   transform: translateX(0);
   opacity: 1;
-  filter: blur(0);
 }
 
 .drill-layer-detail {
-  transform: translateX(110%);
+  transform: translateX(24px);
   opacity: 0;
-  filter: blur(3px);
   visibility: hidden;
 }
 
 .drill-navigation.is-detail .drill-layer-root {
-  transform: translateX(-110%);
+  transform: translateX(-24px);
   opacity: 0;
-  filter: blur(3px);
   visibility: hidden;
 }
 
 .drill-navigation.is-detail .drill-layer-detail {
   transform: translateX(0);
   opacity: 1;
-  filter: blur(0);
   visibility: visible;
 }
 
 .drill-group-items .drill-item {
-  animation: drill-item-in 220ms ease both;
+  animation: drill-item-in 280ms cubic-bezier(.22, 1, .36, 1) both;
 }
 
 .drill-group-items .drill-item:nth-child(2) {
@@ -69,5 +65,6 @@
   .drill-group-items .drill-item {
     transition: none;
     animation: none;
+    will-change: auto;
   }
 }

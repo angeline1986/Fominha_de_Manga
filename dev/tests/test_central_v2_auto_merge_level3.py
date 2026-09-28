@@ -114,6 +114,12 @@ class CentralV2Level3Tests(unittest.TestCase):
             self.assertEqual(manifest["source_level2_sha256"], hashlib.sha256((level2 / "merge-level2-manifest.json").read_bytes()).hexdigest())
             self.assertEqual([(x["global_start"], x["global_end"]) for x in manifest["safe_artifacts"]],
                              [(80, 12_080), (12_080, 13_050)])
+            history = query_level3(manga, ["6"], include_history=True)
+            self.assertEqual(history[0]["status"], "Resolvido")
+            self.assertFalse(history[0]["eligible"])
+            response = dispatch_get("/api/auto-merge/level3?provider=ridi&manga=test-manga", Path(root))
+            self.assertEqual(response.status, 200)
+            self.assertEqual(json.loads(response.body)["chapters"][0]["status"], "Resolvido")
             official = manga / "FLUXO_SECUNDARIO" / "02_MERGE" / "6" / "merge-manifest.json"
             final = json.loads(official.read_text())
             self.assertEqual(final["algorithm"], "merge_auto_level2_level3_composition_v2")
@@ -134,6 +140,10 @@ class CentralV2Level3Tests(unittest.TestCase):
             self.assertEqual(output[0]["resolved_segments"], 0)
             self.assertEqual(output[0]["residuals"], [{"global_start": 80, "global_end": 13_050}])
             self.assertFalse((manga / "FLUXO_SECUNDARIO" / "02_MERGE" / "6").exists())
+            history = query_level3(manga, ["6"], include_history=True)
+            self.assertEqual(history[0]["status"], "Parcial")
+            self.assertEqual(history[0]["residual_images"], 1)
+            self.assertFalse(history[0]["eligible"])
             stage = manga / "FLUXO_SECUNDARIO" / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL3" / "6"
             manifest = stage / "merge-level3-manifest.json"
             before = manifest.read_bytes()
