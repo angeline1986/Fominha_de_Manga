@@ -51,6 +51,34 @@ test('manual merge proposal result resolves to its dedicated page', async () => 
   assert.equal(routes['merge-manual-result'].module, '/processamento/merge_manual/resultado_proposta.js');
 });
 
+test('balanceamento navigation resolves to independent validation and cut editor pages', async () => {
+  const { routes } = await setup();
+  const load = browserModules();
+  const { navigation } = await load('/_shell/navigation.js');
+  assert.equal(routes['validar-estado'].module, '/processamento/balanceamento/validar_estado.js');
+  assert.equal(routes['novos-cortes'].module, '/processamento/balanceamento/novos_cortes.js');
+  assert.equal(navigation.find((section) => section.id === 'balanceamento').defaultAction, 'validar-estado');
+});
+
+test('balanceamento starts with the first deviation and its contiguous neighbors', async () => {
+  const load = browserModules();
+  const { defaultSelection } = await load('/processamento/balanceamento/validar_estado_view.js');
+  const chapter = {
+    merges: ['a.png', 'b.png', 'c.png', 'd.png'].map((file) => ({ file })),
+    issues: [{ file: 'c.png' }],
+  };
+  assert.deepEqual([...defaultSelection(chapter)], ['b.png', 'c.png', 'd.png']);
+  assert.deepEqual([...defaultSelection({ ...chapter, issues: [] })], ['a.png', 'b.png']);
+});
+
+test('balanceamento pages and all their modules load through the frontend module graph', async () => {
+  const load = browserModules();
+  const validation = await load('/processamento/balanceamento/validar_estado.js');
+  const cuts = await load('/processamento/balanceamento/novos_cortes.js');
+  assert.equal(typeof validation.render, 'function');
+  assert.equal(typeof cuts.render, 'function');
+});
+
 test('manual merge outputs identify every intersecting source page', async () => {
   const load = browserModules();
   const { getOutputPages, getOutputPageRange, compositionMarkup } = await load('/processamento/merge_manual/resultado_proposta.js');

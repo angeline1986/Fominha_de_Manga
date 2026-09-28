@@ -53,7 +53,7 @@ export function render(container) {
         <div class="manual-cut-actions"><p role="status" aria-live="polite" data-status></p><button type="button" data-submit>✂ Gerar proposta</button></div>
       </aside>
       <section class="manual-cut-viewer">
-        <div class="manual-cut-viewer-toolbar"><strong>Visualizador de emendas</strong><div><div class="zoom-control"><button data-zoom="-" aria-label="Diminuir zoom">−</button><output data-zoom-value>50%</output><button data-zoom="+" aria-label="Aumentar zoom">+</button><button class="zoom-control-reset" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div><button type="button" class="manual-cut-toolbar-button" data-focus-toggle aria-pressed="false">${iconMarkup("focus-exit")} Modo Foco <kbd>F</kbd></button></div></div>
+        <div class="manual-cut-viewer-toolbar"><strong>Visualizador de emendas</strong><div><div class="zoom-control"><button data-zoom="-" aria-label="Diminuir zoom">−</button><output data-zoom-value>50%</output><button data-zoom="+" aria-label="Aumentar zoom">+</button><button class="zoom-control-reset" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div><button type="button" class="manual-cut-toolbar-button" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button></div></div>
         <div class="manual-cut-canvas-wrap"><div class="manual-cut-strip"><canvas aria-label="Prévia vertical para posicionar as réguas de corte"></canvas><div class="manual-cut-page-tags" data-page-tags></div></div></div>
         <p class="manual-cut-hint">Clique na prévia para posicionar a régua selecionada. Arraste uma régua para ajustá-la.</p>
       </section>

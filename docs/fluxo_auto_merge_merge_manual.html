@@ -41,6 +41,7 @@
         <li><a href="#fluxo">Visão do fluxo</a></li><li><a href="#execucao">Execução</a></li>
         <li><a href="#niveis">Níveis I–V</a></li><li><a href="#artefatos">Estágios e manifestos</a></li>
         <li><a href="#manual">Merge Manual</a></li><li><a href="#proposta">Resultado e aplicação</a></li>
+        <li><a href="#balanceamento">Balanceamento</a></li>
         <li><a href="#diagnostico">Diagnóstico</a></li><li><a href="#testes">Testes</a></li>
         <li><a href="#especificacao">Especificação para implementar</a></li>
       </ul>
@@ -132,6 +133,47 @@ Auto-Merge I → II → III → IV → V
       <p>Com todos os critérios atendidos, os arquivos candidatos são preparados em área temporária e promovidos transacionalmente para o diretório MERGE oficial. O manifesto oficial referencia a proposta; o manifesto manual passa a <code>EFETIVADO</code>. Falhas revertem a tentativa e recuperam a composição anterior. Propostas cujas fontes ou estado de revisão mudaram ficam obsoletas e devem ser geradas novamente.</p>
     </section>
 
+    <section id="balanceamento">
+      <h2>Balanceamento do MERGE oficial</h2>
+      <p>O Balanceamento é um fluxo separado do Auto-Merge e do Merge Manual. A tela <strong>Validar Estado</strong> consulta os manifestos do MERGE oficial e sinaliza merges internos cuja altura seja inferior a 50% da média dos dois vizinhos. Primeiro e último merge são excluídos da regra atual.</p>
+      <pre>02_MERGE/&lt;capítulo&gt;/merge-manifest.json
+        │
+        ├─ GET /api/balanceamento (consulta sem escrita)
+        │        └─ Validar Estado → selecionar sequência contígua
+        │                                  ▼
+        │                            Preparar editor
+        │                                  ▼
+IMG/&lt;capítulo&gt;/page-*.png ────────► mover/adicionar/remover réguas
+                                           │
+                                     Gerar proposta manual
+                                           │
+                                    confirmação explícita
+                                           ▼
+                                  validar e promover para 02_MERGE</pre>
+      <h3>Leitura, validação e seleção</h3>
+      <p>Ao abrir a tela, a consulta é somente leitura: lê o manifesto e mede os arquivos existentes, sem criar manifests de validação. O botão <strong>Atualizar</strong> executa um job explícito e registra o diagnóstico. A interface é master-detail: o cabeçalho escolhe o capítulo, a lateral lista os merges e o canvas compara as imagens selecionadas lado a lado, preservando a proporção das alturas reais. O primeiro desvio e seus vizinhos vêm pré-selecionados; sem desvios, os dois primeiros merges formam a comparação inicial.</p>
+      <p>A lateral alterna entre barras proporcionais à maior altura do capítulo e valores em pixels, filtra entre todos e desvios, oferece miniatura flutuante no hover e mostra o contador de seleção. A lista de merges usa os controles de paginação compartilhados. O canvas oferece zoom de 30% a 120% e Modo Foco pelo botão ou tecla <kbd>F</kbd>; <kbd>Esc</kbd> sai do foco. Selecionar todos é permitido, mas para editar a região a seleção precisa conter pelo menos dois merges contíguos na ordem do manifesto. O backend repete essa validação antes de preparar ou gerar uma proposta.</p>
+      <h3>Editor, coordenadas e proposta</h3>
+      <p><strong>Preparar editor</strong> reconstrói a região selecionada a partir de <code>IMG/&lt;capítulo&gt;/</code>, cria a imagem de prévia e inicializa uma régua em cada fronteira atual. As posições são coordenadas Y globais do capítulo, inteiras, ordenadas e estritamente internas à região. Réguas podem ser adicionadas sem um limite fixo de interface, removidas e arrastadas; posições duplicadas ou fora da seleção não podem ser geradas. Zoom e Modo Foco alteram somente a apresentação.</p>
+      <p><strong>Gerar proposta manual</strong> materializa cada intervalo entre fronteiras como um artefato temporário. O manifesto registra schema <code>balance_manual_result_v1</code>, <code>proposal_id</code>, arquivos substituídos, região global, coordenadas dos cortes, segmentos e garantias de que nem os originais nem o MERGE oficial foram modificados. O estado aponta para o manifesto do editor e da proposta em <code>FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/BALANCE_*</code>. A prévia e as imagens de proposta são servidas apenas quando seus nomes constam dos manifestos correspondentes.</p>
+      <h3>Aplicação e recuperação</h3>
+      <p><strong>Aplicar composição final</strong> exige confirmação pelo popup compartilhado. O domínio confere estado e identificador da proposta, existência e ordem dos merges selecionados, limites globais, continuidade sem lacunas/sobreposições, dimensões dos artefatos e cobertura total do capítulo. Os merges fora da região escolhida são preservados. Um staging candidato é validado antes de substituir a pasta <code>FLUXO_SECUNDARIO/02_MERGE/&lt;capítulo&gt;/</code>; em falha na promoção, a versão anterior é restaurada. Após sucesso, os novos segmentos passam a integrar o MERGE oficial e o estado da proposta fica efetivado. <code>IMG/</code> permanece intacta.</p>
+      <p class="callout"><strong>Separação de contratos:</strong> esta tela oferece geração manual e usa o contrato que a efetivação aceita. O gerador automático visual existente produz outro schema e não deve ser conectado ao botão de aplicar até que exista uma validação/promoção explícita para esse contrato. A Central V2 chama a orquestração e o domínio existentes, sem copiar algoritmos ou alterar seus thresholds.</p>
+      <h3>Endpoints da Central V2</h3>
+      <table>
+        <thead><tr><th>Método / rota</th><th>Uso</th><th>Efeito</th></tr></thead>
+        <tbody>
+          <tr><th>GET <code>/api/balanceamento?provider=&amp;manga=</code></th><td>Carrega capítulos, merges, diagnóstico e proposta persistida.</td><td>Somente leitura.</td></tr>
+          <tr><th>POST <code>/api/balanceamento/validate</code></th><td>Atualiza o diagnóstico de todos os capítulos.</td><td>Job; grava manifests de validação.</td></tr>
+          <tr><th>POST <code>/api/balanceamento/prepare</code></th><td>Entrada: contexto, capítulo e lista ordenada de merges contíguos.</td><td>Job; grava prévia e manifesto do editor em área isolada.</td></tr>
+          <tr><th>POST <code>/api/balanceamento/proposal</code></th><td>Entrada anterior mais lista de coordenadas inteiras Y.</td><td>Job; gera artefatos e manifesto de proposta, sem promover.</td></tr>
+          <tr><th>POST <code>/api/balanceamento/apply</code></th><td>Entrada: provider, obra e capítulo.</td><td>Job; revalida manifesto e promove de modo transacional.</td></tr>
+          <tr><th>GET <code>/api/balanceamento/image</code></th><td>Entrega imagem oficial ou artefato temporário identificado.</td><td>Somente arquivos declarados em manifesto; traversal recusado.</td></tr>
+        </tbody>
+      </table>
+      <p>Jobs usam o gerenciador compartilhado da Central, reportam progresso e bloqueiam a execução enquanto a Central V1 estiver ativa. A interface usa os popups compartilhados para mensagens e confirmação. Ao trocar provider ou obra, a seleção temporária é descartada.</p>
+    </section>
+
     <section id="diagnostico">
       <h2>Diagnóstico rápido</h2>
       <table>
@@ -193,7 +235,7 @@ node --experimental-vm-modules --test dev/tests/central_v2_frontend/*.test.mjs</
         <li><strong>Resultado:</strong> uma única moldura contém a faixa completa; dentro dela, os segmentos de saída ficam ordenados lado a lado, sem cartões independentes. Cada segmento tem sua imagem e legenda com somente o intervalo da primeira à última página de origem; limites coincidentes podem ser compartilhados. A legenda não traz “Páginas”. Zoom altera a largura do quadro de conteúdo dentro de uma área rolável. Voltar mantém a seleção e os cortes.</li>
         <li><strong>Aplicação:</strong> confirmação, sucesso e falha usam o popup compartilhado da Central V2 (<code>confirmMessage</code>/<code>showMessage</code>), nunca <code>alert</code> ou <code>window.confirm</code>. Indicar validação durante o pedido e bloquear cliques repetidos. Após sucesso, atualizar estado da proposta para efetivada; em falha transacional, preservar/restaurar a composição anterior.</li>
       </ol>
-      <p>As três visualizações com zoom (prévia do intervalo, editor de cortes e resultado) oferecem Modo Foco: o botão ou <kbd>F</kbd> expande a visualização para a janela, e <kbd>Esc</kbd> retorna. A tecla Esc não aparece como rótulo no dock. O dock vertical não deve criar rolagem horizontal; no editor, mantém réguas ativas, adição ilimitada de cortes, marca-texto, zoom e geração de proposta sincronizados com os controles normais.</p>
+      <p>As três visualizações com zoom (prévia do intervalo, editor de cortes e resultado) oferecem Modo Foco. O controle exibe somente o ícone e a palavra <strong>Foco</strong>; a tecla <kbd>F</kbd> continua como atalho para expandir a visualização e <kbd>Esc</kbd> para retornar. O dock não exibe o rótulo Esc nem deve criar rolagem horizontal; no editor, mantém réguas ativas, adição ilimitada de cortes, marca-texto, zoom e geração de proposta sincronizados com os controles normais.</p>
       <h3>Critérios de aceite</h3>
       <ul>
         <li>Nenhuma etapa manual muda arquivos em <code>IMG/</code> ou o MERGE oficial antes da ação explícita Aplicar.</li>

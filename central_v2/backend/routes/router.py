@@ -25,6 +25,8 @@ from central_v2.backend.routes.merge_manual import (
     merge_manual_response,
 )
 from central_v2.backend.routes.static import static_response
+from central_v2.backend.routes.balanceamento import balanceamento_job_response, balanceamento_response
+from central_v2.backend.routes.balanceamento_media import balanceamento_image_response
 from central_v2.backend.routes.response import RouteResponse
 
 
@@ -48,6 +50,12 @@ def dispatch_get(
 
     if request.path == "/api/merge-manual":
         return merge_manual_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/balanceamento":
+        return balanceamento_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/balanceamento/image":
+        return balanceamento_image_response(parse_qs(request.query), output_root)
 
     if request.path == "/api/merge-manual/image":
         return merge_manual_image_response(parse_qs(request.query), output_root)
@@ -139,6 +147,12 @@ def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -
         return merge_manual_proposal_response(payload, output_root)
     if urlparse(path).path == "/api/merge-manual/apply":
         return merge_manual_apply_response(payload, output_root)
+    if urlparse(path).path in {
+        "/api/balanceamento/validate", "/api/balanceamento/prepare",
+        "/api/balanceamento/proposal", "/api/balanceamento/apply",
+    }:
+        action = urlparse(path).path.rsplit("/", 1)[-1]
+        return balanceamento_job_response(action, payload, output_root)
     if urlparse(path).path == "/api/auto-merge/open-folder":
         return open_auto_merge_folder_response(payload, output_root)
     return None

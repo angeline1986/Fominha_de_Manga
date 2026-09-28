@@ -31,6 +31,14 @@ export const routes = {
     context: "processamento",
     module: "/processamento/merge_manual/resultado_proposta.js",
   },
+  "validar-estado": {
+    context: "processamento",
+    module: "/processamento/balanceamento/validar_estado.js",
+  },
+  "novos-cortes": {
+    context: "processamento",
+    module: "/processamento/balanceamento/novos_cortes.js",
+  },
   "resumo-operacao": {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",

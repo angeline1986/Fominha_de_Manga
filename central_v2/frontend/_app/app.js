@@ -1,6 +1,7 @@
 import { initializeContext } from "/_app/context/context_controller.js";
 import { disposePage, navigate } from "/_app/router/router.js";
 import { mountShell } from "/_shell/shell.js";
+import { showMessage } from "/_shared/messages/messages.js";
 
 const root = document.querySelector("#app");
 
@@ -30,6 +31,10 @@ async function bootstrap() {
         "[Central V2] Falha ao navegar.",
         error,
       );
+      await showMessage({
+        title: "Não foi possível abrir a tela",
+        message: error.message || "Ocorreu um erro ao carregar esta página.",
+      });
     }
   }
   root.addEventListener("menu:action", onAction);

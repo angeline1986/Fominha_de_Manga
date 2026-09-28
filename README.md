@@ -181,7 +181,7 @@ Os intervalos podem terminar no meio de uma imagem-fonte. Nesse caso, a faixa us
 
 O editor apresenta a sequência vertical do residual e as ferramentas **Réguas**, seletor de cor, marca-texto das páginas ímpares, lista de páginas, zoom e botão **Gerar proposta**.
 
-As visualizações com zoom — prévia do intervalo, editor de cortes e resultado — também oferecem **Modo Foco**. O botão ou a tecla **F** expande a visualização para a janela; **Esc** retorna. No editor, o dock lateral mantém seleção de régua, adição de cortes, marca-texto, zoom e geração de proposta sincronizados com os controles da barra lateral. O dock não exibe um rótulo “Esc” nem cria rolagem horizontal; a tecla continua disponível como atalho.
+As visualizações com zoom — prévia do intervalo, editor de cortes e resultado — também oferecem **Modo Foco**. O controle exibe somente o ícone e a palavra **Foco**; a tecla **F** continua sendo atalho para expandir a visualização à janela e **Esc** para retornar. No editor, o dock lateral mantém seleção de régua, adição de cortes, marca-texto, zoom e geração de proposta sincronizados com os controles da barra lateral. O dock não exibe um rótulo “Esc” nem cria rolagem horizontal.
 
 - Adicione quantas réguas forem necessárias e posicione-as clicando na prévia ou arrastando a linha. A posição é medida no eixo vertical da faixa montada. As cores padrão se repetem ciclicamente quando todas as opções da paleta já foram usadas.
 - Clique no seletor de uma régua para escolher sua cor.
@@ -232,24 +232,39 @@ Os testes HTTP que iniciam servidor local podem exigir permissão para abrir por
 
 ## Balanceamento
 
-O fluxo de **Balanceamento** possui duas etapas:
+O fluxo de **Balanceamento** é independente do Auto-Merge e do Merge Manual. A tela **Validar Estado** consulta o MERGE oficial e apresenta o diagnóstico por capítulo. A regra atual sinaliza merges internos com altura inferior a 50% da média dos dois vizinhos; primeiro e último merge ficam fora da comparação.
+
+A validação usa um layout dividido: a lateral reúne capítulos, filtros e merges; o canvas mostra as imagens selecionadas lado a lado, em escala proporcional às alturas reais. A tela inicia no primeiro capítulo e pré-seleciona o primeiro desvio com seus vizinhos (ou os dois primeiros merges quando não há desvios). É possível alternar entre barras relativas e valores em pixels, filtrar desvios, conferir miniaturas no hover, ajustar zoom de 30% a 120% e abrir o Modo Foco. A seleção enviada para Novos Cortes precisa conter pelo menos dois merges contíguos.
 
 ```text
-Balanceamento
-   │
-   ├── Validar
-   └── Novos Cortes
+02_MERGE/<capítulo>/merge-manifest.json
+        │
+        ├── consulta somente leitura ──► Validar Estado
+        │                                  │
+        │                                  └── selecionar merges contíguos
+        │                                               ▼
+        │                                        Preparar editor
+        │                                               ▼
+IMG/<capítulo>/page-*.png ────────────────► Ajustar réguas e gerar proposta
+                                                        │
+                                      Aplicar composição final (confirmação)
+                                                        ▼
+                                      validar e promover para 02_MERGE
 ```
 
-### Validar
+### Consulta e validação explícita
 
-Permite analisar os merges existentes e identificar regiões que podem precisar de redistribuição.
+Ao abrir a tela, a consulta lê os manifestos e dimensões existentes; não grava validações nem modifica arquivos. O botão **Atualizar** inicia um job explícito que registra o diagnóstico. A interface mostra o estado, a altura e o motivo das pendências por merge. Para editar, selecione pelo menos dois merges adjacentes na ordem do manifesto.
 
-### Novos Cortes
+### Editor e proposta manual
 
-Permite trabalhar sobre uma proposta de novos cortes para a região selecionada.
+**Novos Cortes** reconstrói a região escolhida a partir de `IMG/`, prepara uma prévia, e carrega as fronteiras atuais como réguas iniciais. As réguas podem ser adicionadas sem limite fixo, removidas, selecionadas e arrastadas; cada posição deve permanecer dentro da região e ser distinta. O zoom e o Modo Foco são controles de apresentação. Gerar a proposta cria novos segmentos em área de processamento e não altera `IMG/` nem `02_MERGE/`.
 
-O balanceamento é tratado como fluxo próprio e não deve alterar indiscriminadamente outras etapas do processamento.
+Use **Aplicar composição final** para substituir a sequência selecionada. A confirmação usa o popup compartilhado da Central. Antes de promover, o domínio valida a proposta persistida, a contiguidade e a cobertura global; os segmentos candidatos são montados e conferidos numa área temporária. Só então a nova composição e seu manifesto substituem o capítulo em `FLUXO_SECUNDARIO/02_MERGE/<capítulo>/`. Uma falha durante a promoção restaura a pasta anterior. As imagens originais continuam em `IMG/`.
+
+Os manifestos de editor, proposta e status ficam sob `FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/`; arquivos temporários da proposta não são tratados como MERGE oficial. A tela de resultado apresenta os artefatos da proposta antes da confirmação. A consulta de imagens aceita somente arquivos declarados nos manifestos.
+
+**Limite funcional atual:** a tela V2 expõe a geração manual de cortes. O gerador automático de partições visuais ainda não é ligado a este fluxo, pois seu contrato de proposta não é aceito pela operação de efetivação manual. O domínio existente permanece responsável pelos algoritmos e pela promoção.
 
 ## Gerar PDF
 

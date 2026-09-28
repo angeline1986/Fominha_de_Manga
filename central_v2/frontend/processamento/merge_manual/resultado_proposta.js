@@ -22,7 +22,7 @@ export function render(container) {
       <div><h1>Resultado · Cap. ${escapeHtml(selection.chapter)}</h1><p>${proposal.outputs.length} merges</p></div>
       <div class="manual-result-tools">
         <div class="zoom-control"><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><output data-zoom-value>100%</output><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><button type="button" class="zoom-control-reset" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div>
-        <button type="button" class="manual-cut-toolbar-button" data-focus-toggle aria-pressed="false">${iconMarkup("focus-exit")} Modo Foco <kbd>F</kbd></button>
+        <button type="button" class="manual-cut-toolbar-button" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button>
         <button type="button" class="manual-result-apply" data-apply>Aplicar composição final</button>
       </div>
     </header>

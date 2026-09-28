@@ -128,7 +128,9 @@ export function createDrillNavigation() {
     const sectionButton = event.target.closest("[data-section]");
 
     if (sectionButton) {
+      const section = navigation.find((item) => item.id === sectionButton.dataset.section);
       openSection(sectionButton.dataset.section, sectionButton);
+      if (section?.defaultAction) dispatchAction(section.defaultAction, section.label, section.id);
       return;
     }
 
@@ -162,18 +164,16 @@ export function createDrillNavigation() {
         })
       )?.id;
 
-      element.dispatchEvent(
-        new CustomEvent("menu:action", {
-          bubbles: true,
-          detail: {
-            context: sectionId ?? null,
-            action: actionButton.dataset.action,
-            label: actionButton.textContent.trim(),
-          },
-        }),
-      );
+      dispatchAction(actionButton.dataset.action, actionButton.textContent.trim(), sectionId);
     }
   });
+
+  function dispatchAction(action, label, context) {
+    element.dispatchEvent(new CustomEvent("menu:action", {
+      bubbles: true,
+      detail: { context: context ?? null, action, label },
+    }));
+  }
 
   element.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && element.classList.contains("is-detail")) {
