@@ -8,6 +8,12 @@ test('navigation resolves the Level III page', async () => {
   assert.equal(resolveRoute('auto-merge-3').module, '/processamento/auto_merge/nivel3.js');
 });
 
+test('navigation resolves the Level IV page', async () => {
+  const load = browserModules();
+  const { resolveRoute } = await load('/_app/router/routes.js');
+  assert.equal(resolveRoute('auto-merge-4').module, '/processamento/auto_merge/nivel4.js');
+});
+
 test('Level III confirms, polls, summarizes and opens its own stage', async () => {
   const requests = [];
   const confirmations = [];
@@ -47,5 +53,39 @@ test('Level III confirms, polls, summarizes and opens its own stage', async () =
   await summaries[0].onAction(summaries[0].summary.items[0], { level: 3 });
   assert.equal(requests.at(-1).url, '/api/auto-merge/open-folder');
   assert.equal(JSON.parse(requests.at(-1).options.body).level, 3);
+  runner.dispose();
+});
+
+test('Level IV confirms execution and links its own stage in the summary', async () => {
+  const requests = [], summaries = [];
+  const load = browserModules({
+    fetch: async (url, options = {}) => {
+      requests.push({ url, options });
+      if (url === '/api/auto-merge/level4/execute') return { ok: true, json: async () => ({ job: { id: 'job-4' } }) };
+      if (url === '/api/jobs/job-4') return { ok: true, json: async () => ({ job: {
+        id: 'job-4', status: 'completed', progress: {}, results: [{
+          chapter: '6', status: 'partial', resolved_segments: 2,
+          pending_segments: 1, next_stage: 'Auto-Merge Nível V',
+        }],
+      } }) };
+      return { ok: true, json: async () => ({ ok: true }) };
+    },
+    setTimeout: (callback) => { callback(); return 1; },
+    confirmations: [], summaries,
+  }, {
+    '/_app/state/context.js': 'export function getContext() { return { provider: "ridi", manga: "Teste" }; }',
+    '/_shared/messages/messages.js': `
+      export async function confirmMessage(value) { globalThis.confirmations.push(value); return true; }
+      export async function showMessage() {}
+      export async function showOperationSummary(value) { globalThis.summaries.push(value); }
+    `,
+  });
+  const { createLevel4Execution } = await load('/processamento/auto_merge/execucao_nivel4.js');
+  const runner = createLevel4Execution({ onStatus() {}, async onComplete() {} });
+  await runner.execute(['6']);
+  assert.equal(JSON.parse(requests[0].options.body).chapters[0], '6');
+  assert.equal(summaries[0].summary.items[0].details.at(-1).value, 'Auto-Merge Nível V');
+  await summaries[0].onAction(summaries[0].summary.items[0], { level: 4 });
+  assert.equal(JSON.parse(requests.at(-1).options.body).level, 4);
   runner.dispose();
 });

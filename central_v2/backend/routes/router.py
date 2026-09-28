@@ -9,6 +9,8 @@ from central_v2.backend.routes.auto_merge_execute import execute_response
 from central_v2.backend.routes.auto_merge_level2_execute import execute_level2_response
 from central_v2.backend.routes.auto_merge_level3 import level3_response
 from central_v2.backend.routes.auto_merge_level3_execute import execute_level3_response
+from central_v2.backend.routes.auto_merge_level4 import level4_response
+from central_v2.backend.routes.auto_merge_level4_execute import execute_level4_response
 from central_v2.backend.routes.auto_merge_folder import open_auto_merge_folder_response
 from central_v2.backend.routes.catalog import catalog_response
 from central_v2.backend.routes.health import health_response
@@ -45,6 +47,9 @@ def dispatch_get(
 
     if request.path == "/api/auto-merge/level3":
         return level3_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/auto-merge/level4":
+        return level4_response(parse_qs(request.query), output_root)
 
     job = job_response(request.path)
     if job is not None:
@@ -107,6 +112,8 @@ def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -
         return execute_level2_response(payload, output_root)
     if urlparse(path).path == "/api/auto-merge/level3/execute":
         return execute_level3_response(payload, output_root)
+    if urlparse(path).path == "/api/auto-merge/level4/execute":
+        return execute_level4_response(payload, output_root)
     if urlparse(path).path == "/api/auto-merge/open-folder":
         return open_auto_merge_folder_response(payload, output_root)
     return None

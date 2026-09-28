@@ -1,0 +1,9 @@
+.auto-merge-level4 header {
+  display: grid;
+  gap: 2px;
+}
+
+.auto-merge-level4 .auto-merge-subtitle {
+  margin: 0;
+  color: var(--color-text-secondary);
+}
