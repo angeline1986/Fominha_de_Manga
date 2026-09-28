@@ -25,10 +25,19 @@ function mergeStatus(row) {
   return "—";
 }
 
-function occurrence(row) {
+export function occurrence(row) {
   const messages = [row.level1.error, row.attempt.error, row.official.error,
     row.attempt.message].filter(Boolean);
   return messages.length ? messages.join(" · ") : "—";
+}
+
+export function matchesLevel1Filter(row, filter) {
+  if (filter === "all") return true;
+  if (filter === "clean") return Boolean(row.clean);
+  if (filter === "pdf_merge") return Boolean(row.pdf_merge);
+  if (filter === "occurrences") return occurrence(row) !== "—";
+  if (filter === "merge") return ["recorded", "invalid"].includes(row.official.status);
+  return false;
 }
 
 export function level1Label(record) {
@@ -56,6 +65,6 @@ export function createColumns({ selected, onSelect, onSelectPage }) {
     { label: "MERGE", render: mergeStatus, className: (row) => row.official.status === "recorded" ? "auto-merge-ok" : "" },
     { label: "CLEAN", render: (row) => row.clean ? "✓" : "—", className: (row) => row.clean ? "auto-merge-ok" : "" },
     { label: "PDF MERGE", render: (row) => row.pdf_merge ? "✓" : "—", className: (row) => row.pdf_merge ? "auto-merge-ok" : "" },
-    { label: "OCORRÊNCIAS", render: occurrence },
+    { label: "OCORRÊNCIAS", render: occurrence, title: occurrence },
   ];
 }

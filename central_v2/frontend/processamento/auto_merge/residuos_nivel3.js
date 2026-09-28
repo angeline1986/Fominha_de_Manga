@@ -26,7 +26,8 @@ export function createLevel3Columns({ selected, onSelect, onSelectPage }) {
     { label: "CAP.", render: (row) => row.chapter },
     { label: "IMAGENS", render: (row) => row.residual_images },
     { label: "RESÍDUOS", render: (row) => row.residual_segments },
-    { label: "REGIÃO DO RESÍDUO", render: (row) => (row.residual_regions || []).join("; ") || "—" },
+    { label: "REGIÃO DO RESÍDUO", render: (row) => (row.residual_regions || []).join("; ") || "—",
+      title: (row) => (row.residual_regions || []).join("; ") || "—" },
     { label: "ESTADO", render: renderStatusBadge },
   ];
 }

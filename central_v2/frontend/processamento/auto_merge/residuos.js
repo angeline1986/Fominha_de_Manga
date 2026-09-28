@@ -24,8 +24,9 @@ export function createLevel2Columns({ selected, onSelect, onSelectPage }) {
     { label: "Seleção", header: () => pageCheckbox(selected, onSelectPage),
       render: (row) => chapterCheckbox(row, selected.chapters, onSelect) },
     { label: "CAP.", render: (row) => row.chapter },
-    { label: "RESIDUAL RECEBIDO", render: (row) => row.residual_segments },
-    { label: "REGIÃO DO RESIDUAL", render: (row) => (row.residual_regions || []).join("; ") || "—" },
+    { label: "RESIDUAL", render: (row) => row.residual_segments },
+    { label: "REGIÃO DO RESIDUAL", render: (row) => (row.residual_regions || []).join("; ") || "—",
+      title: (row) => (row.residual_regions || []).join("; ") || "—" },
     { label: "ESTADO", render: renderStatusBadge },
   ];
 }

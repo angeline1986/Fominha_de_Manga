@@ -96,13 +96,10 @@
 .manual-merge-sessions { display: grid; gap: var(--space-md); }
 
 .manual-merge-table th {
-  font-weight: var(--font-weight-label);
-  letter-spacing: .04em;
+  font-weight: var(--font-weight-bold);
+  letter-spacing: .035em;
   text-transform: uppercase;
 }
-
-.manual-merge-table th,
-.manual-merge-table td { padding-block: 5px; }
 
 .manual-merge-table tbody tr { cursor: pointer; }
 .manual-merge-table tbody tr:nth-child(odd) { background: #fff; }

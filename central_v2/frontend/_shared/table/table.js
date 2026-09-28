@@ -18,6 +18,7 @@ export function createTable(columns, rows, label, { emptyMessage } = {}) {
       const cell = tr.insertCell();
       if (column.className) cell.className = column.className(row);
       const value = column.render(row);
+      if (column.title) cell.title = String(column.title(row) ?? "");
       if (value instanceof Node) cell.append(value);
       else cell.textContent = value == null ? "—" : String(value);
     }

@@ -105,6 +105,23 @@ test('record labels do not treat missing artifacts as completed work', async () 
   controller.dispose();
 });
 
+test('Level I filters identify rows with values in their matching output columns', async () => {
+  const { load, controller } = await setup();
+  const { matchesLevel1Filter } = await load('/processamento/auto_merge/registros.js');
+  const rows = [
+    { official: { status: 'recorded' }, clean: true, pdf_merge: false, level1: {}, attempt: {} },
+    { official: { status: 'absent' }, clean: false, pdf_merge: true, level1: {}, attempt: { message: 'Pendente' } },
+    { official: { status: 'invalid' }, clean: false, pdf_merge: false, level1: {}, attempt: {} },
+  ];
+  const matches = (filter) => rows.map((row, index) => matchesLevel1Filter(row, filter) ? index : -1).filter((index) => index >= 0);
+  assert.deepEqual(matches('all'), [0, 1, 2]);
+  assert.deepEqual(matches('clean'), [0]);
+  assert.deepEqual(matches('pdf_merge'), [1]);
+  assert.deepEqual(matches('occurrences'), [1]);
+  assert.deepEqual(matches('merge'), [0, 2]);
+  controller.dispose();
+});
+
 test('Level II route uses its dedicated residual consultation page', async () => {
   const boxes = [];
   const load = browserModules({ document: { createElement() {
@@ -120,7 +137,7 @@ test('Level II route uses its dedicated residual consultation page', async () =>
     onSelect: (chapter, checked) => checked ? selected.add(chapter) : selected.delete(chapter),
     onSelectPage() {} });
   assert.deepEqual(JSON.parse(JSON.stringify(columns.map((column) => column.label))), [
-    'Seleção', 'CAP.', 'RESIDUAL RECEBIDO', 'REGIÃO DO RESIDUAL', 'ESTADO',
+    'Seleção', 'CAP.', 'RESIDUAL', 'REGIÃO DO RESIDUAL', 'ESTADO',
   ]);
   assert.equal(columns.some((column) => /PIXEL|ALTURA/i.test(column.label)), false);
   columns[0].render({ chapter: '6' });
@@ -132,4 +149,6 @@ test('Level II route uses its dedicated residual consultation page', async () =>
   assert.equal(selected.has('6'), true);
   columns[0].render({ chapter: '5', eligible: false });
   assert.equal(boxes.at(-1).disabled, true);
+  columns[0].render({ chapter: '7', eligible: true });
+  assert.equal(boxes.at(-1).disabled, false);
 });

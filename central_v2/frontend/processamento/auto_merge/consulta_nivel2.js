@@ -7,7 +7,7 @@ import { createStatusFilters, matchesStatus } from "/processamento/auto_merge/fi
 
 export function createLevel2View({ onExecute } = {}) {
   const element = document.createElement("section");
-  element.className = "auto-merge-page";
+  element.className = "auto-merge-page auto-merge-level2";
   element.innerHTML = `
     <header><h1 title="Processa os resíduos recebidos do Nível I em busca de divisões seguras.">Auto-Merge Nível II</h1></header>
     <div class="auto-merge-toolbar">
@@ -32,7 +32,7 @@ export function createLevel2View({ onExecute } = {}) {
   const handleExecute = () => onExecute?.([...selectedChapters]);
   element.querySelector(".auto-merge-toolbar").after(progress.element);
   let state = { status: "idle", chapters: [], manga: null };
-  let selectedFilter = "all";
+  let selectedFilter = "pending";
 
   function draw() {
     results.replaceChildren();
@@ -85,7 +85,7 @@ export function createLevel2View({ onExecute } = {}) {
     update(next) {
       if (state.provider !== next.provider || state.manga !== next.manga) {
         query.value = "";
-        selectedFilter = "all";
+        selectedFilter = "pending";
         selectedChapters.clear();
         pagination.reset();
       }

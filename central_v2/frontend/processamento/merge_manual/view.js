@@ -1,7 +1,7 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { renderMergeManualSession } from "/processamento/merge_manual/session_view.js";
 
-const filters = [["all", "Todos"], ["pending", "Pendentes"], ["resolved", "Resolvidos"]];
+const filters = [["all", "Todos"], ["pending", "Pendentes"], ["resolved", "Resolvidos"], ["review", "Revisar"]];
 
 export function createMergeManualView() {
   const element = document.createElement("section");
@@ -32,7 +32,9 @@ export function createMergeManualView() {
     const term = search.value.trim().toLocaleLowerCase("pt-BR");
     return (state.chapters || []).filter((row) =>
       String(row.chapter).toLocaleLowerCase("pt-BR").includes(term)
-      && (filter === "all" || row.status === filter));
+      && (filter === "all" || (filter === "review"
+        ? row.status !== "pending" && row.status !== "resolved"
+        : row.status === filter)));
   }
 
   function initialSession(row) {

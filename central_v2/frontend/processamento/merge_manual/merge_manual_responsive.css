@@ -1,7 +1,7 @@
 @media (max-width: 720px) {
   .manual-merge-count { flex-basis: 100%; margin-left: 0; }
   .manual-merge-table th,
-  .manual-merge-table td { padding: 9px 8px; }
+  .manual-merge-table td { padding: 8px; }
   .manual-merge-controls { justify-content: flex-start; }
   .manual-merge-controls { flex-wrap: wrap; }
   .manual-merge-config-heading { flex-wrap: wrap; }

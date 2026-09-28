@@ -2,11 +2,11 @@ import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
-import { createColumns, needsAttention } from "/processamento/auto_merge/registros.js";
+import { createColumns, matchesLevel1Filter } from "/processamento/auto_merge/registros.js";
 
 export function createLevel1View({ onExecute } = {}) {
   const element = document.createElement("section");
-  element.className = "auto-merge-page";
+  element.className = "auto-merge-page auto-merge-level1";
   element.innerHTML = `
     <header>
       <h1>Auto-Merge</h1>
@@ -18,9 +18,10 @@ export function createLevel1View({ onExecute } = {}) {
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos">
         <button type="button" data-filter="all" aria-pressed="true">Todos</button>
-        <button type="button" data-filter="absent" aria-pressed="false">Sem registro</button>
-        <button type="button" data-filter="recorded" aria-pressed="false">Com registro</button>
-        <button type="button" data-filter="attention" aria-pressed="false">Com problemas</button>
+        <button type="button" data-filter="clean" aria-pressed="false">CLEAN</button>
+        <button type="button" data-filter="pdf_merge" aria-pressed="false">PDF MERGE</button>
+        <button type="button" data-filter="occurrences" aria-pressed="false">OCORRÊNCIAS</button>
+        <button type="button" data-filter="merge" aria-pressed="false">MERGE</button>
       </div>
       <button class="auto-merge-execute" type="button" data-execute>Executar</button>
     </div>
@@ -58,8 +59,7 @@ export function createLevel1View({ onExecute } = {}) {
     const term = query.value.trim().toLocaleLowerCase("pt-BR");
     const rows = state.chapters.filter((row) => {
       if (!row.chapter.toLocaleLowerCase("pt-BR").includes(term)) return false;
-      if (selectedFilter === "attention") return needsAttention(row);
-      return selectedFilter === "all" || row.level1.status === selectedFilter;
+      return matchesLevel1Filter(row, selectedFilter);
     });
     for (const button of filters) {
       const active = button.dataset.filter === selectedFilter;
