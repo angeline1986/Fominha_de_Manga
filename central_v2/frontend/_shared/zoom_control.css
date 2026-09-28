@@ -1,0 +1,28 @@
+.zoom-control {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-small);
+}
+
+.zoom-control button {
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface-soft);
+  color: var(--color-primary-hover);
+  font: inherit;
+  cursor: pointer;
+}
+
+.zoom-control output {
+  min-width: 42px;
+  color: var(--color-primary-hover);
+  font-weight: var(--font-weight-semibold);
+  text-align: center;
+}
+
+.zoom-control .zoom-control-reset { padding-inline: 10px; }

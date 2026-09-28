@@ -38,14 +38,8 @@ export const navigation = [
         },
       },
       {
-        label: "REVISÃO",
-        items: [
-          { id: "revisao-merge", label: "Revisão Merge" },
-          { id: "revisao-merge-v2", label: "Revisão Estrutural" },
-        ],
-      },
-      {
         label: "MERGE MANUAL",
+        linear: true,
         items: [
           { id: "validar-faixa", label: "Validar Faixa" },
           { id: "novos-merges", label: "Novos Merges" },

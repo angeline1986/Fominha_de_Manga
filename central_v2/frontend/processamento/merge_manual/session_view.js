@@ -18,6 +18,7 @@ export function renderMergeManualSession({ row, session, provider, manga, onTogg
   const first = pages.findIndex((page) => page.file === session.start);
   const last = pages.findIndex((page) => page.file === session.end);
   const selected = first >= 0 && last >= first ? pages.slice(first, last + 1) : [];
+  const thumbnailScale = session.zoom / 100;
   const options = (value) => pages.map((page) => `<option value="${escapeHtml(page.file)}" ${page.file === value ? "selected" : ""}>${escapeHtml(page.file)}</option>`).join("");
 
   section.innerHTML = `
@@ -27,13 +28,13 @@ export function renderMergeManualSession({ row, session, provider, manga, onTogg
         ${row.pending_blocks.length > 1 ? `<label>Bloco<select data-block>${row.pending_blocks.map((item, index) => `<option value="${index}" ${index === session.blockIndex ? "selected" : ""}>${index + 1} de ${row.pending_blocks.length} · ${item.page_count} páginas</option>`).join("")}</select></label>` : ""}
         <label><span>Início</span><select data-start>${options(session.start)}</select></label><span class="manual-merge-arrow" aria-hidden="true">→</span>
         <label><span>Fim</span><select data-end>${options(session.end)}</select></label>
-        <div class="manual-merge-zoom"><span>Zoom</span><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><output>${session.zoom}%</output><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button></div>
+        <div class="zoom-control manual-merge-zoom"><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><output>${session.zoom}%</output><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><button type="button" class="zoom-control-reset" data-zoom-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div>
       </div>
       <button type="button" class="manual-merge-collapse" aria-expanded="${session.expanded}" aria-label="${session.expanded ? "Minimizar" : "Expandir"} sessão">${iconMarkup(session.expanded ? "collapse" : "expand")}</button>
     </div>
     <div class="manual-merge-session-body" ${session.expanded ? "" : "hidden"}>
-      <div class="manual-merge-thumbnails">${selected.map((page) => `<figure><img loading="lazy" src="${mergeManualImageUrl(provider, manga, row.chapter, page.file)}" alt="Prévia de ${escapeHtml(page.file)}" style="height:${session.zoom}px"><figcaption>${escapeHtml(page.file)}</figcaption></figure>`).join("")}</div>
-      <div class="manual-merge-footer"><p>Faixa selecionada · ${selected.length} imagem(ns)</p><div><button type="button" class="manual-merge-cancel" data-cancel>Cancelar</button><button type="button" class="manual-merge-next" data-next>Submeter a Novos Cortes →</button></div></div>
+      <div class="manual-merge-thumbnails" style="--thumbnail-min-width:${116 * thumbnailScale}px;--thumbnail-height:${132 * thumbnailScale}px">${selected.map((page) => `<figure><div class="manual-merge-thumbnail-frame"><img loading="lazy" src="${mergeManualImageUrl(provider, manga, row.chapter, page.file)}" alt="Prévia de ${escapeHtml(page.file)}"></div><figcaption>${escapeHtml(page.file)}</figcaption></figure>`).join("")}</div>
+      <div class="manual-merge-footer"><p>Faixa selecionada · ${selected.length} ${selected.length === 1 ? "imagem" : "imagens"}</p><div><button type="button" class="manual-merge-cancel" data-cancel>Cancelar</button><button type="button" class="manual-merge-next" data-next>Submeter a Novos Cortes →</button></div></div>
     </div>
   `;
 
@@ -56,9 +57,10 @@ export function renderMergeManualSession({ row, session, provider, manga, onTogg
     onChange({ ...session, blockIndex, start: nextBlock.first_page, end: nextBlock.last_page });
   });
   section.querySelectorAll("[data-zoom]").forEach((button) => button.addEventListener("click", () => {
-    const delta = button.dataset.zoom === "+" ? 16 : -16;
-    onChange({ ...session, zoom: Math.max(64, Math.min(240, session.zoom + delta)) });
+    const delta = button.dataset.zoom === "+" ? 10 : -10;
+    onChange({ ...session, zoom: Math.max(30, Math.min(200, session.zoom + delta)) });
   }));
+  section.querySelector("[data-zoom-reset]").addEventListener("click", () => onChange({ ...session, zoom: 100 }));
   section.querySelector("[data-next]").addEventListener("click", () => onOpenCuts({
     chapter: row.chapter, blockId: block.id, start: session.start, end: session.end, pendingBlock: block,
   }));

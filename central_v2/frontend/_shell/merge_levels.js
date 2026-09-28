@@ -1,7 +1,7 @@
 export function segmentedMarkup(control) {
   return `
     <div
-      class="segmented-card"
+      class="segmented-shell"
       data-segmented="${control.id}"
       data-value="${control.defaultValue}"
     >
@@ -12,22 +12,24 @@ export function segmentedMarkup(control) {
         </span>
       </div>
 
-      <div
-        class="segmented-control"
-        role="group"
-        aria-label="Seletor de nível de ${control.label}"
-      >
-        ${control.options.map((option) => `
-          <button
-            class="segmented-button${option.value === control.defaultValue ? " active" : ""}"
-            type="button"
-            data-segment-value="${option.value}"
-            data-action="${option.action}"
-            aria-pressed="${option.value === control.defaultValue}"
-          >
-            ${option.label}
-          </button>
-        `).join("")}
+      <div class="segmented-card">
+        <div
+          class="segmented-control"
+          role="group"
+          aria-label="Seletor de nível de ${control.label}"
+        >
+          ${control.options.map((option) => `
+            <button
+              class="segmented-button${option.value === control.defaultValue ? " active" : ""}"
+              type="button"
+              data-segment-value="${option.value}"
+              data-action="${option.action}"
+              aria-pressed="${option.value === control.defaultValue}"
+            >
+              ${option.label}
+            </button>
+          `).join("")}
+        </div>
       </div>
     </div>
   `;
