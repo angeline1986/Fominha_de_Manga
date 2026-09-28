@@ -1,18 +1,28 @@
-import { fetchJob, openAutoMergeFolder, submitLevel2 } from "/_app/api/auto_merge.js";
+import { fetchJob, openAutoMergeFolder, submitLevel3 } from "/_app/api/auto_merge.js";
 import { getContext } from "/_app/state/context.js";
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 
 const delay = (milliseconds) => new Promise((resolve) => setTimeout(resolve, milliseconds));
 
+function reasonText(reason) {
+  const labels = {
+    continuous_scene_too_long: "Cena contínua extensa; revisão estrutural necessária",
+    strong_diagonal_crossing: "Linha diagonal atravessa o corte",
+    connected_component_crossing: "Elementos visuais atravessam o corte",
+    text_like_region: "Texto ou efeito visual próximo ao corte",
+    structural_evidence_inconclusive: "Evidência estrutural inconclusiva",
+  };
+  return labels[reason] || String(reason || "").replaceAll("_", " ") || "—";
+}
+
 function summary(job) {
   const results = Array.isArray(job.results) ? job.results : [];
-  const complete = results.filter((item) => item.status === "promoted").length;
+  const promoted = results.filter((item) => item.status === "promoted").length;
   const partial = results.filter((item) => item.status === "partial").length;
   const failed = results.filter((item) => item.status === "failed").length;
-  const format = (value) => Number(value).toLocaleString("pt-BR");
   return {
     headline: `${results.length} ${results.length === 1 ? "capítulo processado" : "capítulos processados"}`,
-    breakdown: [complete && `${complete} concluído(s)`, partial && `${partial} parcial(is)`,
+    breakdown: [promoted && `${promoted} concluído(s)`, partial && `${partial} parcial(is)`,
       failed && `${failed} com ocorrência`].filter(Boolean).join(" · "),
     items: results.map((item) => ({
       chapter: item.chapter,
@@ -26,16 +36,15 @@ function summary(job) {
           ? `${item.pending_files.length} ${item.pending_files.length === 1 ? "imagem" : "imagens"}`
           : `${Number(item.pending_segments || 0)} segmento(s) residual(is)`,
         files: item.pending_files || [], kind: "pending" },
-        { label: "Motivo", value: (item.reason_codes || []).map((reason) => reason.replaceAll("_", " ")).join("; ") || item.error || "—" },
-        { label: "Residual", value: (item.residuals || []).map((range) => `${format(range.global_start)} – ${format(range.global_end)} px`).join("; ") || "—" },
+        { label: "Motivo", value: (item.reason_codes || []).map(reasonText).join("; ") || item.error || "—" },
         { label: "Próxima etapa", value: item.next_stage || "—" },
       ],
-      actions: [{ label: "Abrir pasta", level: 2 }],
+      actions: [{ label: "Abrir pasta", level: 3 }],
     })),
   };
 }
 
-export function createLevel2Execution({ onStatus, onComplete }) {
+export function createLevel3Execution({ onStatus, onComplete }) {
   let active = false;
   let disposed = false;
 
@@ -47,8 +56,8 @@ export function createLevel2Execution({ onStatus, onComplete }) {
     }
     const context = getContext();
     const confirmed = await confirmMessage({
-      title: "Confirmar",
-      message: `${chapters.length} capítulo(s) selecionado(s).`,
+      title: "Executar Auto-Merge Nível III",
+      message: `Executar para ${chapters.length} capítulo(s) selecionado(s)? Somente cortes comprovados como seguros serão usados.`,
       confirmText: "Executar",
     });
     const current = getContext();
@@ -60,7 +69,7 @@ export function createLevel2Execution({ onStatus, onComplete }) {
     active = true;
     onStatus({ busy: true, message: "Enviando execução…" });
     try {
-      const { job } = await submitLevel2(context.provider, context.manga, chapters);
+      const { job } = await submitLevel3(context.provider, context.manga, chapters);
       if (!job?.id) throw new Error("A Central não confirmou a criação do job.");
       let result = job;
       while (!disposed && !["completed", "failed"].includes(result.status)) {
@@ -84,7 +93,7 @@ export function createLevel2Execution({ onStatus, onComplete }) {
           } });
       }
     } catch (error) {
-      if (!disposed) await showMessage({ title: "Falha no Auto-Merge Nível II", message: error.message });
+      if (!disposed) await showMessage({ title: "Falha no Auto-Merge Nível III", message: error.message });
     } finally {
       active = false;
       if (!disposed) onStatus({ busy: false, message: "" });
@@ -93,7 +102,7 @@ export function createLevel2Execution({ onStatus, onComplete }) {
 
   function report(job) {
     const progress = job.progress || {};
-    onStatus({ busy: true, title: `Auto-Merge Nível II · ${job.status}`,
+    onStatus({ busy: true, title: `Auto-Merge Nível III · ${job.status}`,
       message: progress.message || "Aguardando processamento…", percent: progress.percent,
       completed: progress.completed, total: progress.total });
   }

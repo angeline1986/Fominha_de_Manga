@@ -72,13 +72,19 @@ test('Escape dismisses confirmation and queued messages open one at a time', asy
 
 test('operation summary uses the shared dialog and renders chapter details as text', async () => {
   const ui = await setup();
+  const actions = [];
   const result = ui.api.showOperationSummary({
+    onAction: (item, action) => actions.push([item.chapter, action.level]),
     summary: {
       headline: '1 capítulo processado',
       breakdown: '1 parcial',
       items: [{
         chapter: '11', status: 'Concluído parcialmente', count: '12 merges', warning: true,
-        details: [['Residual', '6200–20200 px']],
+        actions: [{ label: 'Abrir pasta', level: 2 }],
+        details: [
+          { label: 'Merges salvos', value: '1', kind: 'saved', files: ['page-001-007.png'] },
+          { label: 'Residual', value: '6.200 – 20.200 px' },
+        ],
       }],
     },
   });
@@ -91,6 +97,14 @@ test('operation summary uses the shared dialog and renders chapter details as te
   const row = dialog.querySelector('[data-items]').children[0];
   assert.equal(row.children[0].children[0].textContent, 'Cap. 11');
   assert.equal(row.children[0].children[1].textContent, 'Concluído parcialmente');
+  const fileGroup = row.children[1].children[0];
+  assert.equal(fileGroup.children[1].hidden, true);
+  fileGroup.children[0].children[2].fire('click');
+  assert.equal(fileGroup.children[1].hidden, false);
+  assert.equal(fileGroup.children[1].children[0].textContent, 'page-001-007.png');
+  const action = row.children[1].children[2].children[0];
+  action.fire('click');
+  assert.deepEqual(actions, [['11', 2]]);
   assert.equal(dialog.querySelector('[data-accept]').textContent, 'Fechar');
   dialog.querySelector('[data-accept]').fire('click');
   assert.equal(await result, true);

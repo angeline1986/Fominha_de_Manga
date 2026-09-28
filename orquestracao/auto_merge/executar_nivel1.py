@@ -5,6 +5,7 @@ from pathlib import Path
 import threading
 
 from orquestracao.auto_merge.eventos_nivel1 import record_event
+from orquestracao.auto_merge.resultado_existente import existing_level1_result
 from processamento.unificacao_imagens import image_stitcher as v3
 from processamento.unificacao_imagens.auto_merge.materializacao_nivel1 import materialize_safe_intervals
 from processamento.unificacao_imagens.auto_merge.planejamento_nivel1 import plan_level1
@@ -46,7 +47,7 @@ def _run_chapter(manga: Path, chapter_name: str, job_id: str, progress) -> dict:
             raise FileExistsError(f"{chapter_name}: destino oficial existente não reconhecido; nada foi alterado.")
         stage = manga / "FLUXO_SECUNDARIO" / "01_MERGE_PROCESSAMENTO" / "AUTO_MERGE" / chapter_name
         if stage.exists():
-            raise FileExistsError(f"{chapter_name}: estágio existente; revisar antes de nova execução.")
+            return existing_level1_result(manga, chapter_name)
         pages = v3.list_pages(chapter)
         if not pages:
             raise ValueError(f"{chapter_name}: nenhuma imagem ativa encontrada.")
@@ -69,8 +70,14 @@ def _run_chapter(manga: Path, chapter_name: str, job_id: str, progress) -> dict:
             status = "unresolved"
         pending = [item for item in plan.intervals if item.status == "pending"]
         reasons = sorted({item.reason for item in pending})
+        pending_files = sorted({
+            info.path.name for interval in pending for info in infos
+            if min(interval.end, info.global_end) > max(interval.start, info.global_start)
+        }, key=lambda name: v3.natural_key(Path(name)))
         result = {
             "chapter": chapter_name, "status": status, "artifacts": len(artifacts),
+            "saved_files": [item["file"] for item in artifacts],
+            "pending_files": pending_files,
             "pending_segments": len(pending),
             "residuals": [{"global_start": item.start, "global_end": item.end} for item in pending],
             "reason_codes": reasons,

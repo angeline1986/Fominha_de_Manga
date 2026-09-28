@@ -52,6 +52,11 @@ test('execution confirms selection, polls its job and refreshes results', async 
   assert.equal(app.confirmations[0].message, "2 capítulo(s) selecionado(s).");
   assert.equal(app.summaries[0].title, "Resumo da Operação");
   assert.equal(app.summaries[0].summary.items[0].status, "Concluído");
+  await app.summaries[0].onAction(app.summaries[0].summary.items[0], { level: 1 });
+  assert.equal(app.requests[2].url, '/api/auto-merge/open-folder');
+  assert.deepEqual(JSON.parse(app.requests[2].options.body), {
+    provider: 'comix', manga: 'Obra', chapter: '1', level: 1,
+  });
   assert.equal(app.states.at(-1).busy, false);
   app.runner.dispose();
 });
@@ -67,6 +72,7 @@ test('cancelled execution does not create a job', async () => {
 test('partial execution produces a per-chapter operation summary', async () => {
   const app = await setup({ results: [{
     chapter: '11', status: 'partial', artifacts: 12, pending_segments: 1,
+    saved_files: ['page-001-007.png'], pending_files: ['page-008.png'],
     residuals: [{ global_start: 6200, global_end: 20200 }],
     reason_codes: ['no_safe_boundary_before_max_height'], next_stage: 'Auto-Merge Nível II',
   }] });
@@ -76,11 +82,14 @@ test('partial execution produces a per-chapter operation summary', async () => {
   assert.equal(summary.breakdown, '1 parcial');
   assert.deepEqual(JSON.parse(JSON.stringify(summary.items[0])), {
     chapter: '11', status: 'Concluído parcialmente', count: '12 merges', warning: true,
+    actions: [{ label: 'Abrir pasta', level: 1 }],
     details: [
-      ['Status', 'Concluído parcialmente'], ['Merges salvos', '12'],
-      ['Pendente', '1 segmento residual'],
-      ['Motivo', 'Faixa branca segura não encontrada'], ['Residual', '6200–20200 px'],
-      ['Próxima etapa', 'Auto-Merge Nível II'],
+      { label: 'Status', value: 'Concluído parcialmente', warning: true },
+      { label: 'Merges salvos', value: '12', files: ['page-001-007.png'], kind: 'saved' },
+      { label: 'Pendente', value: '1 imagem', files: ['page-008.png'], kind: 'pending' },
+      { label: 'Motivo', value: 'Faixa branca segura não encontrada' },
+      { label: 'Residual', value: '6.200 – 20.200 px' },
+      { label: 'Próxima etapa', value: 'Auto-Merge Nível II' },
     ],
   });
   app.runner.dispose();

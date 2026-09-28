@@ -50,12 +50,17 @@ def read_level1(manga: Path, chapter: str) -> Document:
             names.add(name)
             files.append({**interval, "file": name, "exists": artifact_exists(directory, name)})
         residuals = [_interval(item, total) for item in pending]
+        reasons = sorted({
+            item.get("reason") for item in pending
+            if isinstance(item.get("reason"), str) and item.get("reason")
+        })
         kind = ALGORITHMS[algorithm]
         if kind == "complete" and (residuals or not files):
             raise ValueError("Registro completo sem artefatos ou com residual.")
         return Document("recorded", {
             "kind": kind, "artifacts": files, "residuals": residuals,
             "total_height": total, "algorithm": data["algorithm"],
+            "reason_codes": reasons,
         })
     except ValueError as exc:
         return Document("invalid", error=str(exc))

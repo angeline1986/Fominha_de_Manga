@@ -68,6 +68,9 @@ class Level2ExecutionTests(unittest.TestCase):
 
             self.assertEqual(result['status'], 'partial')
             self.assertEqual(result['pending_segments'], 1)
+            self.assertEqual(result['saved_files'], [])
+            self.assertEqual(result['pending_files'], ['page-002.png'])
+            self.assertEqual(result['reason_codes'], ['level2_no_complete_safe_path'])
             self.assertEqual(result['next_stage'], 'Auto-Merge Nível III')
             stage = manga / 'FLUXO_SECUNDARIO' / '01_MERGE_PROCESSAMENTO' / 'MERGE_LEVEL2' / '1'
             level2 = json.loads((stage / 'merge-level2-manifest.json').read_text())
@@ -87,6 +90,8 @@ class Level2ExecutionTests(unittest.TestCase):
 
             self.assertEqual(result['status'], 'promoted')
             self.assertEqual(result['pending_segments'], 0)
+            self.assertEqual(len(result['saved_files']), result['resolved_segments'])
+            self.assertEqual(result['pending_files'], [])
             self.assertTrue(v3.is_chapter_merged(chapter))
             official = v3.merge_output_dir(chapter)
             manifest = json.loads((official / 'merge-manifest.json').read_text())

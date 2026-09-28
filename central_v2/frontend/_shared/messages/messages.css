@@ -11,10 +11,6 @@
   box-shadow: 0 28px 80px rgba(0, 0, 0, .25);
 }
 
-.message-summary-dialog {
-  width: min(820px, calc(100vw - 32px));
-}
-
 .message-caption {
   display: block;
   margin-bottom: 3px;
@@ -22,72 +18,6 @@
   font-size: var(--font-size-label);
   font-weight: var(--font-weight-label);
   letter-spacing: .13em;
-}
-
-.message-summary-batch {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md) 0;
-  border-bottom: 1px solid var(--color-border);
-}
-
-.message-summary-batch span {
-  color: var(--color-text-secondary);
-  font-size: var(--font-size-small);
-}
-
-.message-summary-items {
-  max-height: 52vh;
-  overflow: auto;
-}
-
-.message-summary-item {
-  border-bottom: 1px solid var(--color-border);
-}
-
-.message-summary-item > summary {
-  display: grid;
-  grid-template-columns: minmax(70px, 1fr) minmax(140px, 2fr) auto 18px;
-  align-items: center;
-  gap: var(--space-sm);
-  min-height: 52px;
-  cursor: pointer;
-  list-style: none;
-}
-
-.message-summary-item > summary::-webkit-details-marker {
-  display: none;
-}
-
-.message-summary-item > summary::after {
-  content: "⌄";
-  color: var(--color-text-secondary);
-}
-
-.message-summary-item[open] > summary::after {
-  transform: rotate(180deg);
-}
-
-.message-summary-item .is-warning {
-  color: var(--color-warning);
-}
-
-.message-summary-details {
-  display: grid;
-  gap: var(--space-sm);
-  padding: 0 var(--space-md) var(--space-md);
-}
-
-.message-summary-details > div {
-  display: grid;
-  grid-template-columns: minmax(110px, .7fr) 2fr;
-  gap: var(--space-md);
-  font-size: var(--font-size-small);
-}
-
-.message-summary-details > div > span {
-  color: var(--color-text-secondary);
 }
 
 .message-dialog::backdrop {
@@ -145,18 +75,4 @@
   padding: 0 3px;
   font-size: 22px;
   line-height: 1;
-}
-
-@media (max-width: 600px) {
-  .message-summary-batch {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: var(--space-xs);
-  }
-
-  .message-summary-item > summary {
-    grid-template-columns: minmax(45px, .6fr) minmax(110px, 2fr) auto 12px;
-    gap: var(--space-xs);
-    font-size: var(--font-size-small);
-  }
 }

@@ -90,6 +90,32 @@ linhas e manter a Central V1 intacta.
 Os testes históricos úteis são `test_merge_level2.py`,
 `test_merge_level2_direct_promotion_safety.py`,
 `test_merge_level2_state_machine.py` e `test_merge_level2_state_consistency.py`.
+
+## Resumo de execução e comparação visual com a V1
+
+O resumo da V2 segue agora a hierarquia usada pela V1: capítulo expansível,
+linhas de status/merges/pendências/motivo/residual/próxima etapa e listas
+recolhíveis de arquivos salvos e pendentes. Os nomes são enviados a partir dos
+artefatos materializados e das páginas-fonte cobertas pelo residual; intervalos
+são formatados com separadores locais. A ação “Abrir pasta” usa uma rota V2
+restrita aos diretórios de estágio dos níveis I e II.
+
+Os valores de saída observados nos prints não são tratados como diferença
+cosmética: Nível I mostra 23 merges e 79 imagens pendentes na V1, contra 27 e
+três intervalos residuais na V2; no Nível II os prints mostram 3 merges/61
+imagens e 4 merges/um segmento residual, respectivamente. O resumo agora
+apresenta cada métrica com seu significado e os arquivos associados. Igualar os
+totais exigiria uma análise separada dos planos e entradas de cada execução;
+esta alteração não muda algoritmos nem artefatos da V1. Os filtros do Nível I
+também mantêm os conceitos próprios da consulta de registros da V2, em vez de
+renomear estados sem equivalência comprovada com `novo`, `pendente_review` e
+`parcial` da V1.
+
+Ao executar um capítulo que já possui um estágio Nível I, a V2 agora lê o
+manifesto válido e reapresenta arquivos/resíduos sem reprocessar nem sobrescrever
+o estágio. Registro inválido, artefatos ausentes ou estágio completo sem MERGE
+oficial continuam como ocorrência para revisão. Os valores do resumo ficam
+alinhados à direita como na V1.
 As fixtures antigas que não fornecem o manifesto I atual devem ser substituídas
 por contratos explícitos de Nível I, mantendo os asserts funcionais de pixels,
 residuais e promoção segura.

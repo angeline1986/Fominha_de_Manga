@@ -83,6 +83,32 @@ class Level1ExecutionTests(unittest.TestCase):
         self.assertEqual(sentinel.read_text(), "preserve")
         self.assertTrue(is_chapter_merged(second))
 
+    def test_existing_valid_partial_stage_is_reported_without_reprocessing(self):
+        stage = self.manga / "FLUXO_SECUNDARIO" / "01_MERGE_PROCESSAMENTO" / "AUTO_MERGE" / "1"
+        stage.mkdir(parents=True)
+        artifact = stage / "auto-001.png"
+        Image.new("RGB", (8, 60), "white").save(artifact)
+        manifest = stage / "auto-merge-manifest.json"
+        manifest.write_text(json.dumps({
+            "schema_version": 1,
+            "algorithm": "auto_merge_level1_resolved_segments",
+            "chapter": "1", "total_height": 120,
+            "artifacts": [{"file": artifact.name, "global_start": 0, "global_end": 60}],
+            "pending_segments": [{"global_start": 60, "global_end": 120,
+                                  "reason": "no_safe_boundary_before_max_height"}],
+        }), encoding="utf-8")
+        before = (manifest.read_bytes(), artifact.read_bytes())
+
+        result = execute_level1(self.manga, ["1"], "existing", lambda *_: None)[0]
+
+        self.assertEqual(result["status"], "partial")
+        self.assertTrue(result["existing_record"])
+        self.assertEqual(result["artifacts"], 1)
+        self.assertEqual(result["saved_files"], ["auto-001.png"])
+        self.assertEqual(result["pending_files"], ["page-001.png"])
+        self.assertEqual(result["reason_codes"], ["no_safe_boundary_before_max_height"])
+        self.assertEqual((manifest.read_bytes(), artifact.read_bytes()), before)
+
     def test_selected_chapters_run_in_parallel_and_report_aggregate_progress(self):
         names = ["1", "2", "3"]
         for name in names[1:]:

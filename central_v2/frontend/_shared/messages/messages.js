@@ -2,7 +2,7 @@ import { iconMarkup } from "/_shared/icons/icons.js";
 let queue = Promise.resolve();
 let sequence = 0;
 
-function openMessage({ title, message = "", confirm = false, confirmText = "OK", cancelText = "Cancelar", summary = null }) {
+function openMessage({ title, message = "", confirm = false, confirmText = "OK", cancelText = "Cancelar", summary = null, onAction = null }) {
   return new Promise((resolve) => {
     const previousFocus = document.activeElement;
     const dialog = document.createElement("dialog");
@@ -29,7 +29,7 @@ function openMessage({ title, message = "", confirm = false, confirmText = "OK",
     const body = dialog.querySelector("p");
     body.textContent = message;
     body.hidden = !message;
-    if (summary) renderSummary(dialog, summary, confirmText);
+    if (summary) renderSummary(dialog, summary, confirmText, id, onAction);
     const cancel = dialog.querySelector("[data-cancel]");
     const accept = dialog.querySelector("[data-accept]");
     cancel.textContent = cancelText;
@@ -59,7 +59,7 @@ function openMessage({ title, message = "", confirm = false, confirmText = "OK",
   });
 }
 
-function renderSummary(dialog, summary, closeText) {
+function renderSummary(dialog, summary, closeText, id, onAction) {
   dialog.querySelector("[data-caption]").hidden = false;
   const container = dialog.querySelector("[data-summary]");
   container.hidden = false;
@@ -82,14 +82,64 @@ function renderSummary(dialog, summary, closeText) {
     details.append(heading);
     const rows = document.createElement("div");
     rows.className = "message-summary-details";
-    for (const [labelText, valueText] of item.details || []) {
+    for (const detail of item.details || []) {
+      const group = document.createElement("div");
+      group.className = "message-summary-detail-group";
       const row = document.createElement("div");
+      row.className = "message-summary-row";
       const label = document.createElement("span");
       const value = document.createElement("strong");
-      label.textContent = labelText;
-      value.textContent = valueText;
+      label.className = "message-summary-label";
+      value.className = `message-summary-value${detail.warning ? " is-warning" : ""}`;
+      label.textContent = detail.label;
+      value.textContent = detail.value;
       row.append(label, value);
-      rows.append(row);
+      if (detail.files?.length) {
+        const listId = `${id}-files-${item.chapter}-${detail.kind}`;
+        const toggle = document.createElement("button");
+        toggle.className = `message-summary-toggle is-${detail.kind}`;
+        toggle.type = "button";
+        toggle.setAttribute("aria-expanded", "false");
+        toggle.setAttribute("aria-controls", listId);
+        toggle.setAttribute("aria-label", `Mostrar arquivos: ${detail.label}`);
+        toggle.textContent = "⌄";
+        const files = document.createElement("ul");
+        files.id = listId;
+        files.className = `message-summary-files is-${detail.kind}`;
+        files.hidden = true;
+        for (const fileName of detail.files) {
+          const file = document.createElement("li");
+          file.textContent = fileName;
+          files.append(file);
+        }
+        toggle.addEventListener("click", () => {
+          const expanded = files.hidden;
+          files.hidden = !expanded;
+          toggle.setAttribute("aria-expanded", String(expanded));
+          toggle.setAttribute("aria-label", `${expanded ? "Ocultar" : "Mostrar"} arquivos: ${detail.label}`);
+        });
+        row.append(toggle);
+        group.append(row, files);
+      } else {
+        const spacer = document.createElement("span");
+        spacer.className = "message-summary-toggle-spacer";
+        row.append(spacer);
+        group.append(row);
+      }
+      rows.append(group);
+    }
+    if (item.actions?.length) {
+      const actions = document.createElement("div");
+      actions.className = "message-summary-actions-inline";
+      for (const action of item.actions) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "message-summary-folder-action";
+        button.textContent = action.label;
+        button.addEventListener("click", () => onAction?.(item, action));
+        actions.append(button);
+      }
+      rows.append(actions);
     }
     details.append(rows);
     list.append(details);
@@ -110,6 +160,6 @@ export function showMessage(options) {
   return enqueue({ ...options, confirm: false });
 }
 
-export function showOperationSummary({ title = "Resumo da Operação", summary, closeText = "Fechar" }) {
-  return enqueue({ title, summary, confirm: false, confirmText: closeText });
+export function showOperationSummary({ title = "Resumo da Operação", summary, closeText = "Fechar", onAction }) {
+  return enqueue({ title, summary, confirm: false, confirmText: closeText, onAction });
 }

@@ -95,6 +95,11 @@ def _run_chapter(manga: Path, name: str, job_id: str, progress, preflight) -> di
     progress(name, {"stage": "analyze_pages", "message": "Validando residual e analisando fontes"})
     plan = plan_level2(chapter, progress_callback=lambda event: progress(name, event))
     pending = _pending(plan["plans"])
+    pending_files = sorted({
+        info.path.name for segment in pending for info in plan["infos"]
+        if min(segment["global_end"], info.global_end)
+        > max(segment["global_start"], info.global_start)
+    }, key=lambda name: v3.natural_key(Path(name)))
     root.mkdir(parents=True, exist_ok=True)
     progress(name, {"stage": "materialize", "message": "Gravando apenas intervalos seguros"})
     artifacts = materialize_level2(chapter, plan["infos"], plan["plans"], stage)
@@ -111,8 +116,13 @@ def _run_chapter(manga: Path, name: str, job_id: str, progress, preflight) -> di
     progress(name, {"stage": "done", "message": f"Capítulo finalizado: {status}"})
     return {
         "chapter": name, "status": status, "artifacts": len(artifacts),
+        "saved_files": [item["file"] for item in artifacts],
+        "pending_files": pending_files,
         "resolved_segments": len(artifacts),
         "pending_segments": len(pending),
+        "residuals": [{"global_start": item["global_start"], "global_end": item["global_end"]}
+                      for item in pending],
+        "reason_codes": ["level2_no_complete_safe_path"] if pending else [],
         "next_stage": "Auto-Merge Nível III" if pending else "—",
     }
 

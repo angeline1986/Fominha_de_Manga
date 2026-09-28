@@ -1,4 +1,4 @@
-import { fetchJob, submitLevel1 } from "/_app/api/auto_merge.js";
+import { fetchJob, openAutoMergeFolder, submitLevel1 } from "/_app/api/auto_merge.js";
 import { getContext } from "/_app/state/context.js";
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 
@@ -30,23 +30,30 @@ function summaryItem(item) {
     already_complete: "Já concluído",
     failed: "Requer atenção",
   };
-  const residuals = (item.residuals || []).map((range) => `${range.global_start}–${range.global_end} px`);
+  const format = (value) => Number(value).toLocaleString("pt-BR");
+  const residuals = (item.residuals || []).map((range) =>
+    `${format(range.global_start)} – ${format(range.global_end)} px`);
   const reasons = (item.reason_codes || []).map((reason) => reason === "no_safe_boundary_before_max_height"
     ? "Faixa branca segura não encontrada" : String(reason).replaceAll("_", " "));
   const pendingCount = Number(item.pending_segments || residuals.length);
+  const pendingFiles = item.pending_files || [];
   return {
     chapter: item.chapter,
     status: statuses[item.status] || "Requer atenção",
     count: `${Number(item.artifacts || 0)} merges`,
     warning: ["partial", "unresolved", "failed"].includes(item.status),
     details: [
-      ["Status", statuses[item.status] || "Requer atenção"],
-      ["Merges salvos", String(Number(item.artifacts || 0))],
-      ["Pendente", pendingCount ? `${pendingCount} ${pendingCount === 1 ? "segmento residual" : "segmentos residuais"}` : "0"],
-      ["Motivo", reasons.join("; ") || item.error || "—"],
-      ["Residual", residuals.join(", ") || "—"],
-      ["Próxima etapa", item.next_stage || (pendingCount ? "Auto-Merge Nível II" : "—")],
+      { label: "Status", value: statuses[item.status] || "Requer atenção", warning: ["partial", "unresolved", "failed"].includes(item.status) },
+      { label: "Merges salvos", value: String(Number(item.artifacts || 0)), files: item.saved_files || [], kind: "saved" },
+      { label: "Pendente", value: pendingFiles.length
+        ? `${pendingFiles.length} ${pendingFiles.length === 1 ? "imagem" : "imagens"}`
+        : pendingCount ? `${pendingCount} ${pendingCount === 1 ? "segmento residual" : "segmentos residuais"}` : "0",
+      files: pendingFiles, kind: "pending" },
+      { label: "Motivo", value: reasons.join("; ") || item.error || "—" },
+      { label: "Residual", value: residuals.join("; ") || "—" },
+      { label: "Próxima etapa", value: item.next_stage || (pendingCount ? "Auto-Merge Nível II" : "—") },
     ],
+    actions: [{ label: "Abrir pasta", level: 1 }],
   };
 }
 
@@ -91,7 +98,14 @@ export function createLevel1Execution({ onStatus, onComplete }) {
         await showMessage({ title: "Execução interrompida", message: current.error || "O job falhou." });
       } else {
         await onComplete();
-        await showOperationSummary({ title: "Resumo da Operação", summary: completionSummary(current) });
+        await showOperationSummary({ title: "Resumo da Operação", summary: completionSummary(current),
+          onAction: async (item, action) => {
+            try {
+              await openAutoMergeFolder(provider, manga, item.chapter, action.level);
+            } catch (error) {
+              await showMessage({ title: "Falha ao abrir pasta", message: error.message });
+            }
+          } });
       }
     } catch (error) {
       if (!disposed) await showMessage({ title: "Falha no Auto-Merge", message: error.message });
