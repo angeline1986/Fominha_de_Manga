@@ -160,9 +160,13 @@ Este catálogo complementa o Mapa do Metrô. O Mapa documenta principalmente aut
 
 **Teste automatizado existente:** não foi identificado teste automatizado específico de Texto Off na suíte atual.
 
+**Migração V2 iniciada:** página Texto Off — Merged consulta `/api/textoff/merged`, executa `/api/textoff/merged/execute` como job e delega ao `clean_chapter(source_stage="MERGE")`. Testes novos cobrem a consulta/projeção, validação da seleção, contrato HTTP e execução frontend. Isso não altera ainda os contratos de Texto Off — Original, Correção Assistida ou Tratamentos Especiais.
+
 **Smoke/caso real disponível:** não formalizado na baseline atual.
 
 **Lacuna conhecida:** a proveniência MERGE oficial → Texto Off — Merged não possui, no levantamento atual, fingerprint inequívoco dos bytes do MERGE de origem no `clean-manifest.json`.
+
+O rótulo “Resultado registrado” na nova tela V2 significa correspondência de stage, nomes e contagem de artefatos no manifesto; não deve ser interpretado como confirmação de que os bytes da origem permanecem idênticos.
 
 ---
 

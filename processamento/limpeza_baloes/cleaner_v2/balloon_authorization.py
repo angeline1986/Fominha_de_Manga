@@ -1,13 +1,14 @@
 """Texto Off Nível I: restringe a máscara do Cleaner V2 a balões segmentados."""
 from pathlib import Path
 import json
+from .transparency_classifier import measure_transparency
 
 MODEL_REPO="huyvux3005/manga109-segmentation-bubble"
 MODEL_FILE="best.pt"
 MODEL_REVISION="f9a4108c4955136a810e5e92207972f3fb3a65fd"
 CONF=0.25
 IOU=0.45
-ALGORITHM="textoff_level1_balloon_component_gate_v2"
+ALGORITHM="textoff_level1_balloon_transparency_gate_v3"
 COMPONENT_MIN_AREA=20
 COMPONENT_MIN_INSIDE_RATIO=0.90
 BALLOON_INTERIOR_ERODE_RATIO=0.025
@@ -61,8 +62,10 @@ def apply_balloon_authorization(source_images, output_dir, report_path, *, progr
             raise RuntimeError(f"Nível I falhou ao segmentar {src.name}; Cleaner V2 global NÃO será promovido.") from exc
 
         balloon_masks=[]
+        transparent_balloons=[]
+        transparent_mask=np.zeros(original.shape[:2],dtype=bool)
         if result.masks is not None:
-            for poly in result.masks.xy:
+            for balloon_index,poly in enumerate(result.masks.xy,1):
                 pts=np.asarray(poly,dtype=np.int32)
                 if len(pts)<3:
                     continue
@@ -78,6 +81,14 @@ def apply_balloon_authorization(source_images, output_dir, report_path, *, progr
                     if np.count_nonzero(interior):
                         bm=interior
                 balloon_masks.append(bm)
+                metrics=measure_transparency(original,bm)
+                if metrics["transparent"]:
+                    x,y,w,h=cv2.boundingRect(pts)
+                    transparent_mask|=bm>0
+                    transparent_balloons.append({
+                        "balloon":balloon_index,"bbox":[int(x),int(y),int(w),int(h)],
+                        **metrics,
+                    })
         balloons=len(balloon_masks)
 
         binary=(cleaner_mask>0).astype(np.uint8)
@@ -102,7 +113,12 @@ def apply_balloon_authorization(source_images, output_dir, report_path, *, progr
                     best_ratio=ratio
                     best_balloon=bi
 
-            if best_ratio>=COMPONENT_MIN_INSIDE_RATIO:
+            transparent_overlap=bool(np.any(component & transparent_mask))
+
+            if transparent_overlap:
+                decision="preserve"
+                reason="transparent_balloon_deferred"
+            elif best_ratio>=COMPONENT_MIN_INSIDE_RATIO:
                 effective[component]=cleaner_mask[component]
                 decision="remove"
                 reason="inside_single_balloon"
@@ -133,16 +149,26 @@ def apply_balloon_authorization(source_images, output_dir, report_path, *, progr
         pages.append({"source":src.name,"balloons_detected":balloons,"cleaner_mask_pixels":cp,
                       "authorized_mask_pixels":ap,"authorized_percent":round(ap/cp*100,4) if cp else 0.0,
                       "components_total":max(0,n-1),"components_authorized":authorized_components,
-                      "component_decisions":component_decisions})
+                      "component_decisions":component_decisions,
+                      "transparent_balloons":transparent_balloons,
+                      "transparent_components_deferred":sum(
+                          item["reason"]=="transparent_balloon_deferred"
+                          for item in component_decisions),
+                      "protected_mask_pixels":int(np.count_nonzero(
+                          (cleaner_mask>0) & transparent_mask
+                      ))})
 
-    report={"schema_version":2,"algorithm":ALGORITHM,
-            "policy":"cleaner_component_must_be_inside_single_balloon_interior",
+    report={"schema_version":3,"algorithm":ALGORITHM,
+            "policy":"preserve_components_intersecting_transparent_balloon; otherwise_require_single_balloon",
             "fail_closed":True,
             "component_policy":{"min_area":COMPONENT_MIN_AREA,
                                 "min_inside_ratio":COMPONENT_MIN_INSIDE_RATIO,
                                 "balloon_interior_erode_ratio":BALLOON_INTERIOR_ERODE_RATIO,
                                 "balloon_interior_erode_min":BALLOON_INTERIOR_ERODE_MIN,
                                 "balloon_interior_erode_max":BALLOON_INTERIOR_ERODE_MAX,
+                                "transparency_gray_std_threshold":9.0,
+                                "transparency_chroma_threshold":5,
+                                "transparency_chroma_ratio_threshold":0.05,
                                 "ambiguous_action":"preserve","outside_action":"preserve"},
             "model":{"repo":MODEL_REPO,"file":MODEL_FILE,"revision":MODEL_REVISION,
             "task":"segment","class":"balloon","conf":CONF,"iou":IOU},"pages_total":len(pages),

@@ -1,0 +1,23 @@
+@media (max-width: 900px) {
+  .balance-cuts-workspace { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 900px) {
+  .balance-validation-workspace { grid-template-columns: minmax(240px, 25%) minmax(0, 1fr); }
+  .balance-validation-header { align-items: flex-start; }
+}
+@media (max-width: 720px) {
+  .balance-validation-page { grid-template-rows: auto auto auto; }
+  .balance-validation-header { flex-wrap: wrap; }
+  .balance-validation-workspace { grid-template-columns: 1fr; height: auto; min-height: 0; }
+  .balance-validation-sidebar { max-height: 55vh; }
+  .balance-inspection-canvas { min-height: 55vh; }
+  .balance-canvas-toolbar { align-items: flex-start; flex-wrap: wrap; }
+  .balance-heading { align-items: flex-start; flex-wrap: wrap; }
+  .balance-detail-heading,
+  .balance-editor-heading { align-items: flex-start; flex-wrap: wrap; }
+  .balance-result-actions { flex-wrap: wrap; }
+  .balance-result-grid figure { width: min(72vw, 360px); }
+  .balance-workarea { grid-template-columns: 90px minmax(0, 1fr); min-height: 50vh; }
+  .balance-table th,
+  .balance-table td { padding: 8px 6px; font-size: var(--font-size-small); }
+}

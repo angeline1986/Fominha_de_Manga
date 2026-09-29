@@ -333,6 +333,7 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
             ],
             "regional": {
                 "algorithm": worker.get("algorithm"),
+                "ocr": worker.get("ocr"),
                 "selection_count": worker.get("selection_count"),
                 "mask_pixels": worker.get("mask_pixels"),
                 "outside_mask_changed_pixels": worker.get(
@@ -351,6 +352,7 @@ def generate_preview(manga: Path, chapter: str, source_stage: str, source_file: 
                 "device": worker.get("device"),
                 "model": worker.get("model"),
                 "algorithm": worker.get("algorithm"),
+                "ocr": worker.get("ocr"),
             },
             "safety": {
                 "official_image_modified": False,

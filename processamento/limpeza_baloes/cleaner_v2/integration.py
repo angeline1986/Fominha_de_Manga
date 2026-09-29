@@ -4,6 +4,7 @@ from pathlib import Path
 import json, os, shutil, subprocess, tempfile, time, uuid
 from .launcher import MODULE_DIR, build_command
 from .balloon_authorization import apply_balloon_authorization
+from .ocr_manifest import ocr_manifest_metadata
 
 LEVEL2_SCRIPT = MODULE_DIR / 'level2.py'
 
@@ -156,6 +157,7 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
             'engine_version': '2.11.11',
             'profile': PROFILE_NAME,
             'offline': True,
+            'ocr': ocr_manifest_metadata(MODULE_DIR / PROFILE_NAME),
             'source_stage': str(source_stage).upper(),
             'source_immutable': True,
             'pages_total': len(images),
@@ -177,6 +179,14 @@ def clean_chapter(source_images, target, *, source_stage: str, timeout: int = 90
                 'cleaner_mask_pixels': level1_report.get('cleaner_mask_pixels'),
                 'authorized_mask_pixels': level1_report.get('authorized_mask_pixels'),
                 'authorized_percent': level1_report.get('authorized_percent'),
+                'transparent_balloons_total': sum(
+                    len(page.get('transparent_balloons', []))
+                    for page in level1_report.get('pages', [])
+                ),
+                'transparent_components_deferred': sum(
+                    int(page.get('transparent_components_deferred', 0))
+                    for page in level1_report.get('pages', [])
+                ),
                 'report': 'level1-balloon-report.json',
             },
             'level2': {

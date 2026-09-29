@@ -299,7 +299,15 @@ Processamento das imagens provenientes do fluxo original.
 
 ### Merged
 
-Processamento das imagens provenientes do fluxo de merge.
+Processamento das imagens provenientes do MERGE oficial em `FLUXO_SECUNDARIO/02_MERGE/<capítulo>/`. A primeira rodada usa o Cleaner V2 em área temporária, valida os resultados e só então publica imagens limpas, máscaras e manifesto em `FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED/<capítulo>/`.
+
+O Nível I segmenta os balões e aplica uma proteção conservadora aos que mostram variação de cor/textura do desenho através do interior. Componentes de máscara que tocam um balão classificado como transparente são preservados da limpeza e registrados no relatório para uma rodada específica futura. Balões opacos continuam sujeitos à validação normal; componentes fora de um único balão ou ambíguos também são preservados.
+
+O teste focado de *Things that deserve to die*, capítulo 3, nas imagens `page-156-163.png` e `page-179-187.png`, detectou dois balões transparentes por imagem. A comparação confirmou que as áreas desses quatro balões permaneceram pixel a pixel iguais às fontes e sem pixels de máscara aplicados. A consulta da tabela usa o manifesto e a presença dos arquivos, sem decodificar todas as páginas durante a listagem.
+
+O manifesto registra a configuração OCR aplicada pelo perfil. No perfil atual do Cleaner V2, `detect_box` e `auto` são configurados, mas Tesseract está desligado; o Panel Cleaner acaba usando MangaOCR em japonês. Isso não fornece OCR coreano ou chinês. A classificação por cor/textura também é uma heurística conservadora: cobertura universal de estilos transparentes ainda requer mais amostras e validação.
+
+Detalhes de arquitetura, métricas, regras de autorização, campos de observabilidade e limitações estão em [TextOff Merged e preservação de balões transparentes](docs/textoff_merged_transparencia.html). As dependências do motor ficam descritas em [Cleaner V2](processamento/limpeza_baloes/cleaner_v2/README.md).
 
 ### Comparar resultados
 

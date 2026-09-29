@@ -523,6 +523,12 @@ utilizam o mesmo executor:
 
 Portanto são dois contextos de entrada do mesmo pipeline oficial, e não duas implementações independentes do Cleaner.
 
+### Migração inicial para Central V2
+
+A página **Texto Off — Merged** está sendo iniciada em `central_v2/frontend/texto_off/merged.js`. Sua consulta e job usam `/api/textoff/merged` e `/api/textoff/merged/execute`; a orquestração fica em `orquestracao/textoff/merged.py` e delega a limpeza para o `clean_chapter()` existente. A V2 valida MERGE oficial, expõe a lista de capítulos/artefatos e não copia o Cleaner nem seus gates.
+
+O estado “resultado registrado” compara `source_stage`, nomes dos arquivos e contagem do `clean-manifest.json`. Isso **não prova identidade dos bytes do MERGE**, pois o manifesto Cleaner atual não guarda fingerprint da entrada. A interface informa esse limite; rastreabilidade por hash permanece lacuna separada para decisão e migração futura.
+
 ### Contrato oficial do Cleaner V2
 
 `clean_chapter()`:

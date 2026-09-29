@@ -39,6 +39,10 @@ export const routes = {
     context: "processamento",
     module: "/processamento/balanceamento/novos_cortes.js",
   },
+  "texto-off-merged": {
+    context: "texto-off",
+    module: "/texto_off/merged.js",
+  },
   "resumo-operacao": {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",

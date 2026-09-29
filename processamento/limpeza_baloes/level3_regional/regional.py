@@ -20,11 +20,13 @@ import numpy as np
 import torch
 from PIL import Image
 from simple_lama_inpainting import SimpleLama
+from processamento.limpeza_baloes.level3_regional.ocr_config import (
+    create_readers,
+    manifest_metadata,
+)
 
 
 ALGORITHM = "textoff_level3_regional_v1"
-
-OCR_LANGUAGES = ["en"]
 
 BRIGHT_THRESHOLD = 175
 LOCAL_CONTRAST_THRESHOLD = 10
@@ -76,18 +78,12 @@ def _validate_bbox(
 
 def _detect_mask(
     crop_bgr: np.ndarray,
-    reader: easyocr.Reader,
+    readers: list[tuple[tuple[str, ...], easyocr.Reader]],
 ) -> tuple[np.ndarray, list[dict]]:
 
     gray = cv2.cvtColor(
         crop_bgr,
         cv2.COLOR_BGR2GRAY,
-    )
-
-    detections_raw = reader.readtext(
-        crop_bgr,
-        detail=1,
-        paragraph=False,
     )
 
     mask = np.zeros(
@@ -110,57 +106,46 @@ def _detect_mask(
         blur,
     )
 
-    for box, text, confidence in detections_raw:
-
-        pts = np.asarray(
-            [
+    for languages, reader in readers:
+        detections_raw = reader.readtext(
+            crop_bgr,
+            detail=1,
+            paragraph=False,
+        )
+        for box, text, confidence in detections_raw:
+            pts = np.asarray(
                 [
-                    int(round(point[0])),
-                    int(round(point[1])),
-                ]
-                for point in box
-            ],
-            dtype=np.int32,
-        )
-
-        region = np.zeros_like(mask)
-
-        cv2.fillPoly(
-            region,
-            [pts],
-            255,
-        )
-
-        region = cv2.dilate(
-            region,
-            cv2.getStructuringElement(
-                cv2.MORPH_ELLIPSE,
-                OCR_REGION_KERNEL,
-            ),
-            iterations=1,
-        )
-
-        candidate = (
-            (gray >= BRIGHT_THRESHOLD)
-            & (
-                local_contrast
-                >= LOCAL_CONTRAST_THRESHOLD
+                    [
+                        int(round(point[0])),
+                        int(round(point[1])),
+                    ]
+                    for point in box
+                ],
+                dtype=np.int32,
             )
-            & (region > 0)
-        ).astype(np.uint8) * 255
 
-        mask = cv2.bitwise_or(
-            mask,
-            candidate,
-        )
-
-        detections.append(
-            {
+            region = np.zeros_like(mask)
+            cv2.fillPoly(region, [pts], 255)
+            region = cv2.dilate(
+                region,
+                cv2.getStructuringElement(
+                    cv2.MORPH_ELLIPSE,
+                    OCR_REGION_KERNEL,
+                ),
+                iterations=1,
+            )
+            candidate = (
+                (gray >= BRIGHT_THRESHOLD)
+                & (local_contrast >= LOCAL_CONTRAST_THRESHOLD)
+                & (region > 0)
+            ).astype(np.uint8) * 255
+            mask = cv2.bitwise_or(mask, candidate)
+            detections.append({
                 "text": str(text),
                 "confidence": float(confidence),
                 "polygon": pts.tolist(),
-            }
-        )
+                "reader_languages": list(languages),
+            })
 
     # V2 aprovada.
     mask = cv2.morphologyEx(
@@ -236,10 +221,7 @@ def generate(
             "Nenhuma região selecionada."
         )
 
-    reader = easyocr.Reader(
-        OCR_LANGUAGES,
-        gpu=False,
-    )
+    readers = create_readers(easyocr.Reader, gpu=False)
 
     full_mask = np.zeros(
         (height, width),
@@ -263,7 +245,7 @@ def generate(
 
         local_mask, detections = _detect_mask(
             crop,
-            reader,
+            readers,
         )
 
         destination = full_mask[
@@ -288,6 +270,7 @@ def generate(
                         local_mask
                     )
                 ),
+                "ocr_detection_count": len(detections),
                 "detections": detections,
             }
         )
@@ -447,6 +430,7 @@ def generate(
 
     report = {
         "algorithm": ALGORITHM,
+        "ocr": manifest_metadata(regions),
         "device": str(device),
         "model": str(model_path),
         "context_padding": CONTEXT_PADDING,

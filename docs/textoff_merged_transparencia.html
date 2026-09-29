@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TextOff Merged — preservação de balões transparentes</title>
+  <style>
+    :root{color-scheme:light;--ink:#153c50;--muted:#527286;--blue:#1683ad;--line:#bce5f3;--pale:#edf8fc;--green:#eaf7f0;--amber:#fff5df;--white:#fff}
+    *{box-sizing:border-box}body{margin:0;background:#f4f9fb;color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1120px;margin:36px auto;padding:0 22px 56px}header,.card{background:var(--white);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 10px #143e5010}
+    header{padding:28px 32px;margin-bottom:22px}h1{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.15;margin:.3rem 0 .7rem}h2{font-size:1.35rem;margin:0 0 12px}h3{font-size:1.05rem;margin:0 0 6px}
+    p{margin:.45rem 0 1rem}.eyebrow{color:var(--blue);font-size:.8rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.lede{font-size:1.08rem;color:var(--muted);max-width:850px}
+    section{margin:20px 0}.card{padding:22px 24px}.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:stretch}.step{background:var(--pale);border:1px solid var(--line);border-radius:10px;padding:15px;position:relative}.step:not(:last-child)::after{content:"›";position:absolute;right:-12px;top:34%;z-index:1;color:var(--blue);font-size:1.6rem;font-weight:800}.step b{display:block;color:var(--blue);margin-bottom:5px}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;background:white}th,td{text-align:left;vertical-align:top;padding:11px 13px;border-bottom:1px solid var(--line)}th{background:var(--pale);font-size:.88rem;color:#245d77}code{font: .9em ui-monospace,SFMono-Regular,Menlo,monospace;background:#edf4f7;padding:.12em .35em;border-radius:4px;overflow-wrap:anywhere}.callout{border-left:4px solid var(--blue);padding:12px 16px;background:var(--pale);border-radius:0 8px 8px 0}.warning{background:var(--amber);border-left-color:#cb8b16}.success{background:var(--green);border-left-color:#278357}.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:#dff1f8;color:#1a607e;font-size:.84rem;font-weight:700}
+    ul{padding-left:1.3rem}li{margin:.35rem 0}.small{font-size:.92rem;color:var(--muted)}footer{padding:12px 2px;color:var(--muted);font-size:.9rem}
+    @media(max-width:850px){main{margin:18px auto}.flow{grid-template-columns:1fr}.step:not(:last-child)::after{content:"⌄";right:50%;top:auto;bottom:-20px}.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Processamento · Cleaner V2</div>
+    <h1>TextOff Merged: preservação de balões transparentes</h1>
+    <p class="lede">A primeira rodada limpa balões opacos autorizados e deixa intactos os balões que deixam o desenho de fundo visível através de seu interior. Os casos protegidos ficam identificados para tratamento posterior.</p>
+  </header>
+
+  <section class="card" aria-labelledby="flow-title">
+    <h2 id="flow-title">Fluxo da primeira rodada</h2>
+    <div class="flow">
+      <div class="step"><b>1 · Fonte</b><code>02_MERGE/&lt;capítulo&gt;</code><br>Imagens oficiais somente leitura.</div>
+      <div class="step"><b>2 · Cleaner V2</b>Gera <code>_clean</code> e <code>_mask</code> numa área temporária.</div>
+      <div class="step"><b>3 · Segmentação</b>Localiza os interiores de balão pelo modelo Manga109 fixado.</div>
+      <div class="step"><b>4 · Proteção</b>Classifica transparência e remove da máscara componentes que a intersectam.</div>
+      <div class="step"><b>5 · Publicação</b>Valida o lote e grava imagens, relatórios e manifesto em <code>04_TEXTO_OFF/MERGED</code>.</div>
+    </div>
+    <p class="small">A saída temporária do Cleaner não é publicada diretamente. O Nível I recompõe a imagem a partir da fonte e copia apenas os pixels autorizados; os pixels dos componentes protegidos permanecem idênticos à fonte.</p>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>Como a transparência é estimada</h2>
+      <p>O classificador trabalha sobre o interior erodido do polígono de balão. A erosão reduz influência da borda; pixels escuros são excluídos para que as letras não sejam confundidas com a textura de fundo.</p>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Métrica</th><th>Regra atual</th><th>Interpretação</th></tr></thead>
+        <tbody>
+          <tr><td>Amostra válida</td><td><code>gray ≥ 200</code> e pelo menos 500 pixels</td><td>Usa a região clara do interior, ignorando a maior parte da tinta escura.</td></tr>
+          <tr><td>Variação tonal</td><td>Desvio-padrão de cinza <code>≥ 9.0</code></td><td>Variação persistente pode indicar ilustração visível sob o balão.</td></tr>
+          <tr><td>Cor residual</td><td>Saturação HSV <code>&gt; 5</code> em pelo menos <code>5%</code> da amostra</td><td>Cor visível no interior reforça a hipótese de transparência.</td></tr>
+          <tr><td>Decisão</td><td>Variação tonal <strong>ou</strong> cor residual</td><td>Política conservadora: falso positivo preserva conteúdo para revisão.</td></tr>
+        </tbody>
+      </table></div>
+    </article>
+    <article class="card">
+      <h2>Autorização de pixels no Nível I</h2>
+      <ol>
+        <li>Segmenta os balões e registra caixa e métricas dos que parecem transparentes.</li>
+        <li>Se qualquer componente da máscara intersecta um interior transparente, preserva o componente inteiro com motivo <code>transparent_balloon_deferred</code>.</li>
+        <li>Para os demais, autoriza remoção somente quando pelo menos 90% dos pixels do componente estão dentro de um único interior de balão.</li>
+        <li>Componentes pequenos, externos ou ambíguos permanecem sem alteração.</li>
+      </ol>
+      <p class="callout success"><strong>Garantia observada:</strong> em componentes adiados, a máscara final fica zerada e a saída é idêntica à fonte dentro das caixas transparentes detectadas.</p>
+    </article>
+  </section>
+
+  <section class="card">
+    <h2>Teste de referência · capítulo 3</h2>
+    <p>Obra: <em>Things that deserve to die</em>. O teste executou o Cleaner nas duas imagens listadas e usou uma saída isolada, sem substituir o resultado oficial.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Imagem</th><th>Balões transparentes detectados</th><th>Componentes adiados</th><th>Pixels diferentes na caixa protegida</th><th>Pixels de máscara na caixa</th></tr></thead>
+      <tbody>
+        <tr><td><code>page-156-163.png</code></td><td>2</td><td>2</td><td><span class="pill">0</span></td><td><span class="pill">0</span></td></tr>
+        <tr><td><code>page-179-187.png</code></td><td>2</td><td>3</td><td><span class="pill">0</span></td><td><span class="pill">0</span></td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">As saídas isoladas e relatórios daquele teste foram escritos em <code>/private/tmp/textoff-transparent-round1-cap3</code>. Os valores acima são evidência destas duas imagens, não uma garantia de classificação perfeita para todo estilo de balão.</p>
+  </section>
+
+  <section class="grid">
+    <article class="card">
+      <h2>Observabilidade</h2>
+      <p><code>level1-balloon-report.json</code> contém as caixas, caixas delimitadoras, desvio-padrão, razão de cromaticidade, motivo, componentes adiados e pixels protegidos por página.</p>
+      <p><code>clean-manifest.json</code> resume <code>transparent_balloons_total</code> e <code>transparent_components_deferred</code> dentro de <code>level1</code>. O objeto <code>ocr</code> registra perfil, idioma configurado e motor efetivo.</p>
+    </article>
+    <article class="card">
+      <h2>OCR efetivo do perfil atual</h2>
+      <p>O perfil informa <code>ocr_language=detect_box</code> e <code>ocr_engine=auto</code>, mas define <code>ocr_use_tesseract=False</code>. Com Tesseract desligado, o Panel Cleaner força MangaOCR.</p>
+      <p>O manifesto registra o idioma efetivo <code>jpn</code>; os rótulos de idioma por caixa são <code>ja</code>/<code>eng</code>. Este perfil não habilita OCR coreano nem chinês, mesmo quando o balão é preservado pelo classificador visual.</p>
+    </article>
+  </section>
+
+  <section class="card">
+    <h2>Limites e próxima etapa</h2>
+    <ul>
+      <li>A proteção depende da segmentação localizar o balão. Regiões não segmentadas precisam de melhor detecção e instrumentação.</li>
+      <li>Os limiares são empíricos e precisam de validação em fundos claros, texturas variadas, baixa opacidade e estilos diferentes.</li>
+      <li>Preservar agora evita resíduos da limpeza, mas ainda não restaura o fundo sob o texto. O caso fica listado para uma segunda rodada.</li>
+      <li>O Nível II atual é refinamento de resíduos do Cleaner, não o fluxo dedicado de processamento dos balões adiados. Uma futura tela/etapa TextOff Merged Nível II deverá consumir as caixas e relatórios sem usar o resultado já alterado como fonte.</li>
+    </ul>
+    <p class="callout warning"><strong>Política de segurança:</strong> na dúvida, não aplicar a máscara. Registrar o caso e manter os pixels originais para revisão ou tratamento posterior.</p>
+  </section>
+  <footer>Documentação técnica do fluxo TextOff Merged · atualizada com os resultados do teste direcionado do capítulo 3.</footer>
+</main>
+</body>
+</html>
