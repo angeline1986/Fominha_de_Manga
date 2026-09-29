@@ -93,12 +93,15 @@
     <ul>
       <li>A proteção depende da segmentação localizar o balão. Regiões não segmentadas precisam de melhor detecção e instrumentação.</li>
       <li>Os limiares são empíricos e precisam de validação em fundos claros, texturas variadas, baixa opacidade e estilos diferentes.</li>
-      <li>Preservar agora evita resíduos da limpeza, mas ainda não restaura o fundo sob o texto. O caso fica listado para uma segunda rodada.</li>
-      <li>O refinamento antigo segue isolado em Legado. O Nível II combina os componentes Cleaner adiados pelo Nível I com detecção CRAFT, usa dilatações 3×3 e 9×9 dentro do balão e aplica LaMa com 120 px de contexto. Apenas pixels autorizados são compostos na saída.</li>
+      <li>No Nível I, preservar o texto evita resíduos da limpeza e deixa o componente disponível para a segunda rodada do Nível II.</li>
+      <li>O refinamento antigo segue isolado em Legado. O Nível II usa os componentes Cleaner adiados pelo Nível I, aplica dilatações 3×3 e 9×9 dentro do balão correspondente e usa LaMa com 120 px de contexto. Cada balão é reconstruído em seu próprio ROI; CRAFT não é usado nesta versão.</li>
+      <li>Para limitar o uso de memória no MPS, a inferência carrega uma página por vez, libera a cache entre regiões e recicla o modelo a cada três balões processados.</li>
+      <li>O vínculo entre cada balão transparente e o rótulo de sua máscara é versionado no manifesto. Ausência ou divergência cancela a execução; zero pixels alterados aparece como “Sem alteração — revisar resultado”, nunca como conclusão visual positiva.</li>
     </ul>
+    <p class="callout success"><strong>Teste integral do Cap. 3:</strong> 31 páginas, 8 com máscaras, 1.689.843 pixels de máscara e 1.654.872 pixels alterados. Nenhum pixel foi alterado fora das máscaras; duração de 100,448 s. A revisão visual ainda encontrou marcas residuais nas quatro páginas prioritárias. Dilatações 15×15 e 31×31 ampliaram a área alterada sem melhora visual relevante; 3×3 + 9×9 fica como referência enquanto se testa outra técnica de reconstrução. Saídas temporárias, sem alteração do MERGE oficial.</p>
     <p class="callout warning"><strong>Política de segurança:</strong> na dúvida, não aplicar a máscara. Registrar o caso e manter os pixels originais para revisão ou tratamento posterior.</p>
   </section>
-  <footer>Documentação técnica do fluxo TextOff Merged · atualizada com os resultados do teste direcionado do capítulo 3.</footer>
+  <footer>Documentação técnica do fluxo TextOff Merged · atualizada com os resultados do teste integral do capítulo 3.</footer>
 </main>
 </body>
 </html>

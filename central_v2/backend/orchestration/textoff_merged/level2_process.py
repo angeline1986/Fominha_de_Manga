@@ -10,8 +10,10 @@ import numpy as np
 from PIL import Image
 
 from .level2_vision import (
-    ALGORITHM, AUTHORIZED_DILATION, BASE_DILATION, LAMA_PADDING, SUPPORTED,
-    _atomic_json, _balloon_text_mask, _inpaint, _lama_model,
+    ALGORITHM, AUTHORIZED_DILATION, BASE_DILATION, LAMA_PADDING,
+    MAX_MPS_PAGES_PER_MODEL, REFERENCE_RECIPE,
+    SUPPORTED, _atomic_json, _authorized_deferred_mask, _inpaint, _lama_model,
+    _release_inference_cache,
 )
 
 def process(source_dir: Path, level1_dir: Path, output_dir: Path,
@@ -23,8 +25,8 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     manifest_file = level1_dir / "clean-manifest.json"
     report = json.loads(report_file.read_text(encoding="utf-8"))
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
-    if manifest.get("integrity_ok") is not True or manifest.get("level1", {}).get("algorithm") != "textoff_level1_balloon_transparency_gate_v3":
-        raise ValueError("A saída não é um resultado íntegro do Texto Off Merged Nível I.")
+    if manifest.get("integrity_ok") is not True or manifest.get("level1", {}).get("algorithm") != "textoff_level1_balloon_transparency_gate_v4":
+        raise ValueError("Reexecute o Nível I para vincular cada balão transparente à sua máscara.")
 
     pages = {item.get("source"): item for item in report.get("pages", []) if isinstance(item, dict)}
     sources = sorted(path for path in source_dir.iterdir() if path.is_file() and path.suffix.lower() in SUPPORTED)
@@ -34,19 +36,15 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     if set(cleaner_names) != {path.name.replace(path.suffix, "_clean" + path.suffix) for path in sources}:
         raise ValueError("As imagens do Nível I não correspondem ao MERGE oficial atual.")
 
-    try:
-        import easyocr
-    except ImportError as exc:
-        raise RuntimeError("Nível II requer EasyOCR no ambiente regional.") from exc
     if runtime is None:
         runtime = {}
-    reader = runtime.get("reader")
-    if reader is None:
-        reader = easyocr.Reader(["en"], gpu=False, detector=True, recognizer=False,
-                                download_enabled=False, verbose=False)
-        runtime["reader"] = reader
 
-    analyses = []
+    model = runtime.get("model")
+    model_path = runtime.get("model_path")
+    device = runtime.get("device")
+    output_dir.mkdir(parents=True, exist_ok=True)
+    page_results = []
+    changed_total = mask_total = 0
     for index, source in enumerate(sources, 1):
         page = pages.get(source.name)
         if page is None:
@@ -75,36 +73,43 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
                 raise ValueError(f"Máscara de texto adiado ausente ou inválida para {source.name}.")
         elif int(page.get("transparent_components_deferred") or 0):
             raise ValueError(f"Reexecute o Nível I para gerar as máscaras de texto adiado de {source.name}.")
+        balloons, balloon_masks = [], []
         mask = np.zeros(labels.shape, dtype=np.uint8)
-        balloon_reports = []
+        deferred_components = int(page.get("transparent_components_deferred") or 0)
         for balloon in page.get("transparent_balloons", []):
             label = int(balloon.get("mask_label") or 0)
             if label <= 0:
-                continue
-            balloon_mask, decisions = _balloon_text_mask(
-                original, labels == label, balloon["bbox"], reader, deferred,
-            )
+                raise ValueError(f"Nível I sem mask_label para balão em {source.name}; reexecute o Nível I.")
+            balloon_area = labels == label
+            if not np.any(balloon_area):
+                raise ValueError(f"Rótulo {label} sem pixels para balão em {source.name}; reexecute o Nível I.")
+            balloon_mask = _authorized_deferred_mask(deferred, balloon_area)
             mask = cv2.bitwise_or(mask, balloon_mask)
-            balloon_reports.append({"balloon": balloon.get("balloon"), "bbox": balloon.get("bbox"),
-                                   "boxes": decisions, "mask_pixels": int(np.count_nonzero(balloon_mask))})
-        analyses.append((source, clean_name, original, level1, mask, balloon_reports))
-        if progress_path:
-            _atomic_json(progress_path, {"percent": round(index * 35 / len(sources)),
-                                         "detail": f"Detectando texto em balões transparentes ({index}/{len(sources)})"})
-
-    model = runtime.get("model")
-    model_path = runtime.get("model_path")
-    device = runtime.get("device")
-    if any(np.any(item[4]) for item in analyses):
-        if model is None:
-            model, model_path, device = _lama_model()
-            runtime.update(model=model, model_path=model_path, device=device)
-
-    output_dir.mkdir(parents=True, exist_ok=True)
-    page_results = []
-    changed_total = mask_total = 0
-    for index, (source, clean_name, original, level1, mask, balloons) in enumerate(analyses, 1):
-        final = _inpaint(original, mask, model) if np.any(mask) else original.copy()
+            balloon_masks.append(balloon_mask)
+            balloons.append({"balloon": balloon.get("balloon"), "mask_label": label,
+                             "mask_pixels": int(np.count_nonzero(balloon_mask)),
+                             "deferred_cleaner_pixels": int(np.count_nonzero(
+                                 (deferred > 0) & balloon_area))})
+        if deferred_components and not np.any(mask):
+            raise RuntimeError(f"Nível II não formou máscara para resíduos adiados em {source.name}.")
+        final = original.copy()
+        for balloon_mask in balloon_masks:
+            if not np.any(balloon_mask):
+                continue
+            model_inferences = runtime.get("model_inferences", 0)
+            if (model is not None and device == "mps"
+                    and model_inferences >= MAX_MPS_PAGES_PER_MODEL):
+                model = None
+                runtime.update(model=None, model_path=None, device=None, model_inferences=0)
+                _release_inference_cache(device)
+                device = None
+            if model is None:
+                model, model_path, device = _lama_model()
+                runtime.update(model=model, model_path=model_path, device=device,
+                               model_inferences=0)
+            final = _inpaint(final, balloon_mask, model)
+            runtime["model_inferences"] = runtime.get("model_inferences", 0) + 1
+            _release_inference_cache(device)
         result = level1.copy()
         active = mask > 0
         result[active] = final[active]
@@ -122,20 +127,20 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
                              "mask_pixels": mask_pixels, "changed_pixels": changed,
                              "changed_outside_mask": outside})
         if progress_path:
-            _atomic_json(progress_path, {"percent": 35 + round(index * 60 / len(analyses)),
-                                         "detail": f"Reconstruindo texto autorizado ({index}/{len(analyses)})"})
+            _atomic_json(progress_path, {"percent": round(index * 95 / len(sources)),
+                                         "detail": f"Reconstruindo texto autorizado ({index}/{len(sources)})"})
 
     result = {
         "schema_version": 1,
         "algorithm": ALGORITHM,
-        "mask_sources": ["Level I deferred Cleaner V2 components", "EasyOCR CRAFT text boxes"],
+        "mask_sources": ["Level I deferred Cleaner V2 components inside the matching transparent balloon"],
         "base_dilation": [BASE_DILATION, BASE_DILATION],
         "authorized_dilation": [AUTHORIZED_DILATION, AUTHORIZED_DILATION],
         "lama_padding": LAMA_PADDING,
+        "reference_recipe": REFERENCE_RECIPE,
         "source_stage": "MERGED_NIVEL_I",
-        "text_detector": "EasyOCR CRAFT detector-only",
+        "text_detector": "Cleaner V2 deferred text mask",
         "text_recognition": False,
-        "language_independent_detection": True,
         "inpainter": "anime-manga-big-lama" if model else None,
         "model_path": model_path,
         "device": device,
@@ -144,6 +149,7 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         "pages_with_text": sum(page["mask_pixels"] > 0 for page in page_results),
         "mask_pixels": mask_total,
         "changed_pixels": changed_total,
+        "outcome": "visual_changes" if changed_total else "no_visual_change",
         "integrity_ok": all(page["changed_outside_mask"] == 0 for page in page_results),
         "pages": page_results,
     }

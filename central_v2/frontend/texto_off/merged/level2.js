@@ -8,7 +8,8 @@ import { createMergedExecution } from "/texto_off/merged/execution.js";
 
 const FILTERS = [
   ["all", "Todos"], ["pending", "Pendentes"], ["processed", "Processados"],
-  ["none", "Sem candidatos"], ["missing", "Atualizar Nível I"], ["invalid", "MERGE inválido"],
+  ["unchanged", "Sem alteração"], ["none", "Sem candidatos"],
+  ["missing", "Atualizar Nível I"], ["invalid", "MERGE inválido"],
 ];
 
 function checkbox(label, checked, onChange) {
@@ -42,18 +43,19 @@ function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
     { label: "Candidatas Nível II", render: (row) => row.cleaned ? `${row.transparent_page_count} / ${row.merge_count}` : "—" },
     { label: "Balões transp.", render: (row) => row.cleaned ? row.transparent_balloons : "—" },
     { label: "Resíduos adiados", render: (row) => row.cleaned ? row.deferred_components : "—" },
-    { label: "Pág. com texto", render: (row) => row.level2_status === "processed" ? row.level2_pages_with_text : "—" },
-    { label: "Pixels alterados", render: (row) => row.level2_status === "processed" ? row.level2_changed_pixels : "—" },
+    { label: "Pág. com texto", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_pages_with_text : "—" },
+    { label: "Pixels alterados", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_changed_pixels : "—" },
     {
       label: "Situação",
       render: (row) => ({
         pending: "Pendente para Nível II",
         processed: "Nível II concluído",
+        no_change: "Sem alteração — revisar resultado",
         no_candidates: "Sem candidatos",
         missing_level1: "Atualize o Nível I",
         invalid_merge: "MERGE inválido",
       })[row.level2_status] || "—",
-      className: (row) => `textoff-status ${row.level2_status === "pending" ? "is-pending" : row.level2_status === "invalid_merge" ? "is-invalid" : "is-done"}`,
+      className: (row) => `textoff-status ${["pending", "no_change"].includes(row.level2_status) ? "is-pending" : row.level2_status === "invalid_merge" ? "is-invalid" : "is-done"}`,
     },
   ];
 }
@@ -85,25 +87,16 @@ export function createMergedLevel2View(onRun) {
   let selectedFilter = "pending";
   let executionBusy = false;
 
-  function match(row) {
-    if (selectedFilter === "all") return true;
-    if (selectedFilter === "pending") return row.level2_status === "pending";
-    if (selectedFilter === "processed") return row.level2_status === "processed";
-    if (selectedFilter === "none") return row.level2_status === "no_candidates";
-    if (selectedFilter === "missing") return row.level2_status === "missing_level1";
-    return row.level2_status === "invalid_merge";
+  function match(row, filter = selectedFilter) {
+    return filter === "all" || row.level2_status === ({pending: "pending", processed: "processed",
+      unchanged: "no_change", none: "no_candidates", missing: "missing_level1", invalid: "invalid_merge"})[filter];
   }
 
   function draw() {
     filters.replaceChildren();
     for (const [key, label] of FILTERS) {
       const button = document.createElement("button");
-      const count = state.chapters.filter((row) => key === "all" || (
-        key === "pending" ? row.level2_status === "pending" :
-          key === "processed" ? row.level2_status === "processed" :
-            key === "none" ? row.level2_status === "no_candidates" :
-              key === "missing" ? row.level2_status === "missing_level1" : row.level2_status === "invalid_merge"
-      )).length;
+      const count = state.chapters.filter((row) => match(row, key)).length;
       button.type = "button";
       button.textContent = `${label} (${count})`;
       button.classList.toggle("active", selectedFilter === key);

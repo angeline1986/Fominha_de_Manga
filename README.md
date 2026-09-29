@@ -308,11 +308,15 @@ O teste focado de *Things that deserve to die*, capítulo 3, nas imagens `page-1
 
 ### Merged · Nível II
 
-A tela consulta os relatórios do Nível I e lista capítulos com balões transparentes detectados ou componentes adiados. O Nível II combina a máscara Cleaner adiada pelo Nível I com caixas de texto CRAFT, dilata 3×3 e 9×9 dentro do balão e reconstrói com LaMa e contexto de 120 px. O Legado continua separado e não é aplicado automaticamente.
+A tela consulta os relatórios do Nível I e lista capítulos com balões transparentes detectados ou componentes adiados. O Nível II usa a máscara Cleaner adiada pelo Nível I, aplica as dilatações elípticas 3×3 e 9×9 e reconstrói com LaMa e contexto de 120 px, limitado ao interior do balão correspondente. Essa sequência deriva do Patch Transparente Legado que teve resultado aprovado no teste manual; CRAFT não faz parte da máscara automática.
 
 A tabela distingue o total de imagens do MERGE das páginas candidatas ao Nível II. No Cap. 3 de *Things that deserve to die*, o relatório mostra 31 imagens oficiais, 10 páginas com balões transparentes e 17 balões; portanto, 31 é a composição completa do capítulo, não o número de páginas com casos transparentes. O Nível II grava uma composição completa para manter o capítulo íntegro.
 
-O Patch Transparente Legado manual limpou as duas regiões selecionadas em `page-179-187.png`, mas o primeiro resultado automático Nível II e uma variante com máscara ampliada ainda deixaram texto. O relatório CRAFT também registra uma caixa rejeitada por tinta fora da faixa. O Nível II usa agora os componentes Cleaner adiados, limitados ao interior dos balões, para cobrir esse tipo de falha. O resultado ainda requer validação visual nas páginas `page-051-059`, `page-078-083`, `page-156-163` e `page-179-187`; integridade técnica, por si só, não declara a limpeza visual completa.
+O Patch Transparente Legado manual limpou as duas regiões selecionadas em `page-179-187.png`. A execução automática anterior não aplicou a máscara: embora o relatório Nível I registrasse 17 balões transparentes, ele não vinculava cada balão ao rótulo da imagem de máscara. O Nível II ignorava os balões sem `mask_label` e ainda marcava o capítulo como concluído com zero pixels alterados. O contrato foi corrigido e versionado como Nível I v4/Nível II v1; agora a execução falha se esse vínculo estiver ausente ou divergente e informa separadamente quando não houve alteração visual.
+
+Cada balão é reconstruído em uma região de contexto própria. Isso impede que balões distantes criem uma única área LaMa do tamanho da página. No dispositivo MPS, o modelo é reciclado a cada três inferências e a cache de inferência é liberada entre regiões para limitar o uso acumulado de memória. O processamento também carrega uma página por vez.
+
+Teste integral temporário de *Things that deserve to die*, capítulo 3: 31 páginas analisadas, 8 páginas com máscaras Nível II, 1.689.843 pixels cobertos pelas máscaras, 1.654.872 pixels alterados e zero pixels modificados fora das máscaras. O processamento terminou em 100,448 s. A validação visual ainda encontrou marcas residuais nas páginas `page-051-059`, `page-078-083`, `page-156-163` e `page-179-187`. Testes com dilatação 15×15 e 31×31 ampliaram a área alterada, mas não trouxeram melhora visual relevante; os parâmetros 3×3 + 9×9 permanecem como receita de referência até testar outra técnica de reconstrução. As imagens e o relatório deste ensaio ficaram em diretório temporário; o MERGE oficial não foi alterado.
 
 ### Legado
 

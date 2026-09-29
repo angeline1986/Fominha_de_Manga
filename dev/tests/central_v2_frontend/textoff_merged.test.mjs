@@ -53,3 +53,29 @@ test('TextOff Merged confirms, submits selected chapters and summarizes the job'
   assert.equal(statuses.at(-1).busy, false);
   runner.dispose();
 });
+
+test('Nível II reports zero changed pixels as a review outcome, not success', async () => {
+  const summaries = [];
+  const load = browserModules({
+    fetch: async (url) => ({ ok: true, json: async () => url.endsWith('/execute')
+      ? { job: { id: 'job-no-change' } }
+      : { job: { id: 'job-no-change', status: 'completed', progress: {}, results: [
+        { chapter: '3', status: 'no_change', pages: 31, outputs: 31, masks: 31, text_pages: 0, changed_pixels: 0 },
+      ] } } }),
+    setTimeout: (callback) => { callback(); return 1; }, summaries,
+  }, {
+    '/_app/state/context.js': 'export function getContext() { return { provider: "ridi", manga: "Obra" }; }',
+    '/_shared/messages/messages.js': `
+      export async function confirmMessage() { return true; }
+      export async function showMessage() {}
+      export async function showOperationSummary(value) { globalThis.summaries.push(value); }
+    `,
+  });
+  const { createMergedExecution } = await load('/texto_off/merged/execution.js');
+  const runner = createMergedExecution({ async onComplete() {}, onStatus() {}, level: '2' });
+  await runner.execute(['3']);
+  assert.match(summaries[0].summary.breakdown, /sem alteração/);
+  assert.equal(summaries[0].summary.items[0].status, 'Sem alteração — revisar');
+  assert.equal(summaries[0].summary.items[0].warning, true);
+  runner.dispose();
+});

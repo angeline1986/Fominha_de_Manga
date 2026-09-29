@@ -3,6 +3,8 @@ from pathlib import Path
 
 from processamento.limpeza_baloes.cleaner_v2 import balloon_authorization as policy
 
+LEVEL1_ARTIFACT_ALGORITHM = "textoff_level1_balloon_transparency_gate_v4"
+
 
 def save_deferred_artifacts(images, raw_masks, output_dir: Path, report: dict) -> None:
     try:
@@ -40,10 +42,11 @@ def save_deferred_artifacts(images, raw_masks, output_dir: Path, report: dict) -
         except Exception as exc:
             raise RuntimeError(f"V2 falhou ao produzir a máscara de balões de {image.name}.") from exc
 
-        labels, transparent_mask, detected_count = _transparent_balloon_masks(original, prediction, cv2, np)
+        labels, transparent_mask, mask_labels = _transparent_balloon_masks(original, prediction, cv2, np)
         reported_count = len(page.get("transparent_balloons", []))
-        if detected_count != reported_count:
+        if len(mask_labels) != reported_count:
             raise RuntimeError(f"Detecção transparente divergente em {image.name}; Nível I cancelado.")
+        _bind_mask_labels(page.get("transparent_balloons", []), mask_labels, image.name)
         deferred = _deferred_text_mask(raw_mask, page, transparent_mask, cv2, np)
         transparent_name = f"{image.stem}_transparent_balloons.png"
         if not cv2.imwrite(str(output_dir / transparent_name), labels):
@@ -60,6 +63,18 @@ def save_deferred_artifacts(images, raw_masks, output_dir: Path, report: dict) -
             "deferred_text_mask_artifact": deferred_name,
             "deferred_text_mask_pixels": int(np.count_nonzero(deferred)),
         })
+    report["algorithm"] = LEVEL1_ARTIFACT_ALGORITHM
+
+
+def _bind_mask_labels(balloons: list[dict], mask_labels: dict[int, dict], source_name: str) -> None:
+    for balloon in balloons:
+        detection_index = int(balloon.get("balloon") or 0)
+        mapping = mask_labels.get(detection_index)
+        if mapping is None:
+            raise RuntimeError(f"Rótulo da máscara transparente ausente em {source_name}; Nível I cancelado.")
+        if list(balloon.get("bbox") or []) != mapping["bbox"]:
+            raise RuntimeError(f"Geometria do balão divergiu em {source_name}; Nível I cancelado.")
+        balloon["mask_label"] = mapping["mask_label"]
 
 
 def _transparent_balloon_masks(original, prediction, cv2, np):
@@ -67,15 +82,16 @@ def _transparent_balloon_masks(original, prediction, cv2, np):
     labels = np.zeros(shape, dtype=np.uint16)
     combined = np.zeros(shape, dtype=bool)
     transparent_count = 0
+    mask_labels = {}
     if prediction.masks is None:
-        return labels, combined, 0
-    for polygon in prediction.masks.xy:
+        return labels, combined, mask_labels
+    for detection_index, polygon in enumerate(prediction.masks.xy, 1):
         points = np.asarray(polygon, dtype=np.int32)
         if len(points) < 3:
             continue
         mask = np.zeros(shape, dtype=np.uint8)
         cv2.fillPoly(mask, [points], 255)
-        _, _, width, height = cv2.boundingRect(points)
+        x, y, width, height = cv2.boundingRect(points)
         margin = max(policy.BALLOON_INTERIOR_ERODE_MIN, min(
             policy.BALLOON_INTERIOR_ERODE_MAX,
             int(round(min(width, height) * policy.BALLOON_INTERIOR_ERODE_RATIO)),
@@ -89,8 +105,11 @@ def _transparent_balloon_masks(original, prediction, cv2, np):
             continue
         transparent_count += 1
         labels[mask > 0] = transparent_count
+        mask_labels[detection_index] = {
+            "mask_label": transparent_count, "bbox": [int(x), int(y), int(width), int(height)],
+        }
         combined |= mask > 0
-    return labels, combined, transparent_count
+    return labels, combined, mask_labels
 
 
 def _deferred_text_mask(raw_mask, page, transparent_mask, cv2, np):

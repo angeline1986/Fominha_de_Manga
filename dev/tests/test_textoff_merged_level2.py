@@ -1,7 +1,6 @@
 import json
 import sys
 import tempfile
-import types
 import unittest
 from pathlib import Path
 from unittest.mock import patch
@@ -13,17 +12,14 @@ from central_v2.backend.orchestration.textoff_merged import level2_transparent
 from central_v2.backend.orchestration.textoff_merged.level2_process import process
 
 
-class FakeReader:
-    def __init__(self, *args, **kwargs):
-        pass
-
-    def detect(self, crop, **kwargs):
-        return ([[[25, 75, 35, 65]]], [[]])
-
-
 class FakeLama:
     def __call__(self, source, mask):
         return Image.new("RGB", source.size, (245, 245, 245))
+
+
+class IdentityLama:
+    def __call__(self, source, _mask):
+        return source.copy()
 
 
 class TextoffMergedLevel2Tests(unittest.TestCase):
@@ -62,16 +58,17 @@ class TextoffMergedLevel2Tests(unittest.TestCase):
                 "integrity_ok": True,
                 "source_artifacts": ["page-001-004.png"],
                 "clean_artifacts": ["page-001-004_clean.png"],
-                "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v3"},
+                "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v4"},
             }
             (level1_dir / "clean-manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
 
-            with patch.dict("sys.modules", {"easyocr": types.SimpleNamespace(Reader=FakeReader)}), \
-                 patch("central_v2.backend.orchestration.textoff_merged.level2_process._lama_model",
+            with patch("central_v2.backend.orchestration.textoff_merged.level2_process._lama_model",
                        return_value=(FakeLama(), "test-model", "cpu")):
                 report = process(source_dir, level1_dir, output_dir, output_dir / "report.json")
 
             self.assertTrue(report["integrity_ok"])
+            self.assertEqual(report["reference_recipe"], "textoff_special_roi_transparent_legacy_v1")
+            self.assertEqual(report["outcome"], "visual_changes")
             self.assertGreaterEqual(report["duration_seconds"], 0)
             self.assertEqual(report["pages_with_text"], 1)
             final = np.asarray(Image.open(output_dir / "page-001-004_clean.png").convert("RGB"))
@@ -82,6 +79,64 @@ class TextoffMergedLevel2Tests(unittest.TestCase):
             self.assertTrue(np.all(changed[mask]))
             self.assertFalse(np.any(changed & ~mask))
             self.assertFalse(np.any(mask & (labels != 1)))
+
+    def test_zero_visual_changes_are_recorded_as_review_outcome(self):
+        with tempfile.TemporaryDirectory() as root:
+            base = Path(root)
+            source_dir, level1_dir, output_dir = base / "source", base / "level1", base / "level2"
+            source_dir.mkdir()
+            level1_dir.mkdir()
+            image = np.full((40, 40, 3), 230, dtype=np.uint8)
+            image[18:22, 18:22] = 20
+            Image.fromarray(image).save(source_dir / "page-001-004.png")
+            Image.fromarray(image).save(level1_dir / "page-001-004_clean.png")
+            labels = np.zeros((40, 40), dtype=np.uint16)
+            labels[5:35, 5:35] = 1
+            Image.fromarray(labels).save(level1_dir / "labels.png")
+            deferred = np.zeros((40, 40), dtype=np.uint8)
+            deferred[18:22, 18:22] = 255
+            Image.fromarray(deferred).save(level1_dir / "deferred.png")
+            (level1_dir / "level1-balloon-report.json").write_text(json.dumps({"pages": [{
+                "source": "page-001-004.png", "transparent_mask_artifact": "labels.png",
+                "deferred_text_mask_artifact": "deferred.png", "transparent_components_deferred": 1,
+                "transparent_balloons": [{"balloon": 1, "mask_label": 1}],
+            }]}), encoding="utf-8")
+            (level1_dir / "clean-manifest.json").write_text(json.dumps({
+                "integrity_ok": True, "source_artifacts": ["page-001-004.png"],
+                "clean_artifacts": ["page-001-004_clean.png"],
+                "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v4"},
+            }), encoding="utf-8")
+            with patch("central_v2.backend.orchestration.textoff_merged.level2_process._lama_model",
+                       return_value=(IdentityLama(), "test-model", "cpu")):
+                report = process(source_dir, level1_dir, output_dir, output_dir / "report.json")
+            self.assertEqual(report["outcome"], "no_visual_change")
+            self.assertGreater(report["mask_pixels"], 0)
+            self.assertEqual(report["changed_pixels"], 0)
+
+    def test_missing_mask_label_fails_instead_of_reporting_empty_success(self):
+        with tempfile.TemporaryDirectory() as root:
+            base = Path(root)
+            source_dir, level1_dir = base / "source", base / "level1"
+            source_dir.mkdir()
+            level1_dir.mkdir()
+            image = np.full((20, 20, 3), 240, dtype=np.uint8)
+            Image.fromarray(image).save(source_dir / "page-001-004.png")
+            Image.fromarray(image).save(level1_dir / "page-001-004_clean.png")
+            Image.fromarray(np.ones((20, 20), dtype=np.uint16)).save(
+                level1_dir / "page-001-004_transparent_balloons.png")
+            Image.fromarray(np.ones((20, 20), dtype=np.uint8)).save(level1_dir / "deferred.png")
+            (level1_dir / "level1-balloon-report.json").write_text(json.dumps({"pages": [{
+                "source": "page-001-004.png", "transparent_mask_artifact": "page-001-004_transparent_balloons.png",
+                "deferred_text_mask_artifact": "deferred.png", "transparent_components_deferred": 1,
+                "transparent_balloons": [{"balloon": 1}],
+            }]}), encoding="utf-8")
+            (level1_dir / "clean-manifest.json").write_text(json.dumps({
+                "integrity_ok": True, "source_artifacts": ["page-001-004.png"],
+                "clean_artifacts": ["page-001-004_clean.png"],
+                "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v4"},
+            }), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "sem mask_label"):
+                process(source_dir, level1_dir, base / "out", base / "out" / "report.json")
 
     def test_missing_or_invalid_level1_manifest_fails_closed(self):
         with tempfile.TemporaryDirectory() as root:

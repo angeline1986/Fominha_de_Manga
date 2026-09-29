@@ -65,13 +65,15 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
                 "source_artifacts": ["page-001-005.png"], "clean_artifacts": ["page-001-005_clean.png"],
                 "outputs_total": 1,
                 "pages_total": 1,
-                "level1": {"transparent_balloons_total": 2, "transparent_components_deferred": 3,
+                "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v4",
+                           "transparent_balloons_total": 2, "transparent_components_deferred": 3,
                            "transparent_mask_artifacts": ["page-001-005_transparent_balloons.png"],
                            "deferred_text_mask_artifacts": ["page-001-005_deferred_text.png"],
                            "report": "level1-balloon-report.json"},
             }), encoding="utf-8")
             (output / "level1-balloon-report.json").write_text(json.dumps({
-                "pages": [{"source": "page-001-005.png", "transparent_balloons": [{"balloon": 1}],
+                "pages": [{"source": "page-001-005.png", "transparent_balloons": [
+                           {"balloon": 1, "mask_label": 1}, {"balloon": 2, "mask_label": 2}],
                            "deferred_text_mask_artifact": "page-001-005_deferred_text.png",
                            "transparent_components_deferred": 3}],
             }), encoding="utf-8")
@@ -84,6 +86,43 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
             self.assertEqual(level1["deferred_components"], 3)
             self.assertEqual(level2["level2_status"], "pending")
             self.assertTrue(level2["selectable"])
+
+    def test_valid_level2_with_zero_changes_is_reported_for_review(self):
+        with tempfile.TemporaryDirectory() as root:
+            manga = self.make_manga(root)
+            stage = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF"
+            level1 = stage / "MERGED_NIVEL_I" / "1"
+            level1.mkdir(parents=True)
+            clean_name, labels_name, deferred_name = "page-001-005_clean.png", "labels.png", "deferred.png"
+            for name in (clean_name, labels_name, deferred_name):
+                (level1 / name).write_bytes(b"artifact")
+            (level1 / "level1-balloon-report.json").write_text(json.dumps({"pages": [{
+                "source": "page-001-005.png", "transparent_balloons": [{"balloon": 2, "mask_label": 1}],
+                "transparent_components_deferred": 1, "deferred_text_mask_artifact": deferred_name,
+            }]}), encoding="utf-8")
+            level1_manifest = {"source_stage": "MERGE", "integrity_ok": True,
+                "source_artifacts": ["page-001-005.png"], "clean_artifacts": [clean_name], "outputs_total": 1,
+                "pages_total": 1, "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v4",
+                    "transparent_balloons_total": 1, "transparent_components_deferred": 1,
+                    "transparent_mask_artifacts": [labels_name], "deferred_text_mask_artifacts": [deferred_name],
+                    "report": "level1-balloon-report.json"}}
+            (level1 / "clean-manifest.json").write_text(json.dumps(level1_manifest), encoding="utf-8")
+            level2 = stage / "MERGED_NIVEL_II" / "1"
+            level2.mkdir(parents=True)
+            (level2 / clean_name).write_bytes(b"final")
+            from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest_sha256
+            from central_v2.backend.orchestration.textoff_merged.level2_vision import ALGORITHM
+            (level2 / "clean-manifest.json").write_text(json.dumps({
+                "algorithm": ALGORITHM, "integrity_ok": True, "outcome": "no_visual_change",
+                "source_level1_artifacts": [clean_name],
+                "source_level1_manifest_sha256": _stage_manifest_sha256(manga, "MERGED_NIVEL_I", "1"),
+                "source_artifacts": ["page-001-005.png"], "clean_artifacts": [clean_name], "outputs_total": 1,
+                "pages_with_text": 1, "changed_pixels": 0,
+            }), encoding="utf-8")
+            row = query_merged_level2(manga)["chapters"][0]
+            self.assertEqual(row["level2_status"], "no_change")
+            self.assertEqual(row["level2_changed_pixels"], 0)
+            self.assertFalse(row["selectable"])
 
     def test_level2_table_marks_chapters_without_level1_output(self):
         with tempfile.TemporaryDirectory() as root:

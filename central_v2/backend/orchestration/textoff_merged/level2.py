@@ -13,6 +13,7 @@ import uuid
 from processamento.unificacao_imagens import image_stitcher as v3
 from .execution import validate_selection
 from .manifests import _stage_manifest, _stage_manifest_sha256
+from .level2_vision import ALGORITHM, AUTHORIZED_DILATION, BASE_DILATION, LAMA_PADDING, REFERENCE_RECIPE
 from .query import query_merged_level2
 from .runtime import REPOSITORY_ROOT, python_for
 
@@ -122,7 +123,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             if len(clean_names) != len(images) or any(not (staged / filename).is_file() for filename in clean_names):
                 raise RuntimeError(f"Nível II não gerou todas as imagens finais do Cap. {name}.")
             output_manifest = {
-                "schema_version": 1, "algorithm": report["algorithm"],
+                "schema_version": 1, "algorithm": ALGORITHM,
                 "source_stage": "MERGED_NIVEL_I", "integrity_ok": True,
                 "source_artifacts": [path.name for path in images],
                 "source_level1_artifacts": level1_manifest.get("clean_artifacts", []),
@@ -131,14 +132,15 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                 ),
                 "clean_artifacts": clean_names, "outputs_total": len(clean_names),
                 "mask_artifacts": [item["mask"] for item in report["pages"]],
-                "ocr": {"engine": "EasyOCR CRAFT", "task": "text-box detection only",
-                        "recognition": False, "language_independent": True},
+                "recipe": {"reference": REFERENCE_RECIPE, "base_dilation": BASE_DILATION,
+                           "authorized_dilation": AUTHORIZED_DILATION, "lama_padding": LAMA_PADDING},
                 "pages_with_text": report.get("pages_with_text", 0),
                 "mask_pixels": report.get("mask_pixels", 0),
-                "changed_pixels": report.get("changed_pixels", 0), "report": report_file.name,
+                "changed_pixels": report.get("changed_pixels", 0),
+                "outcome": report.get("outcome"), "report": report_file.name,
                 "execution": {
                     "duration_seconds": report.get("duration_seconds"),
-                    "duration_scope": "chapter_total_including_detection_inpainting_and_validation",
+                    "duration_scope": "chapter_total_including_mask_creation_inpainting_and_validation",
                 },
             }
             (staged / "clean-manifest.json").write_text(
@@ -150,7 +152,9 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             prepared.append((name, target, staged, report, len(images), clean_names, transparent_pages))
         for name, target, staged, report, image_count, clean_names, transparent_pages in prepared:
             _promote_stage(staged, target)
-            results.append({"chapter": name, "status": "ok", "pages": image_count,
+            outcome = report.get("outcome")
+            results.append({"chapter": name, "status": "ok" if outcome == "visual_changes" else "no_change",
+                            "outcome": outcome, "pages": image_count,
                             "outputs": len(clean_names), "masks": len(report["pages"]),
                             "transparent_page_count": len(transparent_pages),
                             "transparent_pages": transparent_pages,
@@ -164,8 +168,12 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                 results.append({"chapter": name, "status": "failed", "error": str(exc)})
     finally:
         shutil.rmtree(batch_work, ignore_errors=True)
+    result_by_chapter = {item["chapter"]: item for item in results}
     for index, name in enumerate(chapters, 1):
+        item = result_by_chapter.get(name, {})
+        message = (f"Cap. {name}: sem pixels alterados; revisar máscaras e resultado."
+                   if item.get("status") == "no_change" else f"Cap. {name}: Nível II finalizado.")
         progress(name, {"stage": "done", "percent": round(index * 100 / len(chapters)),
                         "completed": index, "total": len(chapters),
-                        "message": f"Cap. {name}: Nível II finalizado."})
+                        "message": message})
     return results

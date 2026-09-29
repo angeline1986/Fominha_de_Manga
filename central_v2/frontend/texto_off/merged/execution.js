@@ -4,17 +4,20 @@ import { confirmMessage, showMessage, showOperationSummary } from "/_shared/mess
 
 function summary(results) {
   const done = results.filter((item) => item.status === "ok").length;
-  const failed = results.length - done;
+  const unchanged = results.filter((item) => item.status === "no_change").length;
+  const failed = results.filter((item) => item.status === "failed").length;
   return {
     headline: `${results.length} capítulo(s) processado(s)`,
-    breakdown: [done && `${done} concluído(s)`, failed && `${failed} com ocorrência`].filter(Boolean).join(" · "),
+    breakdown: [done && `${done} concluído(s)`, unchanged && `${unchanged} sem alteração`,
+      failed && `${failed} com ocorrência`].filter(Boolean).join(" · "),
     items: results.map((item) => ({
       chapter: item.chapter,
-      status: item.status === "ok" ? "Concluído" : "Requer atenção",
+      status: item.status === "ok" ? "Concluído" : item.status === "no_change" ? "Sem alteração — revisar" : "Requer atenção",
       count: `${Number(item.outputs || 0)} merge(s)`,
       warning: item.status !== "ok",
       details: [
-        { label: "Cleaner V2", value: item.status === "ok" ? "Concluído" : item.error || "Falha" },
+        { label: item.text_pages !== undefined ? "Resultado Nível II" : "Cleaner V2",
+          value: item.status === "ok" ? "Concluído" : item.status === "no_change" ? "Nenhum pixel alterado; revise máscaras e resultado." : item.error || "Falha" },
         { label: "Imagens de entrada", value: String(Number(item.pages || 0)) },
         { label: "Imagens limpas", value: String(Number(item.outputs || 0)) },
         { label: "Máscaras", value: String(Number(item.masks || 0)) },

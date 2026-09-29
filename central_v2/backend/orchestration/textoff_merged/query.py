@@ -9,6 +9,7 @@ from .manifests import (
     _manifest_matches_merge, _stage_manifest, _stage_manifest_sha256,
     _transparent_masks_ready,
 )
+from .level2_vision import ALGORITHM
 
 def query_merged(manga: Path) -> dict:
     """Project official MERGE availability and current TextOff manifests."""
@@ -90,7 +91,7 @@ def query_merged_level2(manga: Path) -> dict:
             outputs = previous.get("clean_artifacts")
             previous_valid = (
                 previous.get("integrity_ok") is True
-                and previous.get("algorithm") == "textoff_merged_level2_cleaner_mask_craft_lama_transparent_v2"
+                and previous.get("algorithm") == ALGORITHM
                 and previous.get("source_level1_artifacts") == level1.get("clean_artifacts")
                 and previous.get("source_level1_manifest_sha256") == _stage_manifest_sha256(
                     manga, "MERGED_NIVEL_I", row["chapter"]
@@ -100,8 +101,10 @@ def query_merged_level2(manga: Path) -> dict:
                 and all(isinstance(item, str) and Path(item).name == item and (previous_dir / item).is_file()
                         for item in outputs)
             )
+            outcome = previous.get("outcome")
             row["level2_status"] = (
-                "processed" if previous_valid else "pending"
+                ("processed" if outcome == "visual_changes" else "no_change")
+                if previous_valid else "pending"
             )
             row["level2_pages_with_text"] = int(previous.get("pages_with_text") or 0) if previous_valid else 0
             row["level2_changed_pixels"] = int(previous.get("changed_pixels") or 0) if previous_valid else 0

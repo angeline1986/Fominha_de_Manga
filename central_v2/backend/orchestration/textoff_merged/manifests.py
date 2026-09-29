@@ -86,13 +86,30 @@ def _manifest_matches_merge(manifest: dict, manga: Path, chapter: str) -> bool:
 
 def _transparent_masks_ready(manga: Path, chapter: str, manifest: dict) -> bool:
     level1 = manifest.get("level1") if isinstance(manifest.get("level1"), dict) else {}
+    if level1.get("algorithm") != "textoff_level1_balloon_transparency_gate_v4":
+        return False
     names = level1.get("transparent_mask_artifacts")
     expected = int(manifest.get("pages_total") or 0)
     folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / chapter
-    return isinstance(names, list) and len(names) == expected and all(
+    artifacts_ready = isinstance(names, list) and len(names) == expected and all(
         isinstance(name, str) and Path(name).name == name and (folder / name).is_file()
         for name in names
     )
+    if not artifacts_ready:
+        return False
+    report_name = level1.get("report")
+    if not isinstance(report_name, str) or Path(report_name).name != report_name:
+        return False
+    try:
+        report = json.loads((folder / report_name).read_text(encoding="utf-8"))
+    except (OSError, ValueError, TypeError):
+        return False
+    balloons = [balloon for page in report.get("pages", []) if isinstance(page, dict)
+                for balloon in page.get("transparent_balloons", []) if isinstance(balloon, dict)]
+    labels = [balloon.get("mask_label") for balloon in balloons]
+    return (len(balloons) == int(level1.get("transparent_balloons_total") or 0)
+            and all(type(label) is int and label > 0 for label in labels)
+            and len(labels) == len(set(labels)))
 
 
 def _deferred_text_masks_ready(manga: Path, chapter: str, manifest: dict) -> bool:
