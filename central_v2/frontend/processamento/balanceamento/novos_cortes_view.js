@@ -56,22 +56,33 @@ export function createBalanceCutsView(handlers) {
   }
 
   function drawEditor() {
+    const previousCanvas = editorHost.querySelector("[data-canvas]");
+    const previousStage = editorHost.querySelector("[data-stage]");
+    const previousImage = previousStage?.querySelector("img");
+    const scroll = previousCanvas ? { top: previousCanvas.scrollTop, left: previousCanvas.scrollLeft } : null;
+    const mergeScroll = editorHost.querySelector("[data-merges]")?.scrollTop ?? 0;
     const selection = state.selection;
     const draft = state.draft;
     const start = Number(draft?.region?.global_start);
     const end = Number(draft?.region?.global_end);
     const total = end - start;
-    const mergeRows = (selection?.merges || []).map((file) => `<div class="manual-cut-page-item balance-cuts-merge" data-merge-preview="${escapeHtml(file)}"><span>${escapeHtml(file)}</span></div>`).join("");
+    const mergeRanges = draft?.merge_ranges || [];
+    const mergeRows = (selection?.merges || []).map((file) => {
+      const range = mergeRanges.find((item) => item.file === file);
+      const cutLabels = range ? state.cuts.map((cut, index) => cut > Number(range.global_start) && cut <= Number(range.global_end)
+        ? `<small class="manual-cut-cut-label" style="color:${state.rulerColors[index]}">Corte ${index + 1}</small>` : "").join("") : "";
+      return `<div class="manual-cut-page-item balance-cuts-merge" data-merge-preview="${escapeHtml(file)}"><span>${escapeHtml(file)}</span>${cutLabels}</div>`;
+    }).join("");
     const rulers = state.cuts.map((_, index) => `<button type="button" data-ruler="${index}" class="manual-cut-ruler-button ${index === state.activeCut ? "active" : ""}" style="--ruler-color:${state.rulerColors[index]}">${rulerIconMarkup(state.rulerColors[index])}<strong>${index + 1}</strong><i></i></button>`).join("");
     const focusRulers = state.cuts.map((_, index) => `<button type="button" data-focus-ruler="${index}" class="${index === state.activeCut ? "is-active" : ""}" style="--ruler-color:${state.rulerColors[index]}" aria-label="Selecionar régua ${index + 1}" aria-pressed="${index === state.activeCut}">${index + 1}</button>`).join("");
-    const lines = state.cuts.map((cut, index) => `<button type="button" class="balance-cut-line ${index === state.activeCut ? "is-active" : ""}" data-cut-index="${index}" style="--ruler-color:${state.rulerColors[index]};top:${100 * (cut - start) / total}%" aria-label="Régua ${index + 1}"><span>Régua ${index + 1}</span></button>`).join("");
+    const lines = state.cuts.map((cut, index) => `<button type="button" class="manual-cut-ruler-line balance-cut-line ${index === state.activeCut ? "is-active" : ""}" data-cut-index="${index}" style="--ruler-color:${state.rulerColors[index]};top:${100 * (cut - start) / total}%" aria-label="Régua ${index + 1}"><b>Régua ${index + 1}</b></button>`).join("");
     const highlights = state.highlightOdd ? pageHighlights(draft?.source_slices || [], start, total) : "";
     const sourceUrl = draft && selection ? balanceamentoImageUrl(selection.provider, selection.manga, selection.chapter, draft.source_preview || "manual-source.png", "editor", draft.proposal_id) : "";
-    const image = draft ? `<div class="manual-cut-strip balance-image-wrap" data-stage style="width:${state.zoom}%">${highlights}<img src="${sourceUrl}" alt="Região selecionada para balanceamento" draggable="false">${lines}</div>` : `<p class="balance-canvas-empty">${selection ? "Prepare o editor para visualizar os merges selecionados." : "Volte a Validar Balanceamento e escolha merges contíguos."}</p>`;
+    const image = draft ? `<div class="manual-cut-strip balance-image-wrap" data-stage style="width:${state.zoom}%">${highlights}<img src="${sourceUrl}" alt="Região selecionada para balanceamento" draggable="false">${lines}</div>` : `<p class="balance-canvas-empty">${selection ? state.busy ? "Preparando a prévia dos merges selecionados…" : "A prévia ainda não está disponível." : "Volte a Validar Balanceamento e escolha merges contíguos."}</p>`;
     const count = `<div class="manual-cut-ruler-count"><button type="button" data-cut="remove" aria-label="Remover régua" ${!state.cuts.length || state.busy ? "disabled" : ""}>−</button><output>${state.cuts.length}</output><button type="button" data-cut="add" aria-label="Adicionar régua" ${state.busy || !draft ? "disabled" : ""}>+</button></div>`;
     const action = draft
       ? `<button type="button" class="btn primary" data-generate ${state.busy || !validCuts(state.cuts, start, end) ? "disabled" : ""}>✂ Gerar proposta</button>`
-      : `<button type="button" class="btn primary" data-prepare ${!selection || state.busy ? "disabled" : ""}>Preparar editor</button>`;
+      : `<button type="button" class="btn primary" data-prepare ${!selection || state.busy ? "disabled" : ""}>${state.busy ? "Preparando editor…" : "Preparar editor"}</button>`;
     const result = draft ? proposalMarkup(selection, draft, state.busy) : "";
     colorPopover?.remove();
     editorHost.innerHTML = `<div class="manual-cut-workspace balance-cuts-workspace">
@@ -85,10 +96,26 @@ export function createBalanceCutsView(handlers) {
       </aside>
       <section class="manual-cut-viewer">
         <div class="manual-cut-viewer-toolbar"><strong>Visualizador de emendas</strong><div><div class="zoom-control"><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><output data-zoom-value>${state.zoom}%</output><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><button type="button" data-zoom="reset" aria-label="Visualizar em escala 1 para 1">1:1</button></div><span data-focus-toggle-slot></span></div></div>
-        <div class="manual-cut-canvas-wrap" data-canvas>${image}</div>
-        <p class="manual-cut-hint">Clique na prévia para posicionar a régua selecionada. Arraste uma régua para ajustá-la.</p>
-      </section>
+        <div class="manual-cut-canvas-wrap ${draft ? "" : "is-empty"}" data-canvas>${image}</div>
+      <p class="manual-cut-hint">Clique na prévia para posicionar a régua selecionada. Arraste uma régua para ajustá-la.</p>
+    </section>
     </div>${result}`;
+    const nextCanvas = editorHost.querySelector("[data-canvas]");
+    const nextStage = editorHost.querySelector("[data-stage]");
+    const nextImage = nextStage?.querySelector("img");
+    if (previousImage && nextStage && nextImage && previousImage.getAttribute("src") === nextImage.getAttribute("src")) {
+      const stageChildren = Array.from(nextStage.childNodes);
+      stageChildren[stageChildren.indexOf(nextImage)] = previousImage;
+      previousStage.replaceChildren(...stageChildren);
+      previousStage.style.width = `${state.zoom}%`;
+      nextStage.replaceWith(previousStage);
+    }
+    if (scroll && nextCanvas) {
+      nextCanvas.scrollTop = scroll.top;
+      nextCanvas.scrollLeft = scroll.left;
+    }
+    const nextMergeList = editorHost.querySelector("[data-merges]");
+    if (nextMergeList) nextMergeList.scrollTop = mergeScroll;
     editorHost.querySelector("[data-focus-toggle-slot]").append(focusButton);
     element.querySelector("[data-focus-rulers]").innerHTML = focusRulers;
     element.querySelector("[data-dock-zoom]").textContent = `${state.zoom}%`;

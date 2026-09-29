@@ -289,7 +289,7 @@ def _latest_proposal(manga: Path, chapter: str) -> dict[str, Any] | None:
         result["editor"] = editor
         result["generated_proposal"] = generated
         if editor:
-            for key in ("selected_files", "region", "source_slices", "source_preview"):
+            for key in ("selected_files", "region", "source_slices", "source_preview", "merge_ranges"):
                 if editor.get(key) is not None:
                     result[key] = editor.get(key)
             if generated is None and editor.get("cuts") is not None:

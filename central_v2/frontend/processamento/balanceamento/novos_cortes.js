@@ -2,6 +2,7 @@ import { getContext, subscribeContext } from "/_app/state/context.js";
 import { clearBalanceSelection, getBalanceSelection } from "/_app/state/balanceamento.js";
 import { fetchBalanceamento, submitBalanceJob, waitForBalanceJob } from "/_app/api/balanceamento.js";
 import { createBalanceCutsView } from "/processamento/balanceamento/novos_cortes_view.js";
+import { defaultRulerColors } from "/processamento/merge_manual/novos_merges_view.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { confirmMessage, showMessage } from "/_shared/messages/messages.js";
 
@@ -14,12 +15,12 @@ export function render(container) {
   container.replaceChildren(view.element, progress.element);
   let selection = getBalanceSelection();
   const context = getContext();
+  const validSelection = selection && selection.provider === context.provider && selection.manga === context.manga;
   let draft = null;
-  let busy = false;
+  let busy = Boolean(validSelection);
   let disposed = false;
   let active = false;
-  const validSelection = selection && selection.provider === context.provider && selection.manga === context.manga;
-  view.update({ selection: validSelection ? selection : null, draft: null });
+  view.update({ selection: validSelection ? selection : null, draft: null, busy });
   const unsubscribe = subscribeContext((next) => {
     if (!selection || (selection.provider === next.provider && selection.manga === next.manga)) return;
     selection = null;
@@ -37,11 +38,19 @@ export function render(container) {
       const candidate = chapter?.proposal;
       if (candidate?.source_preview && sameFiles(candidate.selected_files, selection.merges)) {
         draft = candidate;
-        view.update({ draft });
+        busy = false;
+        view.update({ draft, busy });
+        return;
       }
     } catch (error) {
-      if (!disposed) await showMessage({ title: "Falha ao recuperar os cortes", message: error.message });
+      if (!disposed) {
+        busy = false;
+        view.update({ busy });
+        await showMessage({ title: "Falha ao carregar os merges", message: error.message });
+      }
+      return;
     }
+    if (!disposed) await onPrepare([...defaultRulerColors]);
   }
 
   async function onPrepare(rulerColors) {
@@ -52,7 +61,7 @@ export function render(container) {
 
   async function onGenerate(cuts, rulerColors) {
     await run("proposal", { cuts }, "Gerando proposta manual…", (result) => {
-      draft = { ...draft, ...result, ruler_colors: rulerColors, source_preview: draft.source_preview, source_slices: draft.source_slices, region: draft.region };
+      draft = { ...draft, ...result, ruler_colors: rulerColors, source_preview: draft.source_preview, source_slices: draft.source_slices, merge_ranges: draft.merge_ranges, region: draft.region };
       view.update({ draft });
     });
   }

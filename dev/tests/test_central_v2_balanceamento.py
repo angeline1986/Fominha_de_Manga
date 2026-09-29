@@ -3,10 +3,12 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
+from PIL import Image
 
 from central_v2.backend.routes.balanceamento import balanceamento_job_response
 from central_v2.backend.routes.balanceamento_media import balanceamento_image_response
 from central_v2.backend.routes.router import dispatch_get
+from processamento.balanceamento.balanceador import prepare_manual_balance
 
 
 class BalanceamentoV2Tests(unittest.TestCase):
@@ -65,6 +67,40 @@ class BalanceamentoV2Tests(unittest.TestCase):
         self.assertEqual(allowed.status, 200)
         self.assertEqual(denied.status, 404)
         self.assertEqual(traversal.status, 404)
+
+    def test_prepare_editor_stitches_selected_merges_and_returns_merge_ranges(self):
+        source = self.manga / "IMG" / "3"
+        source.mkdir(parents=True)
+        merge_dir = self.manga / "FLUXO_SECUNDARIO/02_MERGE/3"
+        merge_dir.mkdir(parents=True)
+        colors = [(220, 10, 10), (210, 20, 20), (10, 20, 220), (20, 30, 210)]
+        for index, color in enumerate(colors, start=1):
+            Image.new("RGB", (3, 2), color).save(source / f"page-{index:03}.png")
+        Image.new("RGB", (3, 4)).save(merge_dir / "merge-a.png")
+        Image.new("RGB", (3, 4)).save(merge_dir / "merge-b.png")
+        (merge_dir / "merge-manifest.json").write_text(json.dumps({"outputs": [
+            {"file": "merge-a.png", "global_start": 0, "global_end": 4},
+            {"file": "merge-b.png", "global_start": 4, "global_end": 8},
+        ]}))
+        for filename, upper, lower in (("merge-a.png", colors[0], colors[1]), ("merge-b.png", colors[2], colors[3])):
+            image = Image.new("RGB", (3, 4))
+            image.paste(Image.new("RGB", (3, 2), upper), (0, 0))
+            image.paste(Image.new("RGB", (3, 2), lower), (0, 2))
+            image.save(merge_dir / filename)
+
+        payload = prepare_manual_balance(self.manga, "3", ["merge-a.png", "merge-b.png"])
+        self.assertEqual(payload["merge_ranges"], [
+            {"file": "merge-a.png", "global_start": 0, "global_end": 4},
+            {"file": "merge-b.png", "global_start": 4, "global_end": 8},
+        ])
+        self.assertEqual([item["file"] for item in payload["source_slices"]], [
+            "page-001.png", "page-002.png", "page-003.png", "page-004.png",
+        ])
+        preview = self.manga / "FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/BALANCE_EDITOR/3/manual-source.png"
+        with Image.open(preview) as image:
+            self.assertEqual(image.size, (3, 8))
+            self.assertEqual(image.getpixel((0, 0)), colors[0])
+            self.assertEqual(image.getpixel((0, 4)), colors[2])
 
 
 if __name__ == "__main__":

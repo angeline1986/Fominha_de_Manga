@@ -123,6 +123,72 @@ def _load_global_region(
     return canvas
 
 
+def _load_selected_merges(
+    manga: Path,
+    chapter: str,
+    selected: list[dict[str, Any]],
+    *,
+    mode: str,
+) -> Image.Image:
+    """Compose a selected region from final merges without decoding every source page."""
+    pieces: list[Image.Image] = []
+    for item in selected:
+        name = str(item.get("file") or "")
+        path = _merge_root(manga) / str(chapter) / name
+        if not name or not path.is_file():
+            raise ValueError(f"Merge final ausente: {name or '(sem nome)'}.")
+        try:
+            start, end = int(item["global_start"]), int(item["global_end"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"Limites globais inválidos para {name}.") from exc
+        with Image.open(path) as image:
+            if image.height != end - start:
+                raise ValueError(f"Altura do merge divergente do manifesto: {name}.")
+            pieces.append(image.convert(mode).copy())
+    if not pieces:
+        raise ValueError("Nenhum merge final foi selecionado.")
+    width = pieces[0].width
+    if any(piece.width != width for piece in pieces):
+        raise ValueError("Os merges selecionados possuem larguras divergentes.")
+    canvas = Image.new(mode, (width, sum(piece.height for piece in pieces)))
+    y = 0
+    for piece in pieces:
+        canvas.paste(piece, (0, y))
+        y += piece.height
+    expected = int(selected[-1]["global_end"]) - int(selected[0]["global_start"])
+    if canvas.height != expected:
+        raise ValueError(f"Altura composta divergente: {canvas.height} != {expected}.")
+    return canvas
+
+
+def _source_ranges_for_region(
+    manga: Path,
+    chapter: str,
+    region_start: int,
+    region_end: int,
+) -> list[dict[str, Any]]:
+    """Read only source image headers to describe page boundaries in a region."""
+    ranges: list[dict[str, Any]] = []
+    cursor = 0
+    for path in _source_files(manga, chapter):
+        with Image.open(path) as image:
+            item_start, item_end = cursor, cursor + int(image.height)
+            cursor = item_end
+        overlap_start, overlap_end = max(region_start, item_start), min(region_end, item_end)
+        if overlap_end > overlap_start:
+            ranges.append({
+                "file": path.name,
+                "global_start": int(overlap_start),
+                "global_end": int(overlap_end),
+                "height": int(overlap_end - overlap_start),
+            })
+        if cursor >= region_end:
+            break
+    if not ranges or ranges[0]["global_start"] != region_start or ranges[-1]["global_end"] != region_end:
+        raise ValueError("Não foi possível mapear a região selecionada para as páginas-fonte.")
+    return ranges
+
+
 def _validate_selection(
     manga: Path,
     chapter: str,
@@ -895,22 +961,13 @@ def prepare_manual_balance(
     if not current_cuts:
         raise ValueError("A seleção não possui fronteiras internas para edição.")
 
-    _progress(progress_callback, 2, 3, "reconstruindo slices originais...")
-    units = _source_units_for_region(manga, chapter, region_start, region_end)
-    source_slices = []
-    for unit in units:
-        start = max(region_start, int(unit["global_start"]))
-        end = min(region_end, int(unit["global_end"]))
-        if end > start:
-            source_slices.append({
-                "file": str(unit["file"]), "global_start": start,
-                "global_end": end, "height": end - start,
-            })
+    _progress(progress_callback, 2, 3, "compondo merges selecionados...")
+    source_slices = _source_ranges_for_region(manga, chapter, region_start, region_end)
 
     proposal_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     editor_dir = _editor_root(manga) / chapter
     editor_dir.mkdir(parents=True, exist_ok=True)
-    rgb = _load_global_region(manga, chapter, region_start, region_end, mode="RGB")
+    rgb = _load_selected_merges(manga, chapter, selected, mode="RGB")
     preview_name = "manual-source.png"
     rgb.save(editor_dir / preview_name, format="PNG")
 
@@ -920,7 +977,13 @@ def prepare_manual_balance(
         "proposal_id": proposal_id, "chapter": chapter, "status": "AJUSTE_MANUAL",
         "generated_at": generated_at, "selected_files": ordered_names,
         "region": {"global_start": region_start, "global_end": region_end},
-        "source_slices": source_slices, "source_preview": preview_name,
+        "source_slices": source_slices,
+        "merge_ranges": [
+            {"file": name, "global_start": int(item["global_start"]),
+             "global_end": int(item["global_end"])}
+            for name, item in zip(ordered_names, selected)
+        ],
+        "source_preview": preview_name,
         "cuts": [{"ordinal": i, "selected_y": y, "origin": "current_merge_boundary"}
                  for i, y in enumerate(current_cuts, start=1)],
         "artifacts": [],
@@ -957,17 +1020,8 @@ def generate_manual_balance(
         raise ValueError("Todos os cortes precisam estar dentro da região selecionada.")
 
     _progress(progress_callback, 2, 4, "reconstruindo região a partir de IMG...")
-    rgb = _load_global_region(manga, chapter, region_start, region_end, mode="RGB")
-    units = _source_units_for_region(manga, chapter, region_start, region_end)
-    source_slices = []
-    for unit in units:
-        start = max(region_start, int(unit["global_start"]))
-        end = min(region_end, int(unit["global_end"]))
-        if end > start:
-            source_slices.append({
-                "file": str(unit["file"]), "global_start": start,
-                "global_end": end, "height": end - start,
-            })
+    rgb = _load_selected_merges(manga, chapter, selected, mode="RGB")
+    source_slices = _source_ranges_for_region(manga, chapter, region_start, region_end)
 
     proposal_id = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
     proposal_parent = _proposal_root(manga)
