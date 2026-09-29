@@ -85,6 +85,8 @@
 .balance-sidebar-heading { padding-bottom: var(--space-sm); border-bottom: 1px solid var(--color-border); }
 .balance-sidebar-title { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-sm); min-width: 0; }
 .balance-sidebar-heading h2 { margin: 0; color: var(--color-primary-hover); font-size: var(--font-size-dialog-title); }
+.balance-refresh-button { width: 36px; min-width: 36px; min-height: 36px; padding: 7px; }
+.balance-refresh-button img { display: block; width: 18px; height: 18px; }
 .balance-chapter-picker select { min-height: 32px; padding: 4px 8px; border: 1px solid var(--color-border-primary); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-primary-hover); font: inherit; }
 .balance-list-controls { margin: var(--space-sm) 0; }
 .balance-list-controls [data-filters],
@@ -94,8 +96,8 @@
 .balance-list-controls button[aria-pressed="true"] { background: var(--color-surface); color: var(--color-primary-hover); box-shadow: var(--focus-ring); }
 .balance-list-controls [data-mode="bars"] { display: grid; width: 32px; place-items: center; }
 .balance-list-controls [data-mode="bars"] img { display: block; width: 15px; height: 15px; }
-.balance-list-heading { padding: 0 2px var(--space-xs); color: var(--color-text-muted); font-size: var(--font-size-label); text-transform: uppercase; letter-spacing: .06em; }
-.balance-list-heading label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-primary); text-transform: none; letter-spacing: 0; cursor: pointer; }
+.balance-list-heading { align-items: flex-end; justify-content: flex-end; min-height: 25px; padding: 0 2px var(--space-xs); color: var(--color-text-muted); font-size: var(--font-size-label); }
+.balance-list-heading label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-primary); white-space: nowrap; cursor: pointer; }
 .balance-list-heading input { width: 15px; height: 15px; margin: 0; accent-color: var(--color-primary); }
 .balance-merge-list { display: grid; align-content: start; gap: 5px; min-height: 0; flex: 1; overflow-y: auto; padding: 2px 4px 2px 0; }
 .balance-merge-item { display: flex; align-items: center; gap: 8px; min-width: 0; padding: 8px; border: 1px solid var(--color-border); border-radius: 9px; background: #f7fbfd; cursor: pointer; }
@@ -119,8 +121,8 @@
 .balance-merge-status { color: var(--color-text-muted); font-size: 10px; white-space: nowrap; }
 .is-short .balance-merge-status { color: #a85f00; font-weight: 700; }
 .balance-list-footer { align-items: stretch; flex-direction: column; padding-top: var(--space-sm); border-top: 1px solid var(--color-border); }
-.balance-list-footer > span { color: var(--color-text-muted); font-size: var(--font-size-small); }
 .balance-list-footer .btn { width: 100%; }
+.balance-submit-count { display: inline-grid; width: 21px; height: 21px; flex: none; place-items: center; border-radius: 50%; background: var(--color-surface); color: var(--color-primary); font-size: var(--font-size-small); font-weight: var(--font-weight-bold); }
 .balance-inspection-canvas { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; }
 .balance-canvas-toolbar,
 .balance-canvas-footer { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm); padding: 9px var(--space-md); border-bottom: 1px solid var(--color-border); background: var(--color-surface-soft); }

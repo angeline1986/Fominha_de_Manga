@@ -55,3 +55,17 @@ test('changing the shared configuration affects independent lists', async () => 
   assert.equal(first.select(rows).start, 21);
   assert.equal(second.select(rows).start, 1);
 });
+
+test('a list can override the shared page size without affecting other lists', async () => {
+  const load = browserModules();
+  const { createPagination } = await load('/_shared/pagination/model.js');
+  const ninePerPage = createPagination(9);
+  const sharedSize = createPagination();
+  const first = ninePerPage.select(rows);
+  assert.equal(first.rows.length, 9);
+  assert.equal(first.pages, 8);
+  assert.equal(first.start, 1);
+  ninePerPage.move(1);
+  assert.equal(ninePerPage.select(rows).start, 10);
+  assert.equal(sharedSize.select(rows).rows.length, 15);
+});

@@ -5,16 +5,16 @@ import { createPaginationControls } from "/_shared/pagination/pagination.js";
 export function createBalanceMergeList({ onEvent }) {
   const element = document.createElement("aside");
   element.className = "balance-validation-sidebar";
-  element.innerHTML = `<div class="balance-sidebar-heading"><div class="balance-sidebar-title"><h2>Merges do capítulo</h2><label class="balance-chapter-picker"><span class="visually-hidden">Capítulo</span><select data-chapter aria-label="Selecionar capítulo"></select></label></div><button class="btn" type="button" data-refresh>Atualizar</button></div>
+  element.innerHTML = `<div class="balance-sidebar-heading"><div class="balance-sidebar-title"><h2>Merges</h2><label class="balance-chapter-picker"><span class="visually-hidden">Capítulo</span><select data-chapter aria-label="Selecionar capítulo"></select></label></div><button class="btn balance-refresh-button" type="button" data-refresh aria-label="Atualizar" title="Atualizar"><img src="/_shared/icons/arrow-rotate-right-solid-full.svg" alt="" aria-hidden="true"></button></div>
     <div class="balance-list-controls"><div data-filters></div><div data-view-mode aria-label="Modo de distribuição"><button type="button" data-mode="bars" aria-label="Exibir barras" aria-pressed="true"><img src="/_shared/icons/chart-simple-solid-full.svg" alt="" aria-hidden="true"></button><button type="button" data-mode="pixels" aria-label="Exibir pixels" aria-pressed="false">px</button></div></div>
-    <div class="balance-list-heading"><strong>Distribuição proporcional</strong><label><input type="checkbox" data-select-all aria-label="Selecionar todos os merges">Marcar todos</label></div>
+    <div class="balance-list-heading"><label><input type="checkbox" data-select-all aria-label="Selecionar todos os merges">Marcar todos</label></div>
     <div class="balance-merge-list" data-list></div><div data-pagination></div>
-    <footer class="balance-list-footer"><span data-count></span><button class="btn primary" type="button" data-submit disabled>Submeter a Novos Cortes →</button></footer>
+    <footer class="balance-list-footer"><button class="btn primary" type="button" data-submit disabled><span class="balance-submit-count" data-count>0</span>Avançar para Cortes&nbsp;→</button></footer>
     <div class="balance-hover-preview" role="tooltip" hidden><img alt=""></div>`;
   const list = element.querySelector("[data-list]");
   const preview = element.querySelector(".balance-hover-preview");
   document.body.append(preview);
-  const pagination = createPagination();
+  const pagination = createPagination(9);
   let state = {};
   let selected = new Set();
   let mode = "bars";
@@ -55,7 +55,7 @@ export function createBalanceMergeList({ onEvent }) {
     selectAll.checked = merges.length > 0 && merges.every((item) => selected.has(item.file));
     selectAll.indeterminate = selected.size > 0 && !selectAll.checked;
     selectAll.disabled = !merges.length;
-    element.querySelector("[data-count]").textContent = `${selected.size} merge${selected.size === 1 ? "" : "s"} selecionado${selected.size === 1 ? "" : "s"}`;
+    element.querySelector("[data-count]").textContent = String(selected.size);
     const submit = element.querySelector("[data-submit]");
     submit.disabled = selected.size < 2 || !contiguous;
     submit.title = selected.size < 2 ? "Selecione pelo menos dois merges" : contiguous ? "Abrir Novos Cortes" : "Selecione merges contíguos";

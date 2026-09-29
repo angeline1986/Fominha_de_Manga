@@ -1,13 +1,13 @@
 import { paginationConfig } from "/_shared/pagination/config.js";
 
-export function createPagination() {
+export function createPagination(pageSize = paginationConfig.pageSize) {
   let page = 1;
   let pages = 1;
+  const size = Math.max(1, Math.floor(Number(pageSize) || paginationConfig.pageSize));
   return {
     reset() { page = 1; },
     move(delta) { page = Math.max(1, Math.min(pages, page + delta)); },
     select(rows) {
-      const size = paginationConfig.pageSize;
       pages = Math.max(1, Math.ceil(rows.length / size));
       page = Math.min(page, pages);
       const offset = (page - 1) * size;
