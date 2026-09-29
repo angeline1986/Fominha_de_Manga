@@ -55,10 +55,16 @@
 .balance-image-wrap { position: relative; min-width: 180px; margin: 0 auto; line-height: 0; }
 .balance-image-wrap img { display: block; width: 100%; height: auto; user-select: none; }
 .balance-actions { padding: var(--space-md) 0 0; }
-.balance-result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--space-md); margin-top: var(--space-md); }
-.balance-result-grid figure { min-width: 0; margin: 0; overflow: hidden; border: 1px solid var(--color-border-primary); border-radius: var(--radius-control); background: var(--color-surface-soft); }
-.balance-result-grid img { display: block; width: 100%; height: auto; }
-.balance-result-grid figcaption { padding: 8px 10px; color: var(--color-text-muted); font-size: var(--font-size-small); }
+.balance-result-viewport { max-height: 65vh; overflow: auto; margin-top: var(--space-md); padding: var(--space-md); border: 1px solid var(--color-border-primary); border-radius: var(--radius-control); background: #EAF3F7; background-image: radial-gradient(#C8DCE5 1px, transparent 1px); background-size: 18px 18px; }
+.balance-result-grid { display: flex; align-items: flex-start; gap: var(--space-md); min-width: 100%; width: max-content; }
+.balance-result-card { margin-top: var(--space-lg); }
+.balance-result-actions { display: flex; align-items: center; gap: var(--space-md); }
+.balance-result-actions .zoom-control { display: flex; align-items: center; gap: 4px; padding: 3px 5px; border: 1px solid var(--color-border-primary); border-radius: 9px; background: var(--color-surface-soft); }
+.balance-result-actions .zoom-control button { min-width: 30px; min-height: 30px; border: 1px solid var(--color-border-primary); border-radius: 7px; background: var(--color-surface); color: var(--color-primary-hover); cursor: pointer; }
+.balance-result-actions .zoom-control output { min-width: 44px; color: var(--color-primary-hover); font-size: var(--font-size-small); text-align: center; }
+.balance-result-grid figure { display: flex; width: max(220px, calc((100vw - 420px) / 3)); flex: 0 0 auto; flex-direction: column; margin: 0; overflow: hidden; border: 1px solid var(--color-border-primary); border-radius: var(--radius-control); background: var(--color-surface); }
+.balance-result-grid img { display: block; max-width: none; height: auto; align-self: flex-start; }
+.balance-result-grid figcaption { min-height: 22px; padding: 8px 10px; border-bottom: 1px solid var(--color-border); color: var(--color-primary-hover); font: 600 var(--font-size-small) ui-monospace, monospace; overflow-wrap: anywhere; }
 .balance-success { color: #17664c; }
 .balance-cuts-page.is-focus-mode { display: block; padding: 0; }
 .balance-cuts-page.is-focus-mode .balance-heading,
@@ -194,6 +200,8 @@
   .balance-heading { align-items: flex-start; flex-wrap: wrap; }
   .balance-detail-heading,
   .balance-editor-heading { align-items: flex-start; flex-wrap: wrap; }
+  .balance-result-actions { flex-wrap: wrap; }
+  .balance-result-grid figure { width: min(72vw, 360px); }
   .balance-workarea { grid-template-columns: 90px minmax(0, 1fr); min-height: 50vh; }
   .balance-table th,
   .balance-table td { padding: 8px 6px; font-size: var(--font-size-small); }

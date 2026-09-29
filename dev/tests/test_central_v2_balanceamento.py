@@ -8,13 +8,17 @@ from PIL import Image
 from central_v2.backend.routes.balanceamento import balanceamento_job_response
 from central_v2.backend.routes.balanceamento_media import balanceamento_image_response
 from central_v2.backend.routes.router import dispatch_get
-from processamento.balanceamento.balanceador import prepare_manual_balance
+from processamento.balanceamento.balanceador import (
+    effect_manual_balance,
+    generate_manual_balance,
+    prepare_manual_balance,
+)
 
 
 class BalanceamentoV2Tests(unittest.TestCase):
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
-        self.root = Path(self.temp.name)
+        self.root = Path(self.temp.name).resolve()
         self.manga = self.root / "comix" / "Teste"
         (self.manga / "IMG").mkdir(parents=True)
 
@@ -79,9 +83,9 @@ class BalanceamentoV2Tests(unittest.TestCase):
         Image.new("RGB", (3, 4)).save(merge_dir / "merge-a.png")
         Image.new("RGB", (3, 4)).save(merge_dir / "merge-b.png")
         (merge_dir / "merge-manifest.json").write_text(json.dumps({"outputs": [
-            {"file": "merge-a.png", "global_start": 0, "global_end": 4},
-            {"file": "merge-b.png", "global_start": 4, "global_end": 8},
-        ]}))
+            {"file": "merge-a.png", "global_start": 0, "global_end": 4, "width": 3, "height": 4},
+            {"file": "merge-b.png", "global_start": 4, "global_end": 8, "width": 3, "height": 4},
+        ], "source_total_height": 8, "validation": {"ok": True, "errors": []}}))
         for filename, upper, lower in (("merge-a.png", colors[0], colors[1]), ("merge-b.png", colors[2], colors[3])):
             image = Image.new("RGB", (3, 4))
             image.paste(Image.new("RGB", (3, 2), upper), (0, 0))
@@ -101,6 +105,16 @@ class BalanceamentoV2Tests(unittest.TestCase):
             self.assertEqual(image.size, (3, 8))
             self.assertEqual(image.getpixel((0, 0)), colors[0])
             self.assertEqual(image.getpixel((0, 4)), colors[2])
+
+        proposal = generate_manual_balance(self.manga, "3", ["merge-a.png", "merge-b.png"], [3, 5])
+        result = effect_manual_balance(self.manga, "3")
+        self.assertEqual(result["status"], "EFETIVADO")
+        self.assertEqual(result["output_count"], 3)
+        manifest = json.loads((merge_dir / "merge-manifest.json").read_text())
+        self.assertEqual(manifest["source_width"], 3)
+        self.assertEqual(len(manifest["outputs"]), 3)
+        with Image.open(merge_dir / proposal["artifacts"][0]["file"]) as image:
+            self.assertEqual(image.width, 3)
 
 
 if __name__ == "__main__":

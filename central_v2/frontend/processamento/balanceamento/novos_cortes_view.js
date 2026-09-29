@@ -30,7 +30,7 @@ export function createBalanceCutsView(handlers) {
   focusButton.setAttribute("aria-label", "Modo Foco");
   focusButton.setAttribute("aria-pressed", "false");
   focusButton.innerHTML = `${iconMarkup("focus-exit")} Foco`;
-  let state = { selection: null, draft: null, zoom: 50, activeCut: 0, cuts: [], rulerColors: [...defaultRulerColors], highlightOdd: true, busy: false };
+  let state = { selection: null, draft: null, zoom: 50, resultZoom: 100, activeCut: 0, cuts: [], rulerColors: [...defaultRulerColors], highlightOdd: true, busy: false };
   let colorPopover;
   let disposeFocusMode = () => {};
   element.addEventListener("click", onClick);
@@ -83,7 +83,7 @@ export function createBalanceCutsView(handlers) {
     const action = draft
       ? `<button type="button" class="btn primary" data-generate ${state.busy || !validCuts(state.cuts, start, end) ? "disabled" : ""}>✂ Gerar proposta</button>`
       : `<button type="button" class="btn primary" data-prepare ${!selection || state.busy ? "disabled" : ""}>${state.busy ? "Preparando editor…" : "Preparar editor"}</button>`;
-    const result = draft ? proposalMarkup(selection, draft, state.busy) : "";
+    const result = draft ? proposalMarkup(selection, draft, state.busy, state.resultZoom) : "";
     colorPopover?.remove();
     editorHost.innerHTML = `<div class="manual-cut-workspace balance-cuts-workspace">
       <aside class="manual-cut-panel">
@@ -137,6 +137,13 @@ export function createBalanceCutsView(handlers) {
   }
 
   function onClick(event) {
+    const resultZoom = event.target.closest("[data-result-zoom]");
+    if (resultZoom) {
+      const direction = resultZoom.dataset.resultZoom;
+      state.resultZoom = direction === "reset" ? 100 : clamp(state.resultZoom + (direction === "+" ? 10 : -10), 30, 200);
+      drawEditor();
+      return;
+    }
     const zoom = event.target.closest("[data-zoom]");
     if (zoom) { adjustZoom(zoom.dataset.zoom); return; }
     if (event.target.closest("[data-back]")) { handlers.onBack(); return; }
@@ -265,8 +272,8 @@ function pageHighlights(slices, start, total) {
     return `<span class="manual-cut-page-highlight" style="top:${100 * (top - start) / total}%;height:${100 * height / total}%"></span>`;
   }).join("");
 }
-function proposalMarkup(selection, draft, busy) {
+function proposalMarkup(selection, draft, busy, resultZoom) {
   if (!draft.artifacts?.length) return "";
-  const cards = draft.artifacts.map((item, index) => `<figure><img loading="lazy" src="${balanceamentoImageUrl(selection.provider, selection.manga, selection.chapter, item.file, "proposal", draft.proposal_id)}" alt="Segmento ${index + 1} da proposta"><figcaption>Segmento ${index + 1} · ${Number(item.height).toLocaleString("pt-BR")} px</figcaption></figure>`).join("");
-  return `<section class="balance-card"><div class="balance-editor-heading"><div><h2>Resultado da proposta</h2><p>A proposta ainda não altera o MERGE oficial.</p></div><button type="button" class="btn primary" data-apply ${busy || draft.status !== "PROPOSTA_GERADA" ? "disabled" : ""}>Aplicar composição final</button></div><div class="balance-result-grid">${cards}</div></section>`;
+  const cards = draft.artifacts.map((item) => `<figure><figcaption>${escapeHtml(item.file)}</figcaption><img loading="lazy" style="width:${resultZoom}%" src="${balanceamentoImageUrl(selection.provider, selection.manga, selection.chapter, item.file, "proposal", draft.proposal_id)}" alt="${escapeHtml(item.file)}"></figure>`).join("");
+  return `<section class="balance-card balance-result-card"><div class="balance-editor-heading"><div><h2>Resultado da proposta</h2><p>A proposta ainda não altera o MERGE oficial.</p></div><div class="balance-result-actions"><div class="zoom-control" aria-label="Zoom do resultado"><button type="button" data-result-zoom="-" aria-label="Diminuir zoom do resultado">−</button><output>${resultZoom}%</output><button type="button" data-result-zoom="+" aria-label="Aumentar zoom do resultado">+</button><button type="button" data-result-zoom="reset" aria-label="Restaurar zoom do resultado">1:1</button></div><button type="button" class="btn primary" data-apply ${busy || draft.status !== "PROPOSTA_GERADA" ? "disabled" : ""}>Aplicar composição final</button></div></div><div class="balance-result-viewport"><div class="balance-result-grid" style="--result-zoom:${resultZoom}%">${cards}</div></div></section>`;
 }

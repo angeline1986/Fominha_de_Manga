@@ -1146,9 +1146,13 @@ def effect_manual_balance(manga: Path, chapter: str, *, progress_callback: Progr
         raise ValueError("Proposta possui gap ou overlap entre artefatos.")
 
     total_height = int(manifest.get("source_total_height") or 0)
-    source_width = int(manifest.get("source_width") or 0)
+    # Auto-Merge Levels II+ and some older approved manifests store width per
+    # output, not at the top level. Infer it from that validated metadata.
+    declared_widths = [int(item.get("width") or 0) for item in outputs if isinstance(item, dict)]
+    source_width = int(manifest.get("source_width") or next((width for width in declared_widths if width > 0), 0))
     validation = manifest.get("validation") or {}
-    if total_height <= 0 or source_width <= 0 or validation.get("ok") is not True:
+    if (total_height <= 0 or source_width <= 0 or validation.get("ok") is not True
+            or any(width not in (0, source_width) for width in declared_widths)):
         raise ValueError("MERGE oficial não possui metadados válidos para efetivação.")
 
     first_idx, last_idx = indices[0], indices[-1]
@@ -1198,6 +1202,8 @@ def effect_manual_balance(manga: Path, chapter: str, *, progress_callback: Progr
 
         effected_at = datetime.now().astimezone().isoformat(timespec="seconds")
         new_manifest = dict(manifest)
+        new_manifest["source_width"] = source_width
+        new_manifest["source_total_height"] = total_height
         new_manifest["outputs"], new_manifest["merged_images"] = candidate, len(candidate)
         new_manifest["validation"] = {**validation, "ok": True, "errors": [], "coverage_start": 0, "coverage_end": total_height}
         composition = list(manifest.get("composition") or [])
