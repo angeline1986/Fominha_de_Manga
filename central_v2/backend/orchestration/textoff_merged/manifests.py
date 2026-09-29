@@ -104,12 +104,24 @@ def _transparent_masks_ready(manga: Path, chapter: str, manifest: dict) -> bool:
         report = json.loads((folder / report_name).read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return False
-    balloons = [balloon for page in report.get("pages", []) if isinstance(page, dict)
-                for balloon in page.get("transparent_balloons", []) if isinstance(balloon, dict)]
-    labels = [balloon.get("mask_label") for balloon in balloons]
-    return (len(balloons) == int(level1.get("transparent_balloons_total") or 0)
-            and all(type(label) is int and label > 0 for label in labels)
-            and len(labels) == len(set(labels)))
+    pages = report.get("pages", [])
+    if not isinstance(pages, list):
+        return False
+    balloon_count = 0
+    for page in pages:
+        if not isinstance(page, dict):
+            return False
+        balloons = page.get("transparent_balloons", [])
+        if not isinstance(balloons, list):
+            return False
+        labels = [balloon.get("mask_label") for balloon in balloons if isinstance(balloon, dict)]
+        if len(labels) != len(balloons):
+            return False
+        if (any(type(label) is not int or label <= 0 for label in labels)
+                or len(labels) != len(set(labels))):
+            return False
+        balloon_count += len(labels)
+    return balloon_count == int(level1.get("transparent_balloons_total") or 0)
 
 
 def _deferred_text_masks_ready(manga: Path, chapter: str, manifest: dict) -> bool:

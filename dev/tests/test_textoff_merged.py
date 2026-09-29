@@ -59,30 +59,36 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
             output.mkdir(parents=True)
             (output / "page-001-005_clean.png").write_bytes(b"clean")
             (output / "page-001-005_transparent_balloons.png").write_bytes(b"labels")
+            (output / "page-005-010_transparent_balloons.png").write_bytes(b"labels")
             (output / "page-001-005_deferred_text.png").write_bytes(b"deferred")
             (output / "clean-manifest.json").write_text(json.dumps({
                 "source_stage": "MERGE", "integrity_ok": True,
                 "source_artifacts": ["page-001-005.png"], "clean_artifacts": ["page-001-005_clean.png"],
                 "outputs_total": 1,
-                "pages_total": 1,
+                "pages_total": 2,
                 "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v4",
-                           "transparent_balloons_total": 2, "transparent_components_deferred": 3,
-                           "transparent_mask_artifacts": ["page-001-005_transparent_balloons.png"],
+                           "transparent_balloons_total": 3, "transparent_components_deferred": 3,
+                           "transparent_mask_artifacts": ["page-001-005_transparent_balloons.png",
+                                                           "page-005-010_transparent_balloons.png"],
                            "deferred_text_mask_artifacts": ["page-001-005_deferred_text.png"],
                            "report": "level1-balloon-report.json"},
             }), encoding="utf-8")
             (output / "level1-balloon-report.json").write_text(json.dumps({
-                "pages": [{"source": "page-001-005.png", "transparent_balloons": [
-                           {"balloon": 1, "mask_label": 1}, {"balloon": 2, "mask_label": 2}],
-                           "deferred_text_mask_artifact": "page-001-005_deferred_text.png",
-                           "transparent_components_deferred": 3}],
+                "pages": [
+                    {"source": "page-001-005.png", "transparent_balloons": [
+                        {"balloon": 1, "mask_label": 1}, {"balloon": 2, "mask_label": 2}],
+                     "deferred_text_mask_artifact": "page-001-005_deferred_text.png",
+                     "transparent_components_deferred": 3},
+                    {"source": "page-005-010.png", "transparent_balloons": [
+                        {"balloon": 1, "mask_label": 1}]},
+                ],
             }), encoding="utf-8")
             level1 = query_merged_level1(manga)["chapters"][0]
             level2 = query_merged_level2(manga)["chapters"][0]
             self.assertTrue(level1["cleaned"])
-            self.assertEqual(level1["transparent_balloons"], 2)
-            self.assertEqual(level1["transparent_page_count"], 1)
-            self.assertEqual(level1["transparent_pages"], ["page-001-005.png"])
+            self.assertEqual(level1["transparent_balloons"], 3)
+            self.assertEqual(level1["transparent_page_count"], 2)
+            self.assertEqual(level1["transparent_pages"], ["page-001-005.png", "page-005-010.png"])
             self.assertEqual(level1["deferred_components"], 3)
             self.assertEqual(level2["level2_status"], "pending")
             self.assertTrue(level2["selectable"])
