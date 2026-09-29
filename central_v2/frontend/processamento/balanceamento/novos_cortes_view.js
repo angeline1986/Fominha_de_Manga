@@ -1,7 +1,7 @@
 import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { defaultRulerColors, rulerPalette } from "/_shared/rulers/palette.js";
 import { balanceamentoImageUrl } from "/_app/api/balanceamento.js";
-import { defaultRulerColors, rulerPalette } from "/processamento/merge_manual/novos_merges_view.js";
 import { clamp, cutValues, renderCutsEditor, validCuts } from "/processamento/balanceamento/novos_cortes_render.js";
 
 export function createBalanceCutsView(handlers) {

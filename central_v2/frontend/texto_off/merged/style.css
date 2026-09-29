@@ -1,0 +1,54 @@
+.textoff-merged-page .data-table th:first-child,
+.textoff-merged-page .data-table td:first-child {
+  width: 56px;
+  text-align: center;
+}
+
+.textoff-merged-page .data-table th:nth-child(2),
+.textoff-merged-page .data-table td:nth-child(2) {
+  width: 24%;
+}
+
+.textoff-merged-page .data-table th:nth-child(3),
+.textoff-merged-page .data-table td:nth-child(3) {
+  width: 20%;
+}
+
+.textoff-merged-page .textoff-status {
+  font-weight: var(--font-weight-semibold);
+}
+
+.textoff-merged-page .textoff-status.is-done { color: var(--color-primary-hover); }
+.textoff-merged-page .textoff-status.is-pending { color: var(--color-warning); }
+.textoff-merged-page .textoff-status.is-invalid { color: #9d3030; }
+
+.textoff-merged-page .data-table input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--color-primary);
+}
+
+.textoff-merged-level2-page .data-table th:first-child,
+.textoff-merged-level2-page .data-table td:first-child { width: 4%; text-align: center; }
+.textoff-merged-level2-page .data-table th:nth-child(2),
+.textoff-merged-level2-page .data-table td:nth-child(2) { width: 7%; }
+.textoff-merged-level2-page .data-table th:nth-child(3),
+.textoff-merged-level2-page .data-table td:nth-child(3) { width: 8%; }
+.textoff-merged-level2-page .data-table th:nth-child(4),
+.textoff-merged-level2-page .data-table td:nth-child(4) { width: 16%; }
+.textoff-merged-level2-page .data-table th:nth-child(5),
+.textoff-merged-level2-page .data-table td:nth-child(5) { width: 13%; }
+.textoff-merged-level2-page .data-table th:nth-child(6),
+.textoff-merged-level2-page .data-table td:nth-child(6) { width: 12%; }
+.textoff-merged-level2-page .data-table th:nth-child(7),
+.textoff-merged-level2-page .data-table td:nth-child(7) { width: 11%; }
+.textoff-merged-level2-page .data-table th:nth-child(8),
+.textoff-merged-level2-page .data-table td:nth-child(8) { width: 13%; }
+.textoff-merged-level2-page .data-table th:nth-child(9),
+.textoff-merged-level2-page .data-table td:nth-child(9) { width: 16%; }
+
+.textoff-level-description {
+  margin: 0 0 var(--space-md);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-control);
+}

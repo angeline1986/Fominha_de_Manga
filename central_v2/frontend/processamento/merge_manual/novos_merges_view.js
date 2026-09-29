@@ -1,16 +1,6 @@
 import { mergeManualImageUrl } from "/_app/api/merge_manual.js";
-
-export const rulerPalette = [
-  { name: "Ciano", value: "#00F0FF", title: "Contraste em fundos escuros e quentes" },
-  { name: "Neon", value: "#FFE600", title: "Alta visibilidade em cenas escuras" },
-  { name: "Pink", value: "#FF007F", title: "Destaque em fundos claros" },
-  { name: "Lima", value: "#00FF66", title: "Alto contraste em fundos escuros" },
-];
-export const defaultRulerColors = ["#FFE600", "#FF007F", "#00FF66", "#00F0FF"];
-
-export function rulerIconMarkup(color) {
-  return `<svg class="manual-cut-ruler-icon" viewBox="0 0 24 18" aria-hidden="true"><rect x="2" y="3" width="20" height="13" rx="1.5" fill="none" stroke="${color}" stroke-width="2"/><path d="M6 3v5m4-5v3m4-3v5m4-5v3" fill="none" stroke="${color}" stroke-width="1.5"/></svg>`;
-}
+import { isOddPage } from "/_shared/pages/page_number.js";
+import { escapeHtml } from "/_shared/dom/sanitize.js";
 
 export function drawPageTags(page, pages, width, totalHeight, zoom, cuts, highlightOdd, colors, focusedPageFile = null) {
   const tags = page.querySelector("[data-page-tags]");
@@ -81,6 +71,3 @@ export function updatePageCutLabels(page, pages, cuts, colors) {
     });
   });
 }
-
-export function isOddPage(file) { return Number(file.match(/page-(\d+)/i)?.[1] || 0) % 2 === 1; }
-export function escapeHtml(value) { return String(value).replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }

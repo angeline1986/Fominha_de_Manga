@@ -61,6 +61,13 @@ central_v2/
 │   ├── routes/
 │   ├── jobs/
 │   └── state/
+├── runtime/
+│   └── textoff/
+│       ├── merged_nivel_i/.venv/
+│       ├── merged_nivel_ii/.venv/
+│       ├── legado/.venv/
+│       ├── correcao_assistida/
+│       └── especiais/
 └── frontend/
     ├── _app/
     │   ├── api/
@@ -75,6 +82,14 @@ central_v2/
     ├── texto_off/
     └── exportar_arquivos/
 ```
+
+Os ambientes especializados de processamento da V2 ficam sob
+`central_v2/runtime/`, organizados por feature. Os diretórios `.venv` são
+locais e ignorados pelo Git; requisitos, resolvedor de runtime e baselines
+reproduzíveis são versionados. A migração preserva as venvs atuais usadas
+pela Central V1, cria cada ambiente V2 separadamente, valida o worker e só
+então direciona a feature para o novo runtime. O mapa operacional completo
+de Texto Off está em `01_ambientes_virtuais.md`, seção 15.
 
 ### 2.3 Orquestração
 

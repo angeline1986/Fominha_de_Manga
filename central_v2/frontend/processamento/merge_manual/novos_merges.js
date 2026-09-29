@@ -2,9 +2,12 @@ import { getMergeManualSelection, setMergeManualProposal, setMergeManualSelectio
 import { generateMergeManualProposal } from "/_app/api/merge_manual.js";
 import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { escapeHtml } from "/_shared/dom/sanitize.js";
+import { defaultRulerColors } from "/_shared/rulers/palette.js";
 import { showMessage } from "/_shared/messages/messages.js";
-import { defaultRulerColors, escapeHtml, rulerPalette, rulerIconMarkup, updatePageCutLabels } from "/processamento/merge_manual/novos_merges_view.js";
+import { updatePageCutLabels } from "/processamento/merge_manual/novos_merges_view.js";
 import { createManualCutPreview } from "/processamento/merge_manual/novos_merges_preview.js";
+import { createRulerColorPicker } from "/processamento/merge_manual/novos_merges_color_picker.js";
 
 export function render(container) {
   const selection = getMergeManualSelection();
@@ -80,11 +83,11 @@ export function render(container) {
 
   function updateRulers() {
     page.querySelector("[data-ruler-count]").textContent = String(cuts.length);
-    page.querySelector("[data-rulers]").innerHTML = cuts.map((_, index) => `<button type="button" data-ruler="${index}" class="manual-cut-ruler-button ${index === activeRuler ? "active" : ""}" style="--ruler-color:${rulerColors[index]}">${rulerIconMarkup(rulerColors[index])}<strong>${index + 1}</strong><i></i></button>`).join("");
+    page.querySelector("[data-rulers]").innerHTML = cuts.map((_, index) => `<button type="button" data-ruler="${index}" class="manual-cut-ruler-button ${index === activeRuler ? "active" : ""}" style="--ruler-color:${rulerColors[index]}">${iconMarkup("ruler")}<strong>${index + 1}</strong><i></i></button>`).join("");
     page.querySelector("[data-focus-rulers]").innerHTML = cuts.map((_, index) => `<button type="button" data-focus-ruler="${index}" class="${index === activeRuler ? "is-active" : ""}" style="--ruler-color:${rulerColors[index]}" aria-label="Selecionar régua ${index + 1}" aria-pressed="${index === activeRuler}">${index + 1}</button>`).join("");
     page.querySelectorAll("[data-ruler]").forEach((button) => button.addEventListener("click", () => {
       activeRuler = Number(button.dataset.ruler); updateRulers(); draw();
-      openColorPicker(page.querySelector(`.manual-cut-ruler-select [data-ruler="${activeRuler}"]`), activeRuler);
+      colorPicker.open(page.querySelector(`.manual-cut-ruler-select [data-ruler="${activeRuler}"]`), activeRuler);
     }));
     page.querySelectorAll("[data-focus-ruler]").forEach((button) => button.addEventListener("click", () => { activeRuler = Number(button.dataset.focusRuler); updateRulers(); draw(); }));
     updatePageCutLabels(page, chosen, cuts, rulerColors);
@@ -95,6 +98,8 @@ export function render(container) {
     const bounds = canvas.getBoundingClientRect();
     return Math.round((event.clientY - bounds.top) * canvas.height / bounds.height);
   }
+
+  const colorPicker = createRulerColorPicker(colorPopover, rulerColors, updateRulers);
 
   function onPointerDown(event) {
     const y = locateCut(event);
@@ -125,8 +130,8 @@ export function render(container) {
   page.querySelector("[data-submit]").addEventListener("click", submitProposal);
   page.querySelector("[data-focus-add-ruler]").addEventListener("click", () => changeRulerCount(1));
   page.querySelector("[data-focus-submit]").addEventListener("click", submitProposal);
-  colorPopover.querySelector("[data-color-close]").addEventListener("click", closeColorPicker);
-  document.addEventListener("pointerdown", onOutsideColorPicker);
+  colorPopover.querySelector("[data-color-close]").addEventListener("click", colorPicker.close);
+  document.addEventListener("pointerdown", colorPicker.onOutside);
   updateRulers();
   draw();
 
@@ -140,23 +145,6 @@ export function render(container) {
   }
   function adjustZoom(delta) { zoom = Math.max(30, Math.min(150, zoom + delta)); draw(); }
 
-  function openColorPicker(anchor, index) {
-    colorPopover.querySelector("[data-color-title]").textContent = `Cor da Régua ${index + 1}`;
-    colorPopover.querySelector("[data-color-options]").innerHTML = rulerPalette.map((color) => `<button type="button" data-color="${color.value}" class="${rulerColors[index] === color.value ? "selected" : ""}" aria-label="${color.name}" title="Selecionar cor"><i style="--swatch:${color.value}"></i></button>`).join("");
-    const bounds = anchor.getBoundingClientRect();
-    colorPopover.hidden = false;
-    colorPopover.style.left = `${Math.max(12, Math.min(window.innerWidth - 248, bounds.left))}px`;
-    colorPopover.style.top = `${Math.max(12, Math.min(window.innerHeight - 170, bounds.bottom + 8))}px`;
-    colorPopover.querySelectorAll("[data-color]").forEach((button) => button.addEventListener("click", () => {
-      rulerColors[index] = button.dataset.color;
-      closeColorPicker(); updateRulers();
-    }));
-  }
-
-  function closeColorPicker() { colorPopover.hidden = true; }
-  function onOutsideColorPicker(event) {
-    if (!colorPopover.contains(event.target) && !event.target.closest("[data-ruler]")) closeColorPicker();
-  }
   function changeRulerCount(delta) {
     if (delta > 0) {
       const colorIndex = cuts.length;
@@ -191,7 +179,7 @@ export function render(container) {
     canvas.removeEventListener("pointerdown", onPointerDown);
     canvas.removeEventListener("pointermove", onPointerMove);
     canvas.removeEventListener("pointerup", onPointerUp);
-    document.removeEventListener("pointerdown", onOutsideColorPicker);
+    document.removeEventListener("pointerdown", colorPicker.onOutside);
     disposeFocusMode();
     colorPopover.remove();
   };

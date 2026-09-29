@@ -1,13 +1,32 @@
 .ui-icon {
+  display: inline-block;
   width: var(--icon-size);
   height: var(--icon-size);
   flex: none;
-  display: inline-block;
   vertical-align: middle;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
   pointer-events: none;
 }
+
+.ui-icon--visao-geral { -webkit-mask-image: url("/_shared/icons/visao-geral.svg"); mask-image: url("/_shared/icons/visao-geral.svg"); }
+.ui-icon--processamento { -webkit-mask-image: url("/_shared/icons/processamento.svg"); mask-image: url("/_shared/icons/processamento.svg"); }
+.ui-icon--balanceamento { -webkit-mask-image: url("/_shared/icons/balanceamento.svg"); mask-image: url("/_shared/icons/balanceamento.svg"); }
+.ui-icon--gerar-pdf { -webkit-mask-image: url("/_shared/icons/gerar-pdf.svg"); mask-image: url("/_shared/icons/gerar-pdf.svg"); }
+.ui-icon--texto-off { -webkit-mask-image: url("/_shared/icons/texto-off.svg"); mask-image: url("/_shared/icons/texto-off.svg"); }
+.ui-icon--exportar-arquivos { -webkit-mask-image: url("/_shared/icons/exportar-arquivos.svg"); mask-image: url("/_shared/icons/exportar-arquivos.svg"); }
+.ui-icon--sync { -webkit-mask-image: url("/_shared/icons/sync.svg"); mask-image: url("/_shared/icons/sync.svg"); }
+.ui-icon--power { -webkit-mask-image: url("/_shared/icons/power.svg"); mask-image: url("/_shared/icons/power.svg"); }
+.ui-icon--next { -webkit-mask-image: url("/_shared/icons/next.svg"); mask-image: url("/_shared/icons/next.svg"); }
+.ui-icon--back { -webkit-mask-image: url("/_shared/icons/back.svg"); mask-image: url("/_shared/icons/back.svg"); }
+.ui-icon--close { -webkit-mask-image: url("/_shared/icons/close.svg"); mask-image: url("/_shared/icons/close.svg"); }
+.ui-icon--focus-exit { -webkit-mask-image: url("/_shared/icons/focus-exit.svg"); mask-image: url("/_shared/icons/focus-exit.svg"); }
+.ui-icon--expand { -webkit-mask-image: url("/_shared/icons/expand.svg"); mask-image: url("/_shared/icons/expand.svg"); }
+.ui-icon--collapse { -webkit-mask-image: url("/_shared/icons/collapse.svg"); mask-image: url("/_shared/icons/collapse.svg"); }
+.ui-icon--menu { -webkit-mask-image: url("/_shared/icons/menu.svg"); mask-image: url("/_shared/icons/menu.svg"); }
+.ui-icon--ruler { -webkit-mask-image: url("/_shared/icons/ruler.svg"); mask-image: url("/_shared/icons/ruler.svg"); }

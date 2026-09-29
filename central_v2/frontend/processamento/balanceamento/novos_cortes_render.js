@@ -1,5 +1,7 @@
 import { balanceamentoImageUrl } from "/_app/api/balanceamento.js";
-import { rulerIconMarkup, escapeHtml, isOddPage } from "/processamento/merge_manual/novos_merges_view.js";
+import { escapeHtml } from "/_shared/dom/sanitize.js";
+import { iconMarkup } from "/_shared/icons/icons.js";
+import { isOddPage } from "/_shared/pages/page_number.js";
 
 export function cutValues(draft) {
   return (draft?.cuts || []).map((cut) => Number(cut.selected_y)).filter(Number.isFinite).sort((a, b) => a - b);
@@ -30,7 +32,7 @@ export function renderCutsEditor({ element, editorHost, preview, focusButton, st
       ? `<small class="manual-cut-cut-label" style="color:${state.rulerColors[index]}">Corte ${index + 1}</small>` : "").join("") : "";
     return `<div class="manual-cut-page-item balance-cuts-merge" data-merge-preview="${escapeHtml(file)}"><span>${escapeHtml(file)}</span>${labels}</div>`;
   }).join("");
-  const rulers = state.cuts.map((_, index) => `<button type="button" data-ruler="${index}" class="manual-cut-ruler-button ${index === state.activeCut ? "active" : ""}" style="--ruler-color:${state.rulerColors[index]}">${rulerIconMarkup(state.rulerColors[index])}<strong>${index + 1}</strong><i></i></button>`).join("");
+  const rulers = state.cuts.map((_, index) => `<button type="button" data-ruler="${index}" class="manual-cut-ruler-button ${index === state.activeCut ? "active" : ""}" style="--ruler-color:${state.rulerColors[index]}">${iconMarkup("ruler")}<strong>${index + 1}</strong><i></i></button>`).join("");
   const focusRulers = state.cuts.map((_, index) => `<button type="button" data-focus-ruler="${index}" class="${index === state.activeCut ? "is-active" : ""}" style="--ruler-color:${state.rulerColors[index]}" aria-label="Selecionar régua ${index + 1}" aria-pressed="${index === state.activeCut}">${index + 1}</button>`).join("");
   const lines = state.cuts.map((cut, index) => `<button type="button" class="manual-cut-ruler-line balance-cut-line ${index === state.activeCut ? "is-active" : ""}" data-cut-index="${index}" style="--ruler-color:${state.rulerColors[index]};top:${100 * (cut - start) / total}%" aria-label="Régua ${index + 1}"><b>Régua ${index + 1}</b></button>`).join("");
   const highlights = state.highlightOdd ? pageHighlights(draft?.source_slices || [], start, total) : "";

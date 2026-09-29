@@ -24,7 +24,7 @@ class Level1ExecutionTests(unittest.TestCase):
         Image.new("RGB", (8, 120), "white").save(self.chapter / "page-001.png")
 
     def submit(self, chapters=("1",)):
-        with patch("central_v2.backend.routes.auto_merge_execute.legacy_server_active", return_value=False):
+        with patch("central_v2.backend.routes.auto_merge.level1.legacy_server_active", return_value=False):
             response = dispatch_post("/api/auto-merge/level1/execute", {
                 "provider": "comix", "manga": "Obra Teste", "chapters": list(chapters),
             }, self.output)
@@ -58,7 +58,7 @@ class Level1ExecutionTests(unittest.TestCase):
         self.assertEqual(set(self.manga.rglob("*")), {self.manga / "IMG", self.chapter, self.chapter / "page-001.png"})
 
     def test_active_v1_blocks_job_creation(self):
-        with patch("central_v2.backend.routes.auto_merge_execute.legacy_server_active", return_value=True):
+        with patch("central_v2.backend.routes.auto_merge.level1.legacy_server_active", return_value=True):
             response = dispatch_post("/api/auto-merge/level1/execute", {
                 "provider": "comix", "manga": "Obra Teste", "chapters": ["1"],
             }, self.output)

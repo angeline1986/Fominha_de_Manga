@@ -5,13 +5,15 @@ async function requestJson(url, options = {}) {
   return payload;
 }
 
-export async function fetchMergedTextoff(provider, manga, signal) {
+export async function fetchMergedTextoff(provider, manga, signal, level = "") {
   const query = new URLSearchParams({ provider, manga });
-  return requestJson(`/api/textoff/merged?${query}`, { signal, cache: "no-store" });
+  const suffix = level ? `/level${level}` : "";
+  return requestJson(`/api/textoff/merged${suffix}?${query}`, { signal, cache: "no-store" });
 }
 
-export async function startMergedTextoff(provider, manga, chapters) {
-  return requestJson("/api/textoff/merged/execute", {
+export async function startMergedTextoff(provider, manga, chapters, level = "") {
+  const suffix = level ? `/level${level}` : "";
+  return requestJson(`/api/textoff/merged${suffix}/execute`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ provider, manga, chapters }),

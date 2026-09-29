@@ -34,7 +34,7 @@ async function setup({ confirmed = true, results = [{ chapter: '1', status: 'pro
       export async function showOperationSummary(value) { globalThis.summaries.push(value); }
     `,
   });
-  const { createLevel1Execution } = await load('/processamento/auto_merge/execution.js');
+  const { createLevel1Execution } = await load('/processamento/auto_merge/nivel1/execution.js');
   const runner = createLevel1Execution({ onStatus: (value) => states.push(value), onComplete: async () => { completed += 1; } });
   return { runner, requests, states, messages, confirmations, summaries, get completed() { return completed; } };
 }

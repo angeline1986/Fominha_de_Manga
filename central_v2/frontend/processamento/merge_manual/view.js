@@ -48,7 +48,7 @@ export function createMergeManualView() {
     count.textContent = `${rows.length} capítulo(s) · ${state.summary?.pending || 0} pendente(s)`;
     const table = document.createElement("table");
     table.className = `manual-merge-table${tableExpanded ? "" : " is-collapsed"}`;
-    table.innerHTML = `<thead><tr><th>Capítulo</th><th>Resíduos / pendências</th><th>Blocos</th><th>Status</th><th class="manual-merge-action-heading"><button type="button" class="manual-merge-expand" data-toggle aria-label="${tableExpanded ? "Recolher tabela de capítulos" : "Expandir tabela de capítulos"}" aria-expanded="${tableExpanded}">${iconMarkup(tableExpanded ? "collapse" : "expand")}</button></th></tr></thead><tbody ${tableExpanded ? "" : "hidden"}></tbody>`;
+    table.innerHTML = `<thead><tr><th>Cap.</th><th>Resíduos / pendências</th><th>Blocos</th><th>Status</th><th class="manual-merge-action-heading"><button type="button" class="manual-merge-expand" data-toggle aria-label="${tableExpanded ? "Recolher tabela de capítulos" : "Expandir tabela de capítulos"}" aria-expanded="${tableExpanded}">${iconMarkup(tableExpanded ? "collapse" : "expand")}</button></th></tr></thead><tbody ${tableExpanded ? "" : "hidden"}></tbody>`;
     const body = table.tBodies[0];
     for (const row of rows) {
       const tr = body.insertRow();

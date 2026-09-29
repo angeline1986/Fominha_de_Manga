@@ -282,13 +282,14 @@ Gera o PDF a partir do resultado do processamento de merge.
 
 O fluxo **Texto Off** trata a remoção de texto das imagens processadas.
 
-A Central possui atualmente:
+A Central organiza o fluxo Merged em níveis explícitos e mantém a execução anterior em Legado:
 
 ```text
 Texto Off
-   │
-   ├── Original
    ├── Merged
+   │   ├── Nível I
+   │   └── Nível II
+   ├── Legado
    ├── Comparar resultados
    └── Correção assistida
 ```
@@ -297,13 +298,25 @@ Texto Off
 
 Processamento das imagens provenientes do fluxo original.
 
-### Merged
+### Merged · Nível I
 
-Processamento das imagens provenientes do MERGE oficial em `FLUXO_SECUNDARIO/02_MERGE/<capítulo>/`. A primeira rodada usa o Cleaner V2 em área temporária, valida os resultados e só então publica imagens limpas, máscaras e manifesto em `FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED/<capítulo>/`.
+Processa imagens do MERGE oficial em `FLUXO_SECUNDARIO/02_MERGE/<capítulo>/` com Cleaner V2 e a proteção de balões transparentes. Os resultados são publicados separadamente em `FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/<capítulo>/`; o pós-processamento legado não roda nesta tela.
 
 O Nível I segmenta os balões e aplica uma proteção conservadora aos que mostram variação de cor/textura do desenho através do interior. Componentes de máscara que tocam um balão classificado como transparente são preservados da limpeza e registrados no relatório para uma rodada específica futura. Balões opacos continuam sujeitos à validação normal; componentes fora de um único balão ou ambíguos também são preservados.
 
 O teste focado de *Things that deserve to die*, capítulo 3, nas imagens `page-156-163.png` e `page-179-187.png`, detectou dois balões transparentes por imagem. A comparação confirmou que as áreas desses quatro balões permaneceram pixel a pixel iguais às fontes e sem pixels de máscara aplicados. A consulta da tabela usa o manifesto e a presença dos arquivos, sem decodificar todas as páginas durante a listagem.
+
+### Merged · Nível II
+
+A tela consulta os relatórios do Nível I e lista capítulos com balões transparentes detectados ou componentes adiados. O Nível II combina a máscara Cleaner adiada pelo Nível I com caixas de texto CRAFT, dilata 3×3 e 9×9 dentro do balão e reconstrói com LaMa e contexto de 120 px. O Legado continua separado e não é aplicado automaticamente.
+
+A tabela distingue o total de imagens do MERGE das páginas candidatas ao Nível II. No Cap. 3 de *Things that deserve to die*, o relatório mostra 31 imagens oficiais, 10 páginas com balões transparentes e 17 balões; portanto, 31 é a composição completa do capítulo, não o número de páginas com casos transparentes. O Nível II grava uma composição completa para manter o capítulo íntegro.
+
+O Patch Transparente Legado manual limpou as duas regiões selecionadas em `page-179-187.png`, mas o primeiro resultado automático Nível II e uma variante com máscara ampliada ainda deixaram texto. O relatório CRAFT também registra uma caixa rejeitada por tinta fora da faixa. O Nível II usa agora os componentes Cleaner adiados, limitados ao interior dos balões, para cobrir esse tipo de falha. O resultado ainda requer validação visual nas páginas `page-051-059`, `page-078-083`, `page-156-163` e `page-179-187`; integridade técnica, por si só, não declara a limpeza visual completa.
+
+### Legado
+
+Mantém a tela anterior e a execução completa existente em `FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED/<capítulo>/`, incluindo seus níveis internos automáticos. Os resultados existentes permanecem no mesmo local.
 
 O manifesto registra a configuração OCR aplicada pelo perfil. No perfil atual do Cleaner V2, `detect_box` e `auto` são configurados, mas Tesseract está desligado; o Panel Cleaner acaba usando MangaOCR em japonês. Isso não fornece OCR coreano ou chinês. A classificação por cor/textura também é uma heurística conservadora: cobertura universal de estilos transparentes ainda requer mais amostras e validação.
 

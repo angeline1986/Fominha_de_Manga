@@ -5,7 +5,7 @@
 > Este documento explica por que o projeto possui ambientes virtuais Python separados, qual fluxo utiliza cada ambiente, quais dependências precisam ser preservadas e como recuperar os ambientes em caso de troca de máquina, corrupção da `.venv` ou entrada de uma nova pessoa no projeto.
 >
 > **Baseline documentada:** 25/09/2026  
-> **Python das três venvs:** 3.12.7
+> **Python das três venvs da baseline:** 3.12.7
 
 ---
 
@@ -15,7 +15,7 @@ O `Fominha_de_Manga` utiliza processamento de imagens e modelos de IA com depend
 
 Por isso, os ambientes de processamento **não devem ser tratados como uma única `.venv` genérica do projeto**.
 
-Atualmente existem três ambientes críticos:
+Na baseline de 25/09/2026 foram registrados três ambientes críticos:
 
 | Ambiente | Localização | Papel |
 |---|---|---|
@@ -643,3 +643,81 @@ docs/Refatoracao/environment_baseline/AAAA-MM-DD/
 ```
 
 Assim o projeto mantém rastreabilidade sobre qual ambiente estava operacional em cada marco relevante.
+
+---
+
+# 15. Mapa de runtimes especializados da Central V2 — Texto Off
+
+**Decisão de destino:** cada fluxo de processamento TextOff migrado para a Central V2 terá um ambiente próprio em `central_v2/runtime/textoff/`. A pasta nomeia a feature e contém `.venv`; os ambientes atuais fora de `central_v2/` permanecem intactos para a Central V1 e outros consumidores.
+
+Esta seção é um **mapa de ambientes planejados**, não afirma que as venvs V2 já existam. Os diretórios `.venv` não são versionados. Antes de criar cada ambiente, inventariar as dependências e comparar com a baseline indicada; não copiar/mover a venv de origem nem instalar dependências nela.
+
+## 15.1 Limpeza Merged e Legado
+
+| Fluxo V2 | Destino da venv | Baseline de referência atual | Situação |
+|---|---|---|---|
+| Texto Off — Merged Nível I | `central_v2/runtime/textoff/merged_nivel_i/.venv` | `processamento/limpeza_baloes/cleaner_v2/.venv` e `cleaner_v2_pip_freeze.txt` | Criada com Python 3.12.7; lock próprio de 86 pacotes; runtime V2 selecionado; validação funcional real pendente |
+| Texto Off — Merged Nível II | `central_v2/runtime/textoff/merged_nivel_ii/.venv` | `processamento/limpeza_baloes/level3_regional/.venv` e `level3_regional_pip_freeze.txt` | Criada com Python 3.12.7; lock próprio de 62 pacotes; runtime V2 selecionado; validação funcional real pendente |
+| Texto Off — Legado (Original/Merged) | `central_v2/runtime/textoff/legado/.venv` | `processamento/limpeza_baloes/cleaner_v2/.venv` e `cleaner_v2_pip_freeze.txt` | Planejada; inventariar o executor completo do Legado, sem presumir que seu conjunto seja igual ao Merged I |
+
+Merged Nível I e Legado usam hoje o Cleaner V2 como referência, mas são fluxos V2 distintos e devem ter ambientes independentes. Merged Nível II usa o snapshot Regional de 25/09/2026 como referência de dependências; sua execução V2 usa exclusivamente a nova venv em `central_v2/runtime/textoff/merged_nivel_ii/`, sem reutilizar a `.venv` Regional.
+
+O lock de Merged Nível I deriva do freeze Cleaner V2 e acrescenta `ultralytics==8.4.162`, necessário para autorização de balões, junto de suas dependências resolvidas. O lock de Merged Nível II foi capturado após instalar o snapshot Regional completo. Os dois arquivos `requirements.lock.txt` nas pastas de runtime são os locks operacionais dessas novas venvs.
+
+Na criação, o freeze instalado em Cleaner V2 coincidiu com os 71 registros do snapshot; o Level 3 Regional coincidiu com os 62 registros. O ambiente V2 de Nível I ficou com 86 pacotes após adicionar e resolver Ultralytics. O ambiente V2 de Nível II ficou com 62 pacotes.
+
+## 15.2 Correção Assistida
+
+| Fluxo V2 | Destino da venv | Baseline de referência atual | Situação |
+|---|---|---|---|
+| Análise de resíduos | `central_v2/runtime/textoff/correcao_assistida/analise_residuos/.venv` | Dependências do analisador atual, a inventariar | Planejada; confirmar uso de OpenCV/NumPy e entradas/saídas do analisador |
+| Geração de prévia | `central_v2/runtime/textoff/correcao_assistida/previa/.venv` | `level3_regional_pip_freeze.txt`, `cleaner_v2_pip_freeze.txt` e modelo LaMa | Planejada; separar os workers de limpeza e reconstrução e registrar qual runtime executa cada um |
+
+A prévia atual pode chamar tanto o Python do Cleaner V2 quanto o worker Regional. A migração deve tornar essa cadeia explícita; não assumir que uma única venv cobre ambos sem provar o conjunto de dependências e o comportamento.
+
+## 15.3 Tratamentos especiais
+
+Cada tratamento terá ambiente próprio na V2, mesmo quando houver bibliotecas em comum. A especificação final de dependências deve ser feita por inventário; as baselines abaixo são pontos de partida, não listas prontas para instalação.
+
+| Tratamento V2 | Destino da venv | Baseline de referência atual | Pontos a inventariar |
+|---|---|---|---|
+| Patch Degradê | `central_v2/runtime/textoff/especiais/patch_degrade/.venv` | Cleaner V2 e runtime do servidor atual | OpenCV/NumPy, autorização e execução Cleaner |
+| Patch Estilizado | `central_v2/runtime/textoff/especiais/patch_estilizado/.venv` | Cleaner V2 e runtime do servidor atual | OpenCV/NumPy, classificação LAB/Canny, autorização e execução Cleaner |
+| Balão Transparente | `central_v2/runtime/textoff/especiais/balao_transparente/.venv` | Cleaner V2, Level 3 Regional e modelo LaMa | OpenCV/NumPy, autorização, LaMa e verificação da máscara |
+| Balão Transparente — Legado | `central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv` | Cleaner V2, Level 3 Regional e modelo LaMa | OpenCV/NumPy, máscara ROI, LaMa e comportamento legado |
+| Degradê Suave | `central_v2/runtime/textoff/especiais/degrade_suave/.venv` | `processamento/limpeza_baloes/gradiente_suave/.venv` e `gradiente_suave_pip_freeze.txt` | OpenCV headless/NumPy e contrato do reconstrutor |
+
+Os tratamentos especiais atuais são chamados dentro do processo web em alguns caminhos. Criar as venvs não os isola por si só: cada algoritmo deverá ser executado por worker/subprocesso usando o Python da sua feature, com entradas/saídas validadas e sem promoção implícita.
+
+## 15.4 Funcionalidades sem venv dedicada
+
+**Comparar resultados** é consulta/apresentação de artefatos e não recebe venv de processamento própria. Ela usa o runtime da aplicação V2 enquanto não houver operação especializada de imagem que justifique isolamento.
+
+As venvs atuais `download/mangago_downloader/.venv` e `reports/experimentos/candy-ch4-pages-051-053/patchmatch/.venv` também foram encontradas no repositório, mas não há evidência de que pertençam a um contrato operacional de Texto Off. Não recebem destino V2 neste mapa; reavaliar somente se um fluxo que as utiliza for migrado.
+
+## 15.5 Regras de criação e migração
+
+1. Preservar as venvs atuais de Cleaner V2, Level 3 Regional e Degradê Suave para seus consumidores existentes.
+2. Inventariar imports, subprocessos, modelos, configuração e arquivos de entrada/saída por feature antes de escolher dependências.
+3. Consultar os snapshots históricos desta documentação; não tratar `requirements.txt` incompleto como reprodução fiel.
+4. Criar a nova venv V2 ao lado da antiga, registrar Python, dependências diretas, freeze completo, hashes e modelos externos.
+5. Validar cada worker isoladamente e executar teste funcional controlado antes de trocar o seletor de runtime da feature.
+6. Atualizar caminhos através de configuração/resolvedor explícito da V2; não espalhar caminhos absolutos ou inferidos entre módulos.
+7. Só remover dependência do runtime antigo após provar que nenhum consumidor V1/CLI ainda o utiliza.
+8. Atualizar esta seção e criar uma nova baseline datada; não sobrescrever os snapshots de 25/09/2026.
+
+### Reconstrução dos dois ambientes já criados
+
+Executar a partir da raiz do repositório. As pastas `.venv` são locais, enquanto os locks são versionados:
+
+```sh
+python3.12 -m venv central_v2/runtime/textoff/merged_nivel_i/.venv
+central_v2/runtime/textoff/merged_nivel_i/.venv/bin/python -m pip install -r central_v2/runtime/textoff/merged_nivel_i/requirements.lock.txt
+
+python3.12 -m venv central_v2/runtime/textoff/merged_nivel_ii/.venv
+central_v2/runtime/textoff/merged_nivel_ii/.venv/bin/python -m pip install -r central_v2/runtime/textoff/merged_nivel_ii/requirements.lock.txt
+```
+
+Esses locks refletem a baseline macOS arm64/Python 3.12.7. Outra plataforma precisa de um lock validado para essa plataforma; não reutilizar cegamente wheels específicos de macOS.
+
+O diretório `central_v2/runtime/textoff/` contém runtimes locais ignorados pelo Git. Devem ser versionados somente código de seleção/validação, arquivos de requisitos e documentação/baselines — nunca os diretórios `.venv` nem modelos grandes.

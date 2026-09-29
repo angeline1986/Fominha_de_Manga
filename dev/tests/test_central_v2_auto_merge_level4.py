@@ -66,8 +66,8 @@ class CentralV2Level4Tests(unittest.TestCase):
             response = dispatch_get("/api/auto-merge/level4?provider=ridi&manga=test-manga", output_root)
             self.assertEqual(response.status, 200)
             self.assertEqual(json.loads(response.body)["chapters"][0]["chapter"], "6")
-            with patch("central_v2.backend.routes.auto_merge_level4_execute.legacy_server_active", return_value=False), patch(
-                "central_v2.backend.routes.auto_merge_level4_execute.submit",
+            with patch("central_v2.backend.routes.auto_merge.level4.legacy_server_active", return_value=False), patch(
+                "central_v2.backend.routes.auto_merge.level4.submit",
                 return_value={"id": "job-4", "status": "queued"},
             ) as submit:
                 queued = dispatch_post("/api/auto-merge/level4/execute", {

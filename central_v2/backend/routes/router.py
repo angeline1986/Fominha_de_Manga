@@ -3,17 +3,12 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from config.data_paths import OUTPUT_ROOT
-from central_v2.backend.routes.auto_merge import level1_response
-from central_v2.backend.routes.auto_merge_level2 import level2_response
-from central_v2.backend.routes.auto_merge_execute import execute_response
-from central_v2.backend.routes.auto_merge_level2_execute import execute_level2_response
-from central_v2.backend.routes.auto_merge_level3 import level3_response
-from central_v2.backend.routes.auto_merge_level3_execute import execute_level3_response
-from central_v2.backend.routes.auto_merge_level4 import level4_response
-from central_v2.backend.routes.auto_merge_level4_execute import execute_level4_response
-from central_v2.backend.routes.auto_merge_level5 import level5_response
-from central_v2.backend.routes.auto_merge_level5_execute import execute_level5_response
-from central_v2.backend.routes.auto_merge_folder import open_auto_merge_folder_response
+from central_v2.backend.routes.auto_merge.level1 import execute_response, level1_response
+from central_v2.backend.routes.auto_merge.level2 import execute_level2_response, level2_response
+from central_v2.backend.routes.auto_merge.level3 import execute_level3_response, level3_response
+from central_v2.backend.routes.auto_merge.level4 import execute_level4_response, level4_response
+from central_v2.backend.routes.auto_merge.level5 import execute_level5_response, level5_response
+from central_v2.backend.routes.auto_merge.folder import open_auto_merge_folder_response
 from central_v2.backend.routes.catalog import catalog_response
 from central_v2.backend.routes.health import health_response
 from central_v2.backend.routes.jobs import job_response
@@ -26,7 +21,10 @@ from central_v2.backend.routes.merge_manual import (
 )
 from central_v2.backend.routes.static import static_response
 from central_v2.backend.routes.textoff_merged import (
+    execute_textoff_merged_level1_response,
+    execute_textoff_merged_level2_response,
     execute_textoff_merged_response,
+    textoff_merged_level_response,
     textoff_merged_response,
 )
 from central_v2.backend.routes.balanceamento import balanceamento_job_response, balanceamento_response
@@ -66,6 +64,12 @@ def dispatch_get(
 
     if request.path == "/api/textoff/merged":
         return textoff_merged_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/textoff/merged/level1":
+        return textoff_merged_level_response("I", parse_qs(request.query), output_root)
+
+    if request.path == "/api/textoff/merged/level2":
+        return textoff_merged_level_response("II", parse_qs(request.query), output_root)
 
     if request.path == "/api/merge-manual/proposal/image":
         return merge_manual_proposal_image_response(parse_qs(request.query), output_root)
@@ -154,6 +158,10 @@ def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -
         return merge_manual_proposal_response(payload, output_root)
     if urlparse(path).path == "/api/textoff/merged/execute":
         return execute_textoff_merged_response(payload, output_root)
+    if urlparse(path).path == "/api/textoff/merged/level1/execute":
+        return execute_textoff_merged_level1_response(payload, output_root)
+    if urlparse(path).path == "/api/textoff/merged/level2/execute":
+        return execute_textoff_merged_level2_response(payload, output_root)
     if urlparse(path).path == "/api/merge-manual/apply":
         return merge_manual_apply_response(payload, output_root)
     if urlparse(path).path in {

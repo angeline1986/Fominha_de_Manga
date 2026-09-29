@@ -5,13 +5,13 @@ import { browserModules } from './modules.mjs';
 test('navigation resolves the Level III page', async () => {
   const load = browserModules();
   const { resolveRoute } = await load('/_app/router/routes.js');
-  assert.equal(resolveRoute('auto-merge-3').module, '/processamento/auto_merge/nivel3.js');
+  assert.equal(resolveRoute('auto-merge-3').module, '/processamento/auto_merge/nivel3/index.js');
 });
 
 test('navigation resolves the Level IV page', async () => {
   const load = browserModules();
   const { resolveRoute } = await load('/_app/router/routes.js');
-  assert.equal(resolveRoute('auto-merge-4').module, '/processamento/auto_merge/nivel4.js');
+  assert.equal(resolveRoute('auto-merge-4').module, '/processamento/auto_merge/nivel4/index.js');
 });
 
 test('Level III confirms, polls, summarizes and opens its own stage', async () => {
@@ -42,7 +42,7 @@ test('Level III confirms, polls, summarizes and opens its own stage', async () =
       export async function showOperationSummary(value) { globalThis.summaries.push(value); }
     `,
   });
-  const { createLevel3Execution } = await load('/processamento/auto_merge/execucao_nivel3.js');
+  const { createLevel3Execution } = await load('/processamento/auto_merge/nivel3/execution.js');
   const runner = createLevel3Execution({ onStatus() {}, async onComplete() {} });
   await runner.execute(['6']);
   assert.equal(confirmations[0].title, 'Executar Auto-Merge Nível III');
@@ -80,7 +80,7 @@ test('Level IV confirms execution and links its own stage in the summary', async
       export async function showOperationSummary(value) { globalThis.summaries.push(value); }
     `,
   });
-  const { createLevel4Execution } = await load('/processamento/auto_merge/execucao_nivel4.js');
+  const { createLevel4Execution } = await load('/processamento/auto_merge/nivel4/execution.js');
   const runner = createLevel4Execution({ onStatus() {}, async onComplete() {} });
   await runner.execute(['6']);
   assert.equal(JSON.parse(requests[0].options.body).chapters[0], '6');
@@ -114,7 +114,7 @@ test('Level V confirms the exhaustive pass and sends a remaining residual to rev
       export async function showOperationSummary(value) { globalThis.summaries.push(value); }
     `,
   });
-  const { createLevel5Execution } = await load('/processamento/auto_merge/execucao_nivel5.js');
+  const { createLevel5Execution } = await load('/processamento/auto_merge/nivel5/execution.js');
   const runner = createLevel5Execution({ onStatus() {}, async onComplete() {} });
   await runner.execute(['6']);
   assert.equal(JSON.parse(requests[0].options.body).chapters[0], '6');

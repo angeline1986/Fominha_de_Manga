@@ -1,23 +1,23 @@
 export const routes = {
   "auto-merge": {
     context: "processamento",
-    module: "/processamento/auto_merge/nivel1.js",
+    module: "/processamento/auto_merge/nivel1/index.js",
   },
   "auto-merge-2": {
     context: "processamento",
-    module: "/processamento/auto_merge/nivel2.js",
+    module: "/processamento/auto_merge/nivel2/index.js",
   },
   "auto-merge-3": {
     context: "processamento",
-    module: "/processamento/auto_merge/nivel3.js",
+    module: "/processamento/auto_merge/nivel3/index.js",
   },
   "auto-merge-4": {
     context: "processamento",
-    module: "/processamento/auto_merge/nivel4.js",
+    module: "/processamento/auto_merge/nivel4/index.js",
   },
   "auto-merge-5": {
     context: "processamento",
-    module: "/processamento/auto_merge/nivel5.js",
+    module: "/processamento/auto_merge/nivel5/index.js",
   },
   "validar-faixa": {
     context: "processamento",
@@ -39,9 +39,17 @@ export const routes = {
     context: "processamento",
     module: "/processamento/balanceamento/novos_cortes.js",
   },
-  "texto-off-merged": {
+  "texto-off-merged-i": {
     context: "texto-off",
-    module: "/texto_off/merged.js",
+    module: "/texto_off/merged/level1.js",
+  },
+  "texto-off-merged-ii": {
+    context: "texto-off",
+    module: "/texto_off/merged/level2.js",
+  },
+  "texto-off-legacy": {
+    context: "texto-off",
+    module: "/texto_off/merged/index.js",
   },
   "resumo-operacao": {
     context: "visao-geral",

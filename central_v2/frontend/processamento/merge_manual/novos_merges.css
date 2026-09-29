@@ -32,7 +32,7 @@
 .manual-cut-ruler-select [data-rulers] { flex-wrap: wrap; }
 .manual-cut-ruler-button { display: inline-flex; align-items: center; gap: 5px; min-width: 68px; padding: 6px; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-surface); color: var(--color-text); cursor: pointer; }
 .manual-cut-ruler-button.active { border-color: #0F5974; background: #0F5974; color: #FFFFFF; }
-.manual-cut-ruler-icon { width: 18px; height: 14px; flex: none; }
+.manual-cut-ruler-button .ui-icon--ruler { width: 18px; height: 14px; color: var(--ruler-color); }
 .manual-cut-ruler-button strong { font-size: 14px; }
 .manual-cut-ruler-button > i { width: 12px; height: 12px; margin-left: auto; border: 1px solid rgba(0,0,0,.35); border-radius: 50%; background: var(--ruler-color); }
 .manual-cut-marker { display: grid; width: 36px; height: 36px; flex: none; place-items: center; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); color: var(--color-text-muted); cursor: pointer; }

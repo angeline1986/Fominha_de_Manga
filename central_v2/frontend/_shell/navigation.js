@@ -82,12 +82,25 @@ export const navigation = [
   {
     id: "texto-off",
     label: "Texto Off",
+    defaultAction: "texto-off-merged-i",
     groups: [
       {
-        label: "FONTE",
+        label: "MERGED",
+        control: {
+          type: "segmented",
+          id: "textoff-merged-level",
+          label: "Merged",
+          defaultValue: "I",
+          options: [
+            { value: "I", action: "texto-off-merged-i", label: "I" },
+            { value: "II", action: "texto-off-merged-ii", label: "II" },
+          ],
+        },
+      },
+      {
+        label: "OUTROS RESULTADOS",
         items: [
-          { id: "texto-off-original", label: "Original" },
-          { id: "texto-off-merged", label: "Merged" },
+          { id: "texto-off-legacy", label: "Legado" },
         ],
       },
       {

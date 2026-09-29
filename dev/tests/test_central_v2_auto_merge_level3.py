@@ -85,9 +85,9 @@ class CentralV2Level3Tests(unittest.TestCase):
             )
             self.assertEqual(response.status, 200)
             self.assertEqual(json.loads(response.body)["chapters"][0]["chapter"], "6")
-            with patch("central_v2.backend.routes.auto_merge_level3_execute.legacy_server_active",
+            with patch("central_v2.backend.routes.auto_merge.level3.legacy_server_active",
                        return_value=False), patch(
-                "central_v2.backend.routes.auto_merge_level3_execute.submit",
+                "central_v2.backend.routes.auto_merge.level3.submit",
                 return_value={"id": "job-1", "status": "queued"},
             ) as submit:
                 queued = dispatch_post("/api/auto-merge/level3/execute", {

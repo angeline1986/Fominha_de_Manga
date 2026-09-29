@@ -94,7 +94,7 @@
       <li>A proteção depende da segmentação localizar o balão. Regiões não segmentadas precisam de melhor detecção e instrumentação.</li>
       <li>Os limiares são empíricos e precisam de validação em fundos claros, texturas variadas, baixa opacidade e estilos diferentes.</li>
       <li>Preservar agora evita resíduos da limpeza, mas ainda não restaura o fundo sob o texto. O caso fica listado para uma segunda rodada.</li>
-      <li>O Nível II atual é refinamento de resíduos do Cleaner, não o fluxo dedicado de processamento dos balões adiados. Uma futura tela/etapa TextOff Merged Nível II deverá consumir as caixas e relatórios sem usar o resultado já alterado como fonte.</li>
+      <li>O refinamento antigo segue isolado em Legado. O Nível II combina os componentes Cleaner adiados pelo Nível I com detecção CRAFT, usa dilatações 3×3 e 9×9 dentro do balão e aplica LaMa com 120 px de contexto. Apenas pixels autorizados são compostos na saída.</li>
     </ul>
     <p class="callout warning"><strong>Política de segurança:</strong> na dúvida, não aplicar a máscara. Registrar o caso e manter os pixels originais para revisão ou tratamento posterior.</p>
   </section>

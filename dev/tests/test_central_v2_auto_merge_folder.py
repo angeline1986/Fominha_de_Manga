@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess
 from unittest.mock import patch
 
-from central_v2.backend.routes.auto_merge_folder import open_auto_merge_folder_response
+from central_v2.backend.routes.auto_merge.folder import open_auto_merge_folder_response
 
 
 class AutoMergeFolderTests(unittest.TestCase):
@@ -20,7 +20,7 @@ class AutoMergeFolderTests(unittest.TestCase):
         stage.mkdir(parents=True)
         payload = {"provider": "comix", "manga": "Obra", "chapter": "6", "level": 2}
 
-        with patch("central_v2.backend.routes.auto_merge_folder.subprocess.Popen") as launch:
+        with patch("central_v2.backend.routes.auto_merge.folder.subprocess.Popen") as launch:
             response = open_auto_merge_folder_response(payload, self.output)
 
         self.assertEqual(response.status, 200)
@@ -31,7 +31,7 @@ class AutoMergeFolderTests(unittest.TestCase):
         stage = self.manga / "FLUXO_SECUNDARIO" / "01_MERGE_PROCESSAMENTO" / "MERGE_LEVEL3" / "6"
         stage.mkdir(parents=True)
         payload = {"provider": "comix", "manga": "Obra", "chapter": "6", "level": 3}
-        with patch("central_v2.backend.routes.auto_merge_folder.subprocess.Popen") as launch:
+        with patch("central_v2.backend.routes.auto_merge.folder.subprocess.Popen") as launch:
             response = open_auto_merge_folder_response(payload, self.output)
         self.assertEqual(response.status, 200)
         launch.assert_called_once_with(["open", str(stage.resolve())], stdout=subprocess.DEVNULL,

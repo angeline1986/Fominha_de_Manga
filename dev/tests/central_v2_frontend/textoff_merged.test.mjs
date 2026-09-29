@@ -2,12 +2,20 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { browserModules } from './modules.mjs';
 
-test('menu action resolves to the dedicated TextOff Merged page', async () => {
+test('TextOff menu separates explicit Merged levels from the Legacy flow', async () => {
   const load = browserModules();
   const { resolveRoute } = await load('/_app/router/routes.js');
-  const route = resolveRoute('texto-off-merged');
-  assert.equal(route.context, 'texto-off');
-  assert.equal(route.module, '/texto_off/merged.js');
+  const level1 = resolveRoute('texto-off-merged-i');
+  const level2 = resolveRoute('texto-off-merged-ii');
+  const legacy = resolveRoute('texto-off-legacy');
+  assert.equal(level1.context, 'texto-off');
+  assert.equal(level1.module, '/texto_off/merged/level1.js');
+  assert.equal(level2.context, 'texto-off');
+  assert.equal(level2.module, '/texto_off/merged/level2.js');
+  assert.equal(legacy.context, 'texto-off');
+  assert.equal(legacy.module, '/texto_off/merged/index.js');
+  await load(level1.module);
+  await load(level2.module);
 });
 
 test('TextOff Merged confirms, submits selected chapters and summarizes the job', async () => {
@@ -34,10 +42,10 @@ test('TextOff Merged confirms, submits selected chapters and summarizes the job'
       export async function showOperationSummary(value) { globalThis.summaries.push(value); }
     `,
   });
-  const { createMergedExecution } = await load('/texto_off/merged_execution.js');
+  const { createMergedExecution } = await load('/texto_off/merged/execution.js');
   const runner = createMergedExecution({ onStatus: (status) => statuses.push(status), async onComplete() {} });
   await runner.execute(['3']);
-  assert.equal(confirmations[0].title, 'Executar Texto Off — Merged');
+  assert.equal(confirmations[0].title, 'Executar Texto Off — Legado');
   assert.deepEqual(JSON.parse(requests[0].options.body), {
     provider: 'ridi', manga: 'Obra', chapters: ['3'],
   });

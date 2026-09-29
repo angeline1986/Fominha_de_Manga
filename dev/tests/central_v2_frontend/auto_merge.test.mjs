@@ -97,7 +97,7 @@ test('response for a different work is rejected', async () => {
 
 test('record labels do not treat missing artifacts as completed work', async () => {
   const { load, controller } = await setup();
-  const { level1Label, needsAttention } = await load('/processamento/auto_merge/registros.js');
+  const { level1Label, needsAttention } = await load('/processamento/auto_merge/shared/registros.js');
   const record = { status: 'recorded', kind: 'complete', artifacts: [{ exists: false }] };
   assert.equal(level1Label(record), 'Arquivos ausentes');
   assert.equal(needsAttention({ level1: record, official: {}, attempt: {} }), true);
@@ -107,7 +107,7 @@ test('record labels do not treat missing artifacts as completed work', async () 
 
 test('Level I filters identify rows with values in their matching output columns', async () => {
   const { load, controller } = await setup();
-  const { matchesLevel1Filter } = await load('/processamento/auto_merge/registros.js');
+  const { matchesLevel1Filter } = await load('/processamento/auto_merge/shared/registros.js');
   const rows = [
     { official: { status: 'recorded' }, clean: true, pdf_merge: false, level1: {}, attempt: {} },
     { official: { status: 'absent' }, clean: false, pdf_merge: true, level1: {}, attempt: { message: 'Pendente' } },
@@ -130,8 +130,8 @@ test('Level II route uses its dedicated residual consultation page', async () =>
     return node;
   } } });
   const { resolveRoute } = await load('/_app/router/routes.js');
-  assert.equal(resolveRoute('auto-merge-2').module, '/processamento/auto_merge/nivel2.js');
-  const { createLevel2Columns } = await load('/processamento/auto_merge/residuos.js');
+  assert.equal(resolveRoute('auto-merge-2').module, '/processamento/auto_merge/nivel2/index.js');
+  const { createLevel2Columns } = await load('/processamento/auto_merge/shared/residuos_nivel2.js');
   const selected = new Set();
   const columns = createLevel2Columns({ selected: { chapters: selected, pageSelected: false },
     onSelect: (chapter, checked) => checked ? selected.add(chapter) : selected.delete(chapter),

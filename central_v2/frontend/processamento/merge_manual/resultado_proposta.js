@@ -1,6 +1,6 @@
 import { applyMergeManualProposal, mergeManualProposalImageUrl } from "/_app/api/merge_manual.js";
 import { getMergeManualSelection } from "/_app/state/merge_manual.js";
-import { escapeHtml } from "/processamento/merge_manual/novos_merges_view.js";
+import { escapeHtml } from "/_shared/dom/sanitize.js";
 import { confirmMessage, showMessage } from "/_shared/messages/messages.js";
 import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
 import { iconMarkup } from "/_shared/icons/icons.js";

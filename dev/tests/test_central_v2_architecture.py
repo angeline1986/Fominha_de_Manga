@@ -17,7 +17,7 @@ FEATURE_ROOTS = [
 class ArchitectureTests(unittest.TestCase):
     def test_source_files_have_at_most_200_lines(self):
         for path in (path for root in [ROOT, *FEATURE_ROOTS] for path in root.rglob("*")):
-            if path.suffix in SOURCE_EXTENSIONS:
+            if path.suffix in SOURCE_EXTENSIONS and ".venv" not in path.parts:
                 with self.subTest(file=str(path.relative_to(ROOT.parent))):
                     self.assertLessEqual(len(path.read_text().splitlines()), 200)
 

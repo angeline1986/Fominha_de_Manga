@@ -117,8 +117,6 @@
 .manual-merge-expand:disabled { opacity: .55; cursor: default; }
 .manual-merge-expand .ui-icon,
 .manual-merge-collapse .ui-icon { width: 14px; height: 14px; }
-.manual-merge-expand .ui-icon path,
-.manual-merge-collapse .ui-icon path { fill: currentColor; stroke: none; }
 
 .manual-merge-row-button {
   padding: 0;

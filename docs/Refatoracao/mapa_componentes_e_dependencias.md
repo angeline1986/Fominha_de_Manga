@@ -525,7 +525,7 @@ Portanto são dois contextos de entrada do mesmo pipeline oficial, e não duas i
 
 ### Migração inicial para Central V2
 
-A página **Texto Off — Merged** está sendo iniciada em `central_v2/frontend/texto_off/merged.js`. Sua consulta e job usam `/api/textoff/merged` e `/api/textoff/merged/execute`; a orquestração fica em `orquestracao/textoff/merged.py` e delega a limpeza para o `clean_chapter()` existente. A V2 valida MERGE oficial, expõe a lista de capítulos/artefatos e não copia o Cleaner nem seus gates.
+A página **Texto Off — Merged** fica em `central_v2/frontend/texto_off/merged/`, separada em entrada, níveis, view, execução, colunas e estilo. Suas rotas HTTP ficam em `central_v2/backend/routes/textoff_merged.py`; os casos de uso V2 ficam em `central_v2/backend/orchestration/textoff_merged/`, divididos por execução, consulta, manifestos e integração com o Cleaner. A V2 valida MERGE oficial e delega o processamento ao domínio Cleaner V2, sem importar uma orquestração compartilhada com a V1.
 
 O estado “resultado registrado” compara `source_stage`, nomes dos arquivos e contagem do `clean-manifest.json`. Isso **não prova identidade dos bytes do MERGE**, pois o manifesto Cleaner atual não guarda fingerprint da entrada. A interface informa esse limite; rastreabilidade por hash permanece lacuna separada para decisão e migração futura.
 

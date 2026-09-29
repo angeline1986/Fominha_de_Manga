@@ -23,6 +23,15 @@ class CentralV2TextoffMergedRouteTests(unittest.TestCase):
         self.assertEqual(payload["chapters"][0]["chapter"], "3")
         self.assertFalse(payload["chapters"][0]["selectable"])
 
+    def test_explicit_level2_query_reports_missing_level1_separately(self):
+        with tempfile.TemporaryDirectory() as root:
+            output = self.make_output(root)
+            response = dispatch_get("/api/textoff/merged/level2?provider=ridi&manga=obra", output)
+        self.assertEqual(response.status, 200)
+        payload = json.loads(response.body)
+        self.assertEqual(payload["chapters"][0]["level2_status"], "invalid_merge")
+        self.assertFalse(payload["chapters"][0]["selectable"])
+
     def test_execute_enqueues_v2_job_for_validated_selection(self):
         with tempfile.TemporaryDirectory() as root:
             output = self.make_output(root)

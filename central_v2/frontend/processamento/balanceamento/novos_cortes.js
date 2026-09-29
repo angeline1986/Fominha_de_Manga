@@ -2,7 +2,7 @@ import { getContext, subscribeContext } from "/_app/state/context.js";
 import { clearBalanceSelection, getBalanceSelection } from "/_app/state/balanceamento.js";
 import { fetchBalanceamento, submitBalanceJob, waitForBalanceJob } from "/_app/api/balanceamento.js";
 import { createBalanceCutsView } from "/processamento/balanceamento/novos_cortes_view.js";
-import { defaultRulerColors } from "/processamento/merge_manual/novos_merges_view.js";
+import { defaultRulerColors } from "/_shared/rulers/palette.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { confirmMessage, showMessage } from "/_shared/messages/messages.js";
 
