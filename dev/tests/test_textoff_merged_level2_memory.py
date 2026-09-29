@@ -59,7 +59,7 @@ class TextoffMergedLevel2MemoryTests(unittest.TestCase):
             with patch.object(level2_process, "_lama_model",
                               return_value=(FakeLama(), "test-model", "mps")) as model_factory, \
                  patch.object(level2_process, "_release_inference_cache"):
-                report = process(source_dir, level1_dir, output_dir, output_dir / "report.json")
+                report = process(source_dir, level1_dir, output_dir, output_dir / "json" / "report.json")
 
             self.assertEqual(model_factory.call_count, 2)
             self.assertEqual(report["pages_analyzed"], 4)
@@ -99,7 +99,7 @@ class TextoffMergedLevel2MemoryTests(unittest.TestCase):
                               return_value=(FakeLama(), "test-model", "cpu")), \
                  patch.object(level2_process, "_inpaint",
                               wraps=level2_process._inpaint) as inpaint:
-                report = process(source_dir, level1_dir, output_dir, output_dir / "report.json")
+                report = process(source_dir, level1_dir, output_dir, output_dir / "json" / "report.json")
 
             self.assertTrue(report["integrity_ok"])
             self.assertEqual(inpaint.call_count, 2)

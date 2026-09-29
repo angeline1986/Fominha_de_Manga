@@ -31,7 +31,7 @@
       <div class="step"><b>2 · Cleaner V2</b>Gera <code>_clean</code> e <code>_mask</code> numa área temporária.</div>
       <div class="step"><b>3 · Segmentação</b>Localiza os interiores de balão pelo modelo Manga109 fixado.</div>
       <div class="step"><b>4 · Proteção</b>Classifica transparência e remove da máscara componentes que a intersectam.</div>
-      <div class="step"><b>5 · Publicação</b>Valida o lote e grava imagens, relatórios e manifesto em <code>04_TEXTO_OFF/MERGED</code>.</div>
+      <div class="step"><b>5 · Publicação</b>Valida e publica em <code>04_TEXTO_OFF/MERGED_NIVEL_I/&lt;capítulo&gt;</code>, separado por tipo.</div>
     </div>
     <p class="small">A saída temporária do Cleaner não é publicada diretamente. O Nível I recompõe a imagem a partir da fonte e copia apenas os pixels autorizados; os pixels dos componentes protegidos permanecem idênticos à fonte.</p>
   </section>
@@ -60,6 +60,20 @@
       </ol>
       <p class="callout success"><strong>Garantia observada:</strong> em componentes adiados, a máscara final fica zerada e a saída é idêntica à fonte dentro das caixas transparentes detectadas.</p>
     </article>
+  </section>
+
+  <section class="card">
+    <h2>Pastas dos artefatos por capítulo</h2>
+    <p>Nível I e Nível II mantêm uma pasta por capítulo e separam os arquivos pelo tipo. Relatórios e manifestos registram caminhos relativos dentro dessa pasta.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Pasta</th><th>Conteúdo</th><th>Exemplos</th></tr></thead>
+      <tbody>
+        <tr><td><code>clean/</code></td><td>Composições finais de cada página</td><td><code>page-051-059_clean.png</code></td></tr>
+        <tr><td><code>mask/</code></td><td>Máscaras Cleaner, balões transparentes, texto adiado e máscara autorizada do Nível II</td><td><code>page-051-059_deferred_text.png</code></td></tr>
+        <tr><td><code>json/</code></td><td>Manifestos e relatórios da execução</td><td><code>clean-manifest.json</code>, <code>level1-balloon-report.json</code></td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">Os leitores da Central V2 aceitam também artefatos antigos que ainda estejam diretamente na pasta do capítulo. Novas execuções publicam a estrutura organizada.</p>
   </section>
 
   <section class="card">
@@ -96,9 +110,10 @@
       <li>No Nível I, preservar o texto evita resíduos da limpeza e deixa o componente disponível para a segunda rodada do Nível II.</li>
       <li>O refinamento antigo segue isolado em Legado. O Nível II usa os componentes Cleaner adiados pelo Nível I, aplica dilatações 3×3 e 9×9 dentro do balão correspondente e usa LaMa com 120 px de contexto. Cada balão é reconstruído em seu próprio ROI; CRAFT não é usado nesta versão.</li>
       <li>Para limitar o uso de memória no MPS, a inferência carrega uma página por vez, libera a cache entre regiões e recicla o modelo a cada três balões processados.</li>
+      <li>O Cap. 3 levou 207,947 s no Nível I e 100,448 s no teste Nível II. O Nível I segmenta as páginas na autorização e volta a segmentá-las para gravar as máscaras transparentes. Reaproveitar a primeira inferência é a otimização prioritária; antes de adotá-la, comparar máscaras e imagens finais pixel a pixel. Por enquanto, não foram alterados algoritmo, limiares ou parâmetros de reconstrução.</li>
       <li>O vínculo entre cada balão transparente e o rótulo de sua máscara é versionado no manifesto. Ausência ou divergência cancela a execução; zero pixels alterados aparece como “Sem alteração — revisar resultado”, nunca como conclusão visual positiva.</li>
     </ul>
-    <p class="callout success"><strong>Teste integral do Cap. 3:</strong> 31 páginas, 8 com máscaras, 1.689.843 pixels de máscara e 1.654.872 pixels alterados. Nenhum pixel foi alterado fora das máscaras; duração de 100,448 s. A revisão visual ainda encontrou marcas residuais nas quatro páginas prioritárias. Dilatações 15×15 e 31×31 ampliaram a área alterada sem melhora visual relevante; 3×3 + 9×9 fica como referência enquanto se testa outra técnica de reconstrução. Saídas temporárias, sem alteração do MERGE oficial.</p>
+    <p class="callout success"><strong>Teste integral do Cap. 3:</strong> 31 páginas, 10 candidatas, 8 com máscara de texto, 1.689.843 pixels de máscara e 1.654.872 pixels alterados. Nenhum pixel foi alterado fora das máscaras; duração do Nível II de 100,448 s. A revisão visual ainda encontrou marcas residuais nas quatro páginas prioritárias. Dilatações 15×15 e 31×31 ampliaram a área alterada sem melhora visual relevante; 3×3 + 9×9 fica como referência enquanto se testa outra técnica de reconstrução. Resultado publicado no estágio isolado Merged Nível II, sem alterar o MERGE oficial.</p>
     <p class="callout warning"><strong>Política de segurança:</strong> na dúvida, não aplicar a máscara. Registrar o caso e manter os pixels originais para revisão ou tratamento posterior.</p>
   </section>
   <footer>Documentação técnica do fluxo TextOff Merged · atualizada com os resultados do teste integral do capítulo 3.</footer>

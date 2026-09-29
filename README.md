@@ -300,7 +300,14 @@ Processamento das imagens provenientes do fluxo original.
 
 ### Merged · Nível I
 
-Processa imagens do MERGE oficial em `FLUXO_SECUNDARIO/02_MERGE/<capítulo>/` com Cleaner V2 e a proteção de balões transparentes. Os resultados são publicados separadamente em `FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/<capítulo>/`; o pós-processamento legado não roda nesta tela.
+Processa imagens do MERGE oficial em `FLUXO_SECUNDARIO/02_MERGE/<capítulo>/` com Cleaner V2 e a proteção de balões transparentes. Os resultados são publicados em `FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/<capítulo>/`, separados em `clean/`, `mask/` e `json/`; o pós-processamento legado não roda nesta tela.
+
+```text
+MERGED_NIVEL_I/<capítulo>/
+├── clean/  imagens limpas
+├── mask/   máscaras Cleaner, balões e texto adiado
+└── json/   manifestos e relatórios
+```
 
 O Nível I segmenta os balões e aplica uma proteção conservadora aos que mostram variação de cor/textura do desenho através do interior. Componentes de máscara que tocam um balão classificado como transparente são preservados da limpeza e registrados no relatório para uma rodada específica futura. Balões opacos continuam sujeitos à validação normal; componentes fora de um único balão ou ambíguos também são preservados.
 
@@ -308,7 +315,14 @@ O teste focado de *Things that deserve to die*, capítulo 3, nas imagens `page-1
 
 ### Merged · Nível II
 
-A tela consulta os relatórios do Nível I e lista capítulos com balões transparentes detectados ou componentes adiados. O Nível II usa a máscara Cleaner adiada pelo Nível I, aplica as dilatações elípticas 3×3 e 9×9 e reconstrói com LaMa e contexto de 120 px, limitado ao interior do balão correspondente. Essa sequência deriva do Patch Transparente Legado que teve resultado aprovado no teste manual; CRAFT não faz parte da máscara automática.
+A tela consulta os relatórios do Nível I e lista capítulos com balões transparentes detectados ou componentes adiados. O Nível II usa a máscara Cleaner adiada pelo Nível I, aplica as dilatações elípticas 3×3 e 9×9 e reconstrói com LaMa e contexto de 120 px, limitado ao interior do balão correspondente. Essa sequência deriva do Patch Transparente Legado que teve resultado aprovado no teste manual; CRAFT não faz parte da máscara automática. Cada capítulo também separa os arquivos finais em `clean/`, as máscaras em `mask/` e manifestos/relatórios em `json/`.
+
+```text
+MERGED_NIVEL_II/<capítulo>/
+├── clean/  composição final do capítulo
+├── mask/   máscara autorizada de texto por página
+└── json/   manifesto e relatório da rodada
+```
 
 A tabela distingue o total de imagens do MERGE das páginas candidatas ao Nível II. No Cap. 3 de *Things that deserve to die*, o relatório mostra 31 imagens oficiais, 10 páginas com balões transparentes e 17 balões; portanto, 31 é a composição completa do capítulo, não o número de páginas com casos transparentes. O Nível II grava uma composição completa para manter o capítulo íntegro.
 
@@ -316,7 +330,7 @@ O Patch Transparente Legado manual limpou as duas regiões selecionadas em `page
 
 Cada balão é reconstruído em uma região de contexto própria. Isso impede que balões distantes criem uma única área LaMa do tamanho da página. No dispositivo MPS, o modelo é reciclado a cada três inferências e a cache de inferência é liberada entre regiões para limitar o uso acumulado de memória. O processamento também carrega uma página por vez.
 
-Teste integral temporário de *Things that deserve to die*, capítulo 3: 31 páginas analisadas, 8 páginas com máscaras Nível II, 1.689.843 pixels cobertos pelas máscaras, 1.654.872 pixels alterados e zero pixels modificados fora das máscaras. O processamento terminou em 100,448 s. A validação visual ainda encontrou marcas residuais nas páginas `page-051-059`, `page-078-083`, `page-156-163` e `page-179-187`. Testes com dilatação 15×15 e 31×31 ampliaram a área alterada, mas não trouxeram melhora visual relevante; os parâmetros 3×3 + 9×9 permanecem como receita de referência até testar outra técnica de reconstrução. As imagens e o relatório deste ensaio ficaram em diretório temporário; o MERGE oficial não foi alterado.
+Teste integral de *Things that deserve to die*, capítulo 3: 31 páginas analisadas, 10 páginas candidatas, 8 páginas com texto na máscara Nível II, 1.689.843 pixels cobertos, 1.654.872 pixels alterados e zero pixels modificados fora das máscaras. O Nível II terminou em 100,448 s; o Nível I anterior registrou 207,947 s. A validação visual ainda encontrou marcas residuais nas páginas `page-051-059`, `page-078-083`, `page-156-163` e `page-179-187`. Testes com dilatação 15×15 e 31×31 ampliaram a área alterada, mas não trouxeram melhora visual relevante; os parâmetros 3×3 + 9×9 permanecem como receita de referência até testar outra técnica de reconstrução. A oportunidade de desempenho identificada é reaproveitar as inferências YOLO do Nível I, atualmente repetidas na autorização e na gravação das máscaras. Essa otimização fica pendente de instrumentação e comparação pixel a pixel; nenhuma etapa foi paralelizada e os parâmetros visuais não mudaram.
 
 ### Legado
 

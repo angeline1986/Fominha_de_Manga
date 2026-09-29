@@ -64,15 +64,15 @@ class TextoffMergedLevel2Tests(unittest.TestCase):
 
             with patch("central_v2.backend.orchestration.textoff_merged.level2_process._lama_model",
                        return_value=(FakeLama(), "test-model", "cpu")):
-                report = process(source_dir, level1_dir, output_dir, output_dir / "report.json")
+                report = process(source_dir, level1_dir, output_dir, output_dir / "json" / "report.json")
 
             self.assertTrue(report["integrity_ok"])
             self.assertEqual(report["reference_recipe"], "textoff_special_roi_transparent_legacy_v1")
             self.assertEqual(report["outcome"], "visual_changes")
             self.assertGreaterEqual(report["duration_seconds"], 0)
             self.assertEqual(report["pages_with_text"], 1)
-            final = np.asarray(Image.open(output_dir / "page-001-004_clean.png").convert("RGB"))
-            mask = np.asarray(Image.open(output_dir / "page-001-004_text_mask.png")) > 0
+            final = np.asarray(Image.open(output_dir / "clean" / "page-001-004_clean.png").convert("RGB"))
+            mask = np.asarray(Image.open(output_dir / "mask" / "page-001-004_text_mask.png")) > 0
             changed = np.any(final != source, axis=2)
             self.assertGreater(mask.sum(), 0)
             self.assertTrue(np.any(mask[20:24, 20:24]))
@@ -108,7 +108,7 @@ class TextoffMergedLevel2Tests(unittest.TestCase):
             }), encoding="utf-8")
             with patch("central_v2.backend.orchestration.textoff_merged.level2_process._lama_model",
                        return_value=(IdentityLama(), "test-model", "cpu")):
-                report = process(source_dir, level1_dir, output_dir, output_dir / "report.json")
+                report = process(source_dir, level1_dir, output_dir, output_dir / "json" / "report.json")
             self.assertEqual(report["outcome"], "no_visual_change")
             self.assertGreater(report["mask_pixels"], 0)
             self.assertEqual(report["changed_pixels"], 0)
@@ -145,7 +145,7 @@ class TextoffMergedLevel2Tests(unittest.TestCase):
             source.mkdir()
             level1.mkdir()
             with self.assertRaisesRegex(FileNotFoundError, "level1-balloon-report"):
-                process(source, level1, base / "out", base / "out" / "report.json")
+                process(source, level1, base / "out", base / "out" / "json" / "report.json")
 
 
 if __name__ == "__main__":

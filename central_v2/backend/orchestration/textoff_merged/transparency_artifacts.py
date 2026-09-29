@@ -2,6 +2,7 @@
 from pathlib import Path
 
 from processamento.limpeza_baloes.cleaner_v2 import balloon_authorization as policy
+from .artifact_paths import artifact_ref
 
 LEVEL1_ARTIFACT_ALGORITHM = "textoff_level1_balloon_transparency_gate_v4"
 
@@ -59,8 +60,9 @@ def save_deferred_artifacts(images, raw_masks, output_dir: Path, report: dict) -
         if int(page.get("transparent_components_deferred") or 0) and not deferred_name:
             raise RuntimeError(f"V2 não validou texto adiado de {image.name}; Nível I cancelado.")
         page.update({
-            "transparent_mask_artifact": transparent_name,
-            "deferred_text_mask_artifact": deferred_name,
+            "transparent_mask_artifact": artifact_ref("mask", transparent_name),
+            "deferred_text_mask_artifact": (artifact_ref("mask", deferred_name)
+                                             if deferred_name else None),
             "deferred_text_mask_pixels": int(np.count_nonzero(deferred)),
         })
     report["algorithm"] = LEVEL1_ARTIFACT_ALGORITHM

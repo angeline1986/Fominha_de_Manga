@@ -56,28 +56,41 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as root:
             manga = self.make_manga(root)
             output = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / "1"
-            output.mkdir(parents=True)
-            (output / "page-001-005_clean.png").write_bytes(b"clean")
-            (output / "page-001-005_transparent_balloons.png").write_bytes(b"labels")
-            (output / "page-005-010_transparent_balloons.png").write_bytes(b"labels")
-            (output / "page-001-005_deferred_text.png").write_bytes(b"deferred")
-            (output / "clean-manifest.json").write_text(json.dumps({
+            for name in ("clean", "mask", "json"):
+                (output / name).mkdir(parents=True, exist_ok=True)
+            merge = manga / "FLUXO_SECUNDARIO" / "02_MERGE" / "1"
+            (merge / "page-005-010.png").write_bytes(b"merge")
+            (merge / "merge-manifest.json").write_text(json.dumps({
+                "merged_images": 2, "source_total_height": 10,
+                "outputs": [
+                    {"file": "page-001-005.png", "global_start": 0, "global_end": 5},
+                    {"file": "page-005-010.png", "global_start": 5, "global_end": 10},
+                ],
+            }), encoding="utf-8")
+            for filename in ("page-001-005_clean.png", "page-005-010_clean.png"):
+                (output / "clean" / filename).write_bytes(b"clean")
+            for filename in ("page-001-005_transparent_balloons.png",
+                             "page-005-010_transparent_balloons.png"):
+                (output / "mask" / filename).write_bytes(b"labels")
+            (output / "mask" / "page-001-005_deferred_text.png").write_bytes(b"deferred")
+            (output / "json" / "clean-manifest.json").write_text(json.dumps({
                 "source_stage": "MERGE", "integrity_ok": True,
-                "source_artifacts": ["page-001-005.png"], "clean_artifacts": ["page-001-005_clean.png"],
-                "outputs_total": 1,
+                "source_artifacts": ["page-001-005.png", "page-005-010.png"],
+                "clean_artifacts": ["clean/page-001-005_clean.png", "clean/page-005-010_clean.png"],
+                "outputs_total": 2,
                 "pages_total": 2,
                 "level1": {"algorithm": "textoff_level1_balloon_transparency_gate_v4",
                            "transparent_balloons_total": 3, "transparent_components_deferred": 3,
-                           "transparent_mask_artifacts": ["page-001-005_transparent_balloons.png",
-                                                           "page-005-010_transparent_balloons.png"],
-                           "deferred_text_mask_artifacts": ["page-001-005_deferred_text.png"],
-                           "report": "level1-balloon-report.json"},
+                           "transparent_mask_artifacts": ["mask/page-001-005_transparent_balloons.png",
+                                                           "mask/page-005-010_transparent_balloons.png"],
+                           "deferred_text_mask_artifacts": ["mask/page-001-005_deferred_text.png"],
+                           "report": "json/level1-balloon-report.json"},
             }), encoding="utf-8")
-            (output / "level1-balloon-report.json").write_text(json.dumps({
+            (output / "json" / "level1-balloon-report.json").write_text(json.dumps({
                 "pages": [
                     {"source": "page-001-005.png", "transparent_balloons": [
                         {"balloon": 1, "mask_label": 1}, {"balloon": 2, "mask_label": 2}],
-                     "deferred_text_mask_artifact": "page-001-005_deferred_text.png",
+                     "deferred_text_mask_artifact": "mask/page-001-005_deferred_text.png",
                      "transparent_components_deferred": 3},
                     {"source": "page-005-010.png", "transparent_balloons": [
                         {"balloon": 1, "mask_label": 1}]},

@@ -9,6 +9,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
+from .artifact_paths import artifact_file, artifact_ref, prepare_artifact_dirs
 from .level2_vision import (
     ALGORITHM, AUTHORIZED_DILATION, BASE_DILATION, LAMA_PADDING,
     MAX_MPS_PAGES_PER_MODEL, REFERENCE_RECIPE,
@@ -21,8 +22,10 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             runtime: dict | None = None) -> dict:
     started = time.perf_counter()
     source_dir, level1_dir, output_dir = source_dir.resolve(), level1_dir.resolve(), output_dir.resolve()
-    report_file = level1_dir / "level1-balloon-report.json"
-    manifest_file = level1_dir / "clean-manifest.json"
+    report_file = artifact_file(level1_dir, "json/level1-balloon-report.json", "json")
+    manifest_file = artifact_file(level1_dir, "json/clean-manifest.json", "json")
+    if report_file is None or manifest_file is None:
+        raise FileNotFoundError("level1-balloon-report.json ou clean-manifest.json do Nível I ausente.")
     report = json.loads(report_file.read_text(encoding="utf-8"))
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
     if manifest.get("integrity_ok") is not True or manifest.get("level1", {}).get("algorithm") != "textoff_level1_balloon_transparency_gate_v4":
@@ -33,7 +36,10 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     if not sources:
         raise ValueError("Nível II: nenhuma imagem MERGE encontrada.")
     cleaner_names = manifest.get("clean_artifacts") or []
-    if set(cleaner_names) != {path.name.replace(path.suffix, "_clean" + path.suffix) for path in sources}:
+    expected_names = {path.stem + "_clean" + path.suffix for path in sources}
+    if (len(cleaner_names) != len(sources)
+            or {Path(str(name)).name for name in cleaner_names} != expected_names
+            or any(artifact_file(level1_dir, name, "clean") is None for name in cleaner_names)):
         raise ValueError("As imagens do Nível I não correspondem ao MERGE oficial atual.")
 
     if runtime is None:
@@ -42,7 +48,7 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     model = runtime.get("model")
     model_path = runtime.get("model_path")
     device = runtime.get("device")
-    output_dir.mkdir(parents=True, exist_ok=True)
+    prepare_artifact_dirs(output_dir)
     page_results = []
     changed_total = mask_total = 0
     for index, source in enumerate(sources, 1):
@@ -50,10 +56,10 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         if page is None:
             raise ValueError(f"Nível I não registrou {source.name}.")
         clean_name = source.stem + "_clean" + source.suffix
-        clean_path = level1_dir / clean_name
-        label_name = page.get("transparent_mask_artifact")
-        label_path = level1_dir / str(label_name or "")
-        if not clean_path.is_file() or not label_path.is_file():
+        clean_reference = artifact_ref("clean", clean_name)
+        clean_path = artifact_file(level1_dir, clean_reference, "clean")
+        label_path = artifact_file(level1_dir, page.get("transparent_mask_artifact"), "mask")
+        if clean_path is None or label_path is None:
             raise FileNotFoundError(f"Artefatos de Nível I ausentes para {source.name}.")
         with Image.open(source) as image:
             original = np.asarray(image.convert("RGB"))
@@ -65,10 +71,8 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         deferred_name = page.get("deferred_text_mask_artifact")
         deferred = np.zeros(labels.shape, dtype=np.uint8)
         if deferred_name:
-            if not isinstance(deferred_name, str) or Path(deferred_name).name != deferred_name:
-                raise ValueError(f"Nome de máscara adiada inválido para {source.name}.")
-            deferred_path = level1_dir / deferred_name
-            deferred = cv2.imread(str(deferred_path), cv2.IMREAD_GRAYSCALE)
+            deferred_path = artifact_file(level1_dir, deferred_name, "mask")
+            deferred = cv2.imread(str(deferred_path), cv2.IMREAD_GRAYSCALE) if deferred_path else None
             if deferred is None or deferred.shape != labels.shape:
                 raise ValueError(f"Máscara de texto adiado ausente ou inválida para {source.name}.")
         elif int(page.get("transparent_components_deferred") or 0):
@@ -116,14 +120,16 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         outside = int(np.count_nonzero(np.any(result != level1, axis=2) & ~active))
         if outside:
             raise RuntimeError(f"Integridade do Nível II violada fora da máscara em {source.name}.")
-        Image.fromarray(result).save(output_dir / clean_name)
-        Image.fromarray(mask, mode="L").save(output_dir / f"{source.stem}_text_mask.png")
+        clean_reference = artifact_ref("clean", clean_name)
+        mask_reference = artifact_ref("mask", f"{source.stem}_text_mask.png")
+        Image.fromarray(result).save(output_dir / clean_reference)
+        Image.fromarray(mask, mode="L").save(output_dir / mask_reference)
         changed = int(np.count_nonzero(np.any(result != level1, axis=2)))
         mask_pixels = int(np.count_nonzero(mask))
         changed_total += changed
         mask_total += mask_pixels
-        page_results.append({"source": source.name, "clean": clean_name,
-                             "mask": f"{source.stem}_text_mask.png", "transparent_balloons": balloons,
+        page_results.append({"source": source.name, "clean": clean_reference,
+                             "mask": mask_reference, "transparent_balloons": balloons,
                              "mask_pixels": mask_pixels, "changed_pixels": changed,
                              "changed_outside_mask": outside})
         if progress_path:

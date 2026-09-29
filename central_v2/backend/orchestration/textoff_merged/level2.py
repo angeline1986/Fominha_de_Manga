@@ -11,6 +11,7 @@ import time
 import uuid
 
 from processamento.unificacao_imagens import image_stitcher as v3
+from .artifact_paths import artifact_file, artifact_ref
 from .execution import validate_selection
 from .manifests import _stage_manifest, _stage_manifest_sha256
 from .level2_vision import ALGORITHM, AUTHORIZED_DILATION, BASE_DILATION, LAMA_PADDING, REFERENCE_RECIPE
@@ -72,7 +73,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
         work.mkdir()
         staged = work / "staged"
         staged.mkdir()
-        report_file = staged / "level2-transparent-report.json"
+        report_file = staged / artifact_ref("json", "level2-transparent-report.json")
         jobs.append({"chapter": name, "source_dir": str(source_dir), "level1_dir": str(level1_dir),
                      "output_dir": str(staged), "report": str(report_file)})
         records.append((name, source_dir, target, staged))
@@ -111,7 +112,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
 
         prepared = []
         for name, source_dir, target, staged in records:
-            report_file = staged / "level2-transparent-report.json"
+            report_file = staged / artifact_ref("json", "level2-transparent-report.json")
             if not report_file.is_file():
                 raise RuntimeError(f"Nível II não gerou relatório para Cap. {name}.")
             report = json.loads(report_file.read_text(encoding="utf-8"))
@@ -120,7 +121,9 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             if report.get("pages_analyzed") != len(images) or report.get("integrity_ok") is not True:
                 raise RuntimeError(f"Relatório Nível II incompleto ou inválido para Cap. {name}.")
             clean_names = [item["clean"] for item in report.get("pages", [])]
-            if len(clean_names) != len(images) or any(not (staged / filename).is_file() for filename in clean_names):
+            if len(clean_names) != len(images) or any(
+                artifact_file(staged, filename, "clean") is None for filename in clean_names
+            ):
                 raise RuntimeError(f"Nível II não gerou todas as imagens finais do Cap. {name}.")
             output_manifest = {
                 "schema_version": 1, "algorithm": ALGORITHM,
@@ -137,13 +140,14 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                 "pages_with_text": report.get("pages_with_text", 0),
                 "mask_pixels": report.get("mask_pixels", 0),
                 "changed_pixels": report.get("changed_pixels", 0),
-                "outcome": report.get("outcome"), "report": report_file.name,
+                "outcome": report.get("outcome"),
+                "report": artifact_ref("json", report_file.name),
                 "execution": {
                     "duration_seconds": report.get("duration_seconds"),
                     "duration_scope": "chapter_total_including_mask_creation_inpainting_and_validation",
                 },
             }
-            (staged / "clean-manifest.json").write_text(
+            (staged / artifact_ref("json", "clean-manifest.json")).write_text(
                 json.dumps(output_manifest, indent=2, ensure_ascii=False), encoding="utf-8")
             transparent_pages = [
                 page["source"] for page in report.get("pages", [])

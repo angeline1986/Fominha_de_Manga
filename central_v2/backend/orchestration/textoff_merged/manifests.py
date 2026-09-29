@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
+from .artifact_paths import artifact_file, json_file
 
 def _clean_manifest(manga: Path, chapter: str) -> dict:
     path = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED" / chapter / "clean-manifest.json"
@@ -53,7 +54,8 @@ def _listing_merge_artifacts(chapter: Path) -> list[Path]:
 
 
 def _stage_manifest(manga: Path, stage: str, chapter: str) -> dict:
-    path = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / stage / chapter / "clean-manifest.json"
+    folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / stage / chapter
+    path = json_file(folder, "clean-manifest.json")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
         return value if isinstance(value, dict) else {}
@@ -62,7 +64,8 @@ def _stage_manifest(manga: Path, stage: str, chapter: str) -> dict:
 
 
 def _stage_manifest_sha256(manga: Path, stage: str, chapter: str) -> str | None:
-    path = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / stage / chapter / "clean-manifest.json"
+    folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / stage / chapter
+    path = json_file(folder, "clean-manifest.json")
     try:
         return hashlib.sha256(path.read_bytes()).hexdigest()
     except OSError:
@@ -74,8 +77,7 @@ def _manifest_matches_merge(manifest: dict, manga: Path, chapter: str) -> bool:
     outputs = manifest.get("clean_artifacts")
     output_dir = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / chapter
     return bool(images) and isinstance(outputs, list) and len(outputs) == len(images) and all(
-        isinstance(name, str) and Path(name).name == name and (output_dir / name).is_file()
-        for name in outputs
+        artifact_file(output_dir, name, "clean") is not None for name in outputs
     ) and (
         manifest.get("source_stage") == "MERGE"
         and manifest.get("integrity_ok") is True
@@ -92,16 +94,18 @@ def _transparent_masks_ready(manga: Path, chapter: str, manifest: dict) -> bool:
     expected = int(manifest.get("pages_total") or 0)
     folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / chapter
     artifacts_ready = isinstance(names, list) and len(names) == expected and all(
-        isinstance(name, str) and Path(name).name == name and (folder / name).is_file()
-        for name in names
+        artifact_file(folder, name, "mask") is not None for name in names
     )
     if not artifacts_ready:
         return False
     report_name = level1.get("report")
-    if not isinstance(report_name, str) or Path(report_name).name != report_name:
+    if not isinstance(report_name, str):
         return False
     try:
-        report = json.loads((folder / report_name).read_text(encoding="utf-8"))
+        report_path = artifact_file(folder, report_name, "json")
+        if report_path is None:
+            return False
+        report = json.loads(report_path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return False
     pages = report.get("pages", [])
@@ -130,10 +134,13 @@ def _deferred_text_masks_ready(manga: Path, chapter: str, manifest: dict) -> boo
         return True
     folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / chapter
     report_name = level1.get("report")
-    if not isinstance(report_name, str) or Path(report_name).name != report_name:
+    if not isinstance(report_name, str):
         return False
     try:
-        report = json.loads((folder / report_name).read_text(encoding="utf-8"))
+        report_path = artifact_file(folder, report_name, "json")
+        if report_path is None:
+            return False
+        report = json.loads(report_path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return False
     deferred_pages = [
@@ -141,8 +148,6 @@ def _deferred_text_masks_ready(manga: Path, chapter: str, manifest: dict) -> boo
         if isinstance(page, dict) and int(page.get("transparent_components_deferred") or 0) > 0
     ]
     return all(
-        isinstance(page.get("deferred_text_mask_artifact"), str)
-        and Path(page["deferred_text_mask_artifact"]).name == page["deferred_text_mask_artifact"]
-        and (folder / page["deferred_text_mask_artifact"]).is_file()
+        artifact_file(folder, page.get("deferred_text_mask_artifact"), "mask") is not None
         for page in deferred_pages
     )

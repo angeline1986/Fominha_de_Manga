@@ -9,6 +9,7 @@ from .manifests import (
     _manifest_matches_merge, _stage_manifest, _stage_manifest_sha256,
     _transparent_masks_ready,
 )
+from .artifact_paths import artifact_file
 from .level2_vision import ALGORITHM
 
 def query_merged(manga: Path) -> dict:
@@ -49,9 +50,10 @@ def query_merged_level1(manga: Path) -> dict:
         valid = _manifest_matches_merge(manifest, manga, row["chapter"])
         level1 = manifest.get("level1") if isinstance(manifest.get("level1"), dict) else {}
         report_name = level1.get("report")
-        report_path = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / row["chapter"] / str(report_name or "")
+        chapter_dir = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / row["chapter"]
         candidate_pages = []
-        if isinstance(report_name, str) and Path(report_name).name == report_name:
+        report_path = artifact_file(chapter_dir, report_name, "json")
+        if report_path is not None:
             try:
                 report = json.loads(report_path.read_text(encoding="utf-8"))
                 candidate_pages = [
@@ -98,8 +100,7 @@ def query_merged_level2(manga: Path) -> dict:
                 )
                 and previous.get("source_artifacts") == level1.get("source_artifacts")
                 and isinstance(outputs, list) and len(outputs) == int(previous.get("outputs_total") or 0)
-                and all(isinstance(item, str) and Path(item).name == item and (previous_dir / item).is_file()
-                        for item in outputs)
+                and all(artifact_file(previous_dir, item, "clean") is not None for item in outputs)
             )
             outcome = previous.get("outcome")
             row["level2_status"] = (

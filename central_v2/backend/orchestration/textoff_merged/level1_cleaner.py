@@ -13,6 +13,7 @@ from processamento.limpeza_baloes.cleaner_v2.launcher import MODULE_DIR
 from processamento.limpeza_baloes.cleaner_v2.ocr_manifest import ocr_manifest_metadata
 
 from .cleaner_process import run_balloon_authorization, run_panel_cleaner
+from .artifact_paths import artifact_ref, prepare_artifact_dirs
 
 ALGORITHM = "cleaner_v2_panel_cleaner_2_11_11"
 PROFILE_NAME = "outlined-text.ini"
@@ -49,7 +50,7 @@ def clean_level1_chapter(images, target, *, source_stage, progress_job, chapter_
             "duration_seconds": round(time.perf_counter() - started, 3),
             "duration_scope": "chapter_total_including_validation_and_promotion",
         }
-        (staged / "clean-manifest.json").write_text(
+        (staged / artifact_ref("json", "clean-manifest.json")).write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False), encoding="utf-8",
         )
         _promote(staged, target)
@@ -79,10 +80,20 @@ def _preserve_raw_masks(mask_files, folder):
 
 
 def _stage_artifacts(output_dir, report_path, staged):
+    prepare_artifact_dirs(staged)
     for artifact in output_dir.iterdir():
         if artifact.is_file():
-            shutil.copy2(artifact, staged / artifact.name)
-    shutil.copy2(report_path, staged / report_path.name)
+            name = artifact.name
+            if "_clean." in name:
+                kind = "clean"
+            elif any(token in name for token in ("_mask.", "_transparent_balloons.", "_deferred_text.")):
+                kind = "mask"
+            elif artifact.suffix.lower() == ".json":
+                kind = "json"
+            else:
+                raise RuntimeError(f"Tipo de artefato Nível I não reconhecido: {name}.")
+            shutil.copy2(artifact, staged / kind / name)
+    shutil.copy2(report_path, staged / artifact_ref("json", report_path.name))
 
 
 def _level2_not_run(pages):
@@ -104,11 +115,12 @@ def _manifest(images, clean_files, mask_files, source_stage, report):
         "pages_total": len(images), "outputs_total": len(clean_files),
         "masks_total": len(mask_files), "mask_complete": True, "integrity_ok": True,
         "source_artifacts": [image.name for image in images],
-        "clean_artifacts": [path.name for path in clean_files],
-        "mask_artifacts": [path.name for path in mask_files],
+        "clean_artifacts": [artifact_ref("clean", path.name) for path in clean_files],
+        "mask_artifacts": [artifact_ref("mask", path.name) for path in mask_files],
         "authorization": {},
         "level1": _level1_manifest(report, pages, deferred),
-        "level2": {**_level2_not_run(len(images)), "report": "level2-report.json"},
+        "level2": {**_level2_not_run(len(images)),
+                    "report": artifact_ref("json", "level2-report.json")},
         "failures": [],
     }
 
@@ -128,7 +140,7 @@ def _level1_manifest(report, pages, deferred):
             page["deferred_text_mask_artifact"] for page in pages
             if page.get("deferred_text_mask_artifact")
         ],
-        "report": "level1-balloon-report.json",
+        "report": artifact_ref("json", "level1-balloon-report.json"),
     }
 
 

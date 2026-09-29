@@ -46,11 +46,11 @@ class MergedLevel1AdapterTests(unittest.TestCase):
             def fake_authorization(_images, output_dir, _raw, report_path, *_args, **_kwargs):
                 page = report["pages"][0]
                 page["transparent_balloons"][0]["mask_label"] = 1
-                page["transparent_mask_artifact"] = "page-001-005_transparent_balloons.png"
-                page["deferred_text_mask_artifact"] = "page-001-005_deferred_text.png"
+                page["transparent_mask_artifact"] = "mask/page-001-005_transparent_balloons.png"
+                page["deferred_text_mask_artifact"] = "mask/page-001-005_deferred_text.png"
                 page["deferred_text_mask_pixels"] = 25
-                (output_dir / page["transparent_mask_artifact"]).write_bytes(b"labels")
-                (output_dir / page["deferred_text_mask_artifact"]).write_bytes(b"deferred")
+                (output_dir / Path(page["transparent_mask_artifact"]).name).write_bytes(b"labels")
+                (output_dir / Path(page["deferred_text_mask_artifact"]).name).write_bytes(b"deferred")
                 report_path.write_text(json.dumps(report), encoding="utf-8")
                 return report
 
@@ -60,18 +60,22 @@ class MergedLevel1AdapterTests(unittest.TestCase):
                     [source], target, source_stage="MERGE", progress_job=None, chapter_name="1",
                 )
 
-            manifest = json.loads((target / "clean-manifest.json").read_text(encoding="utf-8"))
+            manifest = json.loads((target / "json" / "clean-manifest.json").read_text(encoding="utf-8"))
             self.assertEqual(result["level2_pending_pages"], [source.name])
             self.assertEqual(manifest["level2"]["status"], "not_run")
             self.assertEqual(manifest["level1"]["transparent_balloons_total"], 1)
+            self.assertEqual(manifest["level1"]["transparent_mask_artifacts"], [
+                "mask/page-001-005_transparent_balloons.png",
+            ])
             self.assertEqual(manifest["level1"]["deferred_text_mask_artifacts"], [
-                "page-001-005_deferred_text.png",
+                "mask/page-001-005_deferred_text.png",
             ])
             self.assertGreaterEqual(manifest["execution"]["duration_seconds"], 0)
             self.assertEqual(manifest["execution"]["duration_scope"],
                              "chapter_total_including_validation_and_promotion")
-            self.assertTrue((target / "page-001-005_transparent_balloons.png").is_file())
-            self.assertTrue((target / "page-001-005_deferred_text.png").is_file())
+            self.assertTrue((target / "mask" / "page-001-005_transparent_balloons.png").is_file())
+            self.assertTrue((target / "mask" / "page-001-005_deferred_text.png").is_file())
+            self.assertTrue((target / "clean" / "page-001-005_clean.png").is_file())
 
     def test_each_transparent_detection_gets_its_mask_label(self):
         polygons = [np.array([[5, 5], [30, 5], [30, 30], [5, 30]]),
