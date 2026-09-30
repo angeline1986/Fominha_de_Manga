@@ -13,6 +13,8 @@ from central_v2.backend.orchestration.textoff_merged import (
     query_merged_level1, query_merged_level2, validate_level2_selection,
     validate_selection, execute_level3, query_level3,
 )
+from central_v2.backend.orchestration.textoff_merged.overview import query_cleaner_overview, query_mapping_worklist
+from central_v2.backend.orchestration.textoff_merged.special_status import query_special_worklist
 from central_v2.backend.orchestration.textoff_merged.special_levels import (
     execute_special_level, query_special_level,
 )
@@ -36,10 +38,10 @@ def textoff_merged_level_response(level: str, query: dict, output_root: Path) ->
     try:
         provider, name = _context(query, output_root)
         manga = resolve_manga(output_root, provider, name)
-        lookup = {"I": query_merged_level1, "II": query_merged_level2,
-                  "III": query_level3}.get(level)
+        lookup = {"I": query_cleaner_overview, "II": query_merged_level2,
+                  "III": query_mapping_worklist}.get(level)
         if level in {"IV", "V"}:
-            lookup = lambda value: query_special_level(value, level)
+            lookup = lambda value: query_special_worklist(value, level)
         if lookup is None:
             raise ValueError("Nível Merged inválido.")
         return RouteResponse(200, _json({"provider": provider, "manga": name, **lookup(manga)}))

@@ -1,3 +1,7 @@
+import { createMappingColumns } from "/texto_off/merged/mapping.js";
+import { createStageColumns } from "/texto_off/merged/stage_columns.js";
+import { createStatusMark } from "/texto_off/merged/status_mark.js";
+
 function checkbox(label, checked, onChange) {
   const input = document.createElement("input");
   input.type = "checkbox";
@@ -23,23 +27,19 @@ export function createMergedColumns({ rows, selected, pageChapters, onSelect, on
         return input;
       },
     },
-    { id: "chapter", label: "Cap.", render: (row) => row.chapter },
-    { id: "merges", label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },
-    ...(mode === "level3" ? [{ id: "candidates", label: "Balões candidatos", render: (row) => row.cleaned ? row.candidate_count : "—" }] : []),
-    ...(mode === "level3" ? [{ id: "review", label: "Resultado", render: (row) => {
-      if (!row.cleaned || !row.candidate_count) return "—";
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "btn textoff-candidate-view-button";
-      button.textContent = "Ver candidatos";
-      button.addEventListener("click", () => onInspect?.(row));
-      return button;
-    } }] : []),
-    {
+    { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
+    ...(mode === "level3" ? createMappingColumns(onInspect) : [
+      { id: "merges", label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },
+    ]),
+    ...(mode === "overview" ? createStageColumns() : mode === "level3" ? [] : [{
       id: "textoff-status",
       label: "TEXTO OFF",
-      render: (row) => row.cleaned ? mode === "level3" ? "Nível III analisado" : "Resultado registrado" : row.selectable ? "Sem resultado" : "MERGE inválido",
+      render: (row) => {
+        const label = row.cleaned ? mode === "level3" ? "Analisado" : "Concluído" : row.selectable ? "Pendente" : "MERGE inválido";
+        const state = row.cleaned ? "complete" : row.selectable ? "pending" : "review";
+        return createStatusMark(label, state);
+      },
       className: (row) => row.cleaned ? "textoff-status is-done" : row.selectable ? "textoff-status is-pending" : "textoff-status is-invalid",
-    },
+    }]),
   ];
 }

@@ -13,7 +13,7 @@ export function createLevel2View({ onExecute } = {}) {
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search">
         <span class="visually-hidden">Buscar capítulo</span>
-        <input type="search" data-query placeholder="Buscar capítulo...">
+        <input type="search" data-query placeholder="Buscar cap.">
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos por estado"></div>
       <button class="auto-merge-execute" type="button" data-execute>Executar Nível II</button>
@@ -46,8 +46,8 @@ export function createLevel2View({ onExecute } = {}) {
       createStatusFilters(filters, { chapters: state.chapters, value: selectedFilter,
         onChange: (value) => { selectedFilter = value; pagination.reset(); draw(); } });
       const rows = state.chapters.filter((row) => row.chapter.toLocaleLowerCase("pt-BR").includes(term) && matchesStatus(row, selectedFilter));
-      status.textContent = rows.length ? "" : "Nenhum capítulo com residual elegível do Nível I.";
-      status.hidden = rows.length > 0;
+      status.textContent = "";
+      status.hidden = true;
       const selection = pagination.select(rows);
       const currentPage = selection.rows.filter((row) => row.eligible !== false).map((row) => row.chapter);
       const columns = createLevel2Columns({

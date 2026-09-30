@@ -70,6 +70,20 @@
 .textoff-merged-page .textoff-status.is-pending { color: var(--color-warning); }
 .textoff-merged-page .textoff-status.is-invalid { color: #9d3030; }
 
+.textoff-status-mark {
+  display: inline-grid;
+  min-width: 22px;
+  min-height: 22px;
+  place-items: center;
+  border-radius: 50%;
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  cursor: help;
+}
+.textoff-status-mark.is-complete { color: #0b9b68; }
+.textoff-status-mark.is-pending { color: var(--color-text-muted); }
+.textoff-status-mark.is-review { color: var(--color-warning); }
+
 .textoff-merged-page .data-table input[type="checkbox"] {
   width: 16px;
   height: 16px;

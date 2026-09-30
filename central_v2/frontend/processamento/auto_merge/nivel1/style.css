@@ -29,8 +29,8 @@
 }
 
 .auto-merge-search {
-  flex: 0 1 280px;
-  min-width: 190px;
+  flex: 0 1 140px;
+  min-width: 140px;
 }
 
 .auto-merge-toolbar input,
@@ -44,6 +44,38 @@
 
 .auto-merge-search input {
   width: 100%;
+}
+
+@media (min-width: 651px) {
+  .auto-merge-page:not(.textoff-special-manual) .auto-merge-toolbar:not(.special-toolbar) {
+    flex-wrap: nowrap;
+    min-width: 0;
+  }
+
+  .auto-merge-page .auto-merge-filters {
+    min-width: 0;
+    flex: 1 1 auto;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .auto-merge-page .auto-merge-toolbar .auto-merge-filters button,
+  .auto-merge-page .auto-merge-toolbar .auto-merge-filters .auto-merge-filter-button {
+    flex: 0 0 auto;
+    padding-right: 6px;
+    padding-left: 6px;
+    font-size: var(--font-size-small);
+  }
+
+  .auto-merge-page .auto-merge-search {
+    flex: 0 0 140px;
+    width: 140px;
+  }
+
+  .auto-merge-page .auto-merge-execute {
+    flex: 0 0 auto;
+  }
 }
 
 .auto-merge-filters {

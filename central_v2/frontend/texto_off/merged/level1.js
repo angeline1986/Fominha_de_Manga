@@ -10,7 +10,8 @@ export function render(container) {
   const view = createMergedView((chapters) => execution.execute(chapters), {
     title: "Auto-Cleaner — Passo 1: Balões Sólidos",
     description: "Limpeza geral padrão e proteção de áreas translúcidas.",
-    executeLabel: "Executar Merged Nível I",
+    executeLabel: "Executar Passo 1",
+    mode: "overview",
   });
   container.replaceChildren(view.element);
   const execution = createMergedExecution({

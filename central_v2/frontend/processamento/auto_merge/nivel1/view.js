@@ -14,14 +14,14 @@ export function createLevel1View({ onExecute } = {}) {
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search">
         <span class="visually-hidden">Buscar capítulo</span>
-        <input type="search" data-query placeholder="Buscar capítulo...">
+        <input type="search" data-query placeholder="Buscar cap.">
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos">
         <button type="button" data-filter="all" aria-pressed="true">Todos</button>
-        <button type="button" data-filter="clean" aria-pressed="false">CLEAN</button>
-        <button type="button" data-filter="pdf_merge" aria-pressed="false">PDF MERGE</button>
-        <button type="button" data-filter="occurrences" aria-pressed="false">OCORRÊNCIAS</button>
-        <button type="button" data-filter="merge" aria-pressed="false">MERGE</button>
+        <button type="button" data-filter="clean" aria-pressed="false">Limpeza pronta</button>
+        <button type="button" data-filter="pdf_merge" aria-pressed="false">PDF pronto</button>
+        <button type="button" data-filter="occurrences" aria-pressed="false">Com ocorrências</button>
+        <button type="button" data-filter="merge" aria-pressed="false">MERGE identificado</button>
       </div>
       <button class="auto-merge-execute" type="button" data-execute>Executar</button>
     </div>
@@ -66,9 +66,8 @@ export function createLevel1View({ onExecute } = {}) {
       button.classList.toggle("active", active);
       button.setAttribute("aria-pressed", String(active));
     }
-    status.textContent = state.chapters.length
-      ? ""
-      : `${state.manga} · Nenhum capítulo com imagens encontrado.`;
+    status.textContent = "";
+    status.hidden = true;
     const selection = pagination.select(rows);
     const currentPage = selection.rows.map((row) => row.chapter);
     const columns = createColumns({

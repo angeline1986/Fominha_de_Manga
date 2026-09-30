@@ -62,9 +62,9 @@ export function createColumns({ selected, onSelect, onSelectPage }) {
     },
     { label: "CAP.", render: (row) => row.chapter },
     { label: "IMAGENS", render: (row) => row.pages },
-    { label: "MERGE", render: mergeStatus, className: (row) => row.official.status === "recorded" ? "auto-merge-ok" : "" },
-    { label: "CLEAN", render: (row) => row.clean ? "✓" : "—", className: (row) => row.clean ? "auto-merge-ok" : "" },
-    { label: "PDF MERGE", render: (row) => row.pdf_merge ? "✓" : "—", className: (row) => row.pdf_merge ? "auto-merge-ok" : "" },
-    { label: "OCORRÊNCIAS", render: occurrence, title: occurrence },
+    { label: "MERGE identificado", render: mergeStatus, className: (row) => row.official.status === "recorded" ? "auto-merge-ok" : "" },
+    { label: "Limpeza pronta", render: (row) => row.clean ? "✓" : "—", className: (row) => row.clean ? "auto-merge-ok" : "" },
+    { label: "PDF pronto", render: (row) => row.pdf_merge ? "✓" : "—", className: (row) => row.pdf_merge ? "auto-merge-ok" : "" },
+    { label: "Com ocorrências", render: occurrence, title: occurrence },
   ];
 }

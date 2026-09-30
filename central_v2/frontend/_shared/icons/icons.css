@@ -35,3 +35,5 @@
 .ui-icon--highlighter { -webkit-mask-image: url("/_shared/icons/highlighter-solid-full.svg"); mask-image: url("/_shared/icons/highlighter-solid-full.svg"); }
 .ui-icon--crop-simple { -webkit-mask-image: url("/_shared/icons/crop-simple-solid-full.svg"); mask-image: url("/_shared/icons/crop-simple-solid-full.svg"); }
 .ui-icon--scissors { -webkit-mask-image: url("/_shared/icons/scissors-solid-full.svg"); mask-image: url("/_shared/icons/scissors-solid-full.svg"); }
+
+.ui-icon--check { -webkit-mask-image: url("/_shared/icons/check.svg"); mask-image: url("/_shared/icons/check.svg"); }

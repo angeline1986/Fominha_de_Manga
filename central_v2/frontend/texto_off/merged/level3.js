@@ -10,7 +10,7 @@ export function render(container) {
   let disposed = false;
   const view = createMergedView((chapters) => execution.execute(chapters), {
     title: "Pincel & Retoques — Mapear Balões",
-    executeLabel: "Executar Merged Nível III",
+    executeLabel: "Mapear selecionados",
     mode: "level3",
     description: "Identificação de balões com degradê, arte e contornos complexos. Analisa os MERGES originais; candidatos requerem revisão e não acionam patches.",
     onInspect: (row) => {

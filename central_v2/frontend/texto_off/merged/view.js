@@ -1,3 +1,5 @@
+import { MAPPING_FILTERS, matchesMapping } from "/texto_off/merged/mapping.js";
+import { createStageFilters } from "/texto_off/merged/stage_filters.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
@@ -5,17 +7,19 @@ import { createJobProgress } from "/_shared/progress/progress.js";
 import { createMergedColumns } from "/texto_off/merged/columns.js";
 
 const FILTERS = [
-  ["all", "Todos"], ["pending", "Sem resultado"],
-  ["processed", "Com resultado"], ["invalid", "MERGE inválido"],
+  ["all", "Todos"], ["pending", "Pendente"],
+  ["processed", "Concluído"], ["invalid", "MERGE inválido"],
 ];
 
 export function createMergedView(onExecute, { title = "Texto Off — Merged", executeLabel, mode, description = "", onInspect } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page textoff-merged-page";
+  if (mode === "overview") element.classList.add("cleaner-overview");
+  if (mode === "level3") element.classList.add("cleaner-outcomes");
   element.innerHTML = `
     <header><h1${description ? ` class="textoff-page-title-hint" data-tooltip="${description}" tabindex="0" aria-description="${description}"` : ""}>${title}</h1></header>
     <div class="auto-merge-toolbar">
-      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo..."></label>
+      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo"></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
       <button class="auto-merge-execute" type="button" data-execute>${executeLabel ?? `Executar ${title.replace("Texto Off — ", "")}`}</button>
     </div>
@@ -32,9 +36,13 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   const progress = createJobProgress(title);
   element.querySelector(".auto-merge-toolbar").after(progress.element);
   let state = { status: "idle", chapters: [], manga: null, busy: false };
-  let selectedFilter = "pending";
+  let selectedFilter = mode === "level3" ? "map" : "pending";
+  const stageFilters = mode === "overview" ? createStageFilters(filters, () => { pagination.reset(); draw(); }) : null;
+  if (stageFilters) filters.className = "cleaner-filter-groups";
 
   function matches(row) {
+    if (stageFilters) return stageFilters.matches(row);
+    if (mode === "level3") return matchesMapping(row, selectedFilter);
     return selectedFilter === "all"
       || (selectedFilter === "pending" && row.selectable && !row.cleaned)
       || (selectedFilter === "processed" && row.cleaned)
@@ -42,11 +50,16 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   }
 
   function drawFilters() {
+    if (stageFilters) { stageFilters.draw(state.chapters); return; }
     filters.replaceChildren();
-    for (const [key, label] of FILTERS) {
+    const options = mode === "level3"
+      ? MAPPING_FILTERS
+      : FILTERS;
+    for (const [key, label] of options) {
       const button = document.createElement("button");
       button.className = "auto-merge-filter-button";
       const count = state.chapters.filter((row) => {
+        if (mode === "level3") return matchesMapping(row, key);
         if (key === "all") return true;
         if (key === "pending") return row.selectable && !row.cleaned;
         if (key === "processed") return row.cleaned;
@@ -99,7 +112,8 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
     element,
     update(next) {
       if (state.provider !== next.provider || state.manga !== next.manga) {
-        query.value = ""; selectedFilter = "pending"; selected.clear(); pagination.reset();
+        stageFilters?.reset();
+        query.value = ""; selectedFilter = mode === "level3" ? "map" : "pending"; selected.clear(); pagination.reset();
       }
       state = { ...next, busy: state.busy };
       draw();

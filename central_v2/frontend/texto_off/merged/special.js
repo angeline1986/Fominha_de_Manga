@@ -1,3 +1,4 @@
+import { matchesOutcome, drawOutcomeFilters } from "/texto_off/merged/outcome_filters.js";
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchMergedTextoff, startMergedSpecialTextoff, waitForTextoffJob } from "/_app/api/textoff.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
@@ -5,6 +6,7 @@ import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
+import { createOutcomeColumns } from "/texto_off/merged/outcome_columns.js";
 
 const titles = {
   IV: "Auto-Cleaner — Passo 3: Transparência Normal",
@@ -14,18 +16,17 @@ const descriptions = {
   IV: "Aplicação da variante padrão de transparência.",
   V: "Processamento isolado com o algoritmo legado.",
 };
-const FILTERS = [["all", "Todos"], ["ready", "Nível I íntegro"], ["missing", "Nível I ausente"]];
 
 export function renderSpecial(container, level) {
-  let disposed = false, rows = [], request, filter = "ready";
+  let disposed = false, rows = [], request, filter = "pending";
   const selected = new Set(), pagination = createPagination();
   const root = document.createElement("section");
-  root.className = "auto-merge-page textoff-merged-page";
+  root.className = "auto-merge-page textoff-merged-page cleaner-outcomes";
   root.innerHTML = `<header><h1 class="textoff-page-title-hint" data-tooltip="${descriptions[level]}" tabindex="0" aria-description="${descriptions[level]}">${titles[level]}</h1></header>
     <div class="auto-merge-toolbar">
-      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo..."></label>
+      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo"></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
-      <button class="auto-merge-execute" type="button" data-run>Executar Nível ${level}</button>
+      <button class="auto-merge-execute" type="button" data-run>Executar Passo ${level === "IV" ? 3 : 4}</button>
     </div>
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>`;
@@ -36,20 +37,12 @@ export function renderSpecial(container, level) {
   root.querySelector(".auto-merge-toolbar").after(progress.element);
 
   function draw() {
-    filters.replaceChildren();
-    FILTERS.forEach(([key, label]) => {
-      const count = rows.filter((row) => key === "all" || (key === "ready") === row.level1_ready).length;
-      const button = document.createElement("button");
-      button.className = "auto-merge-filter-button";
-      button.type = "button"; button.textContent = `${label} (${count})`;
-      button.classList.toggle("active", filter === key);
-      button.setAttribute("aria-pressed", String(filter === key));
-      button.addEventListener("click", () => { filter = key; pagination.reset(); draw(); });
-      filters.append(button);
+    drawOutcomeFilters(filters, rows, filter, (key) => {
+      filter = key; pagination.reset(); draw();
     });
     const term = query.value.trim().toLocaleLowerCase("pt-BR");
     const visible = rows.filter((row) => row.chapter.toLocaleLowerCase("pt-BR").includes(term)
-      && (filter === "all" || (filter === "ready") === row.level1_ready));
+      && matchesOutcome(row, filter));
     const page = pagination.select(visible);
     const eligible = page.rows.filter((row) => row.level1_ready).map((row) => row.chapter);
     const columns = [
@@ -59,16 +52,15 @@ export function renderSpecial(container, level) {
       }), render: (row) => checkbox(`Selecionar ${row.chapter}`, selected.has(row.chapter), (checked) => {
         checked ? selected.add(row.chapter) : selected.delete(row.chapter); draw();
       }) },
-      { id: "chapter", label: "Cap.", render: (row) => row.chapter },
-      { id: "pages", label: "Páginas", render: (row) => row.level1_pages?.length || 0 },
-      { id: "availability", label: "Disponibilidade", render: (row) => row.level1_ready ? "Nível I íntegro" : "Execute o Nível I" },
+      { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
+      ...createOutcomeColumns(),
     ];
     results.replaceChildren(createTable(columns, page.rows, `Capítulos elegíveis para Nível ${level}`, {
-      emptyMessage: "Nenhum capítulo com Nível I íntegro. Execute o Nível I primeiro.",
+      emptyMessage: "Nenhum capítulo corresponde ao filtro.",
     }));
     if (visible.length) results.append(createPaginationControls(page, (delta) => { pagination.move(delta); draw(); }));
-    status.textContent = rows.length ? "" : "Selecione uma obra com MERGE válido para consultar os capítulos.";
-    status.hidden = Boolean(rows.length);
+    status.textContent = "";
+    status.hidden = true;
     execute.disabled = selected.size === 0;
   }
 
@@ -92,6 +84,8 @@ export function renderSpecial(container, level) {
       const { provider, manga } = getContext();
       const { job } = await startMergedSpecialTextoff(provider, manga, chapters, level);
       const output = await waitForTextoffJob(job, progress.update);
+      selected.clear();
+      await load();
       await showOperationSummary({ title: `Nível ${level} concluído`, summary: { headline: `${output.length} capítulo(s)`,
         items: output.map((item) => ({ chapter: item.chapter, status: item.status,
           count: `${item.pages?.length || 0} imagem(ns)`, warning: item.status !== "ok",
@@ -102,7 +96,9 @@ export function renderSpecial(container, level) {
   const onQuery = () => { pagination.reset(); draw(); };
   query.addEventListener("input", onQuery);
   execute.addEventListener("click", run);
-  const unsubscribe = subscribeContext(load);
+  const unsubscribe = subscribeContext(() => {
+    selected.clear(); filter = "pending"; query.value = ""; pagination.reset(); load();
+  });
   load();
   return () => { disposed = true; request?.abort(); unsubscribe(); query.removeEventListener("input", onQuery); root.remove(); };
 }

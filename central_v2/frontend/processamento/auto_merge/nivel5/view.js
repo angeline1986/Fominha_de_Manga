@@ -9,7 +9,7 @@ export function createLevel5View({ onExecute } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page auto-merge-level5 auto-merge-level3";
   element.innerHTML = `<header><h1 title="Busca global SAFE nos resíduos dirigidos do Nível IV; o restante segue para revisão.">Auto-Merge Nível V</h1></header>
-    <div class="auto-merge-toolbar"><label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo..."></label>
+    <div class="auto-merge-toolbar"><label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar cap."></label>
     <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos por estado"></div>
     <button class="auto-merge-execute" type="button" data-execute>Executar Nível V</button></div>
     <p class="auto-merge-status" role="status" aria-live="polite"></p><div class="auto-merge-results"></div>`;
@@ -30,7 +30,7 @@ export function createLevel5View({ onExecute } = {}) {
       createStatusFilters(filters, { chapters: state.chapters, value: selectedFilter,
         onChange: (value) => { selectedFilter = value; pagination.reset(); draw(); } });
       const rows = state.chapters.filter((row) => row.chapter.toLocaleLowerCase("pt-BR").includes(term) && matchesStatus(row, selectedFilter));
-      status.textContent = rows.length ? "" : "Nenhum capítulo com residual elegível do Nível IV dirigido."; status.hidden = rows.length > 0;
+      status.textContent = ""; status.hidden = true;
       const selection = pagination.select(rows), current = selection.rows.filter((row) => row.eligible !== false).map((row) => row.chapter);
       const columns = createLevel3Columns({ selected: { chapters: selected, eligibleChapters: current, pageSelected: current.length > 0 && current.every((name) => selected.has(name)) },
         onSelect: (name, checked) => { checked ? selected.add(name) : selected.delete(name); draw(); },

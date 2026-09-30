@@ -1,8 +1,8 @@
 const FILTERS = [
   ["all", "Todos"],
-  ["pending", "Pendentes"],
-  ["partial", "Parciais"],
-  ["resolved", "Resolvidos"],
+  ["pending", "Pendente"],
+  ["partial", "Parcial"],
+  ["resolved", "Resolvido"],
   ["invalid", "Revisar"],
 ];
 
@@ -33,6 +33,6 @@ export function renderStatusBadge(row) {
   const status = row.status || "Disponível";
   const badge = document.createElement("span");
   badge.className = `auto-merge-badge ${status === "Parcial" ? "partial" : status === "Resolvido" ? "resolved" : status === "Registro inválido" ? "invalid" : "pending"}`;
-  badge.textContent = status === "Disponível" ? "Pendente" : status === "Registro inválido" ? "Revisar" : status;
+  badge.textContent = status === "Disponível" ? "Pendente" : status === "Resolvido" ? "Resolvido" : status === "Registro inválido" ? "Revisar" : status;
   return badge;
 }

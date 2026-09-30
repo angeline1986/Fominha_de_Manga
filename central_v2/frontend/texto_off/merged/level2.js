@@ -1,3 +1,4 @@
+import { matchesOutcome, drawOutcomeFilters } from "/texto_off/merged/outcome_filters.js";
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchMergedTextoff } from "/_app/api/textoff.js";
 import { createTable } from "/_shared/table/table.js";
@@ -5,12 +6,7 @@ import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createMergedExecution } from "/texto_off/merged/execution.js";
-
-const FILTERS = [
-  ["all", "Todos"], ["pending", "Pendentes"], ["processed", "Processados"],
-  ["unchanged", "Sem alteração"], ["none", "Sem candidatos"],
-  ["missing", "Atualizar Nível I"], ["invalid", "MERGE inválido"],
-];
+import { createOutcomeColumns } from "/texto_off/merged/outcome_columns.js";
 
 function checkbox(label, checked, onChange) {
   const input = document.createElement("input");
@@ -39,37 +35,20 @@ function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
         return input;
       },
     },
-    { id: "chapter", label: "Cap.", render: (row) => row.chapter },
-    { id: "candidates", label: "Páginas transparentes", render: (row) => row.cleaned ? row.transparent_page_count : "—" },
-    { id: "balloons", label: "Balões transp.", render: (row) => row.cleaned ? row.transparent_balloons : "—" },
-    { id: "residue", label: "Resíduos adiados", render: (row) => row.cleaned ? row.deferred_components : "—" },
-    { id: "pages-with-text", label: "Pág. com texto", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_pages_with_text : "—" },
-    { id: "changed-pixels", label: "Pixels alterados", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_changed_pixels : "—" },
-    {
-      id: "textoff-status",
-      label: "Situação",
-      render: (row) => ({
-        pending: "Pendente para Nível II",
-        processed: "Nível II concluído",
-        no_change: "Sem alteração — revisar resultado",
-        no_candidates: "Sem candidatos",
-        missing_level1: "Atualize o Nível I",
-        invalid_merge: "MERGE inválido",
-      })[row.level2_status] || "—",
-      className: (row) => `textoff-status ${["pending", "no_change"].includes(row.level2_status) ? "is-pending" : row.level2_status === "invalid_merge" ? "is-invalid" : "is-done"}`,
-    },
+    { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
+    ...createOutcomeColumns(),
   ];
 }
 
 export function createMergedLevel2View(onRun) {
   const element = document.createElement("section");
-  element.className = "auto-merge-page auto-merge-level2 textoff-merged-page textoff-merged-level2-page";
+  element.className = "auto-merge-page auto-merge-level2 textoff-merged-page textoff-merged-level2-page cleaner-outcomes";
   element.innerHTML = `
     <header><h1 class="textoff-page-title-hint" data-tooltip="Tratamento focado em páginas com balões transparentes." tabindex="0" aria-description="Tratamento focado em páginas com balões transparentes.">Auto-Cleaner — Passo 2: Balões Transparentes</h1></header>
     <div class="auto-merge-toolbar">
-      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo..."></label>
+      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo"></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
-      <button class="auto-merge-execute" type="button" data-execute>Executar Nível II</button>
+      <button class="auto-merge-execute" type="button" data-execute>Executar Passo 2</button>
     </div>
     <p class="auto-merge-status" role="status" aria-live="polite"></p>
     <div class="auto-merge-results"></div>
@@ -88,23 +67,13 @@ export function createMergedLevel2View(onRun) {
   let executionBusy = false;
 
   function match(row, filter = selectedFilter) {
-    return filter === "all" || row.level2_status === ({pending: "pending", processed: "processed",
-      unchanged: "no_change", none: "no_candidates", missing: "missing_level1", invalid: "invalid_merge"})[filter];
+    return matchesOutcome(row, filter);
   }
 
   function draw() {
-    filters.replaceChildren();
-    for (const [key, label] of FILTERS) {
-      const button = document.createElement("button");
-      button.className = "auto-merge-filter-button";
-      const count = state.chapters.filter((row) => match(row, key)).length;
-      button.type = "button";
-      button.textContent = `${label} (${count})`;
-      button.classList.toggle("active", selectedFilter === key);
-      button.setAttribute("aria-pressed", String(selectedFilter === key));
-      button.addEventListener("click", () => { selectedFilter = key; pagination.reset(); draw(); });
-      filters.append(button);
-    }
+    drawOutcomeFilters(filters, state.chapters, selectedFilter, (key) => {
+      selectedFilter = key; pagination.reset(); draw();
+    });
 
     if (state.status === "idle") status.textContent = "Selecione uma obra para consultar os resultados do Nível I.";
     else if (state.status === "loading") status.textContent = `Consultando ${state.manga}…`;
