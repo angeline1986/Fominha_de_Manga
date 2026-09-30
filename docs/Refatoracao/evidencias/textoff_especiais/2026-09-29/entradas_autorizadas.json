@@ -1,0 +1,307 @@
+{
+  "schema_version": 1,
+  "work": "Things that deserve to die",
+  "provider": "ridi",
+  "local_work_root": "/Users/alinesouza/Documents/FominhaData/output/ridi/Things that deserve to die",
+  "authorization": "Usuário autorizou as quatro imagens nos dois níveis para comparar os tratamentos com o Nível II atual.",
+  "selected_level": [
+    "MERGED_NIVEL_I",
+    "MERGED_NIVEL_II"
+  ],
+  "status": "levels_confirmed",
+  "roi_status": "fixed_for_comparison",
+  "note": "Inventário dos dois níveis disponíveis; não implica autorização de promoção ou escolha automática de ROI. Associação individual ao manifesto ainda deve ser validada antes de executar.",
+  "inputs": [
+    {
+      "filename": "page-156-163_clean.png",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/clean/page-156-163_clean.png",
+      "sha256": "3ad3ce4ac224d1b6d7924d4c0b6c385277957eb2b5d926a63b294fcd3510738a",
+      "width": 1280,
+      "height": 7102,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/clean-manifest.json",
+          "sha256": "fd022d1a927a4986762c179abc6459c60cddb6affccc8f4c2f124f6388df9da0"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level1-balloon-report.json",
+          "sha256": "5c1eaa1a8d8d9646d7da84466be6d3646d7bc3e629d2748ba2a80be8f50a1c62"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level2-report.json",
+          "sha256": "384dafa7835a628611b521a862a6d7f800c0569227aea58071458746af7720cd"
+        }
+      ],
+      "selections": [
+        {
+          "x": 204,
+          "y": 4653,
+          "width": 1001,
+          "height": 1072
+        },
+        {
+          "x": 448,
+          "y": 6435,
+          "width": 713,
+          "height": 561
+        }
+      ]
+    },
+    {
+      "filename": "page-051-059_clean.png",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/clean/page-051-059_clean.png",
+      "sha256": "b59f62abf8032c34e41853a3337743e0ed8f5149fea8a3fd45e74fec3f767a60",
+      "width": 1280,
+      "height": 8683,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/clean-manifest.json",
+          "sha256": "fd022d1a927a4986762c179abc6459c60cddb6affccc8f4c2f124f6388df9da0"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level1-balloon-report.json",
+          "sha256": "5c1eaa1a8d8d9646d7da84466be6d3646d7bc3e629d2748ba2a80be8f50a1c62"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level2-report.json",
+          "sha256": "384dafa7835a628611b521a862a6d7f800c0569227aea58071458746af7720cd"
+        }
+      ],
+      "selections": [
+        {
+          "x": 298,
+          "y": 5247,
+          "width": 647,
+          "height": 631
+        },
+        {
+          "x": 738,
+          "y": 7223,
+          "width": 467,
+          "height": 288
+        }
+      ]
+    },
+    {
+      "filename": "page-078-083_clean.png",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/clean/page-078-083_clean.png",
+      "sha256": "68002d61688806d58d5c4a8ff992a226fc9cc29b4a78d89d80eaa988b981ebe0",
+      "width": 1280,
+      "height": 5553,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/clean-manifest.json",
+          "sha256": "fd022d1a927a4986762c179abc6459c60cddb6affccc8f4c2f124f6388df9da0"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level1-balloon-report.json",
+          "sha256": "5c1eaa1a8d8d9646d7da84466be6d3646d7bc3e629d2748ba2a80be8f50a1c62"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level2-report.json",
+          "sha256": "384dafa7835a628611b521a862a6d7f800c0569227aea58071458746af7720cd"
+        }
+      ],
+      "selections": [
+        {
+          "x": 239,
+          "y": 2904,
+          "width": 921,
+          "height": 994
+        }
+      ]
+    },
+    {
+      "filename": "page-179-187_clean.png",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/clean/page-179-187_clean.png",
+      "sha256": "c8baf5eafd85fc0f7e359336b638f43cee9b5d53aafb420a160c1b7fa068f81f",
+      "width": 1280,
+      "height": 7271,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/clean-manifest.json",
+          "sha256": "fd022d1a927a4986762c179abc6459c60cddb6affccc8f4c2f124f6388df9da0"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level1-balloon-report.json",
+          "sha256": "5c1eaa1a8d8d9646d7da84466be6d3646d7bc3e629d2748ba2a80be8f50a1c62"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level2-report.json",
+          "sha256": "384dafa7835a628611b521a862a6d7f800c0569227aea58071458746af7720cd"
+        }
+      ],
+      "selections": [
+        {
+          "x": 172,
+          "y": 1876,
+          "width": 919,
+          "height": 1037
+        },
+        {
+          "x": 190,
+          "y": 249,
+          "width": 674,
+          "height": 551
+        }
+      ]
+    },
+    {
+      "filename": "page-156-163_clean.png",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/clean/page-156-163_clean.png",
+      "sha256": "4567e3be7f19e7d900c5ebbfe145033809b7ca3087ea6545a2ab3dd3bb5d59a2",
+      "width": 1280,
+      "height": 7102,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/clean-manifest.json",
+          "sha256": "24526c524b872b34a8812366f8035b9e79c9aa877b7faad5f5045860cc8b74c3"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/level2-transparent-report.json",
+          "sha256": "fc8d44cd09618b2e13a937a4459fd7fb0c516b728d9a3cdbba0d1c2f20e41c9f"
+        }
+      ],
+      "selections": [
+        {
+          "x": 204,
+          "y": 4653,
+          "width": 1001,
+          "height": 1072
+        },
+        {
+          "x": 448,
+          "y": 6435,
+          "width": 713,
+          "height": 561
+        }
+      ]
+    },
+    {
+      "filename": "page-051-059_clean.png",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/clean/page-051-059_clean.png",
+      "sha256": "fe3b4cc02a9a246adfcfdbe4dbfb76af668a6715d21bfa97678c8054b117b510",
+      "width": 1280,
+      "height": 8683,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/clean-manifest.json",
+          "sha256": "24526c524b872b34a8812366f8035b9e79c9aa877b7faad5f5045860cc8b74c3"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/level2-transparent-report.json",
+          "sha256": "fc8d44cd09618b2e13a937a4459fd7fb0c516b728d9a3cdbba0d1c2f20e41c9f"
+        }
+      ],
+      "selections": [
+        {
+          "x": 298,
+          "y": 5247,
+          "width": 647,
+          "height": 631
+        },
+        {
+          "x": 738,
+          "y": 7223,
+          "width": 467,
+          "height": 288
+        }
+      ]
+    },
+    {
+      "filename": "page-078-083_clean.png",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/clean/page-078-083_clean.png",
+      "sha256": "10147d9e7b7b35b0961f050b1fd0356723c256ef90848d7e5e42ecf169b75992",
+      "width": 1280,
+      "height": 5553,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/clean-manifest.json",
+          "sha256": "24526c524b872b34a8812366f8035b9e79c9aa877b7faad5f5045860cc8b74c3"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/level2-transparent-report.json",
+          "sha256": "fc8d44cd09618b2e13a937a4459fd7fb0c516b728d9a3cdbba0d1c2f20e41c9f"
+        }
+      ],
+      "selections": [
+        {
+          "x": 239,
+          "y": 2904,
+          "width": 921,
+          "height": 994
+        }
+      ]
+    },
+    {
+      "filename": "page-179-187_clean.png",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/clean/page-179-187_clean.png",
+      "sha256": "a932389cad7b994c38caee7fdd69fbb563a0a1d35f5ee249389f92352147000a",
+      "width": 1280,
+      "height": 7271,
+      "chapter_json_artifacts": [
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/clean-manifest.json",
+          "sha256": "24526c524b872b34a8812366f8035b9e79c9aa877b7faad5f5045860cc8b74c3"
+        },
+        {
+          "path": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/3/json/level2-transparent-report.json",
+          "sha256": "fc8d44cd09618b2e13a937a4459fd7fb0c516b728d9a3cdbba0d1c2f20e41c9f"
+        }
+      ],
+      "selections": [
+        {
+          "x": 172,
+          "y": 1876,
+          "width": 919,
+          "height": 1037
+        },
+        {
+          "x": 190,
+          "y": 249,
+          "width": 674,
+          "height": 551
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "reference": "MERGED_NIVEL_II atual, preservado",
+    "treatments": [
+      "transparente",
+      "transparente_legacy"
+    ],
+    "input_count": 8,
+    "planned_runs": 16,
+    "roi_policy": "Mesmas ROIs por página nos dois níveis e tratamentos; coordenadas ainda pendentes.",
+    "criteria": [
+      "resíduos de texto",
+      "preservação da arte",
+      "artefatos de reconstrução",
+      "alterações fora da máscara",
+      "duração"
+    ]
+  },
+  "roi_provenance": {
+    "selected_by": "assistant",
+    "method": "Bounding boxes dos balões transparentes do relatório Nível I, inspecionados visualmente nos dois níveis. Seleção de teste explícita; não altera seleção manual da futura interface.",
+    "report": "/Users/alinesouza/Documents/FominhaData/output/ridi/Things that deserve to die/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/3/json/level1-balloon-report.json",
+    "sha256": "5c1eaa1a8d8d9646d7da84466be6d3646d7bc3e629d2748ba2a80be8f50a1c62"
+  }
+}

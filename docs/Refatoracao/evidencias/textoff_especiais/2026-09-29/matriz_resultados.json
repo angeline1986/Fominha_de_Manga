@@ -1,0 +1,1051 @@
+{
+  "schema_version": 1,
+  "inventory_sha256": "2a54a44cf10f05d8f425a5b6a110f58828d91d82e12c91f138a83d15dcbd262b",
+  "created_at": "2026-09-29T21:21:42.321141+00:00",
+  "runs": [
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-156-163_clean.png",
+      "expected_sha256": "3ad3ce4ac224d1b6d7924d4c0b6c385277957eb2b5d926a63b294fcd3510738a",
+      "selections": [
+        {
+          "x": 204,
+          "y": 4653,
+          "width": 1001,
+          "height": 1072
+        },
+        {
+          "x": 448,
+          "y": 6435,
+          "width": 713,
+          "height": 561
+        }
+      ],
+      "run_id": "3c4f322d3a46420fb613cb2790db1408",
+      "manifest": "reports/experimentos/textoff_especiais_v2/3c4f322d3a46420fb613cb2790db1408/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 55.397,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+      },
+      "manifest_sha256": "1efe445dd2221613525c68e242d5076bf6df21f499496826fba8701cc1bbaca1",
+      "timings": {
+        "cleaner_seconds": 51.389
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-156-163_clean.png",
+      "expected_sha256": "3ad3ce4ac224d1b6d7924d4c0b6c385277957eb2b5d926a63b294fcd3510738a",
+      "selections": [
+        {
+          "x": 204,
+          "y": 4653,
+          "width": 1001,
+          "height": 1072
+        },
+        {
+          "x": 448,
+          "y": 6435,
+          "width": 713,
+          "height": 561
+        }
+      ],
+      "run_id": "a6d5d293858641fb836a673cd0524f62",
+      "manifest": "reports/experimentos/textoff_especiais_v2/a6d5d293858641fb836a673cd0524f62/manifest.json",
+      "execution_status": "succeeded",
+      "duration_seconds": 34.187,
+      "validation": {
+        "width": 1280,
+        "height": 7102,
+        "changed_pixels": 348471,
+        "mask_pixels": 355836,
+        "changed_outside_mask": 0,
+        "result_sha256": "0ee211cc18bef09d103d8635e18438d77a6bb4ce85f82c66eb01923e84716fc3",
+        "mask_sha256": "a42df63a6c08a2365a7184384f1e5ba672ee43813bae2fdcfef083ede11732b5"
+      },
+      "error": null,
+      "manifest_sha256": "301b68b6b57028f4d4ed1790b19efc9e708ea5f4c8084484a29ab27c5cd4fa91",
+      "timings": {
+        "cleaner_seconds": 26.704,
+        "lama_seconds": 5.941
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      },
+      "result_file": "reports/experimentos/textoff_especiais_v2/a6d5d293858641fb836a673cd0524f62/treatment/04_lama_text_only_legacy_roi.png",
+      "models": [
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+        },
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/comictextdetector.pt",
+          "sha256": "1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb"
+        }
+      ]
+    },
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-051-059_clean.png",
+      "expected_sha256": "b59f62abf8032c34e41853a3337743e0ed8f5149fea8a3fd45e74fec3f767a60",
+      "selections": [
+        {
+          "x": 298,
+          "y": 5247,
+          "width": 647,
+          "height": 631
+        },
+        {
+          "x": 738,
+          "y": 7223,
+          "width": 467,
+          "height": 288
+        }
+      ],
+      "run_id": "81dca44f8af04a49b66a00be5fce92a5",
+      "manifest": "reports/experimentos/textoff_especiais_v2/81dca44f8af04a49b66a00be5fce92a5/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 33.24,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+      },
+      "manifest_sha256": "2c3f4604ee73df664a51dd36c5cca3f07f7da04040105b51b31afda4e48d83dc",
+      "timings": {
+        "cleaner_seconds": 29.167
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-051-059_clean.png",
+      "expected_sha256": "b59f62abf8032c34e41853a3337743e0ed8f5149fea8a3fd45e74fec3f767a60",
+      "selections": [
+        {
+          "x": 298,
+          "y": 5247,
+          "width": 647,
+          "height": 631
+        },
+        {
+          "x": 738,
+          "y": 7223,
+          "width": 467,
+          "height": 288
+        }
+      ],
+      "run_id": "939e31182ea84091b05f31a7a90d7567",
+      "manifest": "reports/experimentos/textoff_especiais_v2/939e31182ea84091b05f31a7a90d7567/manifest.json",
+      "execution_status": "succeeded",
+      "duration_seconds": 37.171,
+      "validation": {
+        "width": 1280,
+        "height": 8683,
+        "changed_pixels": 120074,
+        "mask_pixels": 122573,
+        "changed_outside_mask": 0,
+        "result_sha256": "9df30e0056efe773f206fbfa3078d4d7173be6d9f87180ce002a9913c63c5cd1",
+        "mask_sha256": "6390c2883d44d1c5fcbd3a6bbcecd815401dc9381c84a4c910832a473788aace"
+      },
+      "error": null,
+      "manifest_sha256": "087e83691514b48a269df229848ac3ec5e44816863a7d69c9bff6cb654943f44",
+      "timings": {
+        "cleaner_seconds": 28.151,
+        "lama_seconds": 7.003
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      },
+      "result_file": "reports/experimentos/textoff_especiais_v2/939e31182ea84091b05f31a7a90d7567/treatment/04_lama_text_only_legacy_roi.png",
+      "models": [
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+        },
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/comictextdetector.pt",
+          "sha256": "1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb"
+        }
+      ]
+    },
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-078-083_clean.png",
+      "expected_sha256": "68002d61688806d58d5c4a8ff992a226fc9cc29b4a78d89d80eaa988b981ebe0",
+      "selections": [
+        {
+          "x": 239,
+          "y": 2904,
+          "width": 921,
+          "height": 994
+        }
+      ],
+      "run_id": "caeb10662919423ea784a294d090fc04",
+      "manifest": "reports/experimentos/textoff_especiais_v2/caeb10662919423ea784a294d090fc04/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 30.175,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+      },
+      "manifest_sha256": "b0164abc020e965e45485657ac0801554e874e1a8c0994c47683f4d638ee40dd",
+      "timings": {
+        "cleaner_seconds": 26.558
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-078-083_clean.png",
+      "expected_sha256": "68002d61688806d58d5c4a8ff992a226fc9cc29b4a78d89d80eaa988b981ebe0",
+      "selections": [
+        {
+          "x": 239,
+          "y": 2904,
+          "width": 921,
+          "height": 994
+        }
+      ],
+      "run_id": "1db0fb56b2814177a2dfb06435a9b490",
+      "manifest": "reports/experimentos/textoff_especiais_v2/1db0fb56b2814177a2dfb06435a9b490/manifest.json",
+      "execution_status": "succeeded",
+      "duration_seconds": 31.494,
+      "validation": {
+        "width": 1280,
+        "height": 5553,
+        "changed_pixels": 151571,
+        "mask_pixels": 151683,
+        "changed_outside_mask": 0,
+        "result_sha256": "0d2365dda40a17c2b050d0d4180008f55fe41cb763a89e1f8c333882b58c95c1",
+        "mask_sha256": "0aab534bcc72a742583561e5e034be74877a305cb623b5cac18f993944d7c995"
+      },
+      "error": null,
+      "manifest_sha256": "24ef7ebfc329166289a50091fb4f5ae8cfa2ebcffd9c279477e9746452c8402c",
+      "timings": {
+        "cleaner_seconds": 25.905,
+        "lama_seconds": 4.148
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      },
+      "result_file": "reports/experimentos/textoff_especiais_v2/1db0fb56b2814177a2dfb06435a9b490/treatment/04_lama_text_only_legacy_roi.png",
+      "models": [
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+        },
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/comictextdetector.pt",
+          "sha256": "1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb"
+        }
+      ]
+    },
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-179-187_clean.png",
+      "expected_sha256": "c8baf5eafd85fc0f7e359336b638f43cee9b5d53aafb420a160c1b7fa068f81f",
+      "selections": [
+        {
+          "x": 172,
+          "y": 1876,
+          "width": 919,
+          "height": 1037
+        },
+        {
+          "x": 190,
+          "y": 249,
+          "width": 674,
+          "height": 551
+        }
+      ],
+      "run_id": "8275082e2c594aeaa6989e5062804f71",
+      "manifest": "reports/experimentos/textoff_especiais_v2/8275082e2c594aeaa6989e5062804f71/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 30.521,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+      },
+      "manifest_sha256": "fbb5be58498f3cd8b3a9b91e7f6966d65827fbd9e5554d5d822798ccf16ee238",
+      "timings": {
+        "cleaner_seconds": 26.733
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_I",
+      "chapter": "3",
+      "filename": "page-179-187_clean.png",
+      "expected_sha256": "c8baf5eafd85fc0f7e359336b638f43cee9b5d53aafb420a160c1b7fa068f81f",
+      "selections": [
+        {
+          "x": 172,
+          "y": 1876,
+          "width": 919,
+          "height": 1037
+        },
+        {
+          "x": 190,
+          "y": 249,
+          "width": 674,
+          "height": 551
+        }
+      ],
+      "run_id": "98ee3218431241a9b273c4e801b98b53",
+      "manifest": "reports/experimentos/textoff_especiais_v2/98ee3218431241a9b273c4e801b98b53/manifest.json",
+      "execution_status": "succeeded",
+      "duration_seconds": 35.587,
+      "validation": {
+        "width": 1280,
+        "height": 7271,
+        "changed_pixels": 398074,
+        "mask_pixels": 407060,
+        "changed_outside_mask": 0,
+        "result_sha256": "43223b072263390eea689246160219b279ac3d8f7d56dcb47b084c12ce7028ed",
+        "mask_sha256": "08fcb838118ca480bb854ccfc69cf8bfcae55f6401689c141b0721dbb938448a"
+      },
+      "error": null,
+      "manifest_sha256": "3743b65a0936eae9ae3ca975c8e38b48f98ac284f5a6fd0d65108ff194a416e4",
+      "timings": {
+        "cleaner_seconds": 27.746,
+        "lama_seconds": 6.172
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "f4b70e5b39cc669801ed27a28cea66f6c8e2b3d11c049f01087eb289a4c7cea7",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      },
+      "result_file": "reports/experimentos/textoff_especiais_v2/98ee3218431241a9b273c4e801b98b53/treatment/04_lama_text_only_legacy_roi.png",
+      "models": [
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+        },
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/comictextdetector.pt",
+          "sha256": "1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb"
+        }
+      ]
+    },
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-156-163_clean.png",
+      "expected_sha256": "4567e3be7f19e7d900c5ebbfe145033809b7ca3087ea6545a2ab3dd3bb5d59a2",
+      "selections": [
+        {
+          "x": 204,
+          "y": 4653,
+          "width": 1001,
+          "height": 1072
+        },
+        {
+          "x": 448,
+          "y": 6435,
+          "width": 713,
+          "height": 561
+        }
+      ],
+      "run_id": "7780b9efc0144b4ea0162024e2e92a11",
+      "manifest": "reports/experimentos/textoff_especiais_v2/7780b9efc0144b4ea0162024e2e92a11/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 28.335,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+      },
+      "manifest_sha256": "bceeb023424771c585754cbd5336f6d173fd7c6567780cecb8baa094f2562456",
+      "timings": {
+        "cleaner_seconds": 24.687
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-156-163_clean.png",
+      "expected_sha256": "4567e3be7f19e7d900c5ebbfe145033809b7ca3087ea6545a2ab3dd3bb5d59a2",
+      "selections": [
+        {
+          "x": 204,
+          "y": 4653,
+          "width": 1001,
+          "height": 1072
+        },
+        {
+          "x": 448,
+          "y": 6435,
+          "width": 713,
+          "height": 561
+        }
+      ],
+      "run_id": "383d3c0649a34e3da9c06aa4ccb29607",
+      "manifest": "reports/experimentos/textoff_especiais_v2/383d3c0649a34e3da9c06aa4ccb29607/manifest.json",
+      "execution_status": "succeeded",
+      "duration_seconds": 32.575,
+      "validation": {
+        "width": 1280,
+        "height": 7102,
+        "changed_pixels": 105994,
+        "mask_pixels": 106929,
+        "changed_outside_mask": 0,
+        "result_sha256": "74012407ba022ae75867088dfaac044dc7859d2a977e257b566df0fde8fe149c",
+        "mask_sha256": "49f26a2f40564ebaadc546ef56932bea3a5761d9ae00cd6f326843edc73122ec"
+      },
+      "error": null,
+      "manifest_sha256": "8beb90b342ff48e8d0c6bc938735c47c09342317911379e05cd0a95a7bd70cd2",
+      "timings": {
+        "cleaner_seconds": 26.93,
+        "lama_seconds": 3.827
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      },
+      "result_file": "reports/experimentos/textoff_especiais_v2/383d3c0649a34e3da9c06aa4ccb29607/treatment/04_lama_text_only_legacy_roi.png",
+      "models": [
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+        },
+        {
+          "path": "/Users/alinesouza/Library/Caches/pcleaner/model/comictextdetector.pt",
+          "sha256": "1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb"
+        }
+      ]
+    },
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-051-059_clean.png",
+      "expected_sha256": "fe3b4cc02a9a246adfcfdbe4dbfb76af668a6715d21bfa97678c8054b117b510",
+      "selections": [
+        {
+          "x": 298,
+          "y": 5247,
+          "width": 647,
+          "height": 631
+        },
+        {
+          "x": 738,
+          "y": 7223,
+          "width": 467,
+          "height": 288
+        }
+      ],
+      "run_id": "0f94b515918c4881a13518dac8767280",
+      "manifest": "reports/experimentos/textoff_especiais_v2/0f94b515918c4881a13518dac8767280/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 30.061,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Cleaner não detectou componentes de texto."
+      },
+      "manifest_sha256": "688004723c4c7dd430a66869aff5d4d8c6b6ebaf9c6286e7abce0a6b4b3d8ef7",
+      "timings": {
+        "cleaner_seconds": 29.422
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-051-059_clean.png",
+      "expected_sha256": "fe3b4cc02a9a246adfcfdbe4dbfb76af668a6715d21bfa97678c8054b117b510",
+      "selections": [
+        {
+          "x": 298,
+          "y": 5247,
+          "width": 647,
+          "height": 631
+        },
+        {
+          "x": 738,
+          "y": 7223,
+          "width": 467,
+          "height": 288
+        }
+      ],
+      "run_id": "3420688a193b4383b6012bc5a2322432",
+      "manifest": "reports/experimentos/textoff_especiais_v2/3420688a193b4383b6012bc5a2322432/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 28.878,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Nenhum componente do Cleaner intersecta as regiões selecionadas."
+      },
+      "manifest_sha256": "f3491e6237c80f38cf74ccb481b44ae8310aa2f7bb5c0b030d01f7059accfd48",
+      "timings": {
+        "cleaner_seconds": 28.182
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-078-083_clean.png",
+      "expected_sha256": "10147d9e7b7b35b0961f050b1fd0356723c256ef90848d7e5e42ecf169b75992",
+      "selections": [
+        {
+          "x": 239,
+          "y": 2904,
+          "width": 921,
+          "height": 994
+        }
+      ],
+      "run_id": "7e649ccacb714bda8f73db35f7c69459",
+      "manifest": "reports/experimentos/textoff_especiais_v2/7e649ccacb714bda8f73db35f7c69459/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 25.4,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Cleaner não detectou componentes de texto."
+      },
+      "manifest_sha256": "8f5c12462dc51b6f2989640083aa3adfa345e37123448fa32ec9495322ac08a2",
+      "timings": {
+        "cleaner_seconds": 24.67
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-078-083_clean.png",
+      "expected_sha256": "10147d9e7b7b35b0961f050b1fd0356723c256ef90848d7e5e42ecf169b75992",
+      "selections": [
+        {
+          "x": 239,
+          "y": 2904,
+          "width": 921,
+          "height": 994
+        }
+      ],
+      "run_id": "74333789ad494551bca1e8b4e6c1d0e0",
+      "manifest": "reports/experimentos/textoff_especiais_v2/74333789ad494551bca1e8b4e6c1d0e0/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 26.161,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Nenhum componente do Cleaner intersecta as regiões selecionadas."
+      },
+      "manifest_sha256": "5d18749dfc260744b95a6ade3339eca90edda77e5c0791a31418d82318a8ce12",
+      "timings": {
+        "cleaner_seconds": 25.5
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-179-187_clean.png",
+      "expected_sha256": "a932389cad7b994c38caee7fdd69fbb563a0a1d35f5ee249389f92352147000a",
+      "selections": [
+        {
+          "x": 172,
+          "y": 1876,
+          "width": 919,
+          "height": 1037
+        },
+        {
+          "x": 190,
+          "y": 249,
+          "width": 674,
+          "height": 551
+        }
+      ],
+      "run_id": "50ae20f36bbc4c44b2dbb5d9e77d84b6",
+      "manifest": "reports/experimentos/textoff_especiais_v2/50ae20f36bbc4c44b2dbb5d9e77d84b6/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 27.72,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Cleaner não detectou componentes de texto."
+      },
+      "manifest_sha256": "259d7117a6f4a9f5a1b45a82d719aafccb452af73485fa03103a97936b9e5fc2",
+      "timings": {
+        "cleaner_seconds": 26.96
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    },
+    {
+      "treatment": "transparente_legacy",
+      "level": "MERGED_NIVEL_II",
+      "chapter": "3",
+      "filename": "page-179-187_clean.png",
+      "expected_sha256": "a932389cad7b994c38caee7fdd69fbb563a0a1d35f5ee249389f92352147000a",
+      "selections": [
+        {
+          "x": 172,
+          "y": 1876,
+          "width": 919,
+          "height": 1037
+        },
+        {
+          "x": 190,
+          "y": 249,
+          "width": 674,
+          "height": 551
+        }
+      ],
+      "run_id": "f30e2cb672494ba19d1c60f3bbf4cf15",
+      "manifest": "reports/experimentos/textoff_especiais_v2/f30e2cb672494ba19d1c60f3bbf4cf15/manifest.json",
+      "execution_status": "failed",
+      "duration_seconds": 26.42,
+      "validation": null,
+      "error": {
+        "type": "RuntimeError",
+        "error": "Nenhum componente do Cleaner intersecta as regiões selecionadas."
+      },
+      "manifest_sha256": "aadcc99435e43c46f352b77f7e6994bf2c00ca4b78f873851739147f88099901",
+      "timings": {
+        "cleaner_seconds": 25.761
+      },
+      "runtime_lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+      "code_and_configuration": {
+        "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+        "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+        "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+        "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+        "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+        "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+        "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+        "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+        "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+        "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+        "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+        "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+        "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+        "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+        "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+        "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+        "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+        "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+        "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+        "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+        "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+        "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+        "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+        "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+      }
+    }
+  ],
+  "finished_at": "2026-09-29T21:30:15.760498+00:00",
+  "inputs_unchanged": true,
+  "summary": {
+    "failed": 11,
+    "succeeded": 5
+  },
+  "visual_review_status": "assistant_observations_recorded; user_review_pending"
+}

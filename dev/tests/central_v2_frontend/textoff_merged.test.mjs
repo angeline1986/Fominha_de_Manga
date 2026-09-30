@@ -2,9 +2,9 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { browserModules } from './modules.mjs';
 
-test('TextOff menu separates explicit Merged levels from the Legacy flow', async () => {
+test('TextOff menu exposes Merged I, II, IV and V and keeps Legacy separate', async () => {
   const load = browserModules();
-  const { resolveRoute } = await load('/_app/router/routes.js');
+  const { resolveRoute, routes } = await load('/_app/router/routes.js');
   const level1 = resolveRoute('texto-off-merged-i');
   const level2 = resolveRoute('texto-off-merged-ii');
   const legacy = resolveRoute('texto-off-legacy');
@@ -12,6 +12,16 @@ test('TextOff menu separates explicit Merged levels from the Legacy flow', async
   assert.equal(level1.module, '/texto_off/merged/level1.js');
   assert.equal(level2.context, 'texto-off');
   assert.equal(level2.module, '/texto_off/merged/level2.js');
+  for (const [level, numeral] of [['IV', '4'], ['V', '5']]) {
+    const route = resolveRoute(`texto-off-merged-${level.toLowerCase()}`);
+    assert.equal(route.context, 'texto-off');
+    assert.equal(route.module, `/texto_off/merged/level${numeral}.js`);
+    await load(route.module);
+  }
+  const { navigation } = await load('/_shell/navigation.js');
+  const selector = navigation.find((section) => section.id === 'texto-off')
+    .groups.find((group) => group.control?.id === 'textoff-merged-level').control;
+  assert.equal(Array.from(selector.options, (option) => option.value).join(','), 'I,II,IV,V');
   assert.equal(legacy.context, 'texto-off');
   assert.equal(legacy.module, '/texto_off/merged/index.js');
   await load(level1.module);

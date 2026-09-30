@@ -1,0 +1,5645 @@
+{
+  "schema_version": 1,
+  "scope": "Inventário de artefatos históricos; não valida qualidade nem reprodução com o código atual.",
+  "runs": [
+    {
+      "manifest": "reports/experimentos/textoff_especiais/01d872b6813846d1bf45db1675232af6/run.json",
+      "manifest_sha256": "044ffd706966ca9bb291e399935cd5f9fef85588c806cdf8e97cc02a47b38386",
+      "run_id": "01d872b6813846d1bf45db1675232af6",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "8de2cf52fc969f5189250b1e3bd6d1346857747529cd14ea559b2eccde168ce0",
+      "observed_result_sha256": "8de2cf52fc969f5189250b1e3bd6d1346857747529cd14ea559b2eccde168ce0",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 402,
+            "y": 5103,
+            "width": 278,
+            "height": 150
+          },
+          {
+            "index": 2,
+            "x": 243,
+            "y": 5445,
+            "width": 230,
+            "height": 75
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 63252,
+        "authorized_mask_pixels_after_roi_9x9": 69244,
+        "components_before_count": 7,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 4,
+            "bbox": [
+              398,
+              5099,
+              285,
+              162
+            ],
+            "area": 40798,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              228,
+              5435,
+              254,
+              100
+            ],
+            "area": 22454,
+            "roi_hits": [
+              2
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 69244,
+          "changed_pixels": 69092,
+          "changed_outside_mask": 0,
+          "crop": [
+            104,
+            4975,
+            720,
+            5659
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 69092,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 32.637
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/03a5bafbfaf64b639fb37874931d5872/run.json",
+      "manifest_sha256": "e318d379c758aaad0b2e4461bacf6e3c90883d0f7b1988d51e682bf9b0c42cd3",
+      "run_id": "03a5bafbfaf64b639fb37874931d5872",
+      "patch": "transparente",
+      "source_name": "page-015.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/comix/Gazing at you/IMG/1/page-015.png",
+      "source_sha256": "8cd5bbd4fbfa61b7bb39dfb83c470db26256cec0479975b9645c9f61adfcda39",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "6b37e787f4904f78cd46f3f69d12ee2e87503dacefa195df6f67bbc88fec42b4",
+      "observed_result_sha256": "6b37e787f4904f78cd46f3f69d12ee2e87503dacefa195df6f67bbc88fec42b4",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 316,
+            "y": 1234,
+            "width": 334,
+            "height": 135
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 16794,
+        "base_mask_pixels_after_roi": 16794,
+        "authorized_mask_pixels_after_roi_9x9": 19496,
+        "components_before_count": 1,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 1,
+            "bbox": [
+              346,
+              1263,
+              282,
+              62
+            ],
+            "area": 16794,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 4,
+          "authorized_components": 1,
+          "cleaner_mask_pixels": 31355,
+          "authorized_cleaner_mask_pixels": 16150,
+          "authorized_percent": 51.5069,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 1,
+              "cleaner_mask_pixels": 31355,
+              "authorized_mask_pixels": 16150,
+              "authorized_percent": 51.5069,
+              "components_total": 4,
+              "components_authorized": 1,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    540,
+                    396,
+                    190,
+                    101
+                  ],
+                  "area": 15146,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    650,
+                    489,
+                    13,
+                    2
+                  ],
+                  "area": 20,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    690,
+                    489,
+                    19,
+                    3
+                  ],
+                  "area": 39,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    347,
+                    1264,
+                    280,
+                    60
+                  ],
+                  "area": 16150,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 19496,
+          "changed_pixels": 19490,
+          "changed_outside_mask": 0,
+          "crop": [
+            222,
+            1139,
+            752,
+            1449
+          ]
+        },
+        "composition_mode": "technical_result_from_source",
+        "effective_changed_pixels": 19490,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only_roi.png"
+        },
+        "elapsed_seconds": 15.042
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/03fff73ed7ac4f46aef5dcb9fe61ab31/run.json",
+      "manifest_sha256": "59efae92c1eeb3bafe93f1260bd5120e42a039f0aa7e5a4cfeffe67304901894",
+      "run_id": "03fff73ed7ac4f46aef5dcb9fe61ab31",
+      "patch": "transparente_legacy",
+      "source_name": "page-034-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png",
+      "source_sha256": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "b93e4d5ef02de5114bd60b4356f9c28e3f743cec6671233268fc9de1a0554c00",
+      "observed_result_sha256": "b93e4d5ef02de5114bd60b4356f9c28e3f743cec6671233268fc9de1a0554c00",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 244,
+            "y": 3886,
+            "width": 229,
+            "height": 69
+          },
+          {
+            "index": 2,
+            "x": 415,
+            "y": 4532,
+            "width": 229,
+            "height": 40
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 60207,
+        "base_mask_pixels_after_roi_3x3": 61668,
+        "authorized_mask_pixels_after_roi_9x9": 67919,
+        "components_before_count": 11,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 8,
+            "bbox": [
+              223,
+              3856,
+              264,
+              118
+            ],
+            "area": 26110,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 10,
+            "bbox": [
+              381,
+              4532,
+              288,
+              155
+            ],
+            "area": 34097,
+            "roi_hits": [
+              2
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 67919,
+          "changed_pixels": 67770,
+          "changed_outside_mask": 0,
+          "crop": [
+            98,
+            3731,
+            720,
+            4812
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 67770,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 31.744
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/137a0dfd62ed4852a67621fd73132e80/run.json",
+      "manifest_sha256": "d3dc710efc61c26b711da754df139e6006a93a426430e191cfe8680004511573",
+      "run_id": "137a0dfd62ed4852a67621fd73132e80",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "observed_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 242,
+            "y": 5444,
+            "width": 232,
+            "height": 78
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 22454,
+        "authorized_mask_pixels_after_roi_9x9": 25110,
+        "components_before_count": 7,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 5,
+            "bbox": [
+              228,
+              5435,
+              254,
+              100
+            ],
+            "area": 22454,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 25110,
+          "changed_pixels": 25042,
+          "changed_outside_mask": 0,
+          "crop": [
+            104,
+            5311,
+            606,
+            5659
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 25042,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 38.199
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/15c773acbdfa47aa86c00c25ef315701/run.json",
+      "manifest_sha256": "963cb2faf18eaf28d8035fa8397abaa554e33cbabe146885aeb0ade341de497b",
+      "run_id": "15c773acbdfa47aa86c00c25ef315701",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "observed_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 236,
+            "y": 5430,
+            "width": 247,
+            "height": 98
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 22454,
+        "authorized_mask_pixels_after_roi_9x9": 25110,
+        "components_before_count": 7,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 5,
+            "bbox": [
+              228,
+              5435,
+              254,
+              100
+            ],
+            "area": 22454,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 25110,
+          "changed_pixels": 25042,
+          "changed_outside_mask": 0,
+          "crop": [
+            104,
+            5311,
+            606,
+            5659
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 25042,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 43.264
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/1a7ad98b8d464a949ab36d564c1e6052/run.json",
+      "manifest_sha256": "01eb4f50677ac73a9584676326b3d8acaa97312735a276250b5ba9fa912f154e",
+      "run_id": "1a7ad98b8d464a949ab36d564c1e6052",
+      "patch": "transparente_legacy",
+      "source_name": "page-024-026.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 1/page-024-026.png",
+      "source_sha256": "261b7e12dcb9dfa7176ea455cf7b573b376f567fcd44feb68b6aa3880c52494c",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "96773c265b2a38f6cf180d288222d4953b5277840c302d03f1b55a1a26d1f746",
+      "observed_result_sha256": "96773c265b2a38f6cf180d288222d4953b5277840c302d03f1b55a1a26d1f746",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 5,
+        "selections": [
+          {
+            "index": 1,
+            "x": 265,
+            "y": 641,
+            "width": 111,
+            "height": 74
+          },
+          {
+            "index": 2,
+            "x": 116,
+            "y": 1345,
+            "width": 92,
+            "height": 41
+          },
+          {
+            "index": 3,
+            "x": 26,
+            "y": 1444,
+            "width": 90,
+            "height": 44
+          },
+          {
+            "index": 4,
+            "x": 211,
+            "y": 2187,
+            "width": 162,
+            "height": 116
+          },
+          {
+            "index": 5,
+            "x": 92,
+            "y": 2497,
+            "width": 171,
+            "height": 86
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 54695,
+        "base_mask_pixels_after_roi_3x3": 56776,
+        "authorized_mask_pixels_after_roi_9x9": 65647,
+        "components_before_count": 7,
+        "components_selected_count": 5,
+        "selected_components": [
+          {
+            "label": 3,
+            "bbox": [
+              256,
+              632,
+              124,
+              89
+            ],
+            "area": 9880,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 4,
+            "bbox": [
+              111,
+              1340,
+              107,
+              52
+            ],
+            "area": 5324,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              22,
+              1440,
+              104,
+              49
+            ],
+            "area": 4848,
+            "roi_hits": [
+              3
+            ]
+          },
+          {
+            "label": 6,
+            "bbox": [
+              212,
+              2189,
+              197,
+              130
+            ],
+            "area": 20426,
+            "roi_hits": [
+              4
+            ]
+          },
+          {
+            "label": 7,
+            "bbox": [
+              88,
+              2501,
+              176,
+              83
+            ],
+            "area": 14217,
+            "roi_hits": [
+              5
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 65647,
+          "changed_pixels": 65570,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            507,
+            534,
+            2709
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 65570,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 42.33
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/1ace4707ef054752bcdba7833596f596/run.json",
+      "manifest_sha256": "c9fb1184fd2f7c0452f55819dc4f482a0ee060a61cbb1f772bb0a4d2f1ddc7e7",
+      "run_id": "1ace4707ef054752bcdba7833596f596",
+      "patch": "transparente_legacy",
+      "source_name": "page-026.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/IMG/Ch. 1/page-026.png",
+      "source_sha256": "68b3ad8d0822c27629528bebbec87182027186cdc6784d6a098c5e9a1df59cf9",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "772dbee44a59a9801f46f22ddddd3d39d4a58bea1ca46d1f706822d4575a7587",
+      "observed_result_sha256": "772dbee44a59a9801f46f22ddddd3d39d4a58bea1ca46d1f706822d4575a7587",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 91,
+            "y": 110,
+            "width": 183,
+            "height": 78
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 13988,
+        "base_mask_pixels_after_roi_3x3": 14483,
+        "authorized_mask_pixels_after_roi_9x9": 16580,
+        "components_before_count": 1,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 1,
+            "bbox": [
+              87,
+              107,
+              177,
+              81
+            ],
+            "area": 13988,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 16580,
+          "changed_pixels": 16568,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            0,
+            389,
+            313
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 16568,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 13.792
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/20a7125ecad44d38ae1a43ae9205c5ab/run.json",
+      "manifest_sha256": "c227e1ec4531e2e540f6fa2317db5b18ce6788e8170afa4f27bb90465e219569",
+      "run_id": "20a7125ecad44d38ae1a43ae9205c5ab",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/download/mangago_downloader/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "87874cf505256b0648bca3eb44b5de841876488ad4a8646fd75c5eab2e1ce0f9",
+      "observed_result_sha256": "87874cf505256b0648bca3eb44b5de841876488ad4a8646fd75c5eab2e1ce0f9",
+      "result_hash_matches": true,
+      "treatment": {},
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/334bb64c3ebe4ad8a0f9f6cc6a0972c0/run.json",
+      "manifest_sha256": "63b2083712835796048062cd4ce5ae455c4af8fa19dfc0f8d44a2118f1172c16",
+      "run_id": "334bb64c3ebe4ad8a0f9f6cc6a0972c0",
+      "patch": "transparente",
+      "source_name": "page-024-026.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 1/page-024-026.png",
+      "source_sha256": "261b7e12dcb9dfa7176ea455cf7b573b376f567fcd44feb68b6aa3880c52494c",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "96773c265b2a38f6cf180d288222d4953b5277840c302d03f1b55a1a26d1f746",
+      "observed_result_sha256": "96773c265b2a38f6cf180d288222d4953b5277840c302d03f1b55a1a26d1f746",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 5,
+        "selections": [
+          {
+            "index": 1,
+            "x": 264,
+            "y": 642,
+            "width": 107,
+            "height": 71
+          },
+          {
+            "index": 2,
+            "x": 120,
+            "y": 1350,
+            "width": 84,
+            "height": 34
+          },
+          {
+            "index": 3,
+            "x": 27,
+            "y": 1450,
+            "width": 87,
+            "height": 35
+          },
+          {
+            "index": 4,
+            "x": 219,
+            "y": 2196,
+            "width": 155,
+            "height": 110
+          },
+          {
+            "index": 5,
+            "x": 94,
+            "y": 2505,
+            "width": 165,
+            "height": 78
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 83073,
+        "base_mask_pixels_after_roi": 56776,
+        "authorized_mask_pixels_after_roi_9x9": 65647,
+        "components_before_count": 7,
+        "components_selected_count": 5,
+        "selected_components": [
+          {
+            "label": 3,
+            "bbox": [
+              255,
+              631,
+              126,
+              91
+            ],
+            "area": 10251,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 4,
+            "bbox": [
+              110,
+              1339,
+              109,
+              54
+            ],
+            "area": 5620,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              21,
+              1439,
+              106,
+              51
+            ],
+            "area": 5132,
+            "roi_hits": [
+              3
+            ]
+          },
+          {
+            "label": 6,
+            "bbox": [
+              211,
+              2188,
+              199,
+              132
+            ],
+            "area": 21061,
+            "roi_hits": [
+              4
+            ]
+          },
+          {
+            "label": 7,
+            "bbox": [
+              87,
+              2500,
+              178,
+              85
+            ],
+            "area": 14712,
+            "roi_hits": [
+              5
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 7,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 80162,
+          "authorized_cleaner_mask_pixels": 80162,
+          "authorized_percent": 100.0,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 8,
+              "cleaner_mask_pixels": 80162,
+              "authorized_mask_pixels": 80162,
+              "authorized_percent": 100.0,
+              "components_total": 7,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    167,
+                    74,
+                    185,
+                    124
+                  ],
+                  "area": 20152,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    36,
+                    215,
+                    102,
+                    54
+                  ],
+                  "area": 5315,
+                  "best_balloon": 5,
+                  "inside_ratio": 0.9874,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    256,
+                    632,
+                    124,
+                    89
+                  ],
+                  "area": 9880,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    111,
+                    1340,
+                    107,
+                    52
+                  ],
+                  "area": 5324,
+                  "best_balloon": 7,
+                  "inside_ratio": 0.9699,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    22,
+                    1440,
+                    104,
+                    49
+                  ],
+                  "area": 4848,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9977,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    212,
+                    2189,
+                    197,
+                    130
+                  ],
+                  "area": 20426,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    88,
+                    2501,
+                    176,
+                    83
+                  ],
+                  "area": 14217,
+                  "best_balloon": 4,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 65647,
+          "changed_pixels": 65570,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            507,
+            534,
+            2709
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 65570,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 83.263
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/36753ecb0f474da591c1d4db66e9c7b6/run.json",
+      "manifest_sha256": "37182c7fd5a46b761a7d028c38aad9f14bb4289a2f47e71a67c5b0eb5a81d8e3",
+      "run_id": "36753ecb0f474da591c1d4db66e9c7b6",
+      "patch": "transparente_legacy",
+      "source_name": "page-026.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/IMG/Ch. 1/page-026.png",
+      "source_sha256": "68b3ad8d0822c27629528bebbec87182027186cdc6784d6a098c5e9a1df59cf9",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "772dbee44a59a9801f46f22ddddd3d39d4a58bea1ca46d1f706822d4575a7587",
+      "observed_result_sha256": "772dbee44a59a9801f46f22ddddd3d39d4a58bea1ca46d1f706822d4575a7587",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 86,
+            "y": 94,
+            "width": 187,
+            "height": 93
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 13988,
+        "base_mask_pixels_after_roi_3x3": 14483,
+        "authorized_mask_pixels_after_roi_9x9": 16580,
+        "components_before_count": 1,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 1,
+            "bbox": [
+              87,
+              107,
+              177,
+              81
+            ],
+            "area": 13988,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 16580,
+          "changed_pixels": 16568,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            0,
+            389,
+            313
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 16568,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 23.483
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/37f8463a208344839e675ad45551d327/run.json",
+      "manifest_sha256": "1ebb2e29bcf1a168b8d1cc28d0df6d2d005dca4ae9a24c48a0fbc00bc3efc8de",
+      "run_id": "37f8463a208344839e675ad45551d327",
+      "patch": "transparente",
+      "source_name": "page-015.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/comix/Gazing at you/IMG/1/page-015.png",
+      "source_sha256": "8cd5bbd4fbfa61b7bb39dfb83c470db26256cec0479975b9645c9f61adfcda39",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "6b37e787f4904f78cd46f3f69d12ee2e87503dacefa195df6f67bbc88fec42b4",
+      "observed_result_sha256": "6b37e787f4904f78cd46f3f69d12ee2e87503dacefa195df6f67bbc88fec42b4",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 336,
+            "y": 1258,
+            "width": 305,
+            "height": 65
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 16794,
+        "base_mask_pixels_after_roi": 16794,
+        "authorized_mask_pixels_after_roi_9x9": 19496,
+        "components_before_count": 1,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 1,
+            "bbox": [
+              346,
+              1263,
+              282,
+              62
+            ],
+            "area": 16794,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 4,
+          "authorized_components": 1,
+          "cleaner_mask_pixels": 31355,
+          "authorized_cleaner_mask_pixels": 16150,
+          "authorized_percent": 51.5069,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 1,
+              "cleaner_mask_pixels": 31355,
+              "authorized_mask_pixels": 16150,
+              "authorized_percent": 51.5069,
+              "components_total": 4,
+              "components_authorized": 1,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    540,
+                    396,
+                    190,
+                    101
+                  ],
+                  "area": 15146,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    650,
+                    489,
+                    13,
+                    2
+                  ],
+                  "area": 20,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    690,
+                    489,
+                    19,
+                    3
+                  ],
+                  "area": 39,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    347,
+                    1264,
+                    280,
+                    60
+                  ],
+                  "area": 16150,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 19496,
+          "changed_pixels": 19490,
+          "changed_outside_mask": 0,
+          "crop": [
+            222,
+            1139,
+            752,
+            1449
+          ]
+        },
+        "composition_mode": "technical_result_from_source",
+        "effective_changed_pixels": 19490,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only_roi.png"
+        },
+        "elapsed_seconds": 28.018
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/3a1feb43b1b440b4824d29f01b9adbc6/run.json",
+      "manifest_sha256": "e9f20d1401b17ec467b3f94d1bd524364b4d52de44da011e8862090820f09ebe",
+      "run_id": "3a1feb43b1b440b4824d29f01b9adbc6",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "observed_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 240,
+            "y": 5442,
+            "width": 235,
+            "height": 83
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 22454,
+        "authorized_mask_pixels_after_roi_9x9": 25110,
+        "components_before_count": 7,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 5,
+            "bbox": [
+              228,
+              5435,
+              254,
+              100
+            ],
+            "area": 22454,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 25110,
+          "changed_pixels": 25042,
+          "changed_outside_mask": 0,
+          "crop": [
+            104,
+            5311,
+            606,
+            5659
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 25042,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 30.802
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/3de2a214126b405a82c9787b38157a59/run.json",
+      "manifest_sha256": "643e67f12e61e21fc3e7d2a4a3be8860661c260ff732245981a3073468e88106",
+      "run_id": "3de2a214126b405a82c9787b38157a59",
+      "patch": "transparente",
+      "source_name": "page-026.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/IMG/Ch. 1/page-026.png",
+      "source_sha256": "68b3ad8d0822c27629528bebbec87182027186cdc6784d6a098c5e9a1df59cf9",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "772dbee44a59a9801f46f22ddddd3d39d4a58bea1ca46d1f706822d4575a7587",
+      "observed_result_sha256": "772dbee44a59a9801f46f22ddddd3d39d4a58bea1ca46d1f706822d4575a7587",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 94,
+            "y": 110,
+            "width": 161,
+            "height": 76
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 14483,
+        "base_mask_pixels_after_roi": 14483,
+        "authorized_mask_pixels_after_roi_9x9": 16580,
+        "components_before_count": 1,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 1,
+            "bbox": [
+              86,
+              106,
+              179,
+              83
+            ],
+            "area": 14483,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 1,
+          "authorized_components": 1,
+          "cleaner_mask_pixels": 13988,
+          "authorized_cleaner_mask_pixels": 13988,
+          "authorized_percent": 100.0,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 1,
+              "cleaner_mask_pixels": 13988,
+              "authorized_mask_pixels": 13988,
+              "authorized_percent": 100.0,
+              "components_total": 1,
+              "components_authorized": 1,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    87,
+                    107,
+                    177,
+                    81
+                  ],
+                  "area": 13988,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 16580,
+          "changed_pixels": 16568,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            0,
+            389,
+            313
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 16568,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 14.563
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/459cde7ffe514093b56e0fe3de2822bc/run.json",
+      "manifest_sha256": "8d0d7552a017161b994af69e755548bf5e1103b498a27d047ec7b1dfc38514ea",
+      "run_id": "459cde7ffe514093b56e0fe3de2822bc",
+      "patch": "transparente",
+      "source_name": "page-022-028.png",
+      "source_path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/download/mangago_downloader/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 1/page-022-028.png",
+      "source_sha256": "a8f4a48cb0ce1ecdded9e38e63910f0901fa2cefd3f5ce3d5f72ef6fc61ceb8a",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "6d87fa336fe5b7eafe2fa7533e66630779fcef903c75d90094e7e251f807a84e",
+      "observed_result_sha256": "6d87fa336fe5b7eafe2fa7533e66630779fcef903c75d90094e7e251f807a84e",
+      "result_hash_matches": true,
+      "treatment": {},
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/47e8bef9e9d94797b37887ea558c6b9e/run.json",
+      "manifest_sha256": "fa16c935e397719abfc57b9c62ecaa6055241c69207cb68b369946a70880058c",
+      "run_id": "47e8bef9e9d94797b37887ea558c6b9e",
+      "patch": "transparente_legacy",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "13cd5473476b0d4e8f5f9fc54352c06f0e7a1e1566a93b3e22c15a68f02c6242",
+      "observed_result_sha256": "13cd5473476b0d4e8f5f9fc54352c06f0e7a1e1566a93b3e22c15a68f02c6242",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 397,
+            "y": 5116,
+            "width": 288,
+            "height": 144
+          },
+          {
+            "index": 2,
+            "x": 380,
+            "y": 6106,
+            "width": 281,
+            "height": 140
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 73358,
+        "base_mask_pixels_after_roi_3x3": 74956,
+        "authorized_mask_pixels_after_roi_9x9": 81681,
+        "components_before_count": 12,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 9,
+            "bbox": [
+              399,
+              5100,
+              283,
+              160
+            ],
+            "area": 40010,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 12,
+            "bbox": [
+              383,
+              6099,
+              286,
+              151
+            ],
+            "area": 33348,
+            "roi_hits": [
+              2
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 81681,
+          "changed_pixels": 81632,
+          "changed_outside_mask": 0,
+          "crop": [
+            258,
+            4975,
+            720,
+            6375
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 81632,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 45.37
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/694f15f6a0c34d0ca087639de22033e7/run.json",
+      "manifest_sha256": "7d6dd2447d807a6cc69d729dd2671712456c5357b7e48dc71fde1488e276970a",
+      "run_id": "694f15f6a0c34d0ca087639de22033e7",
+      "patch": "transparente",
+      "source_name": "page-028-034.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/comix/Gazing at you/FLUXO_SECUNDARIO/02_MERGE/6/page-028-034.png",
+      "source_sha256": "9c0ee17f6c6029290b7a2aff8201be3d09f141ee9d1df8b8e297a8bffcd50509",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "c58dcf942584d4c8cd003a511697fa4c3d7afc26ef8363aafe172a089732f591",
+      "observed_result_sha256": "c58dcf942584d4c8cd003a511697fa4c3d7afc26ef8363aafe172a089732f591",
+      "result_hash_matches": true,
+      "treatment": {},
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/6992ef005cdf4a319a457eee427cf834/run.json",
+      "manifest_sha256": "c994fe4cc7c3dd4fae4279a84ef96eee472767a139b789b230202759e902ba9d",
+      "run_id": "6992ef005cdf4a319a457eee427cf834",
+      "patch": "transparente_legacy",
+      "source_name": "page-034-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png",
+      "source_sha256": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "b93e4d5ef02de5114bd60b4356f9c28e3f743cec6671233268fc9de1a0554c00",
+      "observed_result_sha256": "b93e4d5ef02de5114bd60b4356f9c28e3f743cec6671233268fc9de1a0554c00",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 244,
+            "y": 3886,
+            "width": 229,
+            "height": 69
+          },
+          {
+            "index": 2,
+            "x": 415,
+            "y": 4532,
+            "width": 229,
+            "height": 40
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 60207,
+        "base_mask_pixels_after_roi_3x3": 61668,
+        "authorized_mask_pixels_after_roi_9x9": 67919,
+        "components_before_count": 11,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 8,
+            "bbox": [
+              223,
+              3856,
+              264,
+              118
+            ],
+            "area": 26110,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 10,
+            "bbox": [
+              381,
+              4532,
+              288,
+              155
+            ],
+            "area": 34097,
+            "roi_hits": [
+              2
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 67919,
+          "changed_pixels": 67770,
+          "changed_outside_mask": 0,
+          "crop": [
+            98,
+            3731,
+            720,
+            4812
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 67770,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 32.592
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/6de7734e55fe412e8bbc1acaa54eb2bc/run.json",
+      "manifest_sha256": "ff1b299589400d0f28bbbfb459f46adf6562c9e04c5be1708918ddf3611c69f3",
+      "run_id": "6de7734e55fe412e8bbc1acaa54eb2bc",
+      "patch": "transparente_legacy",
+      "source_name": "page-015.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/comix/Gazing at you/IMG/1/page-015.png",
+      "source_sha256": "8cd5bbd4fbfa61b7bb39dfb83c470db26256cec0479975b9645c9f61adfcda39",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "6b37e787f4904f78cd46f3f69d12ee2e87503dacefa195df6f67bbc88fec42b4",
+      "observed_result_sha256": "6b37e787f4904f78cd46f3f69d12ee2e87503dacefa195df6f67bbc88fec42b4",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 343,
+            "y": 1263,
+            "width": 292,
+            "height": 56
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 16150,
+        "base_mask_pixels_after_roi_3x3": 16794,
+        "authorized_mask_pixels_after_roi_9x9": 19496,
+        "components_before_count": 4,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 4,
+            "bbox": [
+              347,
+              1264,
+              280,
+              60
+            ],
+            "area": 16150,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 19496,
+          "changed_pixels": 19490,
+          "changed_outside_mask": 0,
+          "crop": [
+            222,
+            1139,
+            752,
+            1449
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 19490,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 17.467
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/6e933ecb84f344819c3fb9cafb88439e/run.json",
+      "manifest_sha256": "2e5ae3f42359fde6086e25bdcecd401523a0283be4a0751894e786d7dd2a61e8",
+      "run_id": "6e933ecb84f344819c3fb9cafb88439e",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "observed_result_sha256": "109887fd49e19bc59c0e7b7dbc13ff305004f68cb64a4f068524caa469ab413d",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 242,
+            "y": 5446,
+            "width": 235,
+            "height": 76
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 22454,
+        "authorized_mask_pixels_after_roi_9x9": 25110,
+        "components_before_count": 7,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 5,
+            "bbox": [
+              228,
+              5435,
+              254,
+              100
+            ],
+            "area": 22454,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 25110,
+          "changed_pixels": 25042,
+          "changed_outside_mask": 0,
+          "crop": [
+            104,
+            5311,
+            606,
+            5659
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 25042,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 50.849
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/6f553a8c3e5c4eebbe9405b9a4eba1ed/run.json",
+      "manifest_sha256": "2abdec85607601c186d04b7af5d03e8785a7f6a4275971c6d62b8a33ce83f54e",
+      "run_id": "6f553a8c3e5c4eebbe9405b9a4eba1ed",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "a5dfcbac35db54b7ec52d998373cf5bb0d47bc41cb1e0599889066038617c589",
+      "observed_result_sha256": "a5dfcbac35db54b7ec52d998373cf5bb0d47bc41cb1e0599889066038617c589",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 403,
+            "y": 5109,
+            "width": 271,
+            "height": 140
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 40798,
+        "authorized_mask_pixels_after_roi_9x9": 44134,
+        "components_before_count": 7,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 4,
+            "bbox": [
+              398,
+              5099,
+              285,
+              162
+            ],
+            "area": 40798,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 44134,
+          "changed_pixels": 44126,
+          "changed_outside_mask": 0,
+          "crop": [
+            274,
+            4975,
+            720,
+            5385
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 44126,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 31.102
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/719f72673b3c476db1d0683e54496ca4/run.json",
+      "manifest_sha256": "597600992ca417f96d4ed3aa9ff825b273a98bb4ed64a2f43745501da43cb712",
+      "run_id": "719f72673b3c476db1d0683e54496ca4",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "c11a0251902f28c97ee289c55c70ea18634cc39449369df202882d09c1d690b1",
+      "observed_result_sha256": "c11a0251902f28c97ee289c55c70ea18634cc39449369df202882d09c1d690b1",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 5,
+        "selections": [
+          {
+            "index": 1,
+            "x": 401,
+            "y": 5108,
+            "width": 272,
+            "height": 143
+          },
+          {
+            "index": 2,
+            "x": 238,
+            "y": 5445,
+            "width": 232,
+            "height": 80
+          },
+          {
+            "index": 3,
+            "x": 45,
+            "y": 5863,
+            "width": 327,
+            "height": 150
+          },
+          {
+            "index": 4,
+            "x": 411,
+            "y": 6095,
+            "width": 253,
+            "height": 44
+          },
+          {
+            "index": 5,
+            "x": 433,
+            "y": 6177,
+            "width": 212,
+            "height": 72
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 146696,
+        "authorized_mask_pixels_after_roi_9x9": 159893,
+        "components_before_count": 7,
+        "components_selected_count": 4,
+        "selected_components": [
+          {
+            "label": 4,
+            "bbox": [
+              398,
+              5099,
+              285,
+              162
+            ],
+            "area": 40798,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              228,
+              5435,
+              254,
+              100
+            ],
+            "area": 22454,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 6,
+            "bbox": [
+              57,
+              5863,
+              318,
+              155
+            ],
+            "area": 49286,
+            "roi_hits": [
+              3
+            ]
+          },
+          {
+            "label": 7,
+            "bbox": [
+              382,
+              6098,
+              288,
+              153
+            ],
+            "area": 34158,
+            "roi_hits": [
+              4,
+              5
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 159893,
+          "changed_pixels": 157156,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            4975,
+            720,
+            6375
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 157156,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 85.852
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/745ead60b4764a7080809ef4244c685b/run.json",
+      "manifest_sha256": "6af6fbe1d8980334a316dc655672cf74e774680e429d5b9526621233992ac909",
+      "run_id": "745ead60b4764a7080809ef4244c685b",
+      "patch": "transparente",
+      "source_name": "page-038-045.png",
+      "source_path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/download/mangago_downloader/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-038-045.png",
+      "source_sha256": "9a0309a136060bf6e55e62a37919331be65816bcf1fd2c9ed1cb986a0b678592",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "4a7c7c048911b5a7a1a12d31f8beff9346df3bb4c7f7796cc022d649bc9a3eeb",
+      "observed_result_sha256": "4a7c7c048911b5a7a1a12d31f8beff9346df3bb4c7f7796cc022d649bc9a3eeb",
+      "result_hash_matches": true,
+      "treatment": {},
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/74b0bd0b98464d05818a28cf83a14f48/run.json",
+      "manifest_sha256": "f97c3bf0bf773138bbe69d98b9e36382fb288713ffcd78ad9873bb6a1e6e7cb4",
+      "run_id": "74b0bd0b98464d05818a28cf83a14f48",
+      "patch": "transparente",
+      "source_name": "page-034-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png",
+      "source_sha256": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "f7082098cfd0ece2ed5ada5dfb5cc2f0e676d3bde405296d38dbc36e059da430",
+      "observed_result_sha256": "f7082098cfd0ece2ed5ada5dfb5cc2f0e676d3bde405296d38dbc36e059da430",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 1,
+        "selections": [
+          {
+            "index": 1,
+            "x": 245,
+            "y": 3882,
+            "width": 226,
+            "height": 74
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 276279,
+        "base_mask_pixels_after_roi": 26763,
+        "authorized_mask_pixels_after_roi_9x9": 29599,
+        "components_before_count": 8,
+        "components_selected_count": 1,
+        "selected_components": [
+          {
+            "label": 5,
+            "bbox": [
+              222,
+              3855,
+              266,
+              120
+            ],
+            "area": 26763,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 11,
+          "authorized_components": 8,
+          "cleaner_mask_pixels": 342091,
+          "authorized_cleaner_mask_pixels": 270489,
+          "authorized_percent": 79.0693,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 10,
+              "cleaner_mask_pixels": 342091,
+              "authorized_mask_pixels": 270489,
+              "authorized_percent": 79.0693,
+              "components_total": 11,
+              "components_authorized": 8,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    34,
+                    543,
+                    133,
+                    155
+                  ],
+                  "area": 15933,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    172,
+                    580,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    557,
+                    667,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    63,
+                    1559,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    331,
+                    1809,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    41,
+                    3131,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 2,
+                  "inside_ratio": 0.9997,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    398,
+                    3535,
+                    284,
+                    159
+                  ],
+                  "area": 39913,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    223,
+                    3856,
+                    264,
+                    118
+                  ],
+                  "area": 26110,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    55,
+                    4297,
+                    317,
+                    157
+                  ],
+                  "area": 45360,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9991,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    381,
+                    4532,
+                    288,
+                    155
+                  ],
+                  "area": 34097,
+                  "best_balloon": 4,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    130,
+                    5845,
+                    116,
+                    85
+                  ],
+                  "area": 9860,
+                  "best_balloon": 8,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 29599,
+          "changed_pixels": 29545,
+          "changed_outside_mask": 0,
+          "crop": [
+            98,
+            3731,
+            612,
+            4099
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 29545,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 28.052
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/8b4e925b4c0f4255a586ea6432fc856b/run.json",
+      "manifest_sha256": "752d950801dbf7b546bdcdc375487428a9512bf2999a2e4e1ea80fe9ff49c049",
+      "run_id": "8b4e925b4c0f4255a586ea6432fc856b",
+      "patch": "transparente_legacy",
+      "source_name": "page-034-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png",
+      "source_sha256": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "f98e3eeb79ac9c30c66f0426b788d54d2be185d3723f48ce344e316156537f61",
+      "observed_result_sha256": "f98e3eeb79ac9c30c66f0426b788d54d2be185d3723f48ce344e316156537f61",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 3,
+        "selections": [
+          {
+            "index": 1,
+            "x": 388,
+            "y": 4539,
+            "width": 273,
+            "height": 145
+          },
+          {
+            "index": 2,
+            "x": 238,
+            "y": 3878,
+            "width": 238,
+            "height": 86
+          },
+          {
+            "index": 3,
+            "x": 400,
+            "y": 3540,
+            "width": 279,
+            "height": 152
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 100120,
+        "base_mask_pixels_after_roi_3x3": 102371,
+        "authorized_mask_pixels_after_roi_9x9": 111962,
+        "components_before_count": 11,
+        "components_selected_count": 3,
+        "selected_components": [
+          {
+            "label": 7,
+            "bbox": [
+              398,
+              3535,
+              284,
+              159
+            ],
+            "area": 39913,
+            "roi_hits": [
+              3
+            ]
+          },
+          {
+            "label": 8,
+            "bbox": [
+              223,
+              3856,
+              264,
+              118
+            ],
+            "area": 26110,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 10,
+            "bbox": [
+              381,
+              4532,
+              288,
+              155
+            ],
+            "area": 34097,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 111962,
+          "changed_pixels": 111835,
+          "changed_outside_mask": 0,
+          "crop": [
+            98,
+            3410,
+            720,
+            4812
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 111835,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 28.623
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/94f34a9d1f724e53ba5c7fef400bb031/run.json",
+      "manifest_sha256": "17987264cfb579bb1ee5dc5e6232cd33be6a36788a2bc9fac72e6ace8a40826b",
+      "run_id": "94f34a9d1f724e53ba5c7fef400bb031",
+      "patch": "transparente",
+      "source_name": "page-034-042.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/comix/Teste_Gazing at you/FLUXO_SECUNDARIO/02_MERGE/6/page-034-042.png",
+      "source_sha256": "c1388b40728002e102b335764d3aaf1904d09c66b504c575c8f8e74d9f9e0537",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "53ebe021f1ec7b263599c53dda2d667aee9b4b25aa48e8662f6c20fa0dddffe2",
+      "observed_result_sha256": "53ebe021f1ec7b263599c53dda2d667aee9b4b25aa48e8662f6c20fa0dddffe2",
+      "result_hash_matches": true,
+      "treatment": {},
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/983db2e294674c509d0cfa4668bf0872/run.json",
+      "manifest_sha256": "3285152f81389e5982f550215ba879cb7772643ef9e858492143d57dbcc9391e",
+      "run_id": "983db2e294674c509d0cfa4668bf0872",
+      "patch": "transparente",
+      "source_name": "page-034-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png",
+      "source_sha256": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "f98e3eeb79ac9c30c66f0426b788d54d2be185d3723f48ce344e316156537f61",
+      "observed_result_sha256": "f98e3eeb79ac9c30c66f0426b788d54d2be185d3723f48ce344e316156537f61",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 3,
+        "selections": [
+          {
+            "index": 1,
+            "x": 404,
+            "y": 3542,
+            "width": 265,
+            "height": 147
+          },
+          {
+            "index": 2,
+            "x": 241,
+            "y": 3885,
+            "width": 235,
+            "height": 69
+          },
+          {
+            "index": 3,
+            "x": 391,
+            "y": 4543,
+            "width": 271,
+            "height": 140
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 276279,
+        "base_mask_pixels_after_roi": 102371,
+        "authorized_mask_pixels_after_roi_9x9": 111962,
+        "components_before_count": 8,
+        "components_selected_count": 3,
+        "selected_components": [
+          {
+            "label": 4,
+            "bbox": [
+              397,
+              3534,
+              286,
+              161
+            ],
+            "area": 40703,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              222,
+              3855,
+              266,
+              120
+            ],
+            "area": 26763,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 7,
+            "bbox": [
+              380,
+              4531,
+              290,
+              157
+            ],
+            "area": 34905,
+            "roi_hits": [
+              3
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 11,
+          "authorized_components": 8,
+          "cleaner_mask_pixels": 342091,
+          "authorized_cleaner_mask_pixels": 270489,
+          "authorized_percent": 79.0693,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 10,
+              "cleaner_mask_pixels": 342091,
+              "authorized_mask_pixels": 270489,
+              "authorized_percent": 79.0693,
+              "components_total": 11,
+              "components_authorized": 8,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    34,
+                    543,
+                    133,
+                    155
+                  ],
+                  "area": 15933,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    172,
+                    580,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    557,
+                    667,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    63,
+                    1559,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    331,
+                    1809,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    41,
+                    3131,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 2,
+                  "inside_ratio": 0.9997,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    398,
+                    3535,
+                    284,
+                    159
+                  ],
+                  "area": 39913,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    223,
+                    3856,
+                    264,
+                    118
+                  ],
+                  "area": 26110,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    55,
+                    4297,
+                    317,
+                    157
+                  ],
+                  "area": 45360,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9991,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    381,
+                    4532,
+                    288,
+                    155
+                  ],
+                  "area": 34097,
+                  "best_balloon": 4,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    130,
+                    5845,
+                    116,
+                    85
+                  ],
+                  "area": 9860,
+                  "best_balloon": 8,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 111962,
+          "changed_pixels": 111835,
+          "changed_outside_mask": 0,
+          "crop": [
+            98,
+            3410,
+            720,
+            4812
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 111835,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 28.979
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/99dccc7b5db7462dba87d17e12232ae7/run.json",
+      "manifest_sha256": "4e1d2bbf313bfb9c295ba65c0dca972799ddb386661b37106120b228bb2c05d5",
+      "run_id": "99dccc7b5db7462dba87d17e12232ae7",
+      "patch": "transparente",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "c11a0251902f28c97ee289c55c70ea18634cc39449369df202882d09c1d690b1",
+      "observed_result_sha256": "c11a0251902f28c97ee289c55c70ea18634cc39449369df202882d09c1d690b1",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 4,
+        "selections": [
+          {
+            "index": 1,
+            "x": 401,
+            "y": 5108,
+            "width": 272,
+            "height": 143
+          },
+          {
+            "index": 2,
+            "x": 238,
+            "y": 5445,
+            "width": 232,
+            "height": 80
+          },
+          {
+            "index": 3,
+            "x": 45,
+            "y": 5863,
+            "width": 327,
+            "height": 150
+          },
+          {
+            "index": 4,
+            "x": 389,
+            "y": 6096,
+            "width": 266,
+            "height": 146
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 264110,
+        "base_mask_pixels_after_roi": 146696,
+        "authorized_mask_pixels_after_roi_9x9": 159893,
+        "components_before_count": 7,
+        "components_selected_count": 4,
+        "selected_components": [
+          {
+            "label": 4,
+            "bbox": [
+              398,
+              5099,
+              285,
+              162
+            ],
+            "area": 40798,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              228,
+              5435,
+              254,
+              100
+            ],
+            "area": 22454,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 6,
+            "bbox": [
+              57,
+              5863,
+              318,
+              155
+            ],
+            "area": 49286,
+            "roi_hits": [
+              3
+            ]
+          },
+          {
+            "label": 7,
+            "bbox": [
+              382,
+              6098,
+              288,
+              153
+            ],
+            "area": 34158,
+            "roi_hits": [
+              4
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 12,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 350373,
+          "authorized_cleaner_mask_pixels": 258677,
+          "authorized_percent": 73.829,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 7,
+              "cleaner_mask_pixels": 350373,
+              "authorized_mask_pixels": 258677,
+              "authorized_percent": 73.829,
+              "components_total": 12,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    247,
+                    731,
+                    243,
+                    36
+                  ],
+                  "area": 8636,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    289,
+                    811,
+                    158,
+                    86
+                  ],
+                  "area": 11230,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    34,
+                    2107,
+                    133,
+                    156
+                  ],
+                  "area": 16161,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    172,
+                    2145,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    557,
+                    2232,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    63,
+                    3124,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    331,
+                    3374,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    41,
+                    4696,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    399,
+                    5100,
+                    283,
+                    160
+                  ],
+                  "area": 40010,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    229,
+                    5436,
+                    252,
+                    98
+                  ],
+                  "area": 21822,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    58,
+                    5864,
+                    316,
+                    153
+                  ],
+                  "area": 48348,
+                  "best_balloon": 4,
+                  "inside_ratio": 0.9994,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 12,
+                  "bbox": [
+                    383,
+                    6099,
+                    286,
+                    151
+                  ],
+                  "area": 33348,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 159893,
+          "changed_pixels": 157156,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            4975,
+            720,
+            6375
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 157156,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 47.938
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/a39b89c06a5649f79ddff5f3140da6d0/run.json",
+      "manifest_sha256": "04470ec4743270fa4d2e7ec983439124624dc6b3de750fc1e6dd70ce6e661ce0",
+      "run_id": "a39b89c06a5649f79ddff5f3140da6d0",
+      "patch": "transparente",
+      "source_name": "page-024-026.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 1/page-024-026.png",
+      "source_sha256": "261b7e12dcb9dfa7176ea455cf7b573b376f567fcd44feb68b6aa3880c52494c",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "e8bc344df7c29a19ba0ab88e3beef022981ff4b8dfdfc80dacd455f021786e74",
+      "observed_result_sha256": "e8bc344df7c29a19ba0ab88e3beef022981ff4b8dfdfc80dacd455f021786e74",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 4,
+        "selections": [
+          {
+            "index": 1,
+            "x": 258,
+            "y": 641,
+            "width": 121,
+            "height": 72
+          },
+          {
+            "index": 2,
+            "x": 117,
+            "y": 1353,
+            "width": 90,
+            "height": 25
+          },
+          {
+            "index": 3,
+            "x": 28,
+            "y": 1451,
+            "width": 90,
+            "height": 34
+          },
+          {
+            "index": 4,
+            "x": 89,
+            "y": 2504,
+            "width": 170,
+            "height": 72
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 83073,
+        "base_mask_pixels_after_roi": 35715,
+        "authorized_mask_pixels_after_roi_9x9": 41950,
+        "components_before_count": 7,
+        "components_selected_count": 4,
+        "selected_components": [
+          {
+            "label": 3,
+            "bbox": [
+              255,
+              631,
+              126,
+              91
+            ],
+            "area": 10251,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 4,
+            "bbox": [
+              110,
+              1339,
+              109,
+              54
+            ],
+            "area": 5620,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              21,
+              1439,
+              106,
+              51
+            ],
+            "area": 5132,
+            "roi_hits": [
+              3
+            ]
+          },
+          {
+            "label": 7,
+            "bbox": [
+              87,
+              2500,
+              178,
+              85
+            ],
+            "area": 14712,
+            "roi_hits": [
+              4
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 7,
+          "authorized_components": 7,
+          "cleaner_mask_pixels": 80162,
+          "authorized_cleaner_mask_pixels": 80162,
+          "authorized_percent": 100.0,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 8,
+              "cleaner_mask_pixels": 80162,
+              "authorized_mask_pixels": 80162,
+              "authorized_percent": 100.0,
+              "components_total": 7,
+              "components_authorized": 7,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    167,
+                    74,
+                    185,
+                    124
+                  ],
+                  "area": 20152,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    36,
+                    215,
+                    102,
+                    54
+                  ],
+                  "area": 5315,
+                  "best_balloon": 5,
+                  "inside_ratio": 0.9874,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    256,
+                    632,
+                    124,
+                    89
+                  ],
+                  "area": 9880,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    111,
+                    1340,
+                    107,
+                    52
+                  ],
+                  "area": 5324,
+                  "best_balloon": 7,
+                  "inside_ratio": 0.9699,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    22,
+                    1440,
+                    104,
+                    49
+                  ],
+                  "area": 4848,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9977,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    212,
+                    2189,
+                    197,
+                    130
+                  ],
+                  "area": 20426,
+                  "best_balloon": 2,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    88,
+                    2501,
+                    176,
+                    83
+                  ],
+                  "area": 14217,
+                  "best_balloon": 4,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 41950,
+          "changed_pixels": 41893,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            507,
+            505,
+            2709
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 41893,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 27.13
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/a887fd50113849a6ab37e2afe6c291d3/run.json",
+      "manifest_sha256": "7049e633e8dae41d44c6159de376627ba46aae1ca11191773b907145f3542f5e",
+      "run_id": "a887fd50113849a6ab37e2afe6c291d3",
+      "patch": "transparente_legacy",
+      "source_name": "page-025.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/IMG/Ch. 1/page-025.png",
+      "source_sha256": "bbab0dd1ac2d9ea21594441452e1516b30066f06deac59c6c88f54a77192d4e8",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "5b6a7af86f3247fb9189da2052c1d8553c29b1e683d616953e41688f9e7e4a23",
+      "observed_result_sha256": "5b6a7af86f3247fb9189da2052c1d8553c29b1e683d616953e41688f9e7e4a23",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 119,
+            "y": 152,
+            "width": 84,
+            "height": 34
+          },
+          {
+            "index": 2,
+            "x": 216,
+            "y": 993,
+            "width": 154,
+            "height": 110
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 26842,
+        "base_mask_pixels_after_roi_3x3": 27744,
+        "authorized_mask_pixels_after_roi_9x9": 31571,
+        "components_before_count": 3,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 1,
+            "bbox": [
+              112,
+              142,
+              104,
+              52
+            ],
+            "area": 5148,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 3,
+            "bbox": [
+              212,
+              993,
+              202,
+              134
+            ],
+            "area": 21694,
+            "roi_hits": [
+              2
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 31571,
+          "changed_pixels": 31562,
+          "changed_outside_mask": 0,
+          "crop": [
+            0,
+            17,
+            539,
+            1198
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 31562,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 26.898
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/abbc793aeb174ff2a2561872c50cbdd8/run.json",
+      "manifest_sha256": "2f79da63db47ccd2932e14dac636b66534e725071a1d5ce75a0fe7a2323eb7c8",
+      "run_id": "abbc793aeb174ff2a2561872c50cbdd8",
+      "patch": "transparente_legacy",
+      "source_name": "page-032-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/mangago/Candy YumYum (Yaoi)/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-032-038.png",
+      "source_sha256": "e8877b4dd5299d6f2d6d229dc0350397aef004688f5b8d8956db99c770926752",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "2e3c4f603970e42208acf1f4562e6251c2262cdacd800744779c4fa98f93b1af",
+      "observed_result_sha256": "2e3c4f603970e42208acf1f4562e6251c2262cdacd800744779c4fa98f93b1af",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 237,
+            "y": 5433,
+            "width": 241,
+            "height": 101
+          },
+          {
+            "index": 2,
+            "x": 396,
+            "y": 5107,
+            "width": 276,
+            "height": 153
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 61832,
+        "base_mask_pixels_after_roi_3x3": 63252,
+        "authorized_mask_pixels_after_roi_9x9": 69244,
+        "components_before_count": 12,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 9,
+            "bbox": [
+              399,
+              5100,
+              283,
+              160
+            ],
+            "area": 40010,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 10,
+            "bbox": [
+              229,
+              5436,
+              252,
+              98
+            ],
+            "area": 21822,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 69244,
+          "changed_pixels": 69092,
+          "changed_outside_mask": 0,
+          "crop": [
+            104,
+            4975,
+            720,
+            5659
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 69092,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 32.037
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/dd9f9471761c4dd8803d5802766f9fa5/run.json",
+      "manifest_sha256": "0651c8dab44fa79334b9a44b999b3958f9b01d9b2a4751537cedc39814a33e5d",
+      "run_id": "dd9f9471761c4dd8803d5802766f9fa5",
+      "patch": "transparente",
+      "source_name": "page-034-038.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png",
+      "source_sha256": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9",
+      "result_file": "transparente/04_lama_text_only_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "ee4e240d2cbb4713649165e674d361662e26afb96fc452737fc8f8c933e04834",
+      "observed_result_sha256": "ee4e240d2cbb4713649165e674d361662e26afb96fc452737fc8f8c933e04834",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 401,
+            "y": 3544,
+            "width": 274,
+            "height": 150
+          },
+          {
+            "index": 2,
+            "x": 246,
+            "y": 3876,
+            "width": 225,
+            "height": 85
+          }
+        ],
+        "authorization_rule": "balloon_authorized_base_components_intersecting_roi",
+        "base_mask_pixels_before_roi": 276279,
+        "base_mask_pixels_after_roi": 67466,
+        "authorized_mask_pixels_after_roi_9x9": 73642,
+        "components_before_count": 8,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 4,
+            "bbox": [
+              397,
+              3534,
+              286,
+              161
+            ],
+            "area": 40703,
+            "roi_hits": [
+              1
+            ]
+          },
+          {
+            "label": 5,
+            "bbox": [
+              222,
+              3855,
+              266,
+              120
+            ],
+            "area": 26763,
+            "roi_hits": [
+              2
+            ]
+          }
+        ],
+        "balloon_authorization": {
+          "report": "balloon_authorization.json",
+          "algorithm": "textoff_level1_balloon_component_gate_v2",
+          "policy": "cleaner_component_must_be_inside_single_balloon_interior",
+          "cleaner_components": 11,
+          "authorized_components": 8,
+          "cleaner_mask_pixels": 342091,
+          "authorized_cleaner_mask_pixels": 270489,
+          "authorized_percent": 79.0693,
+          "pages": [
+            {
+              "source": "source.png",
+              "balloons_detected": 10,
+              "cleaner_mask_pixels": 342091,
+              "authorized_mask_pixels": 270489,
+              "authorized_percent": 79.0693,
+              "components_total": 11,
+              "components_authorized": 8,
+              "component_decisions": [
+                {
+                  "component": 1,
+                  "bbox": [
+                    34,
+                    543,
+                    133,
+                    155
+                  ],
+                  "area": 15933,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 2,
+                  "bbox": [
+                    172,
+                    580,
+                    371,
+                    194
+                  ],
+                  "area": 38018,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 3,
+                  "bbox": [
+                    557,
+                    667,
+                    163,
+                    142
+                  ],
+                  "area": 17651,
+                  "best_balloon": null,
+                  "inside_ratio": 0.0,
+                  "decision": "preserve",
+                  "reason": "outside_or_ambiguous"
+                },
+                {
+                  "component": 4,
+                  "bbox": [
+                    63,
+                    1559,
+                    274,
+                    181
+                  ],
+                  "area": 40006,
+                  "best_balloon": 1,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 5,
+                  "bbox": [
+                    331,
+                    1809,
+                    262,
+                    145
+                  ],
+                  "area": 33255,
+                  "best_balloon": 5,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 6,
+                  "bbox": [
+                    41,
+                    3131,
+                    280,
+                    172
+                  ],
+                  "area": 41888,
+                  "best_balloon": 2,
+                  "inside_ratio": 0.9997,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 7,
+                  "bbox": [
+                    398,
+                    3535,
+                    284,
+                    159
+                  ],
+                  "area": 39913,
+                  "best_balloon": 6,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 8,
+                  "bbox": [
+                    223,
+                    3856,
+                    264,
+                    118
+                  ],
+                  "area": 26110,
+                  "best_balloon": 7,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 9,
+                  "bbox": [
+                    55,
+                    4297,
+                    317,
+                    157
+                  ],
+                  "area": 45360,
+                  "best_balloon": 3,
+                  "inside_ratio": 0.9991,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 10,
+                  "bbox": [
+                    381,
+                    4532,
+                    288,
+                    155
+                  ],
+                  "area": 34097,
+                  "best_balloon": 4,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                },
+                {
+                  "component": 11,
+                  "bbox": [
+                    130,
+                    5845,
+                    116,
+                    85
+                  ],
+                  "area": 9860,
+                  "best_balloon": 8,
+                  "inside_ratio": 1.0,
+                  "decision": "remove",
+                  "reason": "inside_single_balloon"
+                }
+              ]
+            }
+          ]
+        },
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 73642,
+          "changed_pixels": 73575,
+          "changed_outside_mask": 0,
+          "crop": [
+            98,
+            3410,
+            720,
+            4099
+          ]
+        },
+        "composition_mode": "effective_changes_over_official_base",
+        "effective_changed_pixels": 73575,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": true,
+        "preview_result": "04_lama_text_only_roi.png",
+        "promotion_result": "04_lama_text_only.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_text_mask": "01_text_mask_roi.png",
+          "authorized_mask": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_roi.png",
+          "preview_result": "04_lama_text_only_roi.png",
+          "promotion_result": "04_lama_text_only.png"
+        },
+        "elapsed_seconds": 30.104
+      },
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/e06c5522707c4b9caee7c48f86c2a7ea/run.json",
+      "manifest_sha256": "f7ad320f1d8607f4b93667f157436653fe5d892d1ea163f64e8aed46729b8257",
+      "run_id": "e06c5522707c4b9caee7c48f86c2a7ea",
+      "patch": "transparente",
+      "source_name": "page-028-034.png",
+      "source_path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/download/mangago_downloader/output/comix/Teste_Gazing at you/FLUXO_SECUNDARIO/02_MERGE/6/page-028-034.png",
+      "source_sha256": "9c0ee17f6c6029290b7a2aff8201be3d09f141ee9d1df8b8e297a8bffcd50509",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "c58dcf942584d4c8cd003a511697fa4c3d7afc26ef8363aafe172a089732f591",
+      "observed_result_sha256": "c58dcf942584d4c8cd003a511697fa4c3d7afc26ef8363aafe172a089732f591",
+      "result_hash_matches": true,
+      "treatment": {},
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/e35e3477c62a4989901bcf14950d80ea/run.json",
+      "manifest_sha256": "393a34795bc9290c137c459a6079d24f194a02bca56d6ff71f7339454197da14",
+      "run_id": "e35e3477c62a4989901bcf14950d80ea",
+      "patch": "transparente",
+      "source_name": "page-013-016.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/comix/Gazing at you/FLUXO_SECUNDARIO/02_MERGE/1/page-013-016.png",
+      "source_sha256": "56583cb1932963ad70fb27b2b9210976629c86c89a578c85df00b2c79d5239aa",
+      "result_file": "transparente/04_lama_text_only.png",
+      "result_exists": true,
+      "recorded_result_sha256": "36e5e27dad9e81a537181c9d7b9c771e6395ca45d11d9a1ad43674141338fac0",
+      "observed_result_sha256": "36e5e27dad9e81a537181c9d7b9c771e6395ca45d11d9a1ad43674141338fac0",
+      "result_hash_matches": true,
+      "treatment": {},
+      "visual_review": "pending"
+    },
+    {
+      "manifest": "reports/experimentos/textoff_especiais/e98258db7bd94f158c6ff60f6daa70fe/run.json",
+      "manifest_sha256": "61ed39e3d9390f73c139ebf9a6556a97e26c215cc9fddece5e625a4c692d3d23",
+      "run_id": "e98258db7bd94f158c6ff60f6daa70fe",
+      "patch": "transparente_legacy",
+      "source_name": "page-179-187.png",
+      "source_path": "/Users/alinesouza/Documents/FominhaData/output/ridi/Things that deserve to die/FLUXO_SECUNDARIO/02_MERGE/3/page-179-187.png",
+      "source_sha256": "82ec9153ae0623603e7dd836c70698db6a87b915757f20d935667b8cafb172db",
+      "result_file": "transparente_legacy/04_lama_text_only_legacy_roi.png",
+      "result_exists": true,
+      "recorded_result_sha256": "95e4568c0c13ec9b826f2423904444b848fa14869536576e5733be2b34bf77c7",
+      "observed_result_sha256": "95e4568c0c13ec9b826f2423904444b848fa14869536576e5733be2b34bf77c7",
+      "result_hash_matches": true,
+      "treatment": {
+        "algorithm": "textoff_special_roi_transparent_legacy_v1",
+        "proof_phase": true,
+        "promotion_allowed": false,
+        "variant": "legacy_pre_balloon_authorization",
+        "balloon_authorization_used": false,
+        "selection_count": 2,
+        "selections": [
+          {
+            "index": 1,
+            "x": 649,
+            "y": 2001,
+            "width": 320,
+            "height": 282
+          },
+          {
+            "index": 2,
+            "x": 321,
+            "y": 398,
+            "width": 419,
+            "height": 289
+          }
+        ],
+        "selection_rule": "raw_cleaner_components_intersecting_roi",
+        "cleaner_mask_pixels_after_roi": 175645,
+        "base_mask_pixels_after_roi_3x3": 178022,
+        "authorized_mask_pixels_after_roi_9x9": 188388,
+        "components_before_count": 4,
+        "components_selected_count": 2,
+        "selected_components": [
+          {
+            "label": 1,
+            "bbox": [
+              351,
+              385,
+              363,
+              310
+            ],
+            "area": 93162,
+            "roi_hits": [
+              2
+            ]
+          },
+          {
+            "label": 2,
+            "bbox": [
+              659,
+              1977,
+              305,
+              313
+            ],
+            "area": 82483,
+            "roi_hits": [
+              1
+            ]
+          }
+        ],
+        "base_dilation": [
+          3,
+          3
+        ],
+        "authorized_dilation": [
+          9,
+          9
+        ],
+        "lama_padding": 120,
+        "lama": {
+          "model": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "padding": 120,
+          "mask_pixels": 188388,
+          "changed_pixels": 185135,
+          "changed_outside_mask": 0,
+          "crop": [
+            226,
+            260,
+            1089,
+            2415
+          ]
+        },
+        "composition_mode": "technical_result_from_source_legacy",
+        "effective_changed_pixels": 185135,
+        "technical_changed_outside_authorized_pixels": 0,
+        "base_snapshot_used": false,
+        "preview_result": "04_lama_text_only_legacy_roi.png",
+        "promotion_result": "04_lama_text_only_legacy_roi.png",
+        "protected_patch_modified": false,
+        "artifacts": {
+          "restricted_cleaner_mask": "00_cleaner_mask_roi.png",
+          "text_mask_3x3": "01_text_mask_3x3_roi.png",
+          "authorized_mask_9x9": "02_authorized_mask_9x9_roi.png",
+          "overlay": "03_authorized_mask_overlay_roi.png",
+          "technical_result": "04_lama_text_only_legacy_roi.png",
+          "preview_result": "04_lama_text_only_legacy_roi.png"
+        },
+        "elapsed_seconds": 41.995
+      },
+      "visual_review": "pending"
+    }
+  ]
+}

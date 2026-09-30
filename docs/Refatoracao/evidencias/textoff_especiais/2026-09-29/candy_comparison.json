@@ -1,0 +1,1145 @@
+{
+  "schema_version": 1,
+  "preparation": {
+    "schema_version": 1,
+    "source_manga": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum",
+    "created_at": "2026-09-30T00:37:56.936862+00:00",
+    "chapters": [
+      {
+        "chapter": "Ch. 3",
+        "source_hashes": {
+          "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/merge-manifest.json": "baa1d97930dae0cbf5ef0bccc4fd59f9cd11da346199cfe5dc4b8810b5d370d0",
+          "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9"
+        },
+        "source_images": [
+          "page-034-038.png"
+        ],
+        "level1": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/Ch. 3",
+        "level2": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/Ch. 3",
+        "level1_result": {
+          "status": "ok",
+          "pages": 1,
+          "outputs": 1,
+          "masks": 1,
+          "mask_complete": true,
+          "level2_pages": 0,
+          "level2_components": 0,
+          "transparent_balloons": 4,
+          "level2_pending_pages": [
+            "page-034-038.png"
+          ],
+          "stage_folder": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/Ch. 3"
+        },
+        "level1_seconds": 29.502,
+        "level2_report": {
+          "schema_version": 1,
+          "algorithm": "textoff_merged_level2_cleaner_deferred_3x3_9x9_lama_v1",
+          "mask_sources": [
+            "Level I deferred Cleaner V2 components inside the matching transparent balloon"
+          ],
+          "base_dilation": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              3
+            ]
+          ],
+          "authorized_dilation": [
+            [
+              9,
+              9
+            ],
+            [
+              9,
+              9
+            ]
+          ],
+          "lama_padding": 120,
+          "reference_recipe": "textoff_special_roi_transparent_legacy_v1",
+          "source_stage": "MERGED_NIVEL_I",
+          "text_detector": "Cleaner V2 deferred text mask",
+          "text_recognition": false,
+          "inpainter": "anime-manga-big-lama",
+          "model_path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "pages_analyzed": 1,
+          "duration_seconds": 5.001,
+          "pages_with_text": 1,
+          "mask_pixels": 112861,
+          "changed_pixels": 112743,
+          "outcome": "visual_changes",
+          "integrity_ok": true,
+          "pages": [
+            {
+              "source": "page-034-038.png",
+              "clean": "clean/page-034-038_clean.png",
+              "mask": "mask/page-034-038_text_mask.png",
+              "transparent_balloons": [
+                {
+                  "balloon": 3,
+                  "mask_label": 1,
+                  "mask_pixels": 0,
+                  "deferred_cleaner_pixels": 0
+                },
+                {
+                  "balloon": 4,
+                  "mask_label": 2,
+                  "mask_pixels": 39954,
+                  "deferred_cleaner_pixels": 35772
+                },
+                {
+                  "balloon": 6,
+                  "mask_label": 3,
+                  "mask_pixels": 46213,
+                  "deferred_cleaner_pixels": 42018
+                },
+                {
+                  "balloon": 7,
+                  "mask_label": 4,
+                  "mask_pixels": 26694,
+                  "deferred_cleaner_pixels": 23332
+                }
+              ],
+              "mask_pixels": 112861,
+              "changed_pixels": 112743,
+              "changed_outside_mask": 0
+            }
+          ]
+        },
+        "level1_manifest_sha256": "2dd7d633e94b46f1473e902a50377700288be7ef0526f1ce343613c5c1dd4545",
+        "level2_report_sha256": "c2707852cd09d850127a89f459a5cebe4f9c5a20e493ad5dfb3f8a1f0c8bfb98"
+      },
+      {
+        "chapter": "Ch. 1",
+        "source_hashes": {
+          "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 1/merge-manifest.json": "9a9d5d2a7ffbcbd0fa3e882ca79644a1b401f4751dd112b1d4cb0dd6cfc56a3f",
+          "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum/FLUXO_SECUNDARIO/02_MERGE/Ch. 1/page-024-026.png": "261b7e12dcb9dfa7176ea455cf7b573b376f567fcd44feb68b6aa3880c52494c"
+        },
+        "source_images": [
+          "page-024-026.png"
+        ],
+        "level1": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/Ch. 1",
+        "level2": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/Ch. 1",
+        "level1_result": {
+          "status": "ok",
+          "pages": 1,
+          "outputs": 1,
+          "masks": 1,
+          "mask_complete": true,
+          "level2_pages": 0,
+          "level2_components": 0,
+          "transparent_balloons": 6,
+          "level2_pending_pages": [
+            "page-024-026.png"
+          ],
+          "stage_folder": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/Ch. 1"
+        },
+        "level1_seconds": 24.151,
+        "level2_report": {
+          "schema_version": 1,
+          "algorithm": "textoff_merged_level2_cleaner_deferred_3x3_9x9_lama_v1",
+          "mask_sources": [
+            "Level I deferred Cleaner V2 components inside the matching transparent balloon"
+          ],
+          "base_dilation": [
+            [
+              3,
+              3
+            ],
+            [
+              3,
+              3
+            ]
+          ],
+          "authorized_dilation": [
+            [
+              9,
+              9
+            ],
+            [
+              9,
+              9
+            ]
+          ],
+          "lama_padding": 120,
+          "reference_recipe": "textoff_special_roi_transparent_legacy_v1",
+          "source_stage": "MERGED_NIVEL_I",
+          "text_detector": "Cleaner V2 deferred text mask",
+          "text_recognition": false,
+          "inpainter": "anime-manga-big-lama",
+          "model_path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+          "device": "mps",
+          "pages_analyzed": 1,
+          "duration_seconds": 6.455,
+          "pages_with_text": 1,
+          "mask_pixels": 68880,
+          "changed_pixels": 68810,
+          "outcome": "visual_changes",
+          "integrity_ok": true,
+          "pages": [
+            {
+              "source": "page-024-026.png",
+              "clean": "clean/page-024-026_clean.png",
+              "mask": "mask/page-024-026_text_mask.png",
+              "transparent_balloons": [
+                {
+                  "balloon": 2,
+                  "mask_label": 1,
+                  "mask_pixels": 26399,
+                  "deferred_cleaner_pixels": 23276
+                },
+                {
+                  "balloon": 3,
+                  "mask_label": 2,
+                  "mask_pixels": 6255,
+                  "deferred_cleaner_pixels": 4955
+                },
+                {
+                  "balloon": 4,
+                  "mask_label": 3,
+                  "mask_pixels": 17573,
+                  "deferred_cleaner_pixels": 14930
+                },
+                {
+                  "balloon": 6,
+                  "mask_label": 4,
+                  "mask_pixels": 12314,
+                  "deferred_cleaner_pixels": 10278
+                },
+                {
+                  "balloon": 7,
+                  "mask_label": 5,
+                  "mask_pixels": 6339,
+                  "deferred_cleaner_pixels": 5082
+                },
+                {
+                  "balloon": 8,
+                  "mask_label": 6,
+                  "mask_pixels": 0,
+                  "deferred_cleaner_pixels": 0
+                }
+              ],
+              "mask_pixels": 68880,
+              "changed_pixels": 68810,
+              "changed_outside_mask": 0
+            }
+          ]
+        },
+        "level1_manifest_sha256": "94fbc7d2186cd930a79ca3b937a2629ca4a0b3edef6c1231449922d250792081",
+        "level2_report_sha256": "54326762ee2a9113896e25f1ed873a5e1cf1ddf387801b877ac069adec79e45c"
+      }
+    ],
+    "experimental_manga": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work",
+    "official_files_modified": false,
+    "inputs_unchanged": true,
+    "finished_at": "2026-09-30T00:39:03.939801+00:00"
+  },
+  "inventory": {
+    "schema_version": 1,
+    "work": "teste_Candy YumYum",
+    "provider": "ridi",
+    "local_work_root": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work",
+    "original_work_root": "/Users/alinesouza/Documents/FominhaData/output/ridi/teste_Candy YumYum",
+    "selected_level": [
+      "MERGED_NIVEL_I"
+    ],
+    "roi_status": "fixed_for_comparison",
+    "roi_provenance": "Caixas dos balões transparentes do Nível I experimental, em ordem vertical; mesmas ROIs nos dois tratamentos especiais. Nível II usa as máscaras adiadas nativas.",
+    "inputs": [
+      {
+        "filename": "page-034-038_clean.png",
+        "chapter": "Ch. 3",
+        "level": "MERGED_NIVEL_I",
+        "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/Ch. 3/clean/page-034-038_clean.png",
+        "sha256": "7069c86f2882827b339bdd9f948941e50d482bab6021d639d57f60cc7ff76788",
+        "selections": [
+          {
+            "x": 366,
+            "y": 3487,
+            "width": 345,
+            "height": 281
+          },
+          {
+            "x": 205,
+            "y": 3815,
+            "width": 300,
+            "height": 211
+          },
+          {
+            "x": 22,
+            "y": 4223,
+            "width": 375,
+            "height": 248
+          },
+          {
+            "x": 347,
+            "y": 4481,
+            "width": 349,
+            "height": 259
+          }
+        ]
+      },
+      {
+        "filename": "page-024-026_clean.png",
+        "chapter": "Ch. 1",
+        "level": "MERGED_NIVEL_I",
+        "path_relative_to_work": "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I/Ch. 1/clean/page-024-026_clean.png",
+        "sha256": "7aec99ca1d157300a8672c254f65b11ed8a3bdc7fb3b0aec310f60d76ee23bce",
+        "selections": [
+          {
+            "x": 231,
+            "y": 599,
+            "width": 172,
+            "height": 158
+          },
+          {
+            "x": 103,
+            "y": 1314,
+            "width": 115,
+            "height": 104
+          },
+          {
+            "x": 15,
+            "y": 1415,
+            "width": 114,
+            "height": 104
+          },
+          {
+            "x": 6,
+            "y": 1662,
+            "width": 129,
+            "height": 97
+          },
+          {
+            "x": 146,
+            "y": 2147,
+            "width": 297,
+            "height": 223
+          },
+          {
+            "x": 58,
+            "y": 2439,
+            "width": 228,
+            "height": 210
+          }
+        ]
+      }
+    ],
+    "references": [
+      {
+        "kind": "merge",
+        "chapter": "Ch. 3",
+        "filename": "page-034-038_clean.png",
+        "path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/02_MERGE/Ch. 3/page-034-038.png",
+        "sha256": "03c542f49f081febfda59f8bdfc6c4d68ef336cef7ca2a8c045a3fa4d93ffba9"
+      },
+      {
+        "kind": "level2",
+        "chapter": "Ch. 3",
+        "filename": "page-034-038_clean.png",
+        "path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/Ch. 3/clean/page-034-038_clean.png",
+        "sha256": "ab1dd191d64d8d19ca27928cb8e956c7f9f787142c8c0f704f03d8d51c8b5c45"
+      },
+      {
+        "kind": "merge",
+        "chapter": "Ch. 1",
+        "filename": "page-024-026_clean.png",
+        "path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/02_MERGE/Ch. 1/page-024-026.png",
+        "sha256": "261b7e12dcb9dfa7176ea455cf7b573b376f567fcd44feb68b6aa3880c52494c"
+      },
+      {
+        "kind": "level2",
+        "chapter": "Ch. 1",
+        "filename": "page-024-026_clean.png",
+        "path": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/reports/experimentos/textoff_especiais_v2/candy_comparison_2026-09-29/work/FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_II/Ch. 1/clean/page-024-026_clean.png",
+        "sha256": "cdcfe37ee2fc66d05d994291ffd39fb9027fd203f83bb103fce06176fa76bb68"
+      }
+    ]
+  },
+  "special_runs": {
+    "schema_version": 1,
+    "inventory_sha256": "aaa4dc02b2df0b73c488c3111d1fd12120c9e1972781323951be021c5ff0c324",
+    "created_at": "2026-09-30T00:41:32.249573+00:00",
+    "runs": [
+      {
+        "treatment": "transparente",
+        "level": "MERGED_NIVEL_I",
+        "chapter": "Ch. 3",
+        "filename": "page-034-038_clean.png",
+        "expected_sha256": "7069c86f2882827b339bdd9f948941e50d482bab6021d639d57f60cc7ff76788",
+        "selections": [
+          {
+            "x": 366,
+            "y": 3487,
+            "width": 345,
+            "height": 281
+          },
+          {
+            "x": 205,
+            "y": 3815,
+            "width": 300,
+            "height": 211
+          },
+          {
+            "x": 22,
+            "y": 4223,
+            "width": 375,
+            "height": 248
+          },
+          {
+            "x": 347,
+            "y": 4481,
+            "width": 349,
+            "height": 259
+          }
+        ],
+        "run_id": "0ffec79b616c4c2bba469e297183bdf0",
+        "manifest": "reports/experimentos/textoff_especiais_v2/0ffec79b616c4c2bba469e297183bdf0/manifest.json",
+        "execution_status": "failed",
+        "duration_seconds": 28.797,
+        "validation": null,
+        "error": {
+          "type": "RuntimeError",
+          "error": "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+        },
+        "manifest_sha256": "1fd72d2140bc6ff7367bdcc3f3267e4707d81a0b9dffc12c4df2c2ebffc6e54c",
+        "runtime": {
+          "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 08:22:19) [Clang 14.0.6 ]",
+          "executable": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente/.venv/bin/python",
+          "prefix": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente/.venv",
+          "platform": "macOS-26.6.2-arm64-arm-64bit",
+          "lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+          "packages": {
+            "annotated-doc": "0.0.5",
+            "anyio": "4.15.1",
+            "attrs": "26.1.0",
+            "certifi": "2026.7.22",
+            "charset-normalizer": "3.5.1",
+            "click": "8.5.0",
+            "cloudpickle": "3.1.2",
+            "colorama": "0.4.6",
+            "ConfigUpdater": "3.2",
+            "contourpy": "1.4.0",
+            "cycler": "0.12.1",
+            "dictdiffer": "0.10.0",
+            "docopt-ng": "0.9.0",
+            "filelock": "3.32.6",
+            "fire": "0.7.1",
+            "fonttools": "4.66.0",
+            "fsspec": "2026.7.0",
+            "fugashi": "1.5.2",
+            "h11": "0.16.0",
+            "hf-xet": "1.6.0",
+            "httpcore": "1.0.9",
+            "httpx": "0.28.1",
+            "huggingface_hub": "1.31.0",
+            "humanfriendly": "10.0",
+            "idna": "3.19",
+            "jaconv": "0.5.0",
+            "Jinja2": "3.1.6",
+            "kiwisolver": "1.5.1",
+            "loguru": "0.7.3",
+            "manga-ocr": "0.1.16",
+            "markdown-it-py": "4.2.0",
+            "MarkupSafe": "3.0.3",
+            "matplotlib": "3.11.2",
+            "mdurl": "0.1.2",
+            "mpmath": "1.3.0",
+            "natsort": "8.4.0",
+            "networkx": "3.6.1",
+            "numpy": "2.5.3",
+            "nvidia-ml-py": "13.615.71",
+            "opencv-python": "5.0.0.93",
+            "packaging": "26.3",
+            "pcleaner": "2.11.11",
+            "pillow": "12.3.0",
+            "polars": "1.44.2",
+            "polars-runtime-32": "1.44.2",
+            "prettytable": "3.18.0",
+            "psd-tools": "1.19.0",
+            "psutil": "7.2.2",
+            "pyclipper": "1.4.0",
+            "Pygments": "2.21.0",
+            "pyparsing": "3.3.3",
+            "pyperclip": "1.11.0",
+            "PySide6": "6.11.2",
+            "PySide6_Addons": "6.11.2",
+            "PySide6_Essentials": "6.11.2",
+            "pytesseract": "0.3.13",
+            "python-dateutil": "2.9.0.post0",
+            "PyYAML": "6.0.3",
+            "regex": "2026.9.10",
+            "requests": "2.34.2",
+            "rich": "15.0.0",
+            "safetensors": "0.8.0",
+            "scipy": "1.18.1",
+            "setuptools": "84.0.0",
+            "shapely": "2.1.2",
+            "shellingham": "1.5.4",
+            "shiboken6": "6.11.2",
+            "simple-lama-inpainting": "0.1.0",
+            "six": "1.17.0",
+            "sympy": "1.14.0",
+            "termcolor": "3.3.0",
+            "tifffile": "2026.9.9",
+            "tokenizers": "0.23.2",
+            "torch": "2.14.0",
+            "torchvision": "0.29.0",
+            "tqdm": "4.70.1",
+            "transformers": "5.17.0",
+            "typer": "0.27.2",
+            "typing_extensions": "4.16.0",
+            "ultralytics": "8.4.162",
+            "ultralytics-platform": "0.1.70",
+            "ultralytics-thop": "2.2.1",
+            "unidic-lite": "1.0.8",
+            "urllib3": "2.7.0",
+            "wcwidth": "0.8.3",
+            "xdg": "6.0.0"
+          },
+          "commit": "52af0926dafee2241ce4a4c64cf336b15297a621",
+          "code_and_configuration": {
+            "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+            "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+            "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+            "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+            "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+            "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+            "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+            "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+            "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+            "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+            "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+            "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+            "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+            "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+            "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+            "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+            "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+            "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+            "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+            "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+            "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+            "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+            "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+            "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+          }
+        },
+        "models": null
+      },
+      {
+        "treatment": "transparente_legacy",
+        "level": "MERGED_NIVEL_I",
+        "chapter": "Ch. 3",
+        "filename": "page-034-038_clean.png",
+        "expected_sha256": "7069c86f2882827b339bdd9f948941e50d482bab6021d639d57f60cc7ff76788",
+        "selections": [
+          {
+            "x": 366,
+            "y": 3487,
+            "width": 345,
+            "height": 281
+          },
+          {
+            "x": 205,
+            "y": 3815,
+            "width": 300,
+            "height": 211
+          },
+          {
+            "x": 22,
+            "y": 4223,
+            "width": 375,
+            "height": 248
+          },
+          {
+            "x": 347,
+            "y": 4481,
+            "width": 349,
+            "height": 259
+          }
+        ],
+        "run_id": "beec0b634bf54a459d04a1af7274f428",
+        "manifest": "reports/experimentos/textoff_especiais_v2/beec0b634bf54a459d04a1af7274f428/manifest.json",
+        "execution_status": "succeeded",
+        "duration_seconds": 30.797,
+        "validation": {
+          "width": 720,
+          "height": 5980,
+          "changed_pixels": 159050,
+          "mask_pixels": 162076,
+          "changed_outside_mask": 0,
+          "result_sha256": "3bd100845df4923a50c0505f422cc1e182a270fa39e7628ef5bc108758f2f14f",
+          "mask_sha256": "1cd00dc807af0614477708b0d3bf4ef6a5337053b988eb2372e8332bdecba159"
+        },
+        "error": null,
+        "manifest_sha256": "c8645d8afbc647a0c5c1f1858980d8913c52995f8db38711121726c3d51a32b0",
+        "runtime": {
+          "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 08:22:19) [Clang 14.0.6 ]",
+          "executable": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv/bin/python",
+          "prefix": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv",
+          "platform": "macOS-26.6.2-arm64-arm-64bit",
+          "lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+          "packages": {
+            "annotated-doc": "0.0.5",
+            "anyio": "4.15.1",
+            "attrs": "26.1.0",
+            "certifi": "2026.7.22",
+            "charset-normalizer": "3.5.1",
+            "click": "8.5.0",
+            "cloudpickle": "3.1.2",
+            "colorama": "0.4.6",
+            "ConfigUpdater": "3.2",
+            "contourpy": "1.4.0",
+            "cycler": "0.12.1",
+            "dictdiffer": "0.10.0",
+            "docopt-ng": "0.9.0",
+            "filelock": "3.32.6",
+            "fire": "0.7.1",
+            "fonttools": "4.66.0",
+            "fsspec": "2026.7.0",
+            "fugashi": "1.5.2",
+            "h11": "0.16.0",
+            "hf-xet": "1.6.0",
+            "httpcore": "1.0.9",
+            "httpx": "0.28.1",
+            "huggingface_hub": "1.31.0",
+            "humanfriendly": "10.0",
+            "idna": "3.19",
+            "jaconv": "0.5.0",
+            "Jinja2": "3.1.6",
+            "kiwisolver": "1.5.1",
+            "loguru": "0.7.3",
+            "manga-ocr": "0.1.16",
+            "markdown-it-py": "4.2.0",
+            "MarkupSafe": "3.0.3",
+            "matplotlib": "3.11.2",
+            "mdurl": "0.1.2",
+            "mpmath": "1.3.0",
+            "natsort": "8.4.0",
+            "networkx": "3.6.1",
+            "numpy": "2.5.3",
+            "nvidia-ml-py": "13.615.71",
+            "opencv-python": "5.0.0.93",
+            "packaging": "26.3",
+            "pcleaner": "2.11.11",
+            "pillow": "12.3.0",
+            "polars": "1.44.2",
+            "polars-runtime-32": "1.44.2",
+            "prettytable": "3.18.0",
+            "psd-tools": "1.19.0",
+            "psutil": "7.2.2",
+            "pyclipper": "1.4.0",
+            "Pygments": "2.21.0",
+            "pyparsing": "3.3.3",
+            "pyperclip": "1.11.0",
+            "PySide6": "6.11.2",
+            "PySide6_Addons": "6.11.2",
+            "PySide6_Essentials": "6.11.2",
+            "pytesseract": "0.3.13",
+            "python-dateutil": "2.9.0.post0",
+            "PyYAML": "6.0.3",
+            "regex": "2026.9.10",
+            "requests": "2.34.2",
+            "rich": "15.0.0",
+            "safetensors": "0.8.0",
+            "scipy": "1.18.1",
+            "setuptools": "84.0.0",
+            "shapely": "2.1.2",
+            "shellingham": "1.5.4",
+            "shiboken6": "6.11.2",
+            "simple-lama-inpainting": "0.1.0",
+            "six": "1.17.0",
+            "sympy": "1.14.0",
+            "termcolor": "3.3.0",
+            "tifffile": "2026.9.9",
+            "tokenizers": "0.23.2",
+            "torch": "2.14.0",
+            "torchvision": "0.29.0",
+            "tqdm": "4.70.1",
+            "transformers": "5.17.0",
+            "typer": "0.27.2",
+            "typing_extensions": "4.16.0",
+            "ultralytics": "8.4.162",
+            "ultralytics-platform": "0.1.70",
+            "ultralytics-thop": "2.2.1",
+            "unidic-lite": "1.0.8",
+            "urllib3": "2.7.0",
+            "wcwidth": "0.8.3",
+            "xdg": "6.0.0"
+          },
+          "commit": "52af0926dafee2241ce4a4c64cf336b15297a621",
+          "code_and_configuration": {
+            "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+            "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+            "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+            "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+            "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+            "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+            "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+            "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+            "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+            "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+            "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+            "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+            "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+            "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+            "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+            "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+            "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+            "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+            "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+            "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+            "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+            "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+            "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+            "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+          }
+        },
+        "models": [
+          {
+            "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+            "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+          },
+          {
+            "path": "/Users/alinesouza/Library/Caches/pcleaner/model/comictextdetector.pt",
+            "sha256": "1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb"
+          }
+        ],
+        "result_path": "reports/experimentos/textoff_especiais_v2/beec0b634bf54a459d04a1af7274f428/treatment/04_lama_text_only_legacy_roi.png"
+      },
+      {
+        "treatment": "transparente",
+        "level": "MERGED_NIVEL_I",
+        "chapter": "Ch. 1",
+        "filename": "page-024-026_clean.png",
+        "expected_sha256": "7aec99ca1d157300a8672c254f65b11ed8a3bdc7fb3b0aec310f60d76ee23bce",
+        "selections": [
+          {
+            "x": 231,
+            "y": 599,
+            "width": 172,
+            "height": 158
+          },
+          {
+            "x": 103,
+            "y": 1314,
+            "width": 115,
+            "height": 104
+          },
+          {
+            "x": 15,
+            "y": 1415,
+            "width": 114,
+            "height": 104
+          },
+          {
+            "x": 6,
+            "y": 1662,
+            "width": 129,
+            "height": 97
+          },
+          {
+            "x": 146,
+            "y": 2147,
+            "width": 297,
+            "height": 223
+          },
+          {
+            "x": 58,
+            "y": 2439,
+            "width": 228,
+            "height": 210
+          }
+        ],
+        "run_id": "2f8e775fc37c4fc6bb30d8229ef76c9e",
+        "manifest": "reports/experimentos/textoff_especiais_v2/2f8e775fc37c4fc6bb30d8229ef76c9e/manifest.json",
+        "execution_status": "failed",
+        "duration_seconds": 24.911,
+        "validation": null,
+        "error": {
+          "type": "RuntimeError",
+          "error": "Balloon Authorization não autorizou nenhum componente; nenhuma reconstrução será executada."
+        },
+        "manifest_sha256": "6387a2856ebc0ec228acc8a5dad587d6b4f7d0a3b46fa98e0de64283da6baec1",
+        "runtime": {
+          "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 08:22:19) [Clang 14.0.6 ]",
+          "executable": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente/.venv/bin/python",
+          "prefix": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente/.venv",
+          "platform": "macOS-26.6.2-arm64-arm-64bit",
+          "lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+          "packages": {
+            "annotated-doc": "0.0.5",
+            "anyio": "4.15.1",
+            "attrs": "26.1.0",
+            "certifi": "2026.7.22",
+            "charset-normalizer": "3.5.1",
+            "click": "8.5.0",
+            "cloudpickle": "3.1.2",
+            "colorama": "0.4.6",
+            "ConfigUpdater": "3.2",
+            "contourpy": "1.4.0",
+            "cycler": "0.12.1",
+            "dictdiffer": "0.10.0",
+            "docopt-ng": "0.9.0",
+            "filelock": "3.32.6",
+            "fire": "0.7.1",
+            "fonttools": "4.66.0",
+            "fsspec": "2026.7.0",
+            "fugashi": "1.5.2",
+            "h11": "0.16.0",
+            "hf-xet": "1.6.0",
+            "httpcore": "1.0.9",
+            "httpx": "0.28.1",
+            "huggingface_hub": "1.31.0",
+            "humanfriendly": "10.0",
+            "idna": "3.19",
+            "jaconv": "0.5.0",
+            "Jinja2": "3.1.6",
+            "kiwisolver": "1.5.1",
+            "loguru": "0.7.3",
+            "manga-ocr": "0.1.16",
+            "markdown-it-py": "4.2.0",
+            "MarkupSafe": "3.0.3",
+            "matplotlib": "3.11.2",
+            "mdurl": "0.1.2",
+            "mpmath": "1.3.0",
+            "natsort": "8.4.0",
+            "networkx": "3.6.1",
+            "numpy": "2.5.3",
+            "nvidia-ml-py": "13.615.71",
+            "opencv-python": "5.0.0.93",
+            "packaging": "26.3",
+            "pcleaner": "2.11.11",
+            "pillow": "12.3.0",
+            "polars": "1.44.2",
+            "polars-runtime-32": "1.44.2",
+            "prettytable": "3.18.0",
+            "psd-tools": "1.19.0",
+            "psutil": "7.2.2",
+            "pyclipper": "1.4.0",
+            "Pygments": "2.21.0",
+            "pyparsing": "3.3.3",
+            "pyperclip": "1.11.0",
+            "PySide6": "6.11.2",
+            "PySide6_Addons": "6.11.2",
+            "PySide6_Essentials": "6.11.2",
+            "pytesseract": "0.3.13",
+            "python-dateutil": "2.9.0.post0",
+            "PyYAML": "6.0.3",
+            "regex": "2026.9.10",
+            "requests": "2.34.2",
+            "rich": "15.0.0",
+            "safetensors": "0.8.0",
+            "scipy": "1.18.1",
+            "setuptools": "84.0.0",
+            "shapely": "2.1.2",
+            "shellingham": "1.5.4",
+            "shiboken6": "6.11.2",
+            "simple-lama-inpainting": "0.1.0",
+            "six": "1.17.0",
+            "sympy": "1.14.0",
+            "termcolor": "3.3.0",
+            "tifffile": "2026.9.9",
+            "tokenizers": "0.23.2",
+            "torch": "2.14.0",
+            "torchvision": "0.29.0",
+            "tqdm": "4.70.1",
+            "transformers": "5.17.0",
+            "typer": "0.27.2",
+            "typing_extensions": "4.16.0",
+            "ultralytics": "8.4.162",
+            "ultralytics-platform": "0.1.70",
+            "ultralytics-thop": "2.2.1",
+            "unidic-lite": "1.0.8",
+            "urllib3": "2.7.0",
+            "wcwidth": "0.8.3",
+            "xdg": "6.0.0"
+          },
+          "commit": "52af0926dafee2241ce4a4c64cf336b15297a621",
+          "code_and_configuration": {
+            "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+            "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+            "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+            "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+            "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+            "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+            "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+            "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+            "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+            "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+            "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+            "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+            "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+            "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+            "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+            "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+            "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+            "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+            "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+            "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+            "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+            "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+            "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+            "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+          }
+        },
+        "models": null
+      },
+      {
+        "treatment": "transparente_legacy",
+        "level": "MERGED_NIVEL_I",
+        "chapter": "Ch. 1",
+        "filename": "page-024-026_clean.png",
+        "expected_sha256": "7aec99ca1d157300a8672c254f65b11ed8a3bdc7fb3b0aec310f60d76ee23bce",
+        "selections": [
+          {
+            "x": 231,
+            "y": 599,
+            "width": 172,
+            "height": 158
+          },
+          {
+            "x": 103,
+            "y": 1314,
+            "width": 115,
+            "height": 104
+          },
+          {
+            "x": 15,
+            "y": 1415,
+            "width": 114,
+            "height": 104
+          },
+          {
+            "x": 6,
+            "y": 1662,
+            "width": 129,
+            "height": 97
+          },
+          {
+            "x": 146,
+            "y": 2147,
+            "width": 297,
+            "height": 223
+          },
+          {
+            "x": 58,
+            "y": 2439,
+            "width": 228,
+            "height": 210
+          }
+        ],
+        "run_id": "a037cd9042064d55b672889e71ab2c8a",
+        "manifest": "reports/experimentos/textoff_especiais_v2/a037cd9042064d55b672889e71ab2c8a/manifest.json",
+        "execution_status": "succeeded",
+        "duration_seconds": 28.602,
+        "validation": {
+          "width": 720,
+          "height": 3594,
+          "changed_pixels": 65563,
+          "mask_pixels": 65640,
+          "changed_outside_mask": 0,
+          "result_sha256": "35b4175e7b2283aa04731ea585b4c01a87d7432ff1445d92761c60fb6c50dd16",
+          "mask_sha256": "8d8bbb91393c355d77f431d1b2ef5cce06ff86bb5b9c00eaa5aab95eff9b5f91"
+        },
+        "error": null,
+        "manifest_sha256": "11f72599f6d9be28df00c29e46e2ac378e1e85548a5ad872cdde9b17f4e7eb5d",
+        "runtime": {
+          "python": "3.12.7 | packaged by Anaconda, Inc. | (main, Oct  4 2024, 08:22:19) [Clang 14.0.6 ]",
+          "executable": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv/bin/python",
+          "prefix": "/Users/alinesouza/Documents/TI/Projetos/Fominha_de_Manga/central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv",
+          "platform": "macOS-26.6.2-arm64-arm-64bit",
+          "lock_sha256": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+          "packages": {
+            "annotated-doc": "0.0.5",
+            "anyio": "4.15.1",
+            "attrs": "26.1.0",
+            "certifi": "2026.7.22",
+            "charset-normalizer": "3.5.1",
+            "click": "8.5.0",
+            "cloudpickle": "3.1.2",
+            "colorama": "0.4.6",
+            "ConfigUpdater": "3.2",
+            "contourpy": "1.4.0",
+            "cycler": "0.12.1",
+            "dictdiffer": "0.10.0",
+            "docopt-ng": "0.9.0",
+            "filelock": "3.32.6",
+            "fire": "0.7.1",
+            "fonttools": "4.66.0",
+            "fsspec": "2026.7.0",
+            "fugashi": "1.5.2",
+            "h11": "0.16.0",
+            "hf-xet": "1.6.0",
+            "httpcore": "1.0.9",
+            "httpx": "0.28.1",
+            "huggingface_hub": "1.31.0",
+            "humanfriendly": "10.0",
+            "idna": "3.19",
+            "jaconv": "0.5.0",
+            "Jinja2": "3.1.6",
+            "kiwisolver": "1.5.1",
+            "loguru": "0.7.3",
+            "manga-ocr": "0.1.16",
+            "markdown-it-py": "4.2.0",
+            "MarkupSafe": "3.0.3",
+            "matplotlib": "3.11.2",
+            "mdurl": "0.1.2",
+            "mpmath": "1.3.0",
+            "natsort": "8.4.0",
+            "networkx": "3.6.1",
+            "numpy": "2.5.3",
+            "nvidia-ml-py": "13.615.71",
+            "opencv-python": "5.0.0.93",
+            "packaging": "26.3",
+            "pcleaner": "2.11.11",
+            "pillow": "12.3.0",
+            "polars": "1.44.2",
+            "polars-runtime-32": "1.44.2",
+            "prettytable": "3.18.0",
+            "psd-tools": "1.19.0",
+            "psutil": "7.2.2",
+            "pyclipper": "1.4.0",
+            "Pygments": "2.21.0",
+            "pyparsing": "3.3.3",
+            "pyperclip": "1.11.0",
+            "PySide6": "6.11.2",
+            "PySide6_Addons": "6.11.2",
+            "PySide6_Essentials": "6.11.2",
+            "pytesseract": "0.3.13",
+            "python-dateutil": "2.9.0.post0",
+            "PyYAML": "6.0.3",
+            "regex": "2026.9.10",
+            "requests": "2.34.2",
+            "rich": "15.0.0",
+            "safetensors": "0.8.0",
+            "scipy": "1.18.1",
+            "setuptools": "84.0.0",
+            "shapely": "2.1.2",
+            "shellingham": "1.5.4",
+            "shiboken6": "6.11.2",
+            "simple-lama-inpainting": "0.1.0",
+            "six": "1.17.0",
+            "sympy": "1.14.0",
+            "termcolor": "3.3.0",
+            "tifffile": "2026.9.9",
+            "tokenizers": "0.23.2",
+            "torch": "2.14.0",
+            "torchvision": "0.29.0",
+            "tqdm": "4.70.1",
+            "transformers": "5.17.0",
+            "typer": "0.27.2",
+            "typing_extensions": "4.16.0",
+            "ultralytics": "8.4.162",
+            "ultralytics-platform": "0.1.70",
+            "ultralytics-thop": "2.2.1",
+            "unidic-lite": "1.0.8",
+            "urllib3": "2.7.0",
+            "wcwidth": "0.8.3",
+            "xdg": "6.0.0"
+          },
+          "commit": "52af0926dafee2241ce4a4c64cf336b15297a621",
+          "code_and_configuration": {
+            "central_v2/backend/orchestration/textoff_special/__init__.py": "eb22af31a438209c125e37b1ab414942311fcd4d78ed85b0d97c43c3569d589d",
+            "central_v2/backend/orchestration/textoff_special/artifacts.py": "95c616574d60cd9ba1a0d0e8ee673e2fafaee9358b219b63439b2b0c410001b6",
+            "central_v2/backend/orchestration/textoff_special/catalog.py": "054d598479b11646acd37b100776f815e57b09385d74c61dcfb04aa56a67cb95",
+            "central_v2/backend/orchestration/textoff_special/cli.py": "ea20523fd955d2a241078efd2f647dfeea3fc2b6d804a753c62c166a8a4efc3c",
+            "central_v2/backend/orchestration/textoff_special/domain.py": "cc4ef6b347bed0387e75befdf396eb066c06a33181a7a546059cb782856f04b7",
+            "central_v2/backend/orchestration/textoff_special/execution.py": "017b26e92c2c4603dfb2f63a16b93d281985e85c19936590f3e970f4f273e157",
+            "central_v2/backend/orchestration/textoff_special/inputs.py": "9721099f9cbf0c9c1be26d1d2e5fe01c2e45a5c34ff07be3470cc150c60eb9f9",
+            "central_v2/backend/orchestration/textoff_special/process.py": "257a862b4bd995335442c9429e1fb6bc29535064635f291fc4d871868d305105",
+            "central_v2/backend/orchestration/textoff_special/provenance.py": "24cd4b164ddc10137279a5428a030dffbecff658ebeba543a91ed909b5a8b1e2",
+            "central_v2/backend/orchestration/textoff_special/verification.py": "017beb45206180fd5c17a94b7ef19712dc1cadc7bbf22357bc693edcd747f893",
+            "central_v2/backend/orchestration/textoff_special/worker.py": "c4576dc2ef5125b519ac9d16587cc415fad3bea75b910084d918a6c90efcf88c",
+            "processamento/limpeza_baloes/cleaner_v2/__init__.py": "85581e95eec9a2dc579b9a55f8326ffbc4526cd3b4807711db625b0ada65d528",
+            "processamento/limpeza_baloes/cleaner_v2/balloon_authorization.py": "56cb74e6825d365629cac190268ab674b91ddb8381102f924eb7024bca761460",
+            "processamento/limpeza_baloes/cleaner_v2/integration.py": "fc8afdabc7fba7cb2dd36ce381684faa8a56af34977a97fea5a52c931f3ce940",
+            "processamento/limpeza_baloes/cleaner_v2/launcher.py": "78086486fe8d72d2f0833ff051e9cc658cbd5ad1b48ecbf27e6525e99d2090e1",
+            "processamento/limpeza_baloes/cleaner_v2/level2.py": "067ebfd97db12b31320bfad52682867858997fc4839ca808dbf3b678bfcd2bb2",
+            "processamento/limpeza_baloes/cleaner_v2/main.py": "6501649a5cd1949f5db83790ee56798079cbf357bd313a6aab1046ba4839f3e3",
+            "processamento/limpeza_baloes/cleaner_v2/ocr_manifest.py": "4c8929a51f23d5c87eddee1c4d26e99c6f31c42ca8cdd09cfb3d09fe712f8d10",
+            "processamento/limpeza_baloes/cleaner_v2/preserve-colors.ini": "e090cb53eac1f78ca5e876d092f15ed6cc29ed98c99ad93cb269c243169a5ae0",
+            "processamento/limpeza_baloes/cleaner_v2/transparency_classifier.py": "f3ff7ab9393e137d67f28858a0f8acf4e7ed422c261993775381fd3790efb28d",
+            "processamento/limpeza_baloes/patch_balao_transparente_experimento.py": "9b6ed59b98349b3c84352814a1e430dcd2f7b11c72fa18d4d906430b742e5a1a",
+            "processamento/limpeza_baloes/patch_degrade_experimento.py": "be194b2620338fc8c9febb99837f1dc208ffd75cc0b37cab992ad740fa850403",
+            "processamento/limpeza_baloes/textoff_special_transparent_legacy_roi.py": "b35715ae8b342ba6a8b3825a5717be8e946e4486962446677188a3e0e786deb9",
+            "processamento/limpeza_baloes/textoff_special_transparent_roi.py": "c8542d8f6a6b08065e06d0ba98facfbb1845e5baaa5244ccda44804f89f0faf1"
+          }
+        },
+        "models": [
+          {
+            "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+            "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+          },
+          {
+            "path": "/Users/alinesouza/Library/Caches/pcleaner/model/comictextdetector.pt",
+            "sha256": "1f90fa60aeeb1eb82e2ac1167a66bf139a8a61b8780acd351ead55268540cccb"
+          }
+        ],
+        "result_path": "reports/experimentos/textoff_especiais_v2/a037cd9042064d55b672889e71ab2c8a/treatment/04_lama_text_only_legacy_roi.png"
+      }
+    ],
+    "finished_at": "2026-09-30T00:43:25.380435+00:00",
+    "inputs_unchanged": true
+  },
+  "level2_validation": [
+    {
+      "chapter": "Ch. 3",
+      "source": "page-034-038.png",
+      "width": 720,
+      "height": 5980,
+      "changed_pixels": 112743,
+      "mask_pixels": 112861,
+      "changed_outside_mask": 0,
+      "result_sha256": "ab1dd191d64d8d19ca27928cb8e956c7f9f787142c8c0f704f03d8d51c8b5c45",
+      "mask_sha256": "e8b1dce40e2a4ed2012e92b85bdc07b601f9b83ffa500e36c70fd82a682501f6"
+    },
+    {
+      "chapter": "Ch. 1",
+      "source": "page-024-026.png",
+      "width": 720,
+      "height": 3594,
+      "changed_pixels": 68810,
+      "mask_pixels": 68880,
+      "changed_outside_mask": 0,
+      "result_sha256": "cdcfe37ee2fc66d05d994291ffd39fb9027fd203f83bb103fce06176fa76bb68",
+      "mask_sha256": "4a9778cc0ebb4296e787347d756c89938b329fade0fe0672cd735e87527d0f2f"
+    }
+  ],
+  "models": [
+    {
+      "path": "/Users/alinesouza/Library/Caches/pcleaner/model/anime-manga-big-lama.pt",
+      "sha256": "479d3afdcb7ed2fd944ed4ebcc39ca45b33491f0f2e43eb1000bd623cfb41823"
+    }
+  ],
+  "source_files_unchanged": true,
+  "code_sha256": {
+    "central_v2/backend/orchestration/textoff_merged/level2_vision.py": "06fce5f50a1ded90a84081bc25b7633c5e16e3093b1be8a11e4286aad95f2fff",
+    "central_v2/backend/orchestration/textoff_merged/execution.py": "746ce05fd810de7b00058292c305e62034c37acc25984245352a4c6de2b6ab30",
+    "central_v2/backend/orchestration/textoff_merged/manifests.py": "39accdccca3de45515d7d649487145cad9b1f0d16595505cdb93dbc25664c683",
+    "central_v2/backend/orchestration/textoff_merged/query.py": "268225c754047c2f83f75ad8e8b081694b54cb50c46c8ae4001ed994fa751161",
+    "central_v2/backend/orchestration/textoff_merged/level2_batch.py": "e2700ef5dccab241eee6f6d19032e4d1e7c08b99fa0e1935c8a0501bfb373147",
+    "central_v2/backend/orchestration/textoff_merged/__init__.py": "df0014cfd7cc94bea6cbd85419da694beaf93f6163ee8e3a325e2884d82f29f5",
+    "central_v2/backend/orchestration/textoff_merged/level2_process.py": "7539d33f6b90f5cf9a652a2ffd2c1abf309aca5c0527015b7cffc32c2156f45f",
+    "central_v2/backend/orchestration/textoff_merged/runtime.py": "49fbf9a37e413ab32aaa213e9c98e578a0f7cc174a35fc64407d6d831b126ff6",
+    "central_v2/backend/orchestration/textoff_merged/cleaner.py": "df58e27fbe2f968d2935e0d41b19ed19738918543cfd7861067f885d84ceaebf",
+    "central_v2/backend/orchestration/textoff_merged/transparency_artifacts.py": "cc87b4b530ca9a9fd6c43be756c309e8398b89cbf5b8746645badf4f16a3b604",
+    "central_v2/backend/orchestration/textoff_merged/level2.py": "764242a198612ddf203bd4a7b69ec34bfe12511a1ac80f973a25c541bc1bf2b5",
+    "central_v2/backend/orchestration/textoff_merged/level1_cleaner.py": "79098b2ab534e22c89899284be00d6af127fc5fb5c9e9b27ff50079373192f39",
+    "central_v2/backend/orchestration/textoff_merged/cleaner_process.py": "76baaf575310e38bc3ff32fa01f948a479e36012b61d6a8969d37eb7cd2504bd",
+    "central_v2/backend/orchestration/textoff_merged/artifact_paths.py": "37acceb9d08b33f148f538fa1f0054f599b053997cf200b1d1d9c91e9f0ea316",
+    "central_v2/backend/orchestration/textoff_merged/level2_transparent.py": "f7b330d5a289147134dfc1f7c49cc220e3b1e0d918ea9d99dfb941d47f687478",
+    "central_v2/backend/orchestration/textoff_merged/level1_worker.py": "78bdafccb10263a72fd6eff00007423bc74609b40b34c176e2ad1752d5bec486",
+    "dev/tools/textoff_prepare_comparison.py": "a00bbeab97e93a7585878484ff2735a6ca62fe2570e928e053f3d63bbe76c338",
+    "dev/tools/textoff_threeway_report.py": "854775c8f83a26501be806f0b0f3665a8b7c06b4aa42bf9e9fe97ab3fa2a0b16",
+    "dev/tools/textoff_special_matrix.py": "37d4c78010f9f650e69f32224407fd6ee7cc88f44b31e134010f902dc4de985b"
+  },
+  "merged_runtime_locks": {
+    "merged_nivel_i": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+    "merged_nivel_ii": "41e41ce40d923c1e9976db2aec15ca1b5696ffbf4f1bc1ee274b29cdfc8273c4"
+  }
+}

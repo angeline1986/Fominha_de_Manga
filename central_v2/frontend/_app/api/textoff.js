@@ -20,6 +20,14 @@ export async function startMergedTextoff(provider, manga, chapters, level = "") 
   });
 }
 
+export async function startMergedSpecialTextoff(provider, manga, chapters, level) {
+  return requestJson(`/api/textoff/merged/level${level}/execute`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ provider, manga, chapters }),
+  });
+}
+
 export async function waitForTextoffJob(job, onProgress = () => {}) {
   if (!job?.id) throw new Error("A Central não confirmou a criação do job.");
   let current = job;

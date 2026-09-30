@@ -12,6 +12,11 @@ from central_v2.backend.orchestration.textoff_merged import (
     query_merged_level1, query_merged_level2, validate_level2_selection,
     validate_selection,
 )
+from central_v2.backend.orchestration.textoff_merged.special_levels import (
+    execute_special_level, query_special_level,
+)
+from central_v2.backend.orchestration.textoff_merged.artifact_paths import artifact_file
+from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest
 
 
 def textoff_merged_response(query: dict, output_root: Path) -> RouteResponse:
@@ -30,6 +35,8 @@ def textoff_merged_level_response(level: str, query: dict, output_root: Path) ->
         provider, name = _context(query, output_root)
         manga = resolve_manga(output_root, provider, name)
         lookup = {"I": query_merged_level1, "II": query_merged_level2}.get(level)
+        if level in {"IV", "V"}:
+            lookup = lambda value: query_special_level(value, level)
         if lookup is None:
             raise ValueError("Nível Merged inválido.")
         return RouteResponse(200, _json({"provider": provider, "manga": name, **lookup(manga)}))
@@ -49,6 +56,32 @@ def execute_textoff_merged_level1_response(payload: object, output_root: Path) -
 
 def execute_textoff_merged_level2_response(payload: object, output_root: Path) -> RouteResponse:
     return _execute_response(payload, output_root, execute_merged_level2, validate_level2_selection)
+
+
+def execute_textoff_merged_special_response(level: str, payload: object,
+                                           output_root: Path) -> RouteResponse:
+    try:
+        if level not in {"IV", "V"} or not isinstance(payload, dict):
+            raise ValueError("Solicitação de nível Merged inválida.")
+        provider, name = _context(payload, output_root)
+        manga = resolve_manga(output_root, provider, name)
+        chapters = validate_selection(manga, payload.get("chapters"))
+        eligible = {row["chapter"] for row in query_special_level(manga, level)["chapters"]
+                    if row["level1_ready"]}
+        if any(chapter not in eligible for chapter in chapters):
+            raise ValueError("Os Níveis IV e V exigem Nível I íntegro.")
+        if legacy_server_active():
+            raise ValueError("Feche a Central V1 antes de executar TextOff na V2.")
+        def operation(progress, _job_id):
+            if legacy_server_active():
+                raise RuntimeError("Central V1 ativa; execução TextOff cancelada por segurança.")
+            return execute_special_level(manga, level, chapters, progress,
+                                         preflight=lambda: _ensure_v2_session())
+        return RouteResponse(202, _json({"job": submit(operation, total=len(chapters))}))
+    except ValueError as exc:
+        return RouteResponse(400, _json({"error": str(exc)}))
+    except OSError:
+        return RouteResponse(500, _json({"error": "Não foi possível iniciar o nível Merged."}))
 
 
 def _execute_response(payload: object, output_root: Path, runner, validator=None) -> RouteResponse:

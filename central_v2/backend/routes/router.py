@@ -26,6 +26,7 @@ from central_v2.backend.routes.textoff_merged import (
     execute_textoff_merged_response,
     textoff_merged_level_response,
     textoff_merged_response,
+    execute_textoff_merged_special_response,
 )
 from central_v2.backend.routes.balanceamento import balanceamento_job_response, balanceamento_response
 from central_v2.backend.routes.balanceamento_media import balanceamento_image_response
@@ -70,6 +71,10 @@ def dispatch_get(
 
     if request.path == "/api/textoff/merged/level2":
         return textoff_merged_level_response("II", parse_qs(request.query), output_root)
+
+    for level in ("IV", "V"):
+        if request.path == f"/api/textoff/merged/level{level}":
+            return textoff_merged_level_response(level, parse_qs(request.query), output_root)
 
     if request.path == "/api/merge-manual/proposal/image":
         return merge_manual_proposal_image_response(parse_qs(request.query), output_root)
@@ -162,6 +167,9 @@ def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -
         return execute_textoff_merged_level1_response(payload, output_root)
     if urlparse(path).path == "/api/textoff/merged/level2/execute":
         return execute_textoff_merged_level2_response(payload, output_root)
+    for level in ("IV", "V"):
+        if urlparse(path).path == f"/api/textoff/merged/level{level}/execute":
+            return execute_textoff_merged_special_response(level, payload, output_root)
     if urlparse(path).path == "/api/merge-manual/apply":
         return merge_manual_apply_response(payload, output_root)
     if urlparse(path).path in {

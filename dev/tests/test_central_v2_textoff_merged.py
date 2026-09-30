@@ -32,6 +32,21 @@ class CentralV2TextoffMergedRouteTests(unittest.TestCase):
         self.assertEqual(payload["chapters"][0]["level2_status"], "invalid_merge")
         self.assertFalse(payload["chapters"][0]["selectable"])
 
+    def test_levels_four_and_five_are_listed_only_from_level_one_readiness(self):
+        with tempfile.TemporaryDirectory() as root:
+            output = self.make_output(root)
+            self.assertIsNone(dispatch_get(
+                "/api/textoff/merged/levelIII?provider=ridi&manga=obra", output))
+            for level in ("IV", "V"):
+                response = dispatch_get(
+                    f"/api/textoff/merged/level{level}?provider=ridi&manga=obra", output)
+                payload = json.loads(response.body)
+                row = payload["chapters"][0]
+                self.assertEqual(response.status, 200)
+                self.assertFalse(row["level1_ready"])
+                self.assertFalse(row["selectable"])
+                self.assertEqual(row["special_level"], level)
+
     def test_execute_enqueues_v2_job_for_validated_selection(self):
         with tempfile.TemporaryDirectory() as root:
             output = self.make_output(root)
