@@ -26,14 +26,12 @@ export function mountShell(root, onStopped) {
           <div id="app-context"></div>
 
           <div class="app-sidebar-actions" aria-label="Ações da Central">
-            <button type="button" class="sidebar-action" data-action="sync">
+            <button type="button" class="sidebar-action" data-action="sync" aria-label="Sincronizar" title="Sincronizar">
               ${iconMarkup("sync")}
-              <span>Sincronizar</span>
             </button>
 
-            <button type="button" class="sidebar-action sidebar-action-danger" data-action="stop-server">
+            <button type="button" class="sidebar-action sidebar-action-danger" data-action="stop-server" aria-label="Finalizar servidor" title="Finalizar servidor">
               ${iconMarkup("power")}
-              <span>Finalizar servidor</span>
             </button>
           </div>
         </aside>
@@ -62,8 +60,16 @@ export function mountShell(root, onStopped) {
   );
   const drillNavigation = createDrillNavigation();
   navigation.append(drillNavigation.element);
+  const context = root.querySelector("#app-context");
+  const showContextOnMenu = (event) => {
+    context.hidden = event.type === "menu:detail-open";
+  };
+  navigation.addEventListener("menu:detail-open", showContextOnMenu);
+  navigation.addEventListener("menu:detail-close", showContextOnMenu);
 
   return () => {
+    navigation.removeEventListener("menu:detail-open", showContextOnMenu);
+    navigation.removeEventListener("menu:detail-close", showContextOnMenu);
     toggle.removeEventListener("click", toggleSidebar);
     drillNavigation.dispose();
     disposeContext();

@@ -4,11 +4,17 @@ import { fetchManualSpecial, manualSpecialImageUrl, manualSpecialResultUrl, star
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 
-export function renderSpecial(container, level, title) {
+const specialPages = {
+  VI: { title: "Pincel & Retoques — Patch Degradê", description: "Seleção de regiões para reconstrução de fundos em degradê." },
+  VII: { title: "Pincel & Retoques — Balão Artístico", description: "Tratamento pontual para balões ilustrados ou texturizados." },
+  VIII: { title: "Pincel & Retoques — Gradiente Suave", description: "Aplicação de suavização contínua de transição tonal." },
+};
+
+export function renderSpecial(container, level) {
+  const page = specialPages[level];
   const root = document.createElement("section");
   root.className = "auto-merge-page textoff-merged-page textoff-special-manual";
-  root.innerHTML = `<header><h1>Texto Off — Especiais Nível ${level}: ${title}</h1></header>
-    <p class="textoff-level-description">Selecione uma página do Nível I e marque as regiões que devem ser tratadas.</p>
+  root.innerHTML = `<header><h1 class="textoff-page-title-hint" data-tooltip="${page.description}" tabindex="0" aria-description="${page.description}">${page.title}</h1></header>
     <div class="auto-merge-toolbar special-toolbar">
       <label class="special-field">Capítulo<select data-chapter aria-label="Capítulo"></select></label>
       <label class="special-field">Página<select data-page aria-label="Página"></select></label>

@@ -1,8 +1,12 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { access } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { browserModules } from './modules.mjs';
 
-test('TextOff menu exposes Merged I, II, III, IV and V and keeps Legacy separate', async () => {
+const frontend = fileURLToPath(new URL('../../../central_v2/frontend/', import.meta.url));
+
+test('Limpeza de Balões maps all cleaner and brush choices to their existing routes', async () => {
   const load = browserModules();
   const { resolveRoute, routes } = await load('/_app/router/routes.js');
   const level1 = resolveRoute('texto-off-merged-i');
@@ -22,13 +26,64 @@ test('TextOff menu exposes Merged I, II, III, IV and V and keeps Legacy separate
     await load(route.module);
   }
   const { navigation } = await load('/_shell/navigation.js');
-  const selector = navigation.find((section) => section.id === 'texto-off')
-    .groups.find((group) => group.control?.id === 'textoff-merged-level').control;
-  assert.equal(Array.from(selector.options, (option) => option.value).join(','), 'I,II,III,IV,V');
+  const menu = navigation.find((section) => section.id === 'texto-off');
+  assert.equal(menu.label, 'Limpeza de Balões');
+  const auto = menu.groups.find((group) => group.control?.id === 'textoff-auto-cleaner').control;
+  assert.equal(Array.from(auto.options, (option) => option.action).join(','), [
+    'texto-off-merged-i', 'texto-off-merged-ii', 'texto-off-merged-iv', 'texto-off-merged-v',
+  ].join(','));
+  assert.equal(auto.badgeFormat, 'PASSO {value}/4');
+  const brush = menu.groups.find((group) => group.control?.id === 'textoff-brush').control;
+  assert.equal(Array.from(brush.options, (option) => option.action).join(','), [
+    'texto-off-merged-iii', 'texto-off-especiais-vi', 'texto-off-especiais-vii', 'texto-off-especiais-viii',
+  ].join(','));
+  assert.equal(brush.options[0].label, 'Mapear');
+  for (const option of [...auto.options, ...brush.options]) {
+    assert.ok(resolveRoute(option.action), `Rota ausente para ${option.action}`);
+  }
+  for (const option of brush.options.slice(1)) {
+    assert.ok(option.preview, `Preview ausente para ${option.label}`);
+    await access(`${frontend}${option.preview.before}`);
+    await access(`${frontend}${option.preview.after}`);
+  }
+  assert.equal(menu.groups.find((group) => group.label === 'AUDITORIA DE QUALIDADE')
+    .items.map((item) => item.label).join('|'), 'Antes & Depois|Correção Assistida');
+  assert.equal(menu.groups.find((group) => group.items?.[0]?.id === 'texto-off-legacy').label, '');
   assert.equal(legacy.context, 'texto-off');
   assert.equal(legacy.module, '/texto_off/merged/index.js');
   await load(level1.module);
   await load(level2.module);
+});
+
+test('captioned segmented controls update pass, selected action and caption together', async () => {
+  const load = browserModules();
+  const { navigation } = await load('/_shell/navigation.js');
+  const control = navigation.find((section) => section.id === 'texto-off').groups
+    .find((group) => group.control?.id === 'textoff-auto-cleaner').control;
+  const { segmentedMarkup, selectMergeLevel } = await load('/_shell/merge_levels.js');
+  const markup = segmentedMarkup(control);
+  assert.match(markup, /PASSO 1\/4/);
+  assert.match(markup, /Balões sólidos \(padrão\)/);
+
+  const buttons = control.options.map((option, index) => ({
+    dataset: { segmentValue: option.value },
+    classList: { toggle(name, active) { this[name] = active; } },
+    setAttribute(name, value) { this[name] = value; },
+    index,
+  }));
+  const badge = { textContent: '' }, caption = { textContent: '' };
+  const segmented = {
+    dataset: { badgeFormat: control.badgeFormat },
+    querySelectorAll: () => buttons,
+    querySelector: (selector) => selector === '.segmented-badge' ? badge : caption,
+  };
+  buttons[2].closest = () => segmented;
+  selectMergeLevel(buttons[2], control);
+  assert.equal(buttons[2].classList.active, true);
+  assert.equal(buttons[0].classList.active, false);
+  assert.equal(buttons[2]['aria-pressed'], 'true');
+  assert.equal(badge.textContent, 'PASSO 3/4');
+  assert.equal(caption.textContent, 'Transparência normal');
 });
 
 test('TextOff Merged confirms, submits selected chapters and summarizes the job', async () => {

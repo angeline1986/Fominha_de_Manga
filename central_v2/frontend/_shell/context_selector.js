@@ -1,8 +1,10 @@
 function createField({ id, label, items, value, disabled, onChange }) {
-  const field = document.createElement("label");
+  const field = document.createElement("div");
   field.className = "context-field";
   const caption = document.createElement("span");
+  caption.className = "context-combobox-label";
   caption.textContent = label;
+  caption.setAttribute("aria-hidden", "true");
   const control = document.createElement("div");
   control.className = "context-combobox";
   const trigger = document.createElement("button");
@@ -11,9 +13,14 @@ function createField({ id, label, items, value, disabled, onChange }) {
   trigger.setAttribute("aria-haspopup", "listbox");
   trigger.setAttribute("aria-expanded", "false");
   trigger.setAttribute("aria-controls", `${id}-options`);
+  const current = value ? items.find((item) => item.value === value) : null;
+  trigger.classList.toggle("is-empty", !current);
+  trigger.setAttribute("aria-label", current ? `${label}: ${current.label}` : label);
   trigger.disabled = disabled;
-  const current = items.find((item) => item.value === value);
-  trigger.textContent = current?.label ?? "Selecionar";
+  const selected = document.createElement("span");
+  selected.className = "context-combobox-value";
+  selected.textContent = current?.label ?? "";
+  trigger.append(caption, selected);
 
   const list = document.createElement("div");
   list.id = `${id}-options`;
@@ -73,7 +80,7 @@ function createField({ id, label, items, value, disabled, onChange }) {
   });
 
   control.append(trigger, list);
-  field.append(caption, control);
+  field.append(control);
   return field;
 }
 
@@ -86,15 +93,11 @@ export function createContextSelector(
 ) {
   const element = document.createElement("div");
   element.className = "context-selector";
-  const heading = document.createElement("div");
-  heading.className = "context-selector-heading";
-  heading.textContent = "CONTEXTO";
 
   const providers = Object.keys(context.catalog).map((item) => ({ value: item, label: item }));
   const mangas = (context.provider ? context.catalog[context.provider] ?? [] : [])
     .map((item) => ({ value: item, label: item }));
   element.append(
-    heading,
     createField({ id: "context-provider", label: "Provider", items: [{ value: "", label: "Selecionar" }, ...providers], value: context.provider, onChange: onProviderChange }),
     createField({ id: "context-manga", label: "Obra", items: [{ value: "", label: "Selecionar" }, ...mangas], value: context.manga, disabled: !context.provider, onChange: onMangaChange }),
   );

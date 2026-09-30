@@ -65,8 +65,7 @@ export function createMergedLevel2View(onRun) {
   const element = document.createElement("section");
   element.className = "auto-merge-page auto-merge-level2 textoff-merged-page textoff-merged-level2-page";
   element.innerHTML = `
-    <header><h1 title="Casos transparentes adiados pelo Nível I, preparados para a rodada específica do Nível II.">Texto Off — Merged Nível II</h1></header>
-    <p class="textoff-level-description">Acompanha os balões transparentes preservados pelo Nível I e prepara a rodada especializada. O refinamento do Legado não é aplicado aqui.</p>
+    <header><h1 class="textoff-page-title-hint" data-tooltip="Tratamento focado em páginas com balões transparentes." tabindex="0" aria-description="Tratamento focado em páginas com balões transparentes.">Auto-Cleaner — Passo 2: Balões Transparentes</h1></header>
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo..."></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>

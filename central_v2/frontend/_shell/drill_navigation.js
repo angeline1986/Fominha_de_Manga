@@ -1,58 +1,8 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { bindHoverPreview } from "/_shell/hover_preview.js";
-import { segmentedMarkup, selectMergeLevel } from "/_shell/merge_levels.js";
+import { selectMergeLevel } from "/_shell/merge_levels.js";
+import { groupMarkup, rootItem } from "/_shell/drill_navigation_markup.js";
 import { navigation } from "/_shell/navigation.js";
-
-function itemIconMarkup(action) {
-  const iconClass = action === "validar-faixa"
-    ? "fa-solid fa-crop-simple text-xs text-slate-400"
-    : "fa-solid fa-scissors text-xs text-sky-600";
-  return `<i class="drill-subitem-icon ${iconClass}" aria-hidden="true"></i>`;
-}
-
-function rootItem(section) {
-  return `
-    <button
-      class="drill-item drill-root-item"
-      type="button"
-      data-section="${section.id}"
-    >
-      ${iconMarkup(section.id)}
-      <span class="drill-item-label">${section.label}</span>
-      <span class="drill-arrow">${iconMarkup("next")}</span>
-    </button>
-  `;
-}
-
-function groupMarkup(group) {
-  const hasSubitems = (group.items ?? []).length > 0;
-  const content = group.control?.type === "segmented"
-    ? segmentedMarkup(group.control)
-    : `
-      <div class="drill-group-items${hasSubitems ? " drill-subitem-list" : ""}">
-        ${(group.items ?? []).map((item) => `
-          <button
-            class="drill-item${hasSubitems ? " drill-subitem" : ""}"
-            type="button"
-            data-action="${item.id}"
-          >
-            ${group.linear ? `<span class="drill-subitem-label">${itemIconMarkup(item.id)}${item.label}</span>` : `<span>${item.label}</span>`}
-          </button>
-        `).join("")}
-      </div>
-    `;
-
-  const title = group.control?.type === "segmented"
-    ? ""
-    : `<div class="drill-group-title${hasSubitems ? " drill-group-title-subitems" : ""}">${group.label}</div>`;
-
-  return `
-    <section class="drill-group">
-      ${title}
-      ${content}
-    </section>
-  `;
-}
 
 export function createDrillNavigation() {
   const element = document.createElement("div");
@@ -96,6 +46,8 @@ export function createDrillNavigation() {
   const backButton = element.querySelector(".drill-back");
 
   let trigger = null;
+  const selectedValues = new Map();
+  const lastActions = new Map();
 
   function openSection(sectionId, sourceButton) {
     const section = navigation.find((item) => item.id === sectionId);
@@ -105,8 +57,11 @@ export function createDrillNavigation() {
     }
 
     trigger = sourceButton;
+    element.dispatchEvent(new CustomEvent("menu:detail-open", { bubbles: true }));
     sectionTitle.textContent = section.label;
-    detailContent.innerHTML = section.groups.map(groupMarkup).join("");
+    element.classList.toggle("is-limpeza-baloes", sectionId === "texto-off");
+    const state = { selectedValues, currentAction: lastActions.get(sectionId) };
+    detailContent.innerHTML = section.groups.map((group) => groupMarkup(group, state)).join("");
 
     rootLayer.inert = true;
     detailLayer.inert = false;
@@ -117,6 +72,8 @@ export function createDrillNavigation() {
 
   function closeSection() {
     element.classList.remove("is-detail");
+    element.classList.remove("is-limpeza-baloes");
+    element.dispatchEvent(new CustomEvent("menu:detail-close", { bubbles: true }));
 
     rootLayer.inert = false;
     detailLayer.inert = true;
@@ -133,7 +90,8 @@ export function createDrillNavigation() {
     if (sectionButton) {
       const section = navigation.find((item) => item.id === sectionButton.dataset.section);
       openSection(sectionButton.dataset.section, sectionButton);
-      if (section?.defaultAction) dispatchAction(section.defaultAction, section.label, section.id);
+      const action = section && (lastActions.get(section.id) ?? section.defaultAction);
+      if (action) dispatchAction(action, actionLabel(section, action), section.id);
       return;
     }
 
@@ -145,7 +103,9 @@ export function createDrillNavigation() {
     const segmentButton = event.target.closest("[data-segment-value]");
 
     if (segmentButton) {
-      selectMergeLevel(segmentButton);
+      const control = segmentButton.closest("[data-segmented]");
+      selectMergeLevel(segmentButton, controlForSegment(control.dataset.segmented));
+      selectedValues.set(control.dataset.segmented, segmentButton.dataset.segmentValue);
     }
 
     const actionButton = event.target.closest("[data-action]");
@@ -153,19 +113,9 @@ export function createDrillNavigation() {
     if (actionButton) {
       element.querySelectorAll(".drill-subitem.is-current").forEach((item) => item.classList.remove("is-current"));
       actionButton.classList.add("is-current");
-      const sectionId = navigation.find((section) =>
-        section.groups.some((group) => {
-          const itemMatch = (group.items ?? []).some(
-            (item) => item.id === actionButton.dataset.action,
-          );
-
-          const controlMatch = (group.control?.options ?? []).some(
-            (option) => option.action === actionButton.dataset.action,
-          );
-
-          return itemMatch || controlMatch;
-        })
-      )?.id;
+      const section = sectionForAction(actionButton.dataset.action);
+      const sectionId = section?.id;
+      if (sectionId) lastActions.set(sectionId, actionButton.dataset.action);
 
       dispatchAction(actionButton.dataset.action, actionButton.textContent.trim(), sectionId);
     }
@@ -186,4 +136,24 @@ export function createDrillNavigation() {
   });
 
   return { element, dispose: disposePreview };
+}
+
+function sectionForAction(action) {
+  return navigation.find((section) => section.groups.some((group) =>
+    (group.items ?? []).some((item) => item.id === action)
+      || (group.control?.options ?? []).some((option) => option.action === action)));
+}
+
+function controlForSegment(id) {
+  return navigation.flatMap((section) => section.groups)
+    .find((group) => group.control?.id === id)?.control;
+}
+
+function actionLabel(section, action) {
+  for (const group of section.groups) {
+    const item = (group.items ?? []).find((candidate) => candidate.id === action);
+    const option = group.control?.options?.find((candidate) => candidate.action === action);
+    if (item || option) return item?.label ?? option.label;
+  }
+  return section.label;
 }

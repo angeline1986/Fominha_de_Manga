@@ -9,26 +9,20 @@ const FILTERS = [
   ["processed", "Com resultado"], ["invalid", "MERGE inválido"],
 ];
 
-export function createMergedView(onExecute, { title = "Texto Off — Merged", mode, description = "", onInspect } = {}) {
+export function createMergedView(onExecute, { title = "Texto Off — Merged", executeLabel, mode, description = "", onInspect } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page textoff-merged-page";
   element.innerHTML = `
-    <header><h1 title="Executa Cleaner V2 sobre os artefatos do MERGE oficial.">${title}</h1></header>
+    <header><h1${description ? ` class="textoff-page-title-hint" data-tooltip="${description}" tabindex="0" aria-description="${description}"` : ""}>${title}</h1></header>
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo..."></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
-      <button class="auto-merge-execute" type="button" data-execute>Executar ${title.replace("Texto Off — ", "")}</button>
+      <button class="auto-merge-execute" type="button" data-execute>${executeLabel ?? `Executar ${title.replace("Texto Off — ", "")}`}</button>
     </div>
     <p class="auto-merge-status" role="status" aria-live="polite"></p>
     <div class="auto-merge-results"></div>
   `;
   const query = element.querySelector("[data-query]");
-  if (description) {
-    const note = document.createElement("p");
-    note.className = "textoff-level-description";
-    note.textContent = description;
-    element.querySelector("header").after(note);
-  }
   const status = element.querySelector(".auto-merge-status");
   const execute = element.querySelector("[data-execute]");
   const results = element.querySelector(".auto-merge-results");

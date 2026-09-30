@@ -8,7 +8,9 @@ export function render(container) {
   let abortController;
   let disposed = false;
   const view = createMergedView((chapters) => execution.execute(chapters), {
-    title: "Texto Off — Merged Nível I",
+    title: "Auto-Cleaner — Passo 1: Balões Sólidos",
+    description: "Limpeza geral padrão e proteção de áreas translúcidas.",
+    executeLabel: "Executar Merged Nível I",
   });
   container.replaceChildren(view.element);
   const execution = createMergedExecution({

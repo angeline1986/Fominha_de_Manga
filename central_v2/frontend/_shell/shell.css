@@ -128,10 +128,10 @@
 }
 
 .app-sidebar.is-collapsed .sidebar-action {
-  width: 54px;
+  flex: 1 1 0;
+  width: auto;
   height: 40px;
-  margin: 0 auto;
-  font-size: 0;
+  margin: 0;
 }
 
 .app-sidebar.is-collapsed .sidebar-action .ui-icon {

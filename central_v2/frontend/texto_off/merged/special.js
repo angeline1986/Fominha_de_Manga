@@ -6,7 +6,14 @@ import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 
-const labels = { IV: "Transparência normal", V: "Transparência Legado" };
+const titles = {
+  IV: "Auto-Cleaner — Passo 3: Transparência Normal",
+  V: "Auto-Cleaner — Passo 4: Transparência Legada",
+};
+const descriptions = {
+  IV: "Aplicação da variante padrão de transparência.",
+  V: "Processamento isolado com o algoritmo legado.",
+};
 const FILTERS = [["all", "Todos"], ["ready", "Nível I íntegro"], ["missing", "Nível I ausente"]];
 
 export function renderSpecial(container, level) {
@@ -14,8 +21,7 @@ export function renderSpecial(container, level) {
   const selected = new Set(), pagination = createPagination();
   const root = document.createElement("section");
   root.className = "auto-merge-page textoff-merged-page";
-  root.innerHTML = `<header><h1>Texto Off — Merged Nível ${level}: ${labels[level]}</h1></header>
-    <p class="textoff-level-description">Disponível após um Nível I íntegro. Os resultados são experimentais e não substituem os arquivos oficiais.</p>
+  root.innerHTML = `<header><h1 class="textoff-page-title-hint" data-tooltip="${descriptions[level]}" tabindex="0" aria-description="${descriptions[level]}">${titles[level]}</h1></header>
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo..."></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>

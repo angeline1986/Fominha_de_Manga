@@ -7,13 +7,16 @@
   position: relative;
   height: 100%;
   min-height: 0;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .drill-layer {
   position: absolute;
   inset: 0;
+  overflow-x: hidden;
   overflow-y: auto;
+  scrollbar-gutter: stable;
 }
 
 .drill-navigation,
@@ -149,11 +152,7 @@
 .drill-subitem-list { gap: 4px; padding-left: 8px; }
 .drill-subitem { min-height: 36px; padding: 7px 10px 7px 12px; font-size: var(--font-size-small); font-weight: 500; }
 .drill-subitem-label { display: inline-flex; align-items: center; gap: 10px; }
-.drill-subitem-icon { display: inline-block; width: 14px; height: 14px; flex: none; background: currentColor; opacity: .85; }
-.drill-subitem-icon.fa-crop-simple { -webkit-mask: url("/_shared/icons/crop-simple-solid-full.svg") center / contain no-repeat; mask: url("/_shared/icons/crop-simple-solid-full.svg") center / contain no-repeat; }
-.drill-subitem-icon.fa-scissors { -webkit-mask: url("/_shared/icons/scissors-solid-full.svg") center / contain no-repeat; mask: url("/_shared/icons/scissors-solid-full.svg") center / contain no-repeat; }
-.drill-subitem-icon.text-slate-400 { color: #94a3b8; }
-.drill-subitem-icon.text-sky-600 { color: #0284c7; }
+.drill-subitem-label .ui-icon { width: 16px; height: 16px; }
 .drill-subitem.is-current { border-left: 3px solid var(--color-primary); background: var(--color-surface); color: var(--color-text); font-weight: var(--font-weight-bold); }
 
 .navigation-hover-preview {

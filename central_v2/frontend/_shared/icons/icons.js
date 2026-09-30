@@ -1,7 +1,8 @@
 const iconNames = new Set([
   "visao-geral", "processamento", "balanceamento", "gerar-pdf", "texto-off",
   "exportar-arquivos", "sync", "power", "next", "back", "close",
-  "focus-exit", "expand", "collapse", "menu", "ruler",
+  "focus-exit", "expand", "collapse", "menu", "ruler", "search", "compare", "highlighter",
+  "crop-simple", "scissors",
 ]);
 
 export function iconMarkup(name) {

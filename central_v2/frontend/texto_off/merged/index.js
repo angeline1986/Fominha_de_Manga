@@ -7,7 +7,7 @@ export function render(container) {
   let requestId = 0;
   let abortController;
   let disposed = false;
-  const view = createMergedView((chapters) => execution.execute(chapters), { title: "Texto Off — Legado" });
+  const view = createMergedView((chapters) => execution.execute(chapters), { title: "Limpeza de Balões — Modo Legado", executeLabel: "Executar Legado" });
   container.replaceChildren(view.element);
   const execution = createMergedExecution({
     onStatus: view.setExecution,

@@ -1,27 +1,30 @@
+import { iconMarkup } from "/_shared/icons/icons.js";
+
 export function segmentedMarkup(control) {
+  const selected = control.options.find((option) => option.value === control.defaultValue);
+  const badgeFormat = control.badgeFormat ?? "NÍVEL {value}";
   const previews = (option) => option.preview ? `
               data-preview-title="${option.title}"
               data-preview-before="${option.preview.before}"
               data-preview-after="${option.preview.after}"
-              aria-label="Nível ${option.value}: ${option.title}"` : "";
+              aria-label="${option.label}: ${option.title}"` : "";
   return `
     <div
-      class="segmented-shell"
+      class="segmented-shell${control.options.some((option) => option.caption) ? " segmented-shell--captioned" : ""}"
       data-segmented="${control.id}"
       data-value="${control.defaultValue}"
+      data-badge-format="${badgeFormat}"
     >
       <div class="segmented-header">
         <strong>${control.label}</strong>
-        <span class="segmented-badge">
-          NÍVEL ${control.defaultValue}
-        </span>
+        ${control.showBadge === false ? "" : `<span class="segmented-badge">${badgeFormat.replace("{value}", control.defaultValue)}</span>`}
       </div>
 
       <div class="segmented-card">
         <div
           class="segmented-control"
           role="group"
-          aria-label="Seletor de nível de ${control.label}"
+          aria-label="Opções de ${control.label}"
         >
           ${control.options.map((option) => `
             <button
@@ -32,16 +35,17 @@ export function segmentedMarkup(control) {
               ${option.preview ? previews(option) : option.title ? `title="${option.title}" aria-label="Nível ${option.value}: ${option.title}"` : ""}
               aria-pressed="${option.value === control.defaultValue}"
             >
-              ${option.label}
+              ${control.plainLabels ? option.label : `<span class="segmented-option-content">${option.icon ? iconMarkup(option.icon) : ""}<span>${option.label}</span></span>`}
             </button>
           `).join("")}
         </div>
+        ${control.options.some((option) => option.caption) ? `<div class="segmented-caption"><strong data-segment-caption>${selected?.caption ?? ""}</strong></div>` : ""}
       </div>
     </div>
   `;
 }
 
-export function selectMergeLevel(segmentButton) {
+export function selectMergeLevel(segmentButton, control) {
   const segmented = segmentButton.closest("[data-segmented]");
   const buttons = segmented.querySelectorAll("[data-segment-value]");
   const value = segmentButton.dataset.segmentValue;
@@ -56,6 +60,11 @@ export function selectMergeLevel(segmentButton) {
   segmented.dataset.value = value;
 
   if (badge) {
-    badge.textContent = `NÍVEL ${value}`;
+    badge.textContent = segmented.dataset.badgeFormat.replace("{value}", value);
+  }
+
+  const caption = segmented.querySelector("[data-segment-caption]");
+  if (caption) {
+    caption.textContent = control.options.find((option) => option.value === value)?.caption ?? "";
   }
 }

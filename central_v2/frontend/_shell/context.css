@@ -1,32 +1,22 @@
 #app-context {
   flex: 0 0 auto;
-  padding: 12px 12px 32px;
+  padding: 12px 12px 178px;
   border-top: 1px solid var(--color-border);
   border-bottom: 1px solid var(--color-border);
   background: transparent;
 }
 
-.context-selector {
-  display: grid;
-  gap: 9px;
+#app-context[hidden] {
+  display: none;
 }
 
-.context-selector-heading {
-  color: var(--color-primary-hover);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-label);
-  letter-spacing: 0.08em;
+.context-selector {
+  display: grid;
+  gap: var(--space-sm);
 }
 
 .context-field {
-  display: grid;
-  gap: 5px;
-}
-
-.context-field > span {
-  color: var(--color-text-muted);
-  font-size: var(--font-size-label);
-  font-weight: var(--font-weight-bold);
+  min-width: 0;
 }
 
 .context-combobox {
@@ -37,12 +27,12 @@
 .context-combobox-trigger {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: 8px;
   width: 100%;
   min-width: 0;
   min-height: var(--control-height);
-  padding: 0 8px;
+  padding: 0 10px;
   border: 1px solid var(--color-border-primary);
   border-radius: var(--radius-control);
   background: var(--color-surface);
@@ -52,8 +42,27 @@
   cursor: pointer;
 }
 
+.context-combobox-label {
+  flex: 0 0 auto;
+  color: var(--color-text-muted);
+  font-size: var(--font-size-label);
+  font-weight: var(--font-weight-bold);
+}
+
+.context-combobox-label::after { content: ":"; }
+.context-combobox-trigger.is-empty .context-combobox-label::after { content: ""; }
+
+.context-combobox-value {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--color-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .context-combobox-trigger::after {
   content: "";
+  margin-left: auto;
   flex: 0 0 7px;
   width: 7px;
   height: 7px;

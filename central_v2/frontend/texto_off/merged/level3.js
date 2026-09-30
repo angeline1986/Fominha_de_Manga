@@ -9,9 +9,10 @@ export function render(container) {
   let controller;
   let disposed = false;
   const view = createMergedView((chapters) => execution.execute(chapters), {
-    title: "Texto Off — Merged Nível III",
+    title: "Pincel & Retoques — Mapear Balões",
+    executeLabel: "Executar Merged Nível III",
     mode: "level3",
-    description: "Analisa os MERGES originais em recortes sobrepostos para localizar degradês e contornos estilizados. Candidatos requerem revisão; não altera imagens nem aciona patches.",
+    description: "Identificação de balões com degradê, arte e contornos complexos. Analisa os MERGES originais; candidatos requerem revisão e não acionam patches.",
     onInspect: (row) => {
       if (!row.candidate_pages?.length) return;
       const { provider, manga } = getContext();

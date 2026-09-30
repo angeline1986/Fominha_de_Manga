@@ -1,5 +1,5 @@
 import { renderSpecial } from "/texto_off/especiais/view.js";
 
 export function render(container) {
-  return renderSpecial(container, "VII", "Patch Balão Estilizado");
+  return renderSpecial(container, "VII");
 }
