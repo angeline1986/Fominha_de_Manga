@@ -40,8 +40,7 @@ function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
       },
     },
     { id: "chapter", label: "Cap.", render: (row) => row.chapter },
-    { id: "merges", label: "Merges", render: (row) => row.merge_valid ? row.merge_count : "—" },
-    { id: "candidates", label: "Candidatas Nível II", render: (row) => row.cleaned ? `${row.transparent_page_count} / ${row.merge_count}` : "—" },
+    { id: "candidates", label: "Páginas transparentes", render: (row) => row.cleaned ? row.transparent_page_count : "—" },
     { id: "balloons", label: "Balões transp.", render: (row) => row.cleaned ? row.transparent_balloons : "—" },
     { id: "residue", label: "Resíduos adiados", render: (row) => row.cleaned ? row.deferred_components : "—" },
     { id: "pages-with-text", label: "Pág. com texto", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_pages_with_text : "—" },
@@ -98,6 +97,7 @@ export function createMergedLevel2View(onRun) {
     filters.replaceChildren();
     for (const [key, label] of FILTERS) {
       const button = document.createElement("button");
+      button.className = "auto-merge-filter-button";
       const count = state.chapters.filter((row) => match(row, key)).length;
       button.type = "button";
       button.textContent = `${label} (${count})`;

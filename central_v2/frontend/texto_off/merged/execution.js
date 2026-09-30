@@ -2,7 +2,7 @@ import { getContext } from "/_app/state/context.js";
 import { startMergedTextoff, waitForTextoffJob } from "/_app/api/textoff.js";
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 
-function summary(results) {
+function summary(results, level) {
   const done = results.filter((item) => item.status === "ok").length;
   const unchanged = results.filter((item) => item.status === "no_change").length;
   const failed = results.filter((item) => item.status === "failed").length;
@@ -13,14 +13,23 @@ function summary(results) {
     items: results.map((item) => ({
       chapter: item.chapter,
       status: item.status === "ok" ? "Concluído" : item.status === "no_change" ? "Sem alteração — revisar" : "Requer atenção",
-      count: `${Number(item.outputs || 0)} merge(s)`,
+      count: level === "3" ? `${Number(item.candidate_count || 0)} candidato(s)`
+        : `${Number(item.outputs || 0)} merge(s)`,
       warning: item.status !== "ok",
       details: [
-        { label: item.text_pages !== undefined ? "Resultado Nível II" : "Cleaner V2",
+        { label: level === "3" ? "Análise Nível III" : item.text_pages !== undefined ? "Resultado Nível II" : "Cleaner V2",
           value: item.status === "ok" ? "Concluído" : item.status === "no_change" ? "Nenhum pixel alterado; revise máscaras e resultado." : item.error || "Falha" },
-        { label: "Imagens de entrada", value: String(Number(item.pages || 0)) },
-        { label: "Imagens limpas", value: String(Number(item.outputs || 0)) },
-        { label: "Máscaras", value: String(Number(item.masks || 0)) },
+        ...(level === "3" ? [{ label: "Candidatos a balão estilizado", value: String(Number(item.candidate_count || 0)) }] : []),
+        ...(level === "3" ? Object.entries(item.candidate_types || {}).map(([kind, count]) => ({
+          label: ({ soft_gradient: "Candidatos com gradiente", saturated_styled: "Candidatos com cor decorativa",
+            irregular_outline: "Candidatos com contorno irregular" })[kind] || "Outros candidatos",
+          value: String(Number(count || 0)),
+        })) : []),
+        ...(level === "3" ? [{ label: "MERGES analisados", value: String(Number(item.pages || 0)) }] : [
+          { label: "Imagens de entrada", value: String(Number(item.pages || 0)) },
+          { label: "Imagens limpas", value: String(Number(item.outputs || 0)) },
+          { label: "Máscaras", value: String(Number(item.masks || 0)) },
+        ]),
         ...(item.transparent_balloons !== undefined ? [{
           label: "Balões transparentes preservados para Nível II",
           value: String(Number(item.transparent_balloons || 0)),
@@ -40,12 +49,14 @@ function summary(results) {
         ...(item.text_pages !== undefined ? [{ label: "Páginas com texto detectado", value: String(Number(item.text_pages || 0)) }] : []),
         ...(item.changed_pixels !== undefined ? [{ label: "Pixels alterados", value: String(Number(item.changed_pixels || 0)) }] : []),
       ],
+      actions: level === "3" && item.status === "ok" && Number(item.candidate_count || 0) > 0
+        ? [{ id: "review", label: "Ver candidatos" }] : [],
     })),
   };
 }
 
-export function createMergedExecution({ onStatus, onComplete, level = "" }) {
-  const levelLabel = level === "1" ? "I" : level === "2" ? "II" : "";
+export function createMergedExecution({ onStatus, onComplete, onReview, level = "" }) {
+  const levelLabel = ({ "1": "I", "2": "II", "3": "III" })[level] || "";
   const flowLabel = levelLabel ? `Merged Nível ${levelLabel}` : "Legado";
   let active = false;
   let disposed = false;
@@ -56,7 +67,9 @@ export function createMergedExecution({ onStatus, onComplete, level = "" }) {
     const context = getContext();
     const confirmed = await confirmMessage({
       title: `Executar Texto Off — ${flowLabel}`,
-      message: `O Cleaner V2 processará ${chapters.length} capítulo(s) usando os MERGEs oficiais.`,
+      message: level === "3"
+        ? `O Nível III analisará ${chapters.length} capítulo(s) a partir dos MERGES originais em recortes sobrepostos, sem alterar as imagens.`
+        : `O Cleaner V2 processará ${chapters.length} capítulo(s) usando os MERGEs oficiais.`,
       confirmText: "Executar",
     });
     const current = getContext();
@@ -71,7 +84,10 @@ export function createMergedExecution({ onStatus, onComplete, level = "" }) {
       const result = await waitForTextoffJob(job, report);
       if (disposed) return;
       await onComplete();
-      await showOperationSummary({ title: `Resumo do Texto Off — ${flowLabel}`, summary: summary(result) });
+      await showOperationSummary({ title: `Resumo do Texto Off — ${flowLabel}`, summary: summary(result, level),
+        onAction: (item, action) => {
+          if (action.id === "review") onReview?.(item.chapter);
+        } });
     } catch (error) {
       if (!disposed) await showMessage({ title: "Falha no Texto Off — Merged", message: error.message });
     } finally {

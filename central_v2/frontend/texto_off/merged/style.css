@@ -113,7 +113,36 @@
   color: #fff;
   font-weight: var(--font-weight-semibold);
 }
+.textoff-merged-page .data-table td[data-column="review"] { width: 150px; text-align: center; }
+.textoff-candidate-view-button { min-height: 30px; padding: 5px 9px; font-size: var(--font-size-small); }
+.auto-merge-filter-button { min-height: 30px; padding: 5px 9px; border: 0; border-radius: 5px; background: transparent; color: var(--color-primary-hover); font-size: var(--font-size-small); white-space: nowrap; cursor: pointer; }
+.auto-merge-filter-button.active { background: var(--color-surface); box-shadow: 0 1px 3px rgba(6, 69, 90, .1); }
+.textoff-candidate-dialog {
+  width: min(1100px, 94vw);
+  max-height: 92vh;
+  padding: 20px;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  color: var(--color-text);
+  background: var(--color-surface);
+  overflow: auto;
+}
+.textoff-candidate-dialog::backdrop { background: rgb(8 33 45 / 58%); }
+.textoff-candidate-dialog > header { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.textoff-candidate-dialog h2 { margin: 0; font-size: 1.2rem; }
+.textoff-candidate-controls select { min-height: 36px; padding: 6px 12px; }
+.textoff-candidate-controls { margin: 16px 0 10px; }
+.textoff-candidate-controls label { display: flex; align-items: center; gap: 10px; font-weight: var(--font-weight-semibold); }
+.textoff-candidate-image-frame { position: relative; width: fit-content; max-width: 100%; margin: 0 auto 14px; }
+.textoff-candidate-image-frame img { display: block; width: min(70vw, 620px); max-width: 100%; height: auto; }
+.textoff-candidate-overlay { position: absolute; inset: 0; pointer-events: none; }
+.textoff-candidate-box { position: absolute; display: grid; place-items: start; border: 3px solid #e13c97; background: rgb(225 60 151 / 13%); color: #fff; font-weight: 700; text-shadow: 0 1px 3px #000; }
+.textoff-candidate-box.is-soft_gradient { border-color: #168bc0; background: rgb(22 139 192 / 12%); }
+.textoff-candidate-list { margin: 8px 0 0; padding-left: 28px; }
+.textoff-candidate-list li { padding: 4px 0; }
 @media (max-width: 700px) {
   .textoff-merged-page .textoff-special-toolbar { align-items: stretch; flex-direction: column; }
   .textoff-special-actions button { flex: 1 1 auto; }
+  .textoff-candidate-dialog { padding: 14px; }
+  .textoff-candidate-image-frame img { width: 78vw; }
 }

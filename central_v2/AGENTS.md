@@ -16,6 +16,11 @@
   pesos e dimensões. Ícones vêm de `_shared/icons/icons.js`, em SVG; não usar
   caracteres de fonte como ícones. Componentes mantêm seu CSS próprio e
   consomem os tokens, sem recriar valores comuns por feature.
+- Botões criados por JavaScript declaram uma classe visual: use `.btn` para
+  ações comuns ou uma classe semântica do componente com regra CSS explícita.
+  Não dependa do estilo padrão do navegador nem presuma que estilos do pai
+  alcançarão um botão sem classe. O contrato é verificado em
+  `button_contract.test.mjs`.
 - Listagens paginadas usam `_shared/pagination/`: tamanho de página definido
   somente em `config.js`, estado em `model.js` e controles em `pagination.js`.
   Features não definem tamanhos locais; busca, filtros e troca de contexto

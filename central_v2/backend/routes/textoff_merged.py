@@ -1,5 +1,6 @@
 """HTTP contracts for the TextOff Merged worklist and Cleaner V2 jobs."""
 import json
+import mimetypes
 from pathlib import Path
 
 from central_v2.backend.jobs.manager import submit
@@ -10,13 +11,14 @@ from orquestracao.central_session import legacy_server_active
 from central_v2.backend.orchestration.textoff_merged import (
     execute_merged, execute_merged_level1, execute_merged_level2, query_merged,
     query_merged_level1, query_merged_level2, validate_level2_selection,
-    validate_selection,
+    validate_selection, execute_level3, query_level3,
 )
 from central_v2.backend.orchestration.textoff_merged.special_levels import (
     execute_special_level, query_special_level,
 )
 from central_v2.backend.orchestration.textoff_merged.artifact_paths import artifact_file
 from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest
+from central_v2.backend.orchestration.textoff_merged.stages import CONSOLIDATED, stage_chapter
 
 
 def textoff_merged_response(query: dict, output_root: Path) -> RouteResponse:
@@ -34,7 +36,8 @@ def textoff_merged_level_response(level: str, query: dict, output_root: Path) ->
     try:
         provider, name = _context(query, output_root)
         manga = resolve_manga(output_root, provider, name)
-        lookup = {"I": query_merged_level1, "II": query_merged_level2}.get(level)
+        lookup = {"I": query_merged_level1, "II": query_merged_level2,
+                  "III": query_level3}.get(level)
         if level in {"IV", "V"}:
             lookup = lambda value: query_special_level(value, level)
         if lookup is None:
@@ -44,6 +47,28 @@ def textoff_merged_level_response(level: str, query: dict, output_root: Path) ->
         return RouteResponse(400, _json({"error": str(exc)}))
     except OSError:
         return RouteResponse(500, _json({"error": "Não foi possível consultar o nível Merged."}))
+
+
+def textoff_merged_level3_image_response(query: dict, output_root: Path) -> RouteResponse:
+    try:
+        provider, name = _context(query, output_root)
+        manga = resolve_manga(output_root, provider, name)
+        chapter, filename = _value(query, "chapter"), _value(query, "file")
+        if not chapter or Path(chapter).name != chapter or not filename or Path(filename).name != filename:
+            raise ValueError("Imagem inválida.")
+        row = next((item for item in query_level3(manga)["chapters"]
+                    if item["chapter"] == chapter and item["cleaned"]), None)
+        if not row or not any(page["source"] == filename for page in row["candidate_pages"]):
+            raise ValueError("Página não pertence ao relatório Nível III.")
+        consolidated_dir = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
+        image = artifact_file(consolidated_dir, f"clean/{filename}", "clean")
+        if image is None:
+            raise ValueError("Imagem consolidada não encontrada.")
+        return RouteResponse(200, image.read_bytes(), mimetypes.guess_type(image.name)[0] or "image/png")
+    except ValueError as exc:
+        return RouteResponse(404, _json({"error": str(exc)}))
+    except OSError:
+        return RouteResponse(500, _json({"error": "Não foi possível carregar a imagem TextOff."}))
 
 
 def execute_textoff_merged_response(payload: object, output_root: Path) -> RouteResponse:
@@ -56,6 +81,19 @@ def execute_textoff_merged_level1_response(payload: object, output_root: Path) -
 
 def execute_textoff_merged_level2_response(payload: object, output_root: Path) -> RouteResponse:
     return _execute_response(payload, output_root, execute_merged_level2, validate_level2_selection)
+
+
+def execute_textoff_merged_level3_response(payload: object, output_root: Path) -> RouteResponse:
+    return _execute_response(payload, output_root, execute_level3,
+                              lambda manga, chapters: _validate_level3(manga, chapters))
+
+
+def _validate_level3(manga: Path, chapters: object) -> list[str]:
+    selected = validate_selection(manga, chapters)
+    eligible = {row["chapter"] for row in query_level3(manga)["chapters"] if row["selectable"]}
+    if any(chapter not in eligible for chapter in selected):
+        raise ValueError("O Nível III exige Nível I íntegro e análise pendente.")
+    return selected
 
 
 def execute_textoff_merged_special_response(level: str, payload: object,

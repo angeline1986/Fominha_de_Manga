@@ -17,6 +17,7 @@ from .manifests import _stage_manifest, _stage_manifest_sha256
 from .level2_vision import ALGORITHM, AUTHORIZED_DILATION, BASE_DILATION, LAMA_PADDING, REFERENCE_RECIPE
 from .query import query_merged_level2
 from .runtime import REPOSITORY_ROOT, python_for
+from .stages import LEVEL1, LEVEL2, stage_chapter
 
 def validate_level2_selection(manga: Path, chapters: object) -> list[str]:
     selected = validate_selection(manga, chapters)
@@ -64,8 +65,11 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             results.append({"chapter": name, "status": "failed", "error": "MERGE oficial alterado antes do Nível II."})
             continue
         source_dir = v3.merge_output_dir(chapter)
-        level1_dir = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / name
-        target = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_II" / name
+        level1_dir = stage_chapter(manga, LEVEL1, name)
+        chapter_row = next(row for row in query_merged_level2(manga)["chapters"]
+                           if row["chapter"] == name)
+        candidate_names = set(chapter_row.get("level2_candidate_pages", []))
+        target = stage_chapter(manga, LEVEL2, name, read_legacy=False)
         target.parent.mkdir(parents=True, exist_ok=True)
         if batch_work is None:
             batch_work = Path(tempfile.mkdtemp(prefix=".textoff-level2-batch-", dir=target.parent))
@@ -75,8 +79,9 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
         staged.mkdir()
         report_file = staged / artifact_ref("json", "level2-transparent-report.json")
         jobs.append({"chapter": name, "source_dir": str(source_dir), "level1_dir": str(level1_dir),
-                     "output_dir": str(staged), "report": str(report_file)})
-        records.append((name, source_dir, target, staged))
+                     "output_dir": str(staged), "report": str(report_file),
+                     "candidate_pages": sorted(candidate_names)})
+        records.append((name, source_dir, target, staged, candidate_names))
     if not jobs:
         return results
 
@@ -111,29 +116,36 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             raise RuntimeError(f"Nível II encerrou sem resultado validado (código {process.returncode}).")
 
         prepared = []
-        for name, source_dir, target, staged in records:
+        for name, source_dir, target, staged, candidate_names in records:
             report_file = staged / artifact_ref("json", "level2-transparent-report.json")
             if not report_file.is_file():
                 raise RuntimeError(f"Nível II não gerou relatório para Cap. {name}.")
             report = json.loads(report_file.read_text(encoding="utf-8"))
             images = v3.merge_artifact_files(source_dir)
-            level1_manifest = _stage_manifest(manga, "MERGED_NIVEL_I", name)
-            if report.get("pages_analyzed") != len(images) or report.get("integrity_ok") is not True:
+            level1_manifest = _stage_manifest(manga, LEVEL1, name)
+            if (report.get("merge_pages_total", report.get("pages_analyzed")) != len(images)
+                    or report.get("integrity_ok") is not True):
                 raise RuntimeError(f"Relatório Nível II incompleto ou inválido para Cap. {name}.")
-            clean_names = [item["clean"] for item in report.get("pages", [])]
-            if len(clean_names) != len(images) or any(
+            pages = [item for item in report.get("pages", [])
+                     if item.get("source") in candidate_names]
+            clean_names = [item["clean"] for item in pages if item.get("clean")]
+            if len(pages) != len(candidate_names) or any(not item.get("clean") for item in pages) or any(
                 artifact_file(staged, filename, "clean") is None for filename in clean_names
             ):
-                raise RuntimeError(f"Nível II não gerou todas as imagens finais do Cap. {name}.")
+                raise RuntimeError(f"Nível II não gerou as imagens candidatas do Cap. {name}.")
             output_manifest = {
                 "schema_version": 1, "algorithm": ALGORITHM,
-                "source_stage": "MERGED_NIVEL_I", "integrity_ok": True,
+                "source_stage": LEVEL1, "integrity_ok": True,
                 "source_artifacts": [path.name for path in images],
-                "source_level1_artifacts": level1_manifest.get("clean_artifacts", []),
+                "candidate_source_artifacts": sorted(candidate_names),
+                "source_level1_artifacts": [item for item in level1_manifest.get("clean_artifacts", [])
+                                            if Path(item).name.replace("_clean", "") in candidate_names],
                 "source_level1_manifest_sha256": _stage_manifest_sha256(
-                    manga, "MERGED_NIVEL_I", name
+                    manga, LEVEL1, name
                 ),
                 "clean_artifacts": clean_names, "outputs_total": len(clean_names),
+                "pages_total": len(candidate_names),
+                "changed_artifacts": clean_names,
                 "mask_artifacts": [item["mask"] for item in report["pages"]],
                 "recipe": {"reference": REFERENCE_RECIPE, "base_dilation": BASE_DILATION,
                            "authorized_dilation": AUTHORIZED_DILATION, "lama_padding": LAMA_PADDING},
@@ -156,14 +168,17 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             prepared.append((name, target, staged, report, len(images), clean_names, transparent_pages))
         for name, target, staged, report, image_count, clean_names, transparent_pages in prepared:
             _promote_stage(staged, target)
+            from .consolidated import rebuild_consolidated
+            consolidated = rebuild_consolidated(manga, name)
             outcome = report.get("outcome")
             results.append({"chapter": name, "status": "ok" if outcome == "visual_changes" else "no_change",
                             "outcome": outcome, "pages": image_count,
-                            "outputs": len(clean_names), "masks": len(report["pages"]),
+                            "outputs": len(clean_names), "masks": len(pages),
                             "transparent_page_count": len(transparent_pages),
                             "transparent_pages": transparent_pages,
                             "text_pages": report.get("pages_with_text", 0),
-                            "changed_pixels": report.get("changed_pixels", 0)})
+                            "changed_pixels": report.get("changed_pixels", 0),
+                            "consolidated": consolidated})
     except Exception as exc:
         if process.poll() is None:
             process.kill()

@@ -10,6 +10,7 @@ export function createPaginationControls(selection, onMove) {
   indicator.textContent = `${selection.page} / ${selection.pages}`;
   function button(label, delta, disabled) {
     const control = document.createElement("button");
+    control.className = "pagination-button";
     control.type = "button";
     control.textContent = label;
     control.disabled = disabled;

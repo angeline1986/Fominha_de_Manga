@@ -56,7 +56,8 @@
   background: var(--color-primary-soft);
 }
 
-.auto-merge-toolbar .auto-merge-filters button {
+.auto-merge-toolbar .auto-merge-filters button,
+.auto-merge-toolbar .auto-merge-filters .auto-merge-filter-button {
   min-height: 30px;
   padding: 5px 9px;
   border: 0;

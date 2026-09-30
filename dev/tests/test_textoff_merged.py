@@ -133,6 +133,7 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
             from central_v2.backend.orchestration.textoff_merged.level2_vision import ALGORITHM
             (level2 / "clean-manifest.json").write_text(json.dumps({
                 "algorithm": ALGORITHM, "integrity_ok": True, "outcome": "no_visual_change",
+                "candidate_source_artifacts": ["page-001-005.png"], "pages_total": 1,
                 "source_level1_artifacts": [clean_name],
                 "source_level1_manifest_sha256": _stage_manifest_sha256(manga, "MERGED_NIVEL_I", "1"),
                 "source_artifacts": ["page-001-005.png"], "clean_artifacts": [clean_name], "outputs_total": 1,
@@ -179,7 +180,7 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
                  patch("central_v2.backend.orchestration.textoff_merged.execution.v3.merge_artifact_files", return_value=images), \
                  patch("central_v2.backend.orchestration.textoff_merged.cleaner.clean_level1_chapter", return_value={"status": "ok"}) as clean:
                 execute_merged_level1(manga, ["1"], lambda *_: None)
-            self.assertEqual(clean.call_args.args[1], manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / "1")
+            self.assertEqual(clean.call_args.args[1], manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "TO_MERGED_NIVEL_I" / "1")
             self.assertEqual(clean.call_args.kwargs["source_stage"], "MERGE")
 
 

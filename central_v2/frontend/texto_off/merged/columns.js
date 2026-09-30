@@ -7,7 +7,7 @@ function checkbox(label, checked, onChange) {
   return input;
 }
 
-export function createMergedColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
+export function createMergedColumns({ rows, selected, pageChapters, onSelect, onSelectPage, onInspect, mode }) {
   const eligible = pageChapters.filter((chapter) => rows.find((row) => row.chapter === chapter)?.selectable);
   return [
     {
@@ -25,10 +25,20 @@ export function createMergedColumns({ rows, selected, pageChapters, onSelect, on
     },
     { id: "chapter", label: "Cap.", render: (row) => row.chapter },
     { id: "merges", label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },
+    ...(mode === "level3" ? [{ id: "candidates", label: "Balões candidatos", render: (row) => row.cleaned ? row.candidate_count : "—" }] : []),
+    ...(mode === "level3" ? [{ id: "review", label: "Resultado", render: (row) => {
+      if (!row.cleaned || !row.candidate_count) return "—";
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "btn textoff-candidate-view-button";
+      button.textContent = "Ver candidatos";
+      button.addEventListener("click", () => onInspect?.(row));
+      return button;
+    } }] : []),
     {
       id: "textoff-status",
       label: "TEXTO OFF",
-      render: (row) => row.cleaned ? "Resultado registrado" : row.selectable ? "Sem resultado" : "MERGE inválido",
+      render: (row) => row.cleaned ? mode === "level3" ? "Nível III analisado" : "Resultado registrado" : row.selectable ? "Sem resultado" : "MERGE inválido",
       className: (row) => row.cleaned ? "textoff-status is-done" : row.selectable ? "textoff-status is-pending" : "textoff-status is-invalid",
     },
   ];

@@ -16,10 +16,11 @@ from .level2_vision import (
     SUPPORTED, _atomic_json, _authorized_deferred_mask, _inpaint, _lama_model,
     _release_inference_cache,
 )
+from .stages import LEVEL1
 
 def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             report_path: Path, progress_path: Path | None = None,
-            runtime: dict | None = None) -> dict:
+            runtime: dict | None = None, candidate_pages: set[str] | None = None) -> dict:
     started = time.perf_counter()
     source_dir, level1_dir, output_dir = source_dir.resolve(), level1_dir.resolve(), output_dir.resolve()
     report_file = artifact_file(level1_dir, "json/level1-balloon-report.json", "json")
@@ -35,6 +36,11 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     sources = sorted(path for path in source_dir.iterdir() if path.is_file() and path.suffix.lower() in SUPPORTED)
     if not sources:
         raise ValueError("Nível II: nenhuma imagem MERGE encontrada.")
+    if candidate_pages is None:
+        candidate_pages = {name for name, page in pages.items()
+                           if page.get("transparent_balloons") or page.get("transparent_components_deferred")}
+    if not candidate_pages or not candidate_pages.issubset({path.name for path in sources}):
+        raise ValueError("Nível II requer páginas candidatas válidas do manifesto Nível I.")
     cleaner_names = manifest.get("clean_artifacts") or []
     expected_names = {path.stem + "_clean" + path.suffix for path in sources}
     if (len(cleaner_names) != len(sources)
@@ -51,10 +57,14 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     prepare_artifact_dirs(output_dir)
     page_results = []
     changed_total = mask_total = 0
+    analyzed_total = 0
     for index, source in enumerate(sources, 1):
         page = pages.get(source.name)
         if page is None:
             raise ValueError(f"Nível I não registrou {source.name}.")
+        if source.name not in candidate_pages:
+            continue
+        analyzed_total += 1
         clean_name = source.stem + "_clean" + source.suffix
         clean_reference = artifact_ref("clean", clean_name)
         clean_path = artifact_file(level1_dir, clean_reference, "clean")
@@ -122,19 +132,21 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             raise RuntimeError(f"Integridade do Nível II violada fora da máscara em {source.name}.")
         clean_reference = artifact_ref("clean", clean_name)
         mask_reference = artifact_ref("mask", f"{source.stem}_text_mask.png")
-        Image.fromarray(result).save(output_dir / clean_reference)
-        Image.fromarray(mask, mode="L").save(output_dir / mask_reference)
         changed = int(np.count_nonzero(np.any(result != level1, axis=2)))
+        if changed:
+            Image.fromarray(result).save(output_dir / clean_reference)
+        Image.fromarray(mask, mode="L").save(output_dir / mask_reference)
         mask_pixels = int(np.count_nonzero(mask))
         changed_total += changed
         mask_total += mask_pixels
-        page_results.append({"source": source.name, "clean": clean_reference,
+        page_results.append({"source": source.name, "clean": clean_reference if changed else None,
+                             "level1_clean": clean_reference,
                              "mask": mask_reference, "transparent_balloons": balloons,
                              "mask_pixels": mask_pixels, "changed_pixels": changed,
                              "changed_outside_mask": outside})
         if progress_path:
             _atomic_json(progress_path, {"percent": round(index * 95 / len(sources)),
-                                         "detail": f"Reconstruindo texto autorizado ({index}/{len(sources)})"})
+                                         "detail": f"Reconstruindo texto autorizado ({analyzed_total}/{len(candidate_pages)})"})
 
     result = {
         "schema_version": 1,
@@ -144,13 +156,14 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         "authorized_dilation": [AUTHORIZED_DILATION, AUTHORIZED_DILATION],
         "lama_padding": LAMA_PADDING,
         "reference_recipe": REFERENCE_RECIPE,
-        "source_stage": "MERGED_NIVEL_I",
+        "source_stage": LEVEL1,
         "text_detector": "Cleaner V2 deferred text mask",
         "text_recognition": False,
         "inpainter": "anime-manga-big-lama" if model else None,
         "model_path": model_path,
         "device": device,
-        "pages_analyzed": len(sources),
+        "pages_analyzed": analyzed_total,
+        "merge_pages_total": len(sources),
         "duration_seconds": round(time.perf_counter() - started, 3),
         "pages_with_text": sum(page["mask_pixels"] > 0 for page in page_results),
         "mask_pixels": mask_total,

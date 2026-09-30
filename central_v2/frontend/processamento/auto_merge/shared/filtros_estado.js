@@ -11,6 +11,7 @@ export function createStatusFilters(container, { chapters, value, onChange }) {
   for (const [key, label] of FILTERS) {
     const count = chapters.filter((row) => matchesStatus(row, key)).length;
     const button = document.createElement("button");
+    button.className = "auto-merge-filter-button";
     button.type = "button";
     button.textContent = `${label} (${count})`;
     button.classList.toggle("active", key === value);

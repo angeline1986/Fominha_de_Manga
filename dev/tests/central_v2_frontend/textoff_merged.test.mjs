@@ -2,16 +2,19 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { browserModules } from './modules.mjs';
 
-test('TextOff menu exposes Merged I, II, IV and V and keeps Legacy separate', async () => {
+test('TextOff menu exposes Merged I, II, III, IV and V and keeps Legacy separate', async () => {
   const load = browserModules();
   const { resolveRoute, routes } = await load('/_app/router/routes.js');
   const level1 = resolveRoute('texto-off-merged-i');
   const level2 = resolveRoute('texto-off-merged-ii');
+  const level3 = resolveRoute('texto-off-merged-iii');
   const legacy = resolveRoute('texto-off-legacy');
   assert.equal(level1.context, 'texto-off');
   assert.equal(level1.module, '/texto_off/merged/level1.js');
   assert.equal(level2.context, 'texto-off');
   assert.equal(level2.module, '/texto_off/merged/level2.js');
+  assert.equal(level3.module, '/texto_off/merged/level3.js');
+  await load(level3.module);
   for (const [level, numeral] of [['IV', '4'], ['V', '5']]) {
     const route = resolveRoute(`texto-off-merged-${level.toLowerCase()}`);
     assert.equal(route.context, 'texto-off');
@@ -21,7 +24,7 @@ test('TextOff menu exposes Merged I, II, IV and V and keeps Legacy separate', as
   const { navigation } = await load('/_shell/navigation.js');
   const selector = navigation.find((section) => section.id === 'texto-off')
     .groups.find((group) => group.control?.id === 'textoff-merged-level').control;
-  assert.equal(Array.from(selector.options, (option) => option.value).join(','), 'I,II,IV,V');
+  assert.equal(Array.from(selector.options, (option) => option.value).join(','), 'I,II,III,IV,V');
   assert.equal(legacy.context, 'texto-off');
   assert.equal(legacy.module, '/texto_off/merged/index.js');
   await load(level1.module);
@@ -87,5 +90,40 @@ test('Nível II reports zero changed pixels as a review outcome, not success', a
   assert.match(summaries[0].summary.breakdown, /sem alteração/);
   assert.equal(summaries[0].summary.items[0].status, 'Sem alteração — revisar');
   assert.equal(summaries[0].summary.items[0].warning, true);
+  runner.dispose();
+});
+
+test('Nível III summarizes candidates and analyzed MERGEs without clean/mask counts', async () => {
+  const requests = [], summaries = [];
+  const load = browserModules({
+    fetch: async (url) => {
+      requests.push(url);
+      const payload = url.endsWith('/execute')
+        ? { job: { id: 'job-level3' } }
+        : { job: { id: 'job-level3', status: 'completed', progress: {}, results: [
+          { chapter: '1', status: 'ok', pages: 18, candidate_count: 3,
+            candidate_types: { soft_gradient: 1, irregular_outline: 2 } },
+        ] } };
+      return { ok: true, json: async () => payload };
+    },
+    setTimeout: (callback) => { callback(); return 1; }, summaries,
+  }, {
+    '/_app/state/context.js': 'export function getContext() { return { provider: "comix", manga: "Gazing at you" }; }',
+    '/_shared/messages/messages.js': `
+      export async function confirmMessage() { return true; }
+      export async function showMessage() {}
+      export async function showOperationSummary(value) { globalThis.summaries.push(value); }
+    `,
+  });
+  const { createMergedExecution } = await load('/texto_off/merged/execution.js');
+  const runner = createMergedExecution({ async onComplete() {}, onStatus() {}, level: '3' });
+  await runner.execute(['1']);
+  const item = summaries[0].summary.items[0];
+  assert.equal(item.count, '3 candidato(s)');
+  assert.equal(item.details.map(({ label }) => label).join('|'),
+    'Análise Nível III|Candidatos a balão estilizado|Candidatos com gradiente|Candidatos com contorno irregular|MERGES analisados');
+  assert.equal(item.actions[0].id, 'review');
+  assert.equal(item.actions[0].label, 'Ver candidatos');
+  assert.equal(requests[0], '/api/textoff/merged/level3/execute');
   runner.dispose();
 });

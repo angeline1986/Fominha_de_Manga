@@ -3,6 +3,7 @@ from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .cleaner import run_cleaner_v2
+from .stages import LEVEL1, stage_chapter
 
 def validate_selection(manga: Path, chapters: object) -> list[str]:
     if not isinstance(chapters, list) or not chapters or len(chapters) > 100:
@@ -25,8 +26,9 @@ def validate_selection(manga: Path, chapters: object) -> list[str]:
 def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
                    *, output_stage: str = "MERGED", include_legacy_level2: bool = True) -> list[dict]:
     """Run Cleaner V2 over official MERGEs into an explicitly named stage."""
-    if output_stage not in {"MERGED", "MERGED_NIVEL_I"}:
+    if output_stage not in {"MERGED", LEVEL1, "MERGED_NIVEL_I"}:
         raise ValueError("Destino de Texto Off inválido.")
+    target_stage = LEVEL1 if output_stage != "MERGED" else "MERGED"
     validate_selection(manga, chapters)
     results = []
     for index, name in enumerate(chapters, 1):
@@ -54,7 +56,7 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
         try:
             result = run_cleaner_v2(
                 images,
-                manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / output_stage / name,
+                stage_chapter(manga, target_stage, name, read_legacy=False),
                 source_stage="MERGE", progress_job=_CleanerProgress(progress, name, index, len(chapters)),
                 chapter_name=name, level1_only=not include_legacy_level2,
             )
@@ -71,10 +73,19 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
 
 def execute_merged_level1(manga: Path, chapters: list[str], progress, preflight=None) -> list[dict]:
     """Run only Merged Nível I into its isolated output tree."""
-    return execute_merged(
+    results = execute_merged(
         manga, chapters, progress, preflight,
-        output_stage="MERGED_NIVEL_I", include_legacy_level2=False,
+        output_stage=LEVEL1, include_legacy_level2=False,
     )
+    from .consolidated import rebuild_consolidated
+    for result in results:
+        if result.get("status") != "ok":
+            continue
+        try:
+            result["consolidated"] = rebuild_consolidated(manga, result["chapter"])
+        except Exception as exc:
+            result.update(status="failed", error=f"Nível I foi gerado, mas o consolidado falhou: {exc}")
+    return results
 
 
 class _CleanerProgress:

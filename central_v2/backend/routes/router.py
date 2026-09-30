@@ -20,13 +20,8 @@ from central_v2.backend.routes.merge_manual import (
     merge_manual_response,
 )
 from central_v2.backend.routes.static import static_response
-from central_v2.backend.routes.textoff_merged import (
-    execute_textoff_merged_level1_response,
-    execute_textoff_merged_level2_response,
-    execute_textoff_merged_response,
-    textoff_merged_level_response,
-    textoff_merged_response,
-    execute_textoff_merged_special_response,
+from central_v2.backend.routes.textoff_merged_router import (
+    dispatch_textoff_merged_get, dispatch_textoff_merged_post,
 )
 from central_v2.backend.routes.balanceamento import balanceamento_job_response, balanceamento_response
 from central_v2.backend.routes.balanceamento_media import balanceamento_image_response
@@ -35,7 +30,6 @@ from central_v2.backend.routes.textoff_special import (
     execute_special_response, special_image_response, special_level_response,
     special_result_response,
 )
-
 
 def dispatch_get(
     path: str,
@@ -67,18 +61,9 @@ def dispatch_get(
     if request.path == "/api/merge-manual/image":
         return merge_manual_image_response(parse_qs(request.query), output_root)
 
-    if request.path == "/api/textoff/merged":
-        return textoff_merged_response(parse_qs(request.query), output_root)
-
-    if request.path == "/api/textoff/merged/level1":
-        return textoff_merged_level_response("I", parse_qs(request.query), output_root)
-
-    if request.path == "/api/textoff/merged/level2":
-        return textoff_merged_level_response("II", parse_qs(request.query), output_root)
-
-    for level in ("IV", "V"):
-        if request.path == f"/api/textoff/merged/level{level}":
-            return textoff_merged_level_response(level, parse_qs(request.query), output_root)
+    textoff_response = dispatch_textoff_merged_get(request, output_root)
+    if textoff_response is not None:
+        return textoff_response
 
     for level in ("VI", "VII", "VIII"):
         if request.path == f"/api/textoff/special/level{level}":
@@ -173,18 +158,9 @@ def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -
         return execute_level5_response(payload, output_root)
     if urlparse(path).path == "/api/merge-manual/proposal":
         return merge_manual_proposal_response(payload, output_root)
-    if urlparse(path).path == "/api/textoff/merged/execute":
-        return execute_textoff_merged_response(payload, output_root)
-    if urlparse(path).path == "/api/textoff/merged/level1/execute":
-        return execute_textoff_merged_level1_response(payload, output_root)
-    if urlparse(path).path == "/api/textoff/merged/level2/execute":
-        return execute_textoff_merged_level2_response(payload, output_root)
-    for level in ("IV", "V"):
-        if urlparse(path).path == f"/api/textoff/merged/level{level}/execute":
-            return execute_textoff_merged_special_response(level, payload, output_root)
-    for level in ("VI", "VII", "VIII"):
-        if urlparse(path).path == f"/api/textoff/special/level{level}/execute":
-            return execute_special_response(level, payload, output_root)
+    textoff_response = dispatch_textoff_merged_post(path, payload, output_root)
+    if textoff_response is not None:
+        return textoff_response
     if urlparse(path).path == "/api/merge-manual/apply":
         return merge_manual_apply_response(payload, output_root)
     if urlparse(path).path in {

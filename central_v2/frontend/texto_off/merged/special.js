@@ -34,6 +34,7 @@ export function renderSpecial(container, level) {
     FILTERS.forEach(([key, label]) => {
       const count = rows.filter((row) => key === "all" || (key === "ready") === row.level1_ready).length;
       const button = document.createElement("button");
+      button.className = "auto-merge-filter-button";
       button.type = "button"; button.textContent = `${label} (${count})`;
       button.classList.toggle("active", filter === key);
       button.setAttribute("aria-pressed", String(filter === key));

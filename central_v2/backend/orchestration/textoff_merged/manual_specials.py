@@ -4,6 +4,7 @@ from pathlib import Path
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from central_v2.backend.orchestration.textoff_special.execution import preview
 from .artifact_paths import artifact_file
+from .stages import LEVEL1, stage_chapter
 from .manifests import _manifest_matches_merge, _stage_manifest
 from .query import query_merged_level1
 
@@ -15,7 +16,7 @@ def query_manual_special(manga: Path, level: str) -> dict:
         raise ValueError("Nível especial inválido.")
     result = query_merged_level1(manga)
     for row in result["chapters"]:
-        manifest = _stage_manifest(manga, "MERGED_NIVEL_I", row["chapter"])
+        manifest = _stage_manifest(manga, LEVEL1, row["chapter"])
         ready = bool(row["merge_valid"] and _manifest_matches_merge(
             manifest, manga, row["chapter"]))
         row.update(level1_ready=ready, selectable=ready,
@@ -28,7 +29,7 @@ def resolve_manual_page(manga: Path, chapter: str, filename: str) -> Path:
                 if item["chapter"] == chapter and item["level1_ready"]), None)
     if row is None:
         raise ValueError("Capítulo sem Nível I íntegro.")
-    folder = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I" / chapter
+    folder = stage_chapter(manga, LEVEL1, chapter)
     result = artifact_file(folder, filename, "clean")
     if result is None:
         raise ValueError("Imagem não consta nos artefatos do Nível I.")

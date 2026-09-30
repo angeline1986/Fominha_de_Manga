@@ -3,9 +3,11 @@ from pathlib import Path
 import math
 
 from central_v2.backend.orchestration.textoff_merged.artifact_paths import artifact_file, json_file
+from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, stage_chapter
 from .artifacts import read_json, sha256
 
-LEVELS = {"MERGED_NIVEL_I": "MERGE", "MERGED_NIVEL_II": "MERGED_NIVEL_I"}
+LEVELS = {"MERGED_NIVEL_I": {"MERGE"},
+          "MERGED_NIVEL_II": {LEVEL1, "MERGED_NIVEL_I"}}
 
 
 def basename(value: object) -> str:
@@ -19,7 +21,7 @@ def resolve_input(manga: Path, level: str, chapter: str, filename: str,
     manga = manga.resolve()
     if not isinstance(level, str) or level not in LEVELS:
         raise ValueError("Nível Merged inválido.")
-    folder = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF" / level / basename(chapter)
+    folder = stage_chapter(manga, level, basename(chapter))
     manifest_path = json_file(folder, "clean-manifest.json").resolve()
     if not manifest_path.is_relative_to(manga):
         raise ValueError("Manifesto fora da obra.")
@@ -27,7 +29,7 @@ def resolve_input(manga: Path, level: str, chapter: str, filename: str,
     manifest = read_json(manifest_path)
     if sha256(manifest_path) != manifest_hash:
         raise ValueError("PROPOSTA_OBSOLETA: o manifesto mudou durante a leitura.")
-    if manifest.get("integrity_ok") is not True or manifest.get("source_stage") != LEVELS[level]:
+    if manifest.get("integrity_ok") is not True or manifest.get("source_stage") not in LEVELS[level]:
         raise ValueError("Manifesto Merged não elegível.")
     names = manifest.get("clean_artifacts")
     if not isinstance(names, list):
@@ -46,7 +48,7 @@ def resolve_input(manga: Path, level: str, chapter: str, filename: str,
         raise ValueError("PROPOSTA_OBSOLETA: a imagem de entrada mudou.")
     predecessors = [{"path": str(manifest_path), "sha256": manifest_hash}]
     if level == "MERGED_NIVEL_II":
-        parent = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I" / chapter
+        parent = stage_chapter(manga, LEVEL1, chapter)
         parent_manifest = json_file(parent, "clean-manifest.json").resolve()
         if not parent_manifest.is_relative_to(manga):
             raise ValueError("Predecessor fora da obra.")

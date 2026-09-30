@@ -5,6 +5,7 @@ from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .artifact_paths import artifact_file, json_file
+from .stages import LEVEL1, stage_chapter
 
 def _clean_manifest(manga: Path, chapter: str) -> dict:
     path = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED" / chapter / "clean-manifest.json"
@@ -54,7 +55,7 @@ def _listing_merge_artifacts(chapter: Path) -> list[Path]:
 
 
 def _stage_manifest(manga: Path, stage: str, chapter: str) -> dict:
-    folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / stage / chapter
+    folder = stage_chapter(manga, stage, chapter)
     path = json_file(folder, "clean-manifest.json")
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
@@ -64,7 +65,7 @@ def _stage_manifest(manga: Path, stage: str, chapter: str) -> dict:
 
 
 def _stage_manifest_sha256(manga: Path, stage: str, chapter: str) -> str | None:
-    folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / stage / chapter
+    folder = stage_chapter(manga, stage, chapter)
     path = json_file(folder, "clean-manifest.json")
     try:
         return hashlib.sha256(path.read_bytes()).hexdigest()
@@ -75,7 +76,7 @@ def _stage_manifest_sha256(manga: Path, stage: str, chapter: str) -> str | None:
 def _manifest_matches_merge(manifest: dict, manga: Path, chapter: str) -> bool:
     images = _listing_merge_artifacts(manga / "IMG" / chapter)
     outputs = manifest.get("clean_artifacts")
-    output_dir = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / chapter
+    output_dir = stage_chapter(manga, LEVEL1, chapter)
     return bool(images) and isinstance(outputs, list) and len(outputs) == len(images) and all(
         artifact_file(output_dir, name, "clean") is not None for name in outputs
     ) and (
@@ -92,7 +93,7 @@ def _transparent_masks_ready(manga: Path, chapter: str, manifest: dict) -> bool:
         return False
     names = level1.get("transparent_mask_artifacts")
     expected = int(manifest.get("pages_total") or 0)
-    folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / chapter
+    folder = stage_chapter(manga, LEVEL1, chapter)
     artifacts_ready = isinstance(names, list) and len(names) == expected and all(
         artifact_file(folder, name, "mask") is not None for name in names
     )
@@ -132,7 +133,7 @@ def _deferred_text_masks_ready(manga: Path, chapter: str, manifest: dict) -> boo
     level1 = manifest.get("level1") if isinstance(manifest.get("level1"), dict) else {}
     if not int(level1.get("transparent_components_deferred") or 0):
         return True
-    folder = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED_NIVEL_I" / chapter
+    folder = stage_chapter(manga, LEVEL1, chapter)
     report_name = level1.get("report")
     if not isinstance(report_name, str):
         return False

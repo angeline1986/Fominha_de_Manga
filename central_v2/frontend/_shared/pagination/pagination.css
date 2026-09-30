@@ -16,7 +16,8 @@
 
 .auto-merge-results .pagination { padding-block: 5px; }
 
-.pagination button {
+.pagination button,
+.pagination-button {
   min-width: 40px;
   min-height: 36px;
   padding: 6px 10px;

@@ -4,6 +4,7 @@ from pathlib import Path
 import tempfile
 
 from .artifact_paths import artifact_file, json_file
+from .stages import LEVEL1, stage_chapter
 from .manifests import _manifest_matches_merge, _stage_manifest
 from .query import query_merged_level1
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
@@ -18,12 +19,12 @@ def query_special_level(manga: Path, level: str) -> dict:
         raise ValueError("Nível Merged especial inválido.")
     result = query_merged_level1(manga)
     for row in result["chapters"]:
-        manifest = _stage_manifest(manga, "MERGED_NIVEL_I", row["chapter"])
+        manifest = _stage_manifest(manga, LEVEL1, row["chapter"])
         row["selectable"] = bool(row["merge_valid"] and _manifest_matches_merge(
             manifest, manga, row["chapter"]))
         row["level1_ready"] = row["selectable"]
         row["special_level"] = level
-        manifest = _stage_manifest(manga, "MERGED_NIVEL_I", row["chapter"])
+        manifest = _stage_manifest(manga, LEVEL1, row["chapter"])
         row["level1_pages"] = [Path(item).name for item in manifest.get("clean_artifacts", [])
                                if isinstance(item, str)]
     return result
@@ -43,8 +44,8 @@ def execute_special_level(manga: Path, level: str, chapters: list[str], progress
         if not row or not row["level1_ready"]:
             results.append({"chapter": chapter, "status": "failed", "error": "Nível I ausente ou inválido."})
             continue
-        folder = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED_NIVEL_I" / chapter
-        manifest = _stage_manifest(manga, "MERGED_NIVEL_I", chapter)
+        folder = stage_chapter(manga, LEVEL1, chapter)
+        manifest = _stage_manifest(manga, LEVEL1, chapter)
         report_name = (manifest.get("level1") or {}).get("report")
         report_path = artifact_file(folder, report_name, "json")
         try:

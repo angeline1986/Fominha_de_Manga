@@ -38,6 +38,11 @@ export function manualSpecialImageUrl(provider, manga, chapter, filename) {
   return `/api/textoff/special/image?${query}`;
 }
 
+export function mergedLevel3ImageUrl(provider, manga, chapter, filename) {
+  const query = new URLSearchParams({ provider, manga, chapter, file: filename });
+  return `/api/textoff/merged/level3/image?${query}`;
+}
+
 export function manualSpecialResultUrl(runId) {
   return `/api/textoff/special/result?${new URLSearchParams({ run_id: runId })}`;
 }

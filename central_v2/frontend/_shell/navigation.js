@@ -94,6 +94,8 @@ export const navigation = [
           options: [
             { value: "I", action: "texto-off-merged-i", label: "I" },
             { value: "II", action: "texto-off-merged-ii", label: "II" },
+            { value: "III", action: "texto-off-merged-iii", label: "III",
+              title: "Detecção experimental de balões estilizados" },
             { value: "IV", action: "texto-off-merged-iv", label: "IV" },
             { value: "V", action: "texto-off-merged-v", label: "V" },
           ],
