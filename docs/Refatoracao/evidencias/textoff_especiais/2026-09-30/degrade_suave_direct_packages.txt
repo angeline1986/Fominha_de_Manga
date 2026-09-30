@@ -1,0 +1,3 @@
+opencv-python-headless==5.0.0.93
+pip==24.2
+psutil==7.2.2

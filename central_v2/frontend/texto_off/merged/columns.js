@@ -11,6 +11,7 @@ export function createMergedColumns({ rows, selected, pageChapters, onSelect, on
   const eligible = pageChapters.filter((chapter) => rows.find((row) => row.chapter === chapter)?.selectable);
   return [
     {
+      id: "select",
       header: () => {
         const input = checkbox("Selecionar todos os capítulos desta página", eligible.length > 0 && eligible.every((name) => selected.has(name)), onSelectPage);
         input.disabled = eligible.length === 0;
@@ -22,9 +23,10 @@ export function createMergedColumns({ rows, selected, pageChapters, onSelect, on
         return input;
       },
     },
-    { label: "Cap.", render: (row) => row.chapter },
-    { label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },
+    { id: "chapter", label: "Cap.", render: (row) => row.chapter },
+    { id: "merges", label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },
     {
+      id: "textoff-status",
       label: "TEXTO OFF",
       render: (row) => row.cleaned ? "Resultado registrado" : row.selectable ? "Sem resultado" : "MERGE inválido",
       className: (row) => row.cleaned ? "textoff-status is-done" : row.selectable ? "textoff-status is-pending" : "textoff-status is-invalid",

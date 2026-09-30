@@ -1,6 +1,7 @@
 from pathlib import Path
 
-from central_v2.backend.state.catalog import CATALOG_PROVIDERS, _natural_key
+from central_v2.backend.state.catalog import CATALOG_PROVIDERS
+from central_v2.backend.state.sorting import natural_sort_key as _natural_key
 
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}

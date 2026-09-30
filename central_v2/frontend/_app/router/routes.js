@@ -59,6 +59,18 @@ export const routes = {
     context: "texto-off",
     module: "/texto_off/merged/index.js",
   },
+  "texto-off-especiais-vi": {
+    context: "texto-off",
+    module: "/texto_off/especiais/level6.js",
+  },
+  "texto-off-especiais-vii": {
+    context: "texto-off",
+    module: "/texto_off/especiais/level7.js",
+  },
+  "texto-off-especiais-viii": {
+    context: "texto-off",
+    module: "/texto_off/especiais/level8.js",
+  },
   "resumo-operacao": {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",

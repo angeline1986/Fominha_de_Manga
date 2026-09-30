@@ -28,6 +28,27 @@ export async function startMergedSpecialTextoff(provider, manga, chapters, level
   });
 }
 
+export async function fetchManualSpecial(provider, manga, level, signal) {
+  const query = new URLSearchParams({ provider, manga });
+  return requestJson(`/api/textoff/special/level${level}?${query}`, { signal, cache: "no-store" });
+}
+
+export function manualSpecialImageUrl(provider, manga, chapter, filename) {
+  const query = new URLSearchParams({ provider, manga, chapter, file: filename });
+  return `/api/textoff/special/image?${query}`;
+}
+
+export function manualSpecialResultUrl(runId) {
+  return `/api/textoff/special/result?${new URLSearchParams({ run_id: runId })}`;
+}
+
+export async function startManualSpecial(provider, manga, level, chapter, filename, selections) {
+  return requestJson(`/api/textoff/special/level${level}/execute`, {
+    method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ provider, manga, chapter, filename, selections }),
+  });
+}
+
 export async function waitForTextoffJob(job, onProgress = () => {}) {
   if (!job?.id) throw new Error("A Central não confirmou a criação do job.");
   let current = job;

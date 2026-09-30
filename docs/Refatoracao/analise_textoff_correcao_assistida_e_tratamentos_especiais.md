@@ -106,7 +106,7 @@ Os tratamentos especiais atuam sobre uma imagem escolhida pelo usuário, por upl
 
 ### Transparência legada (`transparente_legacy`)
 
-- Usa a máscara do Cleaner intersectada com a ROI e dilata a região.
+- Seleciona componentes inteiros da máscara do Cleaner cujas caixas delimitadoras intersectam a ROI e depois dilata a máscara. Não recorta rigidamente a máscara na ROI.
 - Não passa pelo mesmo estágio de autorização de balões da Transparência atual.
 - Usa LaMa e valida a região externa à máscara.
 - A promoção está explicitamente bloqueada.
@@ -163,6 +163,14 @@ As referências de baseline registram falta de testes automatizados específicos
 - diferença de autoridade entre aprovar Correção Assistida originada em MERGE e promover um Especial.
 
 ## Orientação arquitetural para a próxima etapa
+
+Atualização de 29/09/2026: o inventário dos dois tratamentos transparentes e
+o contrato inicial proposto para Casos Especiais V2 estão em
+[`checkpoints/14_textoff_especiais_inventario_e_contrato_v2.md`](checkpoints/14_textoff_especiais_inventario_e_contrato_v2.md).
+Esse levantamento também registra o efeito do gate atual de adiamento de
+balões transparentes, os runtimes efetivamente chamados e a integridade de
+34 resultados históricos. Não representa validação visual nem implementação
+da feature V2.
 
 `docs/Refatoracao/03_arquitetura_interface_alvo.md` define a Central V2 como camada isolada de interface/orquestração, reutilizando a lógica de domínio existente. O mapa de dependências documenta as ações da Correção Assistida e as rotas próprias dos Especiais. A interface atual da Correção Assistida ainda está em `interface_web`; a tela V2 não deve duplicar limiares, algoritmos, validações de manifesto, hashes ou regras de autorização.
 

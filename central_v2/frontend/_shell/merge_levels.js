@@ -1,4 +1,9 @@
 export function segmentedMarkup(control) {
+  const previews = (option) => option.preview ? `
+              data-preview-title="${option.title}"
+              data-preview-before="${option.preview.before}"
+              data-preview-after="${option.preview.after}"
+              aria-label="Nível ${option.value}: ${option.title}"` : "";
   return `
     <div
       class="segmented-shell"
@@ -24,6 +29,7 @@ export function segmentedMarkup(control) {
               type="button"
               data-segment-value="${option.value}"
               data-action="${option.action}"
+              ${option.preview ? previews(option) : option.title ? `title="${option.title}" aria-label="Nível ${option.value}: ${option.title}"` : ""}
               aria-pressed="${option.value === control.defaultValue}"
             >
               ${option.label}

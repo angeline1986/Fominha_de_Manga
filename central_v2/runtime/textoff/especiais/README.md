@@ -1,20 +1,25 @@
 # Ambientes de Casos Especiais
 
-Dois ambientes independentes, Python 3.12.7/macOS arm64:
+Ambientes independentes por tratamento, Python 3.12.7/macOS arm64:
 
 | Tratamento | Ambiente | Lock |
 |---|---|---|
 | Patch Balão Transparente | `balao_transparente/.venv` | `balao_transparente/requirements.lock.txt` |
 | Balão Transparente — Legado | `balao_transparente_legado/.venv` | `balao_transparente_legado/requirements.lock.txt` |
+| Patch Degradê (VI) | `patch_degrade/.venv` | `patch_degrade/requirements.lock.txt` |
+| Patch Balão Estilizado (VII) | `patch_estilizado/.venv` | `patch_estilizado/requirements.lock.txt` |
+| Gradiente Suave (VIII) | `degrade_suave/.venv` | `degrade_suave/requirements.lock.txt` |
 
-Os locks partem da baseline já instalada do Merged I: 86 pacotes fixados,
-incluindo Cleaner, LaMa e autorização YOLO. O Legado usa inicialmente o mesmo
-conjunto para reduzir variáveis na comparação, embora não chame a autorização.
+Os locks de Transparência, Patch Degradê e Patch Estilizado partem da baseline
+do Merged I: 86 pacotes fixados, incluindo Cleaner, LaMa e YOLO. Gradiente
+Suave usa OpenCV headless e NumPy; o Legado mantém o lock de Transparência.
 Os ambientes foram criados separadamente; não compartilham `site-packages`
-nem dependem da venv de outra feature. `pip check` passou nos dois.
+nem dependem da venv de outra feature. `pip check` passou nos cinco ambientes.
 
 Snapshots instalados estão em
 `docs/Refatoracao/evidencias/textoff_especiais/2026-09-29/*_runtime.json`.
+Os snapshots dos runtimes VI–VIII estão em
+`docs/Refatoracao/evidencias/textoff_especiais/2026-09-30/`.
 Não atualizar versões como efeito colateral da migração.
 
 ## Reconstrução
@@ -27,7 +32,19 @@ central_v2/runtime/textoff/especiais/balao_transparente/.venv/bin/python -m pip 
 
 python3.12 -m venv central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv
 central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv/bin/python -m pip install -r central_v2/runtime/textoff/especiais/balao_transparente_legado/requirements.lock.txt
+
+python3.12 -m venv central_v2/runtime/textoff/especiais/patch_degrade/.venv
+central_v2/runtime/textoff/especiais/patch_degrade/.venv/bin/python -m pip install -r central_v2/runtime/textoff/especiais/patch_degrade/requirements.lock.txt
+
+python3.12 -m venv central_v2/runtime/textoff/especiais/patch_estilizado/.venv
+central_v2/runtime/textoff/especiais/patch_estilizado/.venv/bin/python -m pip install -r central_v2/runtime/textoff/especiais/patch_estilizado/requirements.lock.txt
+
+python3.12 -m venv central_v2/runtime/textoff/especiais/degrade_suave/.venv
+central_v2/runtime/textoff/especiais/degrade_suave/.venv/bin/python -m pip install -r central_v2/runtime/textoff/especiais/degrade_suave/requirements.lock.txt
 ```
+
+Os níveis VI e VII usam o lock independente de 86 pacotes para executar
+Cleaner e autorização YOLO no worker. Gradiente Suave usa seu lock compacto.
 
 Os modelos permanecem externos, nos caches existentes. O worker configura
 Hugging Face/Transformers offline. Ausência de dependência, lock divergente

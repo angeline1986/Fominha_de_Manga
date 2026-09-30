@@ -681,13 +681,31 @@ Cada tratamento terá ambiente próprio na V2, mesmo quando houver bibliotecas e
 
 | Tratamento V2 | Destino da venv | Baseline de referência atual | Pontos a inventariar |
 |---|---|---|---|
-| Patch Degradê | `central_v2/runtime/textoff/especiais/patch_degrade/.venv` | Cleaner V2 e runtime do servidor atual | OpenCV/NumPy, autorização e execução Cleaner |
-| Patch Estilizado | `central_v2/runtime/textoff/especiais/patch_estilizado/.venv` | Cleaner V2 e runtime do servidor atual | OpenCV/NumPy, classificação LAB/Canny, autorização e execução Cleaner |
+| Patch Degradê | `central_v2/runtime/textoff/especiais/patch_degrade/.venv` | Lock próprio derivado do Merged I | Criada em 30/09/2026; 86 pacotes instalados; `pip check` passou |
+| Patch Estilizado | `central_v2/runtime/textoff/especiais/patch_estilizado/.venv` | Lock próprio derivado do Merged I | Criada em 30/09/2026; 86 pacotes instalados; `pip check` passou |
 | Balão Transparente | `central_v2/runtime/textoff/especiais/balao_transparente/.venv` | Cleaner V2, Level 3 Regional e modelo LaMa | OpenCV/NumPy, autorização, LaMa e verificação da máscara |
 | Balão Transparente — Legado | `central_v2/runtime/textoff/especiais/balao_transparente_legado/.venv` | Cleaner V2, Level 3 Regional e modelo LaMa | OpenCV/NumPy, máscara ROI, LaMa e comportamento legado |
-| Degradê Suave | `central_v2/runtime/textoff/especiais/degrade_suave/.venv` | `processamento/limpeza_baloes/gradiente_suave/.venv` e `gradiente_suave_pip_freeze.txt` | OpenCV headless/NumPy e contrato do reconstrutor |
+| Gradiente Suave | `central_v2/runtime/textoff/especiais/degrade_suave/.venv` | `processamento/limpeza_baloes/gradiente_suave/.venv` e snapshot 30/09/2026 | Criada em 30/09/2026; OpenCV headless, NumPy e psutil instalados; `pip check` passou |
 
 Os tratamentos especiais atuais são chamados dentro do processo web em alguns caminhos. Criar as venvs não os isola por si só: cada algoritmo deverá ser executado por worker/subprocesso usando o Python da sua feature, com entradas/saídas validadas e sem promoção implícita.
+
+**Atualização de 29/09/2026 — Transparente e Legado:** os dois ambientes
+acima foram provisionados separadamente com Python 3.12.7 e locks próprios
+de 86 pacotes, derivados da baseline Merged I. `pip check` passou em ambos.
+O executor V2 em `backend/orchestration/textoff_special/` roda em subprocesso
+dedicado e vincula também Cleaner/LaMa ao Python da feature; não usa a venv
+V1. Snapshots instalados estão em
+`evidencias/textoff_especiais/2026-09-29/*_runtime.json` e as instruções em
+`central_v2/runtime/textoff/especiais/README.md`.
+
+**Atualização de 30/09/2026 — Especiais VI–VIII:** a Central V2 ganhou fluxo
+manual por página e ROI, workers isolados e staging sem promoção para Patch
+Degradê (VI), Patch Balão Estilizado (VII) e Gradiente Suave (VIII). Os locks
+e provisionamento ficam em `central_v2/runtime/textoff/especiais/`; os níveis
+VI/VII usam os 86 pacotes do tratamento com Cleaner/YOLO, e o VIII usa o lock
+OpenCV/NumPy e psutil do worker. Proveniência e versões instaladas estão
+registradas em `evidencias/textoff_especiais/2026-09-30/`. Os resultados
+partem dos artefatos do Nível I.
 
 ## 15.4 Funcionalidades sem venv dedicada
 

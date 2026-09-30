@@ -18,6 +18,18 @@ class Treatment:
 
 
 TREATMENTS = {
+    "degrade": Treatment(
+        "degrade", "patch_degrade", "textoff_special_roi_degrade_v2",
+        "textoff_special_roi", "run_degrade_roi",
+    ),
+    "estilizado": Treatment(
+        "estilizado", "patch_estilizado", "textoff_special_roi_styled_v1",
+        "textoff_special_styled_roi", "run_styled_roi",
+    ),
+    "gradiente_suave": Treatment(
+        "gradiente_suave", "degrade_suave", "textoff_gradiente_suave_v1",
+        "gradiente_suave.gradiente_suave", "reconstruct_many",
+    ),
     "transparente": Treatment(
         "transparente", "balao_transparente", "textoff_special_roi_transparent_v1",
         "textoff_special_transparent_roi", "run_transparent_roi",

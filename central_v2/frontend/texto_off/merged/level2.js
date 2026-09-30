@@ -25,6 +25,7 @@ function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
   const eligible = pageChapters.filter((chapter) => rows.find((row) => row.chapter === chapter)?.selectable);
   return [
     {
+      id: "select",
       header: () => {
         const input = checkbox("Selecionar todos os capítulos elegíveis desta página",
           eligible.length > 0 && eligible.every((name) => selected.has(name)), onSelectPage);
@@ -38,14 +39,15 @@ function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
         return input;
       },
     },
-    { label: "Cap.", render: (row) => row.chapter },
-    { label: "Merges", render: (row) => row.merge_valid ? row.merge_count : "—" },
-    { label: "Candidatas Nível II", render: (row) => row.cleaned ? `${row.transparent_page_count} / ${row.merge_count}` : "—" },
-    { label: "Balões transp.", render: (row) => row.cleaned ? row.transparent_balloons : "—" },
-    { label: "Resíduos adiados", render: (row) => row.cleaned ? row.deferred_components : "—" },
-    { label: "Pág. com texto", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_pages_with_text : "—" },
-    { label: "Pixels alterados", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_changed_pixels : "—" },
+    { id: "chapter", label: "Cap.", render: (row) => row.chapter },
+    { id: "merges", label: "Merges", render: (row) => row.merge_valid ? row.merge_count : "—" },
+    { id: "candidates", label: "Candidatas Nível II", render: (row) => row.cleaned ? `${row.transparent_page_count} / ${row.merge_count}` : "—" },
+    { id: "balloons", label: "Balões transp.", render: (row) => row.cleaned ? row.transparent_balloons : "—" },
+    { id: "residue", label: "Resíduos adiados", render: (row) => row.cleaned ? row.deferred_components : "—" },
+    { id: "pages-with-text", label: "Pág. com texto", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_pages_with_text : "—" },
+    { id: "changed-pixels", label: "Pixels alterados", render: (row) => ["processed", "no_change"].includes(row.level2_status) ? row.level2_changed_pixels : "—" },
     {
+      id: "textoff-status",
       label: "Situação",
       render: (row) => ({
         pending: "Pendente para Nível II",

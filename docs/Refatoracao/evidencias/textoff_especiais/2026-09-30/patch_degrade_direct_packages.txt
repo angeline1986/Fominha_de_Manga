@@ -1,0 +1,3 @@
+pcleaner==2.11.11
+pip==24.2
+ultralytics==8.4.162

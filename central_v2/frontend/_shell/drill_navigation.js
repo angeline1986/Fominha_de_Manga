@@ -1,4 +1,5 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { bindHoverPreview } from "/_shell/hover_preview.js";
 import { segmentedMarkup, selectMergeLevel } from "/_shell/merge_levels.js";
 import { navigation } from "/_shell/navigation.js";
 
@@ -56,6 +57,7 @@ function groupMarkup(group) {
 export function createDrillNavigation() {
   const element = document.createElement("div");
   element.className = "drill-navigation";
+  const disposePreview = bindHoverPreview(element);
 
   element.innerHTML = `
     <div class="drill-stage">
@@ -183,5 +185,5 @@ export function createDrillNavigation() {
     }
   });
 
-  return element;
+  return { element, dispose: disposePreview };
 }

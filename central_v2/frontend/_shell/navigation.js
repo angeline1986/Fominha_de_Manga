@@ -100,6 +100,23 @@ export const navigation = [
         },
       },
       {
+        label: "ESPECIAIS",
+        control: {
+          type: "segmented",
+          id: "textoff-special-level",
+          label: "Especiais",
+          defaultValue: "VI",
+          options: [
+            { value: "VI", action: "texto-off-especiais-vi", label: "VI", title: "Patch Degradê",
+              preview: { before: "/texto_off/especiais/assets/degrade_antes.png", after: "/texto_off/especiais/assets/degrade_depois.png" } },
+            { value: "VII", action: "texto-off-especiais-vii", label: "VII", title: "Patch Balão Estilizado",
+              preview: { before: "/texto_off/especiais/assets/estilizado_antes.png", after: "/texto_off/especiais/assets/estilizado_depois.png" } },
+            { value: "VIII", action: "texto-off-especiais-viii", label: "VIII", title: "Gradiente Suave",
+              preview: { before: "/texto_off/especiais/assets/gradiente_suave_antes.png", after: "/texto_off/especiais/assets/gradiente_suave_depois.png" } },
+          ],
+        },
+      },
+      {
         label: "OUTROS RESULTADOS",
         items: [
           { id: "texto-off-legacy", label: "Legado" },

@@ -155,3 +155,25 @@
 .drill-subitem-icon.text-slate-400 { color: #94a3b8; }
 .drill-subitem-icon.text-sky-600 { color: #0284c7; }
 .drill-subitem.is-current { border-left: 3px solid var(--color-primary); background: var(--color-surface); color: var(--color-text); font-weight: var(--font-weight-bold); }
+
+.navigation-hover-preview {
+  position: fixed;
+  z-index: 1000;
+  left: var(--preview-left, 12px);
+  top: var(--preview-top, 12px);
+  width: min(390px, calc(100vw - 24px));
+  padding: 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 10px;
+  background: var(--color-surface);
+  box-shadow: 0 12px 32px rgba(6, 48, 65, 0.22);
+  color: var(--color-text);
+  pointer-events: none;
+}
+
+.navigation-hover-preview[hidden] { display: none; }
+.navigation-hover-preview > strong { display: block; margin-bottom: 8px; font-size: var(--font-size-control); }
+.navigation-hover-preview-images { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.navigation-hover-preview-images figure { min-width: 0; margin: 0; }
+.navigation-hover-preview-images figcaption { margin-bottom: 4px; color: var(--color-text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-bold); }
+.navigation-hover-preview-images img { display: block; width: 100%; height: 170px; object-fit: contain; border-radius: 5px; background: var(--color-surface-soft); }

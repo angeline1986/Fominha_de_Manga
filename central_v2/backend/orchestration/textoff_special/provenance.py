@@ -25,9 +25,12 @@ def collect(key: str) -> dict:
     files.extend(domain.glob("textoff_special_transparent*roi.py"))
     files.extend(domain / name for name in (
         "patch_degrade_experimento.py", "patch_balao_transparente_experimento.py",
+        "patch_balao_estilizado_experimento.py", "textoff_special_roi.py",
+        "textoff_special_styled_roi.py", "gradiente_suave/gradiente_suave.py",
         "cleaner_v2/preserve-colors.ini",
     ))
     files.extend((domain / "cleaner_v2").glob("*.py"))
+    files.append(ROOT / "central_v2/backend/orchestration/textoff_merged/manual_specials.py")
     revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=ROOT,
                               capture_output=True, text=True, check=True).stdout.strip()
     return {"python": sys.version, "executable": sys.executable, "prefix": sys.prefix,

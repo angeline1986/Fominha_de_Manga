@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
+from central_v2.backend.state.sorting import natural_sort_key
 
 from .manifests import (
     _clean_manifest, _deferred_text_masks_ready, _listing_merge_artifacts,
@@ -18,7 +19,7 @@ def query_merged(manga: Path) -> dict:
     root = manga / "IMG"
     chapters = sorted(
         (path for path in root.iterdir() if path.is_dir()),
-        key=lambda path: v3.natural_key(path / "page-1.png"),
+        key=lambda path: natural_sort_key(path.name),
     ) if root.is_dir() else []
     for chapter in chapters:
         files = _listing_merge_artifacts(chapter)

@@ -7,6 +7,7 @@ export function createTable(columns, rows, label, { emptyMessage } = {}) {
   for (const column of columns) {
     const cell = document.createElement("th");
     cell.scope = "col";
+    if (column.id) cell.dataset.column = column.id;
     if (column.header) cell.append(column.header());
     else cell.textContent = column.label;
     head.append(cell);
@@ -16,6 +17,7 @@ export function createTable(columns, rows, label, { emptyMessage } = {}) {
     const tr = body.insertRow();
     for (const column of columns) {
       const cell = tr.insertCell();
+      if (column.id) cell.dataset.column = column.id;
       if (column.className) cell.className = column.className(row);
       const value = column.render(row);
       if (column.title) cell.title = String(column.title(row) ?? "");

@@ -60,10 +60,12 @@ export function mountShell(root, onStopped) {
     root.querySelector('[data-action="stop-server"]'),
     onStopped,
   );
-  navigation.append(createDrillNavigation());
+  const drillNavigation = createDrillNavigation();
+  navigation.append(drillNavigation.element);
 
   return () => {
     toggle.removeEventListener("click", toggleSidebar);
+    drillNavigation.dispose();
     disposeContext();
     disposeShutdown();
   };

@@ -1,0 +1,98 @@
+.special-roi-canvas {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin: 0;
+}
+
+.textoff-special-manual .special-toolbar select {
+  width: 100%;
+  min-height: 38px;
+  padding: 6px 10px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+}
+
+.special-field {
+  display: grid;
+  flex: 0 1 260px;
+  gap: 4px;
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+
+.textoff-special-manual .special-clear {
+  min-height: 38px;
+  margin-left: auto;
+  padding: 6px 12px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-primary-hover);
+  cursor: pointer;
+}
+
+.textoff-special-manual .special-toolbar .auto-merge-execute {
+  margin-left: 0;
+}
+
+.special-image-panel {
+  width: fit-content;
+  max-width: 100%;
+  padding: 8px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: var(--radius-control);
+  background: var(--color-surface);
+}
+
+.special-roi-canvas img {
+  display: block;
+  max-width: 100%;
+  max-height: 72vh;
+}
+
+.special-roi-canvas canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  cursor: crosshair;
+  touch-action: none;
+}
+
+.special-comparison {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding: 12px;
+}
+
+.special-comparison[hidden] {
+  display: none;
+}
+
+.special-comparison figure {
+  margin: 0;
+}
+
+.special-comparison img {
+  display: block;
+  max-width: min(100%, 520px);
+  max-height: 70vh;
+}
+
+.special-comparison figcaption {
+  margin-bottom: 8px;
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+
+@media (max-width: 700px) {
+  .textoff-special-manual .special-field { flex-basis: 100%; }
+  .textoff-special-manual .special-clear { margin-left: 0; }
+  .special-comparison { flex-direction: column; }
+}

@@ -22,9 +22,19 @@ Depois da saída temporária do Panel Cleaner, o Nível I segmenta os balões us
 
 Se qualquer componente da máscara do Cleaner intersectar o interior de um balão transparente, o Nível I preserva o componente inteiro. A decisão conservadora evita deixar franjas de máscara dentro de um balão, ainda que parte do componente esteja fora dele. As demais máscaras só são autorizadas quando pelo menos `90%` de seus pixels estão dentro de um único balão; componentes ambíguos ficam preservados.
 
-O relatório `level1-balloon-report.json` registra caixas e métricas dos balões protegidos, componentes adiados, pixels da máscara protegidos e decisões por componente. O `clean-manifest.json` resume os totais de balões transparentes e componentes adiados. Essa identificação prepara os casos para uma rodada dedicada; não executa ainda um fluxo separado de TextOff Merged Nível II.
+O relatório `level1-balloon-report.json` registra caixas e métricas dos balões protegidos, componentes adiados, pixels da máscara protegidos e decisões por componente. O `clean-manifest.json` resume os totais de balões transparentes e componentes adiados. Para componentes adiados, o Nível I também salva `*_deferred_text.png`, limitado aos pixels do componente dentro das máscaras dos balões; o Nível II usa essa evidência de texto do Cleaner sem modificar a saída do Nível I.
 
-O teste de referência usou `page-156-163.png` e `page-179-187.png` do capítulo 3 de *Things that deserve to die*. Foram encontrados dois balões transparentes em cada imagem. A checagem da saída confirmou zero pixels diferentes das fontes e zero pixels de máscara dentro das caixas detectadas. As saídas isoladas de teste não substituem o MERGE oficial.
+Na Central V2, Merged Nível I grava em `04_TEXTO_OFF/MERGED_NIVEL_I/<capítulo>/` e não chama o pós-processamento histórico. Legado continua em `04_TEXTO_OFF/MERGED/<capítulo>/` e mantém o processamento combinado anterior.
+
+### Nível II: segunda rodada delimitada por balão
+
+O Nível II usa a união da máscara Cleaner adiada do Nível I com os pixels de texto localizados pelas caixas CRAFT do EasyOCR detector-only. A detecção por CRAFT complementa a máscara; não reconhece nem classifica o idioma. A máscara combinada recebe dilatação elíptica 3×3 e depois 9×9, sempre recortada ao interior segmentado dos balões transparentes. O LaMa recebe 120 px de contexto e somente pixels autorizados são compostos na imagem Nível I. O manifesto registra algoritmo, fontes das máscaras, detector, modelo, dispositivo e contagens.
+
+O A/B manual em `page-179-187.png` mostrou que o Patch Transparente Legado removeu o texto das duas ROIs selecionadas. A máscara CRAFT do primeiro Nível II deixou resíduos; a expansão adicional dessa mesma máscara, mesmo recortada aos balões e com 120 px de contexto, também não resolveu o caso. Isso aponta para cobertura insuficiente na máscara-base, não apenas falta de dilatação ou contexto. A máscara Cleaner adiada pretende corrigir essa lacuna. O Legado não é promovido automaticamente: não usa autorização por balão e depende de ROIs manuais.
+
+As máscaras adiadas são geradas ao reexecutar o Nível I. Resultados Nível II antigos não são considerados atuais após a troca de algoritmo ou de manifesto do Nível I. Os quatro exemplos observados (`page-051-059`, `page-078-083`, `page-156-163` e `page-179-187`) continuam exigindo validação visual; sucesso técnico de integridade não significa remoção visual completa.
+
+O teste de referência do Nível I usou `page-156-163.png` e `page-179-187.png` do capítulo 3 de *Things that deserve to die*. Foram encontrados dois balões transparentes em cada imagem. A checagem da saída confirmou preservação pixel a pixel dos balões e nenhuma máscara Cleaner aplicada dentro deles. As saídas isoladas de teste não substituem o MERGE oficial.
 
 ### Limites conhecidos
 

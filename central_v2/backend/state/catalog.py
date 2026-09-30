@@ -1,15 +1,9 @@
-import re
 from pathlib import Path
+
+from .sorting import natural_sort_key as _natural_key
 
 
 CATALOG_PROVIDERS = ("comix", "mangago", "ridi")
-
-
-def _natural_key(value: str) -> list[object]:
-    return [
-        int(part) if part.isdigit() else part.lower()
-        for part in re.split(r"(\d+)", value)
-    ]
 
 
 def build_catalog(output_root: Path) -> dict[str, list[str]]:
