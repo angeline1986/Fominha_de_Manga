@@ -14,6 +14,7 @@ from .runtime import REPOSITORY_ROOT, python_for
 from .styled_balloon_detector import ALGORITHM
 from .stages import CONSOLIDATED, LEVEL1, LEVEL3, stage_chapter
 from .consolidated import consolidated_is_current, rebuild_consolidated
+from .consolidated_artifacts import consolidated_image
 from .consolidated import promote_stage
 from central_v2.backend.state.sorting import natural_sort_key
 from processamento.unificacao_imagens import image_stitcher as v3
@@ -91,7 +92,7 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
     consolidated_dir = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
     consolidated_manifest = json.loads((consolidated_dir / "json/clean-manifest.json").read_text(encoding="utf-8"))
     consolidated_hash = _file_sha256(consolidated_dir / "json/clean-manifest.json")
-    images = [artifact_file(consolidated_dir, name, "clean")
+    images = [consolidated_image(manga, chapter, Path(name).name)
               for name in consolidated_manifest.get("clean_artifacts", [])]
     if (not images or any(path is None for path in images)
             or [path.name for path in images] != [Path(name).stem + "_clean" + Path(name).suffix

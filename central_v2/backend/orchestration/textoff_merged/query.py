@@ -103,7 +103,7 @@ def query_merged_level2(manga: Path) -> dict:
             previous_valid = (
                 previous.get("integrity_ok") is True
                 and previous.get("algorithm") == ALGORITHM
-                and previous.get("candidate_source_artifacts", candidate_pages) == candidate_pages
+                and set(previous.get("candidate_source_artifacts", candidate_pages)) == set(candidate_pages)
                 and (expected_outputs == [
                     item for item in level1.get("clean_artifacts", [])
                     if _source_from_clean(item) in candidate_pages

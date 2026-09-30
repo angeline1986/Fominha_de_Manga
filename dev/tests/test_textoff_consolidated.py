@@ -7,6 +7,7 @@ from pathlib import Path
 from central_v2.backend.orchestration.textoff_merged.consolidated import (
     consolidated_is_current, rebuild_consolidated,
 )
+from central_v2.backend.orchestration.textoff_merged.consolidated_artifacts import consolidated_image
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, LEVEL2
 
 
@@ -57,6 +58,8 @@ class TextoffConsolidatedTests(unittest.TestCase):
         self.assertEqual([item["selected_from"] for item in manifest["selections"]], [LEVEL1, LEVEL1])
         self.assertFalse((folder / "clean/page-001-005_clean.png").exists())
         self.assertTrue(consolidated_is_current(self.manga, self.chapter))
+        self.assertEqual(consolidated_image(self.manga, self.chapter, "page-001-005_clean.png").read_bytes(),
+                         b"level1-a")
 
     def test_prefers_valid_level2_and_invalidates_when_its_manifest_changes(self):
         level1_manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/1/json/clean-manifest.json"

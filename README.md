@@ -288,7 +288,9 @@ A Central organiza o fluxo Merged em níveis explícitos e mantém a execução 
 Texto Off
    ├── Merged
    │   ├── Nível I
-   │   └── Nível II
+   │   ├── Nível II
+   │   ├── Nível III
+   │   └── Especiais · VI–VIII
    ├── Legado
    ├── Comparar resultados
    └── Correção assistida
@@ -315,26 +317,29 @@ O teste focado de *Things that deserve to die*, capítulo 3, nas imagens `page-1
 
 ### Merged · Nível II
 
-A tela consulta os relatórios do Nível I e lista capítulos com balões transparentes detectados ou componentes adiados. O Nível II usa a máscara Cleaner adiada pelo Nível I, aplica as dilatações elípticas 3×3 e 9×9 e reconstrói com LaMa e contexto de 120 px, limitado ao interior do balão correspondente. Essa sequência deriva do Patch Transparente Legado que teve resultado aprovado no teste manual; CRAFT não faz parte da máscara automática. Cada capítulo também separa os arquivos finais em `clean/`, as máscaras em `mask/` e manifestos/relatórios em `json/`.
+A tabela apresenta os capítulos e a quantidade de páginas transparentes candidatas indicada pelo manifesto do Nível I. A execução do Nível II processa somente essas páginas, usando a máscara Cleaner adiada, dilatações elípticas 3×3 e 9×9 e LaMa com 120 px de contexto dentro do balão correspondente. Essa sequência deriva do Patch Transparente Legado aprovado em teste manual; CRAFT não faz parte da máscara automática. `clean/` contém somente imagens candidatas que tiveram pixels alterados; `mask/` e `json/` registram máscaras, relatório e manifesto. Uma página sem alteração não gera cópia no Nível II.
 
 ```text
 TO_MERGED_NIVEL_II/<capítulo>/
-├── clean/  composição final do capítulo
+├── clean/  somente imagens candidatas alteradas
 ├── mask/   máscara autorizada de texto por página
 └── json/   manifesto e relatório da rodada
 ```
 
-A tabela distingue o total de imagens do MERGE das páginas candidatas ao Nível II. No Cap. 3 de *Things that deserve to die*, o relatório mostra 31 imagens oficiais, 10 páginas com balões transparentes e 17 balões; portanto, 31 é a composição completa do capítulo, não o número de páginas com casos transparentes. O Nível II grava uma composição completa para manter o capítulo íntegro.
+No Cap. 3 de *Things that deserve to die*, por exemplo, o MERGE tem 31 páginas, das quais 10 foram candidatas a transparência e 8 tiveram texto processado. A tabela continua sendo por capítulo, mas mostra separadamente o total de páginas transparentes candidatas; os arquivos de saída do Nível II são restritos às páginas candidatas efetivamente alteradas.
 
 ### Texto Off consolidado
 
-`FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/<capítulo>/` reúne uma composição limpa por página para consumo dos níveis seguintes. Para cada página, escolhe a saída do Nível II quando o manifesto do Nível II está íntegro e vinculado ao manifesto atual do Nível I; nas demais situações, mantém a saída do Nível I. O consolidado é reconstruído após cada execução bem-sucedida de Nível I ou II, e sua validade é conferida pelos hashes dos manifestos de origem. O Nível III analisa exclusivamente as imagens desse consolidado.
+`FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/<capítulo>/` contém um manifesto que define a composição lógica por página, sem copiar o capítulo inteiro para uma terceira pasta. Cada página candidata alterada aponta para o arquivo do Nível II; as demais apontam para o Nível I. Os consumidores resolvem essas referências e verificam seus hashes. Assim, só a imagem realmente alterada é armazenada adicionalmente pelo Nível II, sem duplicar páginas inalteradas no consolidado. O manifesto registra os hashes de origem e é reconstruído após execução válida de Nível I ou II.
 
 ```text
 TO_MERGED_CONSOLIDADO/<capítulo>/
-├── clean/  composição consolidada por página
-└── json/   manifesto de origem e seleção por página
+└── json/   manifesto e referências por página aos arquivos de Nível I/II
 ```
+
+### Merged · Nível III
+
+O Nível III analisa somente as imagens limpas resolvidas pelo manifesto consolidado. Usa recortes verticais sobrepostos para procurar balões com cor decorativa, gradiente ou contorno irregular; não altera imagens. Os candidatos e suas caixas ficam em `TO_MERGED_NIVEL_III/<capítulo>/json/` e podem ser inspecionados visualmente na Central V2. A detecção é experimental: exige revisão humana e pode produzir falsos positivos. O manifesto vincula a análise aos hashes dos resultados I, II (quando vigente) e consolidado.
 
 O Patch Transparente Legado manual limpou as duas regiões selecionadas em `page-179-187.png`. A execução automática anterior não aplicou a máscara: embora o relatório Nível I registrasse 17 balões transparentes, ele não vinculava cada balão ao rótulo da imagem de máscara. O Nível II ignorava os balões sem `mask_label` e ainda marcava o capítulo como concluído com zero pixels alterados. O contrato foi corrigido e versionado como Nível I v4/Nível II v1; agora a execução falha se esse vínculo estiver ausente ou divergente e informa separadamente quando não houve alteração visual.
 

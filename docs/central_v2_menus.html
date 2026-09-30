@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Central V2 — Inventário de menus e telas</title>
+  <style>
+    :root{color-scheme:light;--ink:#173d50;--muted:#557487;--blue:#167fa5;--line:#c8e5ef;--pale:#eef8fb;--white:#fff;--amber:#fff5df;--shadow:0 3px 14px #163d5010}
+    *{box-sizing:border-box}body{margin:0;background:#f4f9fb;color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:1120px;margin:34px auto;padding:0 22px 56px}header,.card{background:var(--white);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow)}
+    header{padding:28px 32px;margin-bottom:20px}.eyebrow{color:var(--blue);font-size:.78rem;font-weight:800;letter-spacing:.15em;text-transform:uppercase}h1{font-size:clamp(1.8rem,4vw,2.5rem);line-height:1.15;margin:.35rem 0 .65rem}h2{font-size:1.35rem;margin:0 0 12px}h3{font-size:1.08rem;margin:0 0 10px;color:var(--blue)}p{margin:.45rem 0 1rem}.lede,.muted{color:var(--muted)}
+    nav{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}nav a{color:#155c79;text-decoration:none;background:var(--pale);border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem}nav a:hover,nav a:focus{background:#dff1f7;outline:2px solid #73bdd4;outline-offset:1px}
+    section{margin:18px 0}.card{padding:22px 24px}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:650px;background:white}th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}th{background:var(--pale);color:#245d77;font-size:.86rem}tbody tr:last-child td{border-bottom:0}.tag{display:inline-block;border-radius:999px;background:#e0f2f8;color:#17627f;padding:2px 8px;font-size:.78rem;font-weight:700;white-space:nowrap}.tag.missing{background:var(--amber);color:#815d1e}.intro{margin-bottom:12px}.toc{margin:0;padding-left:20px}.toc li{margin:5px 0}.hierarchy{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px}.hierarchy article{background:var(--pale);border:1px solid var(--line);border-radius:10px;padding:14px}.hierarchy strong{display:block;margin-bottom:4px}footer{color:var(--muted);font-size:.9rem;padding:12px 2px}
+    .tree{overflow-x:auto;margin:0;padding:18px 20px;background:#f7fbfd;border:1px solid var(--line);border-radius:10px;color:#214b60;font:14px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre}
+    @media(max-width:650px){main{margin:16px auto;padding:0 12px 36px}header,.card{padding:18px}nav{gap:6px}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">Central de Processamento · V2</div>
+    <h1>Inventário de menus e telas</h1>
+    <p class="lede">Nomes atuais, hierarquia de navegação e responsabilidade de cada página. Este documento registra a interface existente para apoiar uma futura revisão terminológica; não propõe nomes novos.</p>
+    <nav aria-label="Índice do documento">
+      <a href="#estrutura">Estrutura global</a><a href="#arvore">Árvore do menu</a><a href="#visao-geral">Visão Geral</a><a href="#processamento">Processamento</a><a href="#balanceamento">Balanceamento</a><a href="#pdf">Gerar PDF</a><a href="#textoff">Texto Off</a><a href="#exportacao">Exportar Arquivos</a><a href="#rotulos">Rótulos de tela</a>
+    </nav>
+  </header>
+
+  <section class="card" id="estrutura">
+    <h2>Estrutura global</h2>
+    <div class="hierarchy">
+      <article><strong>Fominha de Mangá · Central de Processamento</strong>Marca e identificação da aplicação.</article>
+      <article><strong>Menu principal</strong>Acesso às áreas funcionais da Central.</article>
+      <article><strong>Provider</strong>Seleciona a fonte/provedor da obra.</article>
+      <article><strong>Obra</strong>Define o mangá usado nas consultas e operações; depende do Provider.</article>
+      <article><strong>Sincronizar</strong>Atualiza o estado da obra selecionada.</article>
+      <article><strong>Finalizar servidor</strong>Encerra a Central V2.</article>
+    </div>
+  </section>
+
+  <section class="card" id="arvore">
+    <h2>Estrutura exata do menu</h2>
+    <p class="muted">Árvore conforme a configuração da navegação da Central V2. Os níveis romanos são opções dos controles segmentados.</p>
+    <pre class="tree"><code>Menu principal
+├── Visão Geral
+│   ├── NAVEGAÇÃO
+│   │   └── Resumo da Operação
+│   └── VALIDAÇÃO
+│       └── Validar Imagens
+├── Processamento
+│   ├── AUTO MERGE · Auto Merge [I–V]
+│   │   ├── I   → Auto-Merge
+│   │   ├── II  → Auto-Merge Nível II
+│   │   ├── III → Auto-Merge Nível III
+│   │   ├── IV  → Auto-Merge Nível IV
+│   │   └── V   → Auto-Merge Nível V
+│   └── MERGE MANUAL
+│       ├── Validar Faixa
+│       └── Novos Merges
+├── Balanceamento
+│   ├── VALIDAÇÃO
+│   │   └── Validar Estado
+│   └── AJUSTES
+│       └── Novos Cortes
+├── Gerar PDF
+│   └── ORIGEM DE GERAÇÃO
+│       ├── Imagens Originais
+│       └── Imagens Mescladas
+├── Texto Off
+│   ├── MERGED · Merged [I–V]
+│   │   ├── I   → Texto Off — Merged Nível I
+│   │   ├── II  → Texto Off — Merged Nível II
+│   │   ├── III → Texto Off — Merged Nível III
+│   │   ├── IV  → Texto Off — Merged Nível IV: Transparência normal
+│   │   └── V   → Texto Off — Merged Nível V: Transparência Legado
+│   ├── ESPECIAIS · Especiais [VI–VIII]
+│   │   ├── VI   → Patch Degradê
+│   │   ├── VII  → Patch Balão Estilizado
+│   │   └── VIII → Gradiente Suave
+│   ├── OUTROS RESULTADOS
+│   │   └── Legado
+│   └── RESULTADOS &amp; LIMPEZA
+│       ├── Comparar Resultados
+│       ├── Correção Assistida
+│       └── Casos Especiais
+└── Exportar Arquivos
+    └── EXECUÇÃO
+        ├── Simular e Exportar
+        └── Destino Local</code></pre>
+  </section>
+
+  <section class="card" id="visao-geral">
+    <h2>Menu: Visão Geral</h2>
+    <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>Navegação</td><td>Resumo da Operação</td><td>Resumo da Operação</td><td>Mostra o resumo do processamento da obra selecionada. É a ação padrão ao abrir o menu.</td></tr>
+      <tr><td>Validação</td><td>Validar Imagens</td><td><span class="tag missing">Sem rota registrada</span></td><td>O item aparece na navegação, mas não há ação correspondente em <code>routes.js</code>.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="processamento">
+    <h2>Menu: Processamento</h2>
+    <h3>Grupo: Auto Merge</h3>
+    <div class="table-wrap"><table><thead><tr><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>I</td><td>Auto-Merge (Nível I)</td><td>Analisa imagens para compor merges seguros e encaminha resíduos quando necessário. Ação padrão do menu.</td></tr>
+      <tr><td>II</td><td>Auto-Merge Nível II</td><td>Processa resíduos recebidos do Nível I em busca de divisões seguras.</td></tr>
+      <tr><td>III</td><td>Auto-Merge Nível III</td><td>Analisa estruturalmente resíduos seguros recebidos do Nível II.</td></tr>
+      <tr><td>IV</td><td>Auto-Merge Nível IV</td><td>Busca composição estrutural global para resíduos válidos do Nível III.</td></tr>
+      <tr><td>V</td><td>Auto-Merge Nível V</td><td>Busca composições seguras nos resíduos dirigidos do Nível IV; o restante segue para revisão.</td></tr>
+    </tbody></table></div>
+    <h3>Grupo: Merge Manual</h3>
+    <div class="table-wrap"><table><thead><tr><th>Item/subitem</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>Validar Faixa</td><td>Merge Manual</td><td>Lista capítulos e permite definir faixas de páginas para revisão e composição manual.</td></tr>
+      <tr><td>Novos Merges</td><td>Novos Cortes / Merge Manual · Cap. N</td><td>Edita faixas selecionadas, posiciona cortes e gera uma proposta de composição.</td></tr>
+      <tr><td>Resultado da proposta (fluxo interno)</td><td>Resultado · Cap. N</td><td>Apresenta a proposta e permite aplicá-la ao MERGE oficial após validação.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="balanceamento">
+    <h2>Menu: Balanceamento</h2>
+    <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item/subitem</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>Validação</td><td>Validar Estado</td><td>VALIDAR BALANCEAMENTO</td><td>Inspeciona merges da obra para identificar desequilíbrios e atualizar o diagnóstico. Ação padrão do menu.</td></tr>
+      <tr><td>Ajustes</td><td>Novos Cortes</td><td>Balanceamento · Novos Cortes</td><td>Edita merges selecionados e aplica uma proposta validada ao MERGE oficial.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="pdf">
+    <h2>Menu: Gerar PDF</h2>
+    <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>Origem de Geração</td><td>Imagens Originais</td><td><span class="tag missing">Sem rota registrada</span></td><td>Opção de origem de geração; não há ação de página em <code>routes.js</code>.</td></tr>
+      <tr><td>Origem de Geração</td><td>Imagens Mescladas</td><td><span class="tag missing">Sem rota registrada</span></td><td>Opção de origem de geração; não há ação de página em <code>routes.js</code>.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="textoff">
+    <h2>Menu: Texto Off</h2>
+    <h3>Grupo: Merged</h3>
+    <div class="table-wrap"><table><thead><tr><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>I</td><td>Texto Off — Merged Nível I</td><td>Executa Cleaner V2 sobre os MERGEs oficiais e identifica/protege balões transparentes. Ação padrão do menu.</td></tr>
+      <tr><td>II</td><td>Texto Off — Merged Nível II</td><td>Consulta candidatas transparentes do Nível I e trata somente as páginas elegíveis.</td></tr>
+      <tr><td>III</td><td>Texto Off — Merged Nível III</td><td>Analisa imagens limpas consolidadas e apresenta candidatos a balões estilizados, gradientes e contornos irregulares para revisão; não aplica patches.</td></tr>
+      <tr><td>IV</td><td>Texto Off — Merged Nível IV: Transparência normal</td><td>Executa a variante normal de tratamento transparente sobre imagens elegíveis do Nível I.</td></tr>
+      <tr><td>V</td><td>Texto Off — Merged Nível V: Transparência Legado</td><td>Executa a variante de transparência baseada no comportamento legado, isolada do resultado oficial.</td></tr>
+    </tbody></table></div>
+    <h3>Grupo: Especiais</h3>
+    <div class="table-wrap"><table><thead><tr><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>VI</td><td>Texto Off — Especiais Nível VI: Patch Degradê</td><td>Seleciona regiões de uma página para o tratamento Patch Degradê. O menu mostra imagens de exemplo no hover.</td></tr>
+      <tr><td>VII</td><td>Texto Off — Especiais Nível VII: Patch Balão Estilizado</td><td>Seleciona regiões para o Patch Balão Estilizado, com exemplos no menu.</td></tr>
+      <tr><td>VIII</td><td>Texto Off — Especiais Nível VIII: Gradiente Suave</td><td>Seleciona regiões para o tratamento Gradiente Suave, com exemplos no menu.</td></tr>
+    </tbody></table></div>
+    <h3>Outros grupos</h3>
+    <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>Outros Resultados</td><td>Legado</td><td>Texto Off — Legado</td><td>Mantém acessível o fluxo anterior de Texto Off.</td></tr>
+      <tr><td>Resultados &amp; Limpeza</td><td>Comparar Resultados</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado sem ação de página em <code>routes.js</code>.</td></tr>
+      <tr><td>Resultados &amp; Limpeza</td><td>Correção Assistida</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado sem ação de página em <code>routes.js</code>.</td></tr>
+      <tr><td>Resultados &amp; Limpeza</td><td>Casos Especiais</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado sem ação de página em <code>routes.js</code>.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="exportacao">
+    <h2>Menu: Exportar Arquivos</h2>
+    <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>Execução</td><td>Simular e Exportar</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado para simulação/exportação, mas sem ação em <code>routes.js</code>.</td></tr>
+      <tr><td>Execução</td><td>Destino Local</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado para destino local, mas sem ação em <code>routes.js</code>.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card" id="rotulos">
+    <h2>Rótulos recorrentes nas telas</h2>
+    <div class="table-wrap"><table><thead><tr><th>Área</th><th>Nomes atuais</th><th>Responsabilidade</th></tr></thead><tbody>
+      <tr><td>Tabelas</td><td>Cap., Merges/MERGES, Páginas, Disponibilidade, Resultado, TEXTO OFF, Situação</td><td>Identificam capítulo, contagens, elegibilidade e estado do processamento. Há variações de caixa e termos entre telas.</td></tr>
+      <tr><td>Filtros</td><td>Todos, Pendentes/Sem resultado, Processados/Com resultado, Sem alteração, Sem candidatos, MERGE inválido</td><td>Restringem as linhas conforme o estado do fluxo.</td></tr>
+      <tr><td>Ações</td><td>Executar Nível…, Selecionar todos, Limpar seleção</td><td>Iniciam processamento e controlam a seleção.</td></tr>
+      <tr><td>Resumo de execução</td><td>Resumo do Texto Off — …, Concluído, Sem alteração — revisar, Requer atenção</td><td>Resume o resultado do job e suas ocorrências.</td></tr>
+      <tr><td>Revisão Nível III</td><td>Ver candidatos</td><td>Abre a inspeção visual de candidatos em uma página.</td></tr>
+      <tr><td>Especiais VI–VIII</td><td>Capítulo, Página, Regiões selecionadas, Limpar regiões, Aplicar tratamento</td><td>Seleciona as entradas e áreas para prévia do tratamento.</td></tr>
+    </tbody></table></div>
+  </section>
+
+  <section class="card"><h2>Como ler o inventário</h2><p>Os nomes marcados como <span class="tag missing">Sem rota registrada</span> estão visíveis na configuração do menu, mas não resolvem para uma página na tabela de rotas atual. O inventário não presume comportamento ausente nem sugere nomenclatura substituta.</p></section>
+  <footer>Fonte: configuração de navegação e rotas da Central V2. Documento de inventário para apoiar revisão futura dos nomes.</footer>
+</main>
+</body>
+</html>

@@ -18,7 +18,7 @@ from central_v2.backend.orchestration.textoff_merged.special_levels import (
 )
 from central_v2.backend.orchestration.textoff_merged.artifact_paths import artifact_file
 from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest
-from central_v2.backend.orchestration.textoff_merged.stages import CONSOLIDATED, stage_chapter
+from central_v2.backend.orchestration.textoff_merged.consolidated_artifacts import consolidated_image
 
 
 def textoff_merged_response(query: dict, output_root: Path) -> RouteResponse:
@@ -60,8 +60,7 @@ def textoff_merged_level3_image_response(query: dict, output_root: Path) -> Rout
                     if item["chapter"] == chapter and item["cleaned"]), None)
         if not row or not any(page["source"] == filename for page in row["candidate_pages"]):
             raise ValueError("Página não pertence ao relatório Nível III.")
-        consolidated_dir = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
-        image = artifact_file(consolidated_dir, f"clean/{filename}", "clean")
+        image = consolidated_image(manga, chapter, filename)
         if image is None:
             raise ValueError("Imagem consolidada não encontrada.")
         return RouteResponse(200, image.read_bytes(), mimetypes.guess_type(image.name)[0] or "image/png")

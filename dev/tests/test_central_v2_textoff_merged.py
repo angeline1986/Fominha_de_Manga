@@ -1,3 +1,4 @@
+import hashlib
 import json
 import tempfile
 import unittest
@@ -45,10 +46,16 @@ class CentralV2TextoffMergedRouteTests(unittest.TestCase):
     def test_level3_image_serves_only_pages_referenced_by_completed_report(self):
         with tempfile.TemporaryDirectory() as root:
             output = self.make_output(root)
-            image_dir = output / "ridi/obra/FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/3/clean"
+            image_dir = output / "ridi/obra/FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/3/clean"
             image_dir.mkdir(parents=True)
             image = image_dir / "page-001-001_clean.png"
             image.write_bytes(b"merge-image")
+            consolidated = output / "ridi/obra/FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/3/json"
+            consolidated.mkdir(parents=True)
+            (consolidated / "clean-manifest.json").write_text(json.dumps({"selections": [{
+                "artifact": "clean/page-001-001_clean.png", "source": "page-001-001.png",
+                "selected_from": "TO_MERGED_NIVEL_I", "sha256": hashlib.sha256(b"merge-image").hexdigest(),
+            }]}), encoding="utf-8")
             row = {"chapter": "3", "cleaned": True,
                    "candidate_pages": [{"source": image.name, "candidates": [{
                        "bbox": [1, 2, 3, 4], "candidate_type": "irregular_outline"}]}]}
