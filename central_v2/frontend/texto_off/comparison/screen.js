@@ -21,11 +21,11 @@ export function createComparisonScreen(context, onBack) {
       <main class="comparison-canvas-panel">
         <header class="comparison-canvas-toolbar">
           <div class="comparison-canvas-title"><strong>Comparação do capítulo</strong><span data-summary></span></div>
+          <div class="comparison-view-toggle" role="group" aria-label="Modo de comparação">
+            <button type="button" data-mode="split" aria-pressed="true">Visão única</button>
+            <button type="button" data-mode="side" aria-pressed="false">Lado a lado</button>
+          </div>
           <div class="comparison-canvas-controls">
-            <div class="comparison-view-toggle" role="group" aria-label="Modo de comparação">
-              <button type="button" data-mode="split" aria-pressed="true">Visão única</button>
-              <button type="button" data-mode="side" aria-pressed="false">Lado a lado</button>
-            </div>
             <div class="zoom-control comparison-zoom" aria-label="Controles de zoom">
               <button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button>
               <output data-zoom-value aria-live="polite">40%</output>
@@ -94,11 +94,12 @@ export function createComparisonScreen(context, onBack) {
   function drawPreviewPosition(button) {
     if (!button || preview.hidden) return;
     const rect = button.getBoundingClientRect();
+    const sidebar = query(".comparison-sidebar").getBoundingClientRect();
     const card = preview.getBoundingClientRect();
     const width = card.width || 300, height = card.height || 420;
     const gap = 12;
-    let left = rect.right + gap;
-    if (left + width > innerWidth - 8) left = rect.left - width - gap;
+    let left = sidebar.right + gap;
+    if (left + width > innerWidth - 8) left = sidebar.left - width - gap;
     left = Math.max(8, Math.min(left, innerWidth - width - 8));
     let top = rect.top - 24;
     top = Math.max(8, Math.min(top, innerHeight - height - 8));
@@ -109,7 +110,7 @@ export function createComparisonScreen(context, onBack) {
     const page = pages.find((entry) => entry.name === name);
     if (!page) return;
     preview.querySelector("img").src = comparisonImageUrl(context, page, "before");
-    query("[data-preview-name]").textContent = name;
+    preview.querySelector("[data-preview-name]").textContent = name;
     preview.hidden = false; drawPreviewPosition(item);
   }
   function onZoom(event) {

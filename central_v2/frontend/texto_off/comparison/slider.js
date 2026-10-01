@@ -12,7 +12,7 @@ export function createSlider(viewport, onState) {
   frame.className = "comparison-frame";
   frame.innerHTML = `<div class="comparison-after"><span class="comparison-image-label">TEXTO OFF</span></div><div class="comparison-before"><span class="comparison-image-label">ORIGINAL</span></div>
     <div class="comparison-divider" role="slider" tabindex="0" aria-label="Divisor Antes e Depois"
-      aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span></span></div>`;
+      aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span aria-hidden="true">↔</span></div>`;
   stage.append(frame); viewport.append(stage);
   const handle = frame.querySelector(".comparison-divider");
   let split = 50, zoom = 0.4, x = 0, y = 0, width = 0, height = 0;
