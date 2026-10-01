@@ -47,6 +47,32 @@ class ComparisonTests(unittest.TestCase):
         for side, expected in [("before", b"original"), ("after", b"step-one")]:
             result = self.request(side=side, page=page["id"], version=page["version"])
             self.assertEqual(result.body, expected)
+        # Some running clients number visible pages from 1; resolve the pair
+        # by its version when the ordinal does not match the index.
+        one_based = self.request(side="before", page="1", version=page["version"])
+        self.assertEqual(one_based.status, 200)
+        self.assertEqual(one_based.body, b"original")
+        merge = self.manga / "FLUXO_SECUNDARIO/02_MERGE/1"
+        merge_manifest = merge / "merge-manifest.json"
+        metadata = json.loads(merge_manifest.read_text())
+        (merge / "page-two.png").write_bytes(b"original-two")
+        metadata["outputs"].append({"file": "page-two.png", "global_start": 10,
+                                    "global_end": 20})
+        metadata["merged_images"] = 2
+        metadata["source_total_height"] = 20
+        merge_manifest.write_text(json.dumps(metadata))
+        (self.level1 / "clean/page-two_clean.png").write_bytes(b"step-one-two")
+        clean_metadata = json.loads(self.manifest.read_text())
+        clean_metadata["source_artifacts"].append("page-two.png")
+        clean_metadata["clean_artifacts"].append("clean/page-two_clean.png")
+        clean_metadata["outputs_total"] = 2
+        self.manifest.write_text(json.dumps(clean_metadata))
+        pages = json.loads(self.request().body)["pages"]
+        self.assertEqual(len(pages), 2)
+        one_based_in_range = self.request(side="before", page="1", version=pages[0]["version"])
+        self.assertEqual(one_based_in_range.status, 200)
+        self.assertEqual(one_based_in_range.body, b"original")
+        self.assertEqual(self.request(side="before", page="999", version=pages[0]["version"]).status, 404)
         (self.level1 / "clean/page_clean.png").write_bytes(b"reprocessed")
         self.assertEqual(self.request(side="after", page="0", version=page["version"]).status, 404)
 

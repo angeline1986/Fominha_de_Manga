@@ -31,6 +31,7 @@ class Element {
   hasPointerCapture(id) { return this.capture === id; }
   releasePointerCapture() { this.capture = null; }
   focus() {}
+  closest() { return this.canvas || null; }
   remove() { this.removed = true; }
 }
 
@@ -49,8 +50,9 @@ async function setup(sizes = [[400, 600], [400, 600]]) {
   });
   const { createSlider, splitAt } = await load('/texto_off/comparison/slider.js');
   const viewport = new Element();
+  viewport.canvas = { scrollTop: 120, scrollLeft: 45 };
   const slider = createSlider(viewport, (...state) => states.push(state));
-  return { slider, viewport, frames, states, splitAt, disconnected: () => disconnected,
+  return { slider, viewport, canvas: viewport.canvas, frames, states, splitAt, disconnected: () => disconnected,
     flush() { const pending = [...frames.values()]; frames.clear(); pending.forEach((fn) => fn()); } };
 }
 
@@ -58,6 +60,8 @@ test('comparison coalesces pointer movement, clamps split, supports keyboard and
   const env = await setup();
   await env.slider.load('before', 'after');
   assert.equal(env.states.at(-1)[0], 'ready');
+  assert.equal(env.canvas.scrollTop, 0);
+  assert.equal(env.canvas.scrollLeft, 0);
   env.flush();
   const handle = env.viewport.child.child.querySelector('.comparison-divider');
   env.viewport.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 200, clientY: 0 });

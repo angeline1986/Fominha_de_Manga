@@ -36,7 +36,7 @@ export function createComparisonScreen(context, onBack) {
           </div>
         </header>
         <div class="comparison-canvas-viewport"><div class="comparison-state" data-state role="status" aria-live="polite"></div><div data-viewport></div></div>
-        <footer class="comparison-canvas-footer"><span data-footer-context>Original ↔ Texto Off</span>
+        <footer class="comparison-canvas-footer"><span data-footer-context>Original ↔ Auto Cleaner</span>
           <div class="comparison-focus-navigation" data-focus-navigation aria-label="Navegação entre páginas">
             <button type="button" data-prev aria-label="Página anterior" title="Página anterior">${iconMarkup("back")}</button>
             <output data-focus-count></output>
@@ -153,7 +153,7 @@ export function createComparisonScreen(context, onBack) {
       const result = await fetchComparison(context, controller.signal);
       if (disposed) return;
       pages = result.pages || [];
-      query("[data-footer-context]").textContent = result.experimental ? "Prévia experimental · Original ↔ Texto Off" : "Original ↔ Texto Off";
+      query("[data-footer-context]").textContent = result.experimental ? "Prévia experimental · Original ↔ Auto Cleaner" : "Original ↔ Auto Cleaner";
       if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
       showPage();
     } catch (error) {

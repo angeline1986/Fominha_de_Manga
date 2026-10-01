@@ -23,11 +23,21 @@ def comparison_response(query: dict, output_root: Path, *, image=False) -> Route
         if side not in {"before", "after"} or not isinstance(index, str) or not index.isdecimal():
             raise ValueError("Imagem de comparação inválida.")
         number = int(index)
-        if number >= len(pairs):
-            raise ValueError("Resultado indisponível ou desatualizado.")
-        if _value(query, "version") != pair_version(pairs[number]):
-            raise ValueError("Resultado alterado durante a comparação. Reabra a tela.")
-        path = pairs[number][side]
+        version = _value(query, "version")
+        pair = None
+        if number < len(pairs) and version == pair_version(pairs[number]):
+            pair = pairs[number]
+        else:
+            # A version is bound to the image pair and also tolerates clients
+            # that number page IDs from 1 instead of 0.
+            matches = [(ordinal, item) for ordinal, item in enumerate(pairs)
+                       if version == pair_version(item)]
+            if len(matches) != 1:
+                raise ValueError("Resultado indisponível ou desatualizado.")
+            ordinal, pair = matches[0]
+            if number != ordinal + 1:
+                raise ValueError("Resultado indisponível ou desatualizado.")
+        path = pair[side]
         return RouteResponse(200, path.read_bytes(), mimetypes.guess_type(path.name)[0] or "image/png")
     except (ValueError, TypeError):
         return RouteResponse(404, _json({"error": "Comparação indisponível para este capítulo e passo."}))

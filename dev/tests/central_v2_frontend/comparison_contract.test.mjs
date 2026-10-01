@@ -48,7 +48,8 @@ test('slider preserves image semantics, split interaction and exact side gap', a
   assert.match(css, /\.comparison-origin-hidden \{ display: none/);
   assert.match(source, /SIDE_BY_SIDE_GAP/);
   assert.match(source, /"Imagem original"/);
-  assert.match(source, /"Imagem TEXTO OFF"/);
+  assert.match(source, /"Imagem Auto Cleaner"/);
+  assert.match(source, /AUTO CLEANER/);
   assert.match(source, /aria-label="Divisor Antes e Depois"/);
   assert.match(source, /pair\[0\]\.naturalWidth !== pair\[1\]\.naturalWidth/);
   assert.match(css, /--comparison-side-gap: 18px/);

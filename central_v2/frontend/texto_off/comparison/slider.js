@@ -10,7 +10,7 @@ export function createSlider(viewport, onState) {
   stage.className = "comparison-stage";
   const frame = document.createElement("div");
   frame.className = "comparison-frame";
-  frame.innerHTML = `<div class="comparison-after"><span class="comparison-image-label">TEXTO OFF</span></div><div class="comparison-before"><span class="comparison-image-label">ORIGINAL</span></div>
+  frame.innerHTML = `<div class="comparison-after"><span class="comparison-image-label">AUTO CLEANER</span></div><div class="comparison-before"><span class="comparison-image-label">ORIGINAL</span></div>
     <div class="comparison-divider" role="slider" tabindex="0" aria-label="Divisor Antes e Depois"
       aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span aria-hidden="true">↔</span></div>`;
   stage.append(frame); viewport.append(stage);
@@ -32,8 +32,8 @@ export function createSlider(viewport, onState) {
     const imageWidth = width * zoom;
     const frameWidth = imageWidth * (side ? 2 : 1) + (side ? SIDE_BY_SIDE_GAP : 0);
     const frameHeight = height * zoom;
-    stage.style.width = `${Math.max(viewport.clientWidth, frameWidth + 32)}px`;
-    stage.style.height = `${Math.max(viewport.clientHeight, frameHeight + 32)}px`;
+    stage.style.width = `${Math.max(viewport.clientWidth, frameWidth + 48)}px`;
+    stage.style.height = `${Math.max(viewport.clientHeight, frameHeight + 48)}px`;
     frame.style.width = `${frameWidth}px`; frame.style.height = `${frameHeight}px`;
     schedule();
   }
@@ -80,10 +80,11 @@ export function createSlider(viewport, onState) {
   return {
     async load(beforeUrl, afterUrl) {
       const id = ++revision;
+      const canvas = viewport.closest?.(".comparison-canvas-viewport");
       ready = false; frame.hidden = true; drag = null; onState("loading");
       images.forEach((img) => { img.removeAttribute("src"); img.remove(); }); images = [new Image(), new Image()];
       const pair = images;
-      pair[0].alt = "Imagem original"; pair[1].alt = "Imagem TEXTO OFF";
+      pair[0].alt = "Imagem original"; pair[1].alt = "Imagem Auto Cleaner";
       pair.forEach((img) => { img.draggable = false; });
       pair[0].src = beforeUrl; pair[1].src = afterUrl;
       try {
@@ -97,7 +98,9 @@ export function createSlider(viewport, onState) {
         pair[0].className = "comparison-image"; pair[1].className = "comparison-image";
         frame.querySelector(".comparison-before").prepend(pair[0]);
         frame.querySelector(".comparison-after").prepend(pair[1]);
-        split = 50; x = 0; y = 0; ready = true; frame.hidden = false; layout(); onState("ready");
+        split = 50; x = 0; y = 0; ready = true; frame.hidden = false; layout();
+        if (canvas) { canvas.scrollTop = 0; canvas.scrollLeft = 0; }
+        onState("ready");
       } catch (error) {
         if (!disposed && revision === id) onState("error", error.message.includes("dimensões")
           ? error.message : "Não foi possível carregar as duas imagens. Tente novamente.");
