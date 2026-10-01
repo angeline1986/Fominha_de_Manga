@@ -1,0 +1,57 @@
+export const RESIDUE_TYPES = [
+  ["residuo_transparencia", "Resíduo de transparência"],
+  ["residuo_degrade", "Resíduo do degradê"],
+  ["residuo_gradiente", "Resíduo do gradiente"],
+  ["fragmento_balao", "Fragmento de balão"],
+  ["texto_residual", "Texto residual"],
+  ["outro", "Outro defeito"],
+];
+
+export function clamp(value, min, max) { return Math.min(max, Math.max(min, value)); }
+
+export function normalizedPoint(event, rect) {
+  return {
+    x: rect.width ? clamp((event.clientX - rect.left) / rect.width, 0, 1) : 0,
+    y: rect.height ? clamp((event.clientY - rect.top) / rect.height, 0, 1) : 0,
+  };
+}
+
+export function normalizedBox(start, end) {
+  const left = Math.min(start.x, end.x), top = Math.min(start.y, end.y);
+  return { left, top, width: Math.abs(end.x - start.x), height: Math.abs(end.y - start.y) };
+}
+
+export function renderedBoxSize(box, rect) {
+  return { width: box.width * rect.width, height: box.height * rect.height };
+}
+
+export function createPageDraft() { return { nextNumber: 1, occurrences: [] }; }
+
+export function createPageDraftStore() {
+  const pages = new Map();
+  return {
+    get(key) {
+      if (!pages.has(key)) pages.set(key, createPageDraft());
+      return pages.get(key);
+    },
+    clear() { pages.clear(); },
+  };
+}
+
+export function addOccurrence(draft, box, id) {
+  const occurrence = { id, number: draft.nextNumber++, type: "residuo_transparencia", note: null, box };
+  draft.occurrences.push(occurrence);
+  return occurrence;
+}
+
+export function removeFromDraft(draft, id) {
+  const index = draft.occurrences.findIndex((item) => item.id === id);
+  if (index < 0) return false;
+  draft.occurrences.splice(index, 1);
+  return true;
+}
+
+export function updateOccurrenceType(occurrence, type) {
+  occurrence.type = type;
+  if (type !== "outro") occurrence.note = null;
+}

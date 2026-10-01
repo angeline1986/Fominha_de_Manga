@@ -40,6 +40,9 @@ test('screen exposes accessible toolbar, chapter context, image preview and focu
   assert.match(source, /context\.chapter/);
   assert.match(source, /controller\.abort\(\)/);
   assert.match(source, /disposeFocus\(\)/);
+  assert.match(source, /createResidueCatalog/);
+  assert.match(source, /aria-controls="comparison-residue-panel"/);
+  assert.match(source, /aria-expanded="false"/);
 });
 
 test('slider preserves image semantics, split interaction and exact side gap', async () => {
@@ -59,4 +62,9 @@ test('slider preserves image semantics, split interaction and exact side gap', a
   assert.match(css, /\.comparison-stage \{[^}]*width: max-content; height: max-content;[^}]*box-sizing: border-box/);
   assert.doesNotMatch(source, /stage\.style\.(?:width|height)|viewport\.client(?:Width|Height)/);
   assert.doesNotMatch(source, /ResizeObserver/);
+  assert.match(source, /getImageMetrics\(\)/);
+  assert.match(source, /mountAfterOverlay\(element\)/);
+  assert.match(source, /setInteractionMode\(nextMode\)/);
+  assert.match(css, /\.comparison-frame\.is-side-by-side \.comparison-after-overlay/);
+  assert.match(css, /\.comparison-workspace\.has-residue-panel/);
 });

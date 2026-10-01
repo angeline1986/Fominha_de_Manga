@@ -17,6 +17,7 @@ export function createSlider(viewport, onState) {
   const handle = frame.querySelector(".comparison-divider");
   let split = 50, zoom = 0.4, x = 0, y = 0, width = 0, height = 0;
   let ready = false, revision = 0, disposed = false, raf = 0, drag = null, space = false;
+  let interactionMode = "normal", mode = "split", afterOverlay = null;
   let images = [];
   function paint() {
     raf = 0;
@@ -37,6 +38,8 @@ export function createSlider(viewport, onState) {
   }
   function down(event) {
     if (!ready || drag || ![0, 1].includes(event.button)) return;
+    if (event.target?.closest?.(".comparison-after-overlay")) return;
+    if (interactionMode === "residue-selection" && event.button === 0) return;
     const wantsPan = space || event.button === 1;
     const pan = wantsPan && zoom > 1;
     if (!pan && frame.classList.contains("is-side-by-side")) return;
@@ -59,7 +62,7 @@ export function createSlider(viewport, onState) {
   }
   function keydown(event) {
     if (event.code === "Space") { event.preventDefault(); space = true; return; }
-    if (!ready) return;
+    if (!ready || interactionMode !== "normal") return;
     const delta = event.shiftKey ? 10 : 1;
     if (event.key === "ArrowLeft") split = clamp(split - delta, 0, 100);
     else if (event.key === "ArrowRight") split = clamp(split + delta, 0, 100);
@@ -104,7 +107,26 @@ export function createSlider(viewport, onState) {
     },
     zoom(value) { zoom = clamp(value, 0.2, 2); layout(); return zoom; },
     getZoom() { return zoom; },
-    setMode(mode) { frame.classList.toggle("is-side-by-side", mode === "side"); layout(); },
+    setMode(nextMode) {
+      mode = nextMode;
+      frame.classList.toggle("is-side-by-side", mode === "side"); layout();
+    },
+    getImageMetrics() { return { naturalWidth: width, naturalHeight: height, zoom, mode }; },
+    mountAfterOverlay(element) {
+      if (afterOverlay && afterOverlay !== element) afterOverlay.remove();
+      afterOverlay = element;
+      element.classList.add("comparison-after-overlay");
+      frame.append(element);
+    },
+    setInteractionMode(nextMode) {
+      if (!["normal", "residue-selection"].includes(nextMode)) throw new TypeError("Modo de interação inválido.");
+      interactionMode = nextMode;
+      frame.classList.toggle("is-residue-selection", nextMode === "residue-selection");
+      if (nextMode !== "normal" && drag) {
+        const pointerId = drag.id; drag = null;
+        if (viewport.hasPointerCapture(pointerId)) viewport.releasePointerCapture(pointerId);
+      }
+    },
     dispose() {
       disposed = true; revision++; cancelAnimationFrame(raf);
       images.forEach((img) => { img.removeAttribute("src"); img.remove(); });
@@ -112,6 +134,7 @@ export function createSlider(viewport, onState) {
       for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) viewport.removeEventListener(type, end);
       handle.removeEventListener("keydown", keydown); handle.removeEventListener("keyup", keyup);
       handle.removeEventListener("blur", blur); stage.remove();
+      afterOverlay = null;
     },
   };
 }

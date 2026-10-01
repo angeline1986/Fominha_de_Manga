@@ -8,6 +8,7 @@ class Element {
     this.className = "";
     this.classList = {
       contains: (name) => this.className.split(/\s+/).includes(name),
+      add: (name) => { if (!this.className.split(/\s+/).includes(name)) this.className = `${this.className} ${name}`.trim(); },
       toggle: (name, force) => {
         const classes = new Set(this.className.split(/\s+/).filter(Boolean));
         if (force ?? !classes.has(name)) classes.add(name); else classes.delete(name);
@@ -100,6 +101,30 @@ test('comparison refuses mismatched dimensions before enabling interaction', asy
   assert.equal(env.viewport.child.child.hidden, true);
   env.viewport.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 200 });
   assert.equal(env.viewport.capture, undefined);
+  env.slider.dispose();
+});
+
+test('comparison exposes after metrics and gives residue selection exclusive left-pointer ownership', async () => {
+  const env = await setup();
+  await env.slider.load('before', 'after');
+  env.slider.setMode('side');
+  env.slider.zoom(1);
+  const metrics = env.slider.getImageMetrics();
+  assert.equal(metrics.naturalWidth, 400); assert.equal(metrics.naturalHeight, 600);
+  assert.equal(metrics.zoom, 1); assert.equal(metrics.mode, 'side');
+  const overlay = new Element();
+  env.slider.mountAfterOverlay(overlay);
+  assert.equal(env.viewport.child.child.child, overlay);
+  assert.equal(overlay.classList.contains('comparison-after-overlay'), true);
+  env.slider.setMode('split'); env.slider.setInteractionMode('residue-selection');
+  env.viewport.dispatch('pointerdown', { pointerId: 5, button: 0, clientX: 200, clientY: 80 });
+  assert.equal(env.viewport.capture, undefined);
+  assert.equal(env.viewport.child.child.classList.contains('is-residue-selection'), true);
+  env.slider.setInteractionMode('normal');
+  assert.equal(env.viewport.child.child.classList.contains('is-residue-selection'), false);
+  env.viewport.dispatch('pointerdown', { pointerId: 6, button: 0, clientX: 200, clientY: 80 });
+  assert.equal(env.viewport.capture, 6);
+  env.viewport.dispatch('pointercancel', { pointerId: 6 });
   env.slider.dispose();
 });
 

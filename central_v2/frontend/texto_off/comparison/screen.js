@@ -4,6 +4,7 @@ import { fetchComparison, comparisonImageUrl } from "/_app/api/comparison.js";
 import { createSlider } from "/texto_off/comparison/slider.js";
 import { INITIAL_ZOOM, clampZoom } from "/texto_off/comparison/model.js";
 import { createPageList } from "/texto_off/comparison/page_list.js";
+import { createResidueCatalog } from "/texto_off/comparison/residue_catalog.js";
 
 export function createComparisonScreen(context, onBack) {
   const element = document.createElement("section");
@@ -33,6 +34,7 @@ export function createComparisonScreen(context, onBack) {
               <button type="button" data-zoom="one" aria-label="Visualizar em escala 1 para 1">1:1</button>
             </div>
             <button type="button" class="btn comparison-focus-toggle" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button>
+            <button type="button" class="btn comparison-panel-toggle" data-panel-toggle aria-controls="comparison-residue-panel" aria-expanded="false" aria-pressed="false">Painel</button>
           </div>
         </header>
         <div class="comparison-canvas-viewport"><div class="comparison-state" data-state role="status" aria-live="polite"></div><div data-viewport></div></div>
@@ -61,6 +63,14 @@ export function createComparisonScreen(context, onBack) {
     else if (nextState === "ready") { pageState = "ready"; state.textContent = ""; }
     drawState();
   });
+  const catalog = createResidueCatalog({ workspace: query(".comparison-workspace"), slider,
+    onOpenChange: (open) => {
+      const button = query("[data-panel-toggle]");
+      button.setAttribute("aria-expanded", String(open)); button.setAttribute("aria-pressed", String(open));
+    },
+  });
+  catalog.element.id = "comparison-residue-panel";
+  query(".comparison-workspace").append(catalog.element);
   const focusButton = query("[data-focus-toggle]");
   const pageList = createPageList({
     list: query("[data-pages]"), search: query("[data-search]"),
@@ -84,6 +94,7 @@ export function createComparisonScreen(context, onBack) {
     if (!page) return;
     state.textContent = "Carregando imagens da comparação…"; pageState = "loading"; drawState();
     query("[data-summary]").textContent = `Cap. ${context.chapter} · ${page.name} · ${index + 1} de ${pages.length}`;
+    catalog.setPage(`${context.step}:${page.name}`);
     query("[data-focus-count]").textContent = `${index + 1} / ${pages.length}`;
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index >= pages.length - 1;
@@ -141,10 +152,12 @@ export function createComparisonScreen(context, onBack) {
     const delta = control.matches("[data-prev]") ? -1 : 1;
     if (pages[index + delta]) selectPage(index + delta);
   }
+  function onPanel(event) { if (event.target.closest("[data-panel-toggle]")) catalog.toggle(); }
   const disposePageList = pageList.dispose;
   element.addEventListener("click", onZoom);
   element.addEventListener("click", onMode);
   element.addEventListener("click", onMove);
+  element.addEventListener("click", onPanel);
   element.addEventListener("keydown", onKeyDown);
 
   async function load() {
@@ -164,8 +177,9 @@ export function createComparisonScreen(context, onBack) {
     disposed = true; controller.abort(); preview.hidden = true; preview.querySelector("img").removeAttribute("src"); preview.remove();
     disposePageList();
     element.removeEventListener("click", onZoom); element.removeEventListener("click", onMode);
-    element.removeEventListener("click", onMove); element.removeEventListener("keydown", onKeyDown);
-    slider.dispose(); disposeFocus();
+    element.removeEventListener("click", onMove); element.removeEventListener("click", onPanel);
+    element.removeEventListener("keydown", onKeyDown);
+    catalog.dispose(); slider.dispose(); disposeFocus();
   }
   drawState();
   return { element, start: load, dispose };
