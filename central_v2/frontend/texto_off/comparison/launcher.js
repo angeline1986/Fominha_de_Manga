@@ -12,7 +12,7 @@ export function createComparisonLauncher(origin, step) {
   let screen = null, unsubscribe = null, focus = null, scroll = 0;
   function close(restore = true) {
     unsubscribe?.(); unsubscribe = null;
-    screen?.dispose(); screen = null;
+    screen?.dispose(); screen?.element.remove(); screen = null;
     origin.classList.remove("comparison-origin-hidden");
     if (restore && origin.parentElement) {
       origin.parentElement.scrollTop = scroll;

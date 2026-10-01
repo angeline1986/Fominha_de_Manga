@@ -1,130 +1,173 @@
-import { fetchComparison, comparisonImageUrl } from "/_app/api/comparison.js";
+import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { fetchComparison, comparisonImageUrl } from "/_app/api/comparison.js";
 import { createSlider } from "/texto_off/comparison/slider.js";
+import { INITIAL_ZOOM, clampZoom } from "/texto_off/comparison/model.js";
+import { createPageList } from "/texto_off/comparison/page_list.js";
 
 export function createComparisonScreen(context, onBack) {
   const element = document.createElement("section");
-  element.className = "comparison-screen";
-  element.setAttribute("aria-label", "Antes e Depois");
-  element.innerHTML = `<header class="qc-studio-toolbar">
-    <div class="toolbar-z-left"><button class="btn comparison-back" type="button" data-back>← Voltar</button>
-    <nav class="comparison-breadcrumb" aria-label="Localização"><span data-manga></span><span>›</span>
-    <span>Cap. <b data-chapter></b></span><span>›</span><span data-filename></span></nav></div>
-    <div class="toolbar-z-center"><div class="view-mode-toggle" role="group" aria-label="Modo de comparação">
-      <button class="mode-btn active" type="button" data-mode="split">◐ Visão única</button>
-      <button class="mode-btn" type="button" data-mode="side">◫ Lado a lado</button></div>
-      <div class="zoom-widget"><button type="button" data-zoom-down aria-label="Diminuir zoom">−</button>
-      <span class="z-val" data-zoom-value>100%</span><button type="button" data-zoom-up aria-label="Aumentar zoom">+</button>
-      <button type="button" data-zoom-reset aria-label="Redefinir zoom">↺</button></div></div>
-    <div class="toolbar-z-right"><span class="comparison-kind" data-kind></span></div>
-    </header><div class="comparison-studio-body">
-      <aside class="studio-pages-sidebar"><div class="sidebar-obra-head"><div class="o-title" data-sidebar-manga></div>
-      <div class="o-sub">Cap. <span data-sidebar-chapter></span> · <span data-total></span> páginas</div></div>
-      <div class="sidebar-search-box"><input type="search" data-search placeholder="Buscar página" aria-label="Buscar página"></div>
-      <div class="pages-scroll-stack" data-pages role="listbox" aria-label="Páginas do capítulo"></div></aside>
-      <div class="studio-canvas-area"><div class="comparison-message" role="status" aria-live="polite"></div>
-      <div class="comparison-viewport"></div></div>
-      <aside class="hover-thumb-card" data-preview hidden><img alt="Prévia da página" data-preview-image>
-      <div><span data-preview-name></span><span data-preview-number></span></div></aside>
-    </div><footer class="studio-footer-pager"><button class="btn-pager" type="button" data-prev>◀ Anterior</button>
-    <span class="page-pill-current" data-count></span><button class="btn-pager" type="button" data-next>Próxima ▶</button></footer>`;
+  element.className = "comparison-screen focus-mode-root";
+  element.setAttribute("aria-label", "Comparar Capítulo");
+  element.innerHTML = `<header class="comparison-page-heading">COMPARAR CAPÍTULO</header>
+    <div class="comparison-workspace">
+      <aside class="comparison-sidebar">
+        <div class="comparison-sidebar-heading"><h2>Páginas</h2><span>Cap. ${escapeHtml(context.chapter)}</span></div>
+        <label class="comparison-search"><span class="visually-hidden">Buscar página pelo nome</span>
+          <input data-search type="search" placeholder="Buscar página"></label>
+        <div class="comparison-page-list" data-pages role="listbox" aria-label="Páginas do capítulo"></div>
+        <div class="comparison-pagination" data-pagination></div>
+      </aside>
+      <main class="comparison-canvas-panel">
+        <header class="comparison-canvas-toolbar">
+          <div class="comparison-canvas-title"><strong>Comparação do capítulo</strong><span data-summary></span></div>
+          <div class="comparison-canvas-controls">
+            <div class="comparison-view-toggle" role="group" aria-label="Modo de comparação">
+              <button type="button" data-mode="split" aria-pressed="true">Visão única</button>
+              <button type="button" data-mode="side" aria-pressed="false">Lado a lado</button>
+            </div>
+            <div class="zoom-control comparison-zoom" aria-label="Controles de zoom">
+              <button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button>
+              <output data-zoom-value aria-live="polite">40%</output>
+              <button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button>
+              <button type="button" data-zoom="one" aria-label="Visualizar em escala 1 para 1">1:1</button>
+            </div>
+            <button type="button" class="btn comparison-focus-toggle" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button>
+          </div>
+        </header>
+        <div class="comparison-canvas-viewport"><div class="comparison-state" data-state role="status" aria-live="polite"></div><div data-viewport></div></div>
+        <footer class="comparison-canvas-footer"><span data-footer-context>Original ↔ Texto Off</span>
+          <div class="comparison-focus-navigation" data-focus-navigation aria-label="Navegação entre páginas">
+            <button type="button" data-prev aria-label="Página anterior" title="Página anterior">${iconMarkup("back")}</button>
+            <output data-focus-count></output>
+            <button type="button" data-next aria-label="Próxima página" title="Próxima página">${iconMarkup("next")}</button>
+          </div>
+          <span>Atalho de foco: F</span>
+        </footer>
+      </main>
+    </div>
+    <aside class="comparison-hover-preview" data-preview role="tooltip" hidden>
+      <img alt="Prévia da imagem original"><span data-preview-name></span></aside>`;
+
   const query = (selector) => element.querySelector(selector);
-  query("[data-manga]").textContent = context.manga;
-  query("[data-sidebar-manga]").textContent = context.manga;
-  query("[data-chapter]").textContent = context.chapter;
-  query("[data-sidebar-chapter]").textContent = context.chapter;
-  const message = query(".comparison-message"), viewport = query(".comparison-viewport");
-  const list = query("[data-pages]"), search = query("[data-search]");
+  const canvas = query("[data-viewport]");
+  const state = query("[data-state]"), preview = query("[data-preview]");
   const controller = new AbortController();
-  let pages = [], index = 0, disposed = false, mode = "split", previewTimer;
-  const slider = createSlider(viewport, (state, error) => {
-    viewport.setAttribute("aria-busy", String(state === "loading"));
-    message.hidden = state === "ready";
-    message.textContent = state === "loading" ? "Carregando imagens…" : error || "";
-    element.querySelectorAll("[data-zoom-down], [data-zoom-up], [data-zoom-reset]")
-      .forEach((button) => { button.disabled = state !== "ready"; });
+  let pages = [], index = 0, pageState = "loading", mode = "split", zoom = INITIAL_ZOOM, disposed = false;
+  const slider = createSlider(canvas, (nextState, error) => {
+    canvas.setAttribute("aria-busy", String(nextState === "loading"));
+    element.querySelectorAll("[data-zoom]").forEach((button) => { button.disabled = nextState !== "ready"; });
+    if (nextState === "error") { pageState = "error"; state.textContent = error; }
+    else if (nextState === "ready") { pageState = "ready"; state.textContent = ""; }
+    drawState();
   });
-  function filteredPages() {
-    const term = search.value.trim().toLocaleLowerCase("pt-BR");
-    return pages.map((page, position) => ({ page, position }))
-      .filter(({ page }) => page.name.toLocaleLowerCase("pt-BR").includes(term));
+  const focusButton = query("[data-focus-toggle]");
+  const pageList = createPageList({
+    list: query("[data-pages]"), search: query("[data-search]"),
+    paginationRoot: query("[data-pagination]"), onSelect: selectPage,
+    onPreview: showPreview, onPreviewPosition: drawPreviewPosition,
+  });
+  const disposeFocus = bindFocusMode(element, { button: focusButton });
+  document.body.append(preview);
+
+  function drawState() {
+    state.hidden = pageState === "ready";
+    if (pageState === "loading" && !state.textContent) state.textContent = "Carregando imagens da comparação…";
+    if (pageState === "empty") state.textContent = "Nenhum resultado atual disponível para comparação.";
+    if (pageState === "error" && !state.textContent) state.textContent = "Não foi possível carregar a comparação.";
   }
-  function drawList() {
-    list.replaceChildren();
-    for (const { page, position } of filteredPages()) {
-      const button = document.createElement("button");
-      button.type = "button"; button.className = "page-row-btn";
-      button.classList.toggle("active", position === index);
-      button.setAttribute("role", "option");
-      button.setAttribute("aria-selected", String(position === index));
-      button.textContent = page.name;
-      button.addEventListener("click", () => { index = position; show(); });
-      button.addEventListener("mouseenter", () => showPreview(page, position, button));
-      button.addEventListener("mouseleave", schedulePreviewClose);
-      list.append(button);
-    }
+  function selectPage(next) {
+    index = next; preview.hidden = true; showPage();
   }
-  function schedulePreviewClose() { previewTimer = setTimeout(() => { query("[data-preview]").hidden = true; }, 100); }
-  function showPreview(page, position, button) {
-    clearTimeout(previewTimer);
-    const card = query("[data-preview]"), rect = button.getBoundingClientRect();
-    card.style.top = `${Math.max(12, Math.min(rect.top, innerHeight - 470))}px`;
-    query("[data-preview-name]").textContent = page.name;
-    query("[data-preview-number]").textContent = `${position + 1} / ${pages.length}`;
-    query("[data-preview-image]").src = comparisonImageUrl(context, page, "before");
-    card.hidden = false;
-  }
-  function show() {
+  function showPage() {
     const page = pages[index];
     if (!page) return;
-    query("[data-filename]").textContent = page.name;
-    query("[data-count]").textContent = `${index + 1} / ${pages.length}`;
+    state.textContent = "Carregando imagens da comparação…"; pageState = "loading"; drawState();
+    query("[data-summary]").textContent = `Cap. ${context.chapter} · ${page.name} · ${index + 1} de ${pages.length}`;
+    query("[data-focus-count]").textContent = `${index + 1} / ${pages.length}`;
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index >= pages.length - 1;
-    drawList();
+    pageList.render(pages, index);
     slider.load(comparisonImageUrl(context, page, "before"), comparisonImageUrl(context, page, "after"));
+    slider.setMode(mode); slider.zoom(zoom / 100); updateZoom();
   }
-  query("[data-back]").addEventListener("click", onBack);
-  query("[data-prev]").addEventListener("click", () => { if (index > 0) { index--; show(); } });
-  query("[data-next]").addEventListener("click", () => { if (index < pages.length - 1) { index++; show(); } });
-  search.addEventListener("input", drawList);
-  const preview = query("[data-preview]");
-  preview.addEventListener("mouseenter", () => clearTimeout(previewTimer));
-  preview.addEventListener("mouseleave", schedulePreviewClose);
-  element.querySelectorAll("[data-mode]").forEach((button) => button.addEventListener("click", () => {
+  function drawPreviewPosition(button) {
+    if (!button || preview.hidden) return;
+    const rect = button.getBoundingClientRect();
+    const card = preview.getBoundingClientRect();
+    const width = card.width || 300, height = card.height || 420;
+    const gap = 12;
+    let left = rect.right + gap;
+    if (left + width > innerWidth - 8) left = rect.left - width - gap;
+    left = Math.max(8, Math.min(left, innerWidth - width - 8));
+    let top = rect.top - 24;
+    top = Math.max(8, Math.min(top, innerHeight - height - 8));
+    preview.style.left = `${left}px`; preview.style.top = `${top}px`;
+  }
+  function showPreview(name, item) {
+    if (name === null) { preview.hidden = true; return; }
+    const page = pages.find((entry) => entry.name === name);
+    if (!page) return;
+    preview.querySelector("img").src = comparisonImageUrl(context, page, "before");
+    query("[data-preview-name]").textContent = name;
+    preview.hidden = false; drawPreviewPosition(item);
+  }
+  function onZoom(event) {
+    const action = event.target.closest("[data-zoom]")?.dataset.zoom;
+    if (!action) return;
+    zoom = clampZoom(zoom, action);
+    slider.zoom(zoom / 100); updateZoom();
+  }
+  function updateZoom() { query("[data-zoom-value]").textContent = `${zoom}%`; }
+  function onMode(event) {
+    const button = event.target.closest("[data-mode]");
+    if (!button) return;
     mode = button.dataset.mode; slider.setMode(mode);
-    element.querySelectorAll("[data-mode]").forEach((item) => {
-      const active = item === button; item.classList.toggle("active", active);
-      item.setAttribute("aria-pressed", String(active));
-    });
-  }));
-  query("[data-zoom-down]").addEventListener("click", () => setZoom(slider.getZoom() - 0.25));
-  query("[data-zoom-up]").addEventListener("click", () => setZoom(slider.getZoom() + 0.25));
-  query("[data-zoom-reset]").addEventListener("click", () => setZoom(1));
-  function setZoom(value) {
-    const zoom = slider.zoom(value); query("[data-zoom-value]").textContent = `${Math.round(zoom * 100)}%`;
+    element.querySelectorAll("[data-mode]").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
   }
-  element.addEventListener("keydown", (event) => {
-    if (event.key === "Escape") onBack();
-    if (event.target.matches("input, select, [role=slider], [contenteditable=true]")) return;
-    if (event.key === "ArrowLeft" && index > 0) { index--; show(); }
-    if (event.key === "ArrowRight" && index < pages.length - 1) { index++; show(); }
-  });
+  function onKeyDown(event) {
+    if (event.key === "Escape") {
+      if (!element.classList.contains("is-focus-mode")) { event.preventDefault(); onBack(); }
+      return;
+    }
+    if (event.target.closest?.("input, textarea, select, [contenteditable='true'], [role='slider']")) return;
+    if (event.key === "ArrowLeft" && index > 0) { event.preventDefault(); selectPage(index - 1); }
+    if (event.key === "ArrowRight" && index < pages.length - 1) { event.preventDefault(); selectPage(index + 1); }
+  }
+  function onMove(event) {
+    const control = event.target.closest("[data-prev], [data-next]");
+    if (!control) return;
+    const delta = control.matches("[data-prev]") ? -1 : 1;
+    if (pages[index + delta]) selectPage(index + delta);
+  }
+  const disposePageList = pageList.dispose;
+  element.addEventListener("click", onZoom);
+  element.addEventListener("click", onMode);
+  element.addEventListener("click", onMove);
+  element.addEventListener("keydown", onKeyDown);
+
   async function load() {
-    message.textContent = "Consultando imagens disponíveis…";
+    pageState = "loading"; drawState();
     try {
       const result = await fetchComparison(context, controller.signal);
       if (disposed) return;
-      pages = result.pages;
-      query("[data-total]").textContent = String(pages.length);
-      query("[data-kind]").textContent = result.experimental ? "Prévia experimental" : "Resultado registrado";
-      if (!pages.length) { message.textContent = "Nenhum resultado atual disponível para comparação."; return; }
-      show(); query("[data-back]").focus();
-    } catch (error) { if (!disposed && error.name !== "AbortError") message.textContent = error.message; }
+      pages = result.pages || [];
+      query("[data-footer-context]").textContent = result.experimental ? "Prévia experimental · Original ↔ Texto Off" : "Original ↔ Texto Off";
+      if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
+      showPage();
+    } catch (error) {
+      if (!disposed && error.name !== "AbortError") { pageState = "error"; state.textContent = error.message; drawState(); }
+    }
   }
-  return {
-    element,
-    start() { query("[data-back]").focus(); load(); },
-    dispose() { disposed = true; clearTimeout(previewTimer); controller.abort(); slider.dispose(); element.remove(); },
-  };
+  function dispose() {
+    disposed = true; controller.abort(); preview.hidden = true; preview.querySelector("img").removeAttribute("src"); preview.remove();
+    disposePageList();
+    element.removeEventListener("click", onZoom); element.removeEventListener("click", onMode);
+    element.removeEventListener("click", onMove); element.removeEventListener("keydown", onKeyDown);
+    slider.dispose(); disposeFocus();
+  }
+  drawState();
+  return { element, start: load, dispose };
 }
+
+function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
