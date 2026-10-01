@@ -37,7 +37,7 @@ class Element {
 
 async function setup(sizes = [[400, 600], [400, 600]]) {
   const frames = new Map(), states = [];
-  let next = 0, image = 0, disconnected = false;
+  let next = 0, image = 0;
   class Image extends Element {
     constructor() { super(); [this.naturalWidth, this.naturalHeight] = sizes[image++]; }
     async decode() {}
@@ -46,13 +46,12 @@ async function setup(sizes = [[400, 600], [400, 600]]) {
     document: { createElement: () => new Element() }, Image,
     requestAnimationFrame: (fn) => { frames.set(++next, fn); return next; },
     cancelAnimationFrame: (id) => frames.delete(id),
-    ResizeObserver: class { observe() {} disconnect() { disconnected = true; } },
   });
   const { createSlider, splitAt } = await load('/texto_off/comparison/slider.js');
   const viewport = new Element();
   viewport.canvas = { scrollTop: 120, scrollLeft: 45 };
   const slider = createSlider(viewport, (...state) => states.push(state));
-  return { slider, viewport, canvas: viewport.canvas, frames, states, splitAt, disconnected: () => disconnected,
+  return { slider, viewport, canvas: viewport.canvas, frames, states, splitAt,
     flush() { const pending = [...frames.values()]; frames.clear(); pending.forEach((fn) => fn()); } };
 }
 
@@ -62,8 +61,21 @@ test('comparison coalesces pointer movement, clamps split, supports keyboard and
   assert.equal(env.states.at(-1)[0], 'ready');
   assert.equal(env.canvas.scrollTop, 0);
   assert.equal(env.canvas.scrollLeft, 0);
+  const stage = env.viewport.child;
+  const frame = stage.child;
+  assert.equal(frame.style.width, '160px');
+  assert.equal(frame.style.height, '240px');
+  assert.equal(stage.style.width, undefined);
+  assert.equal(stage.style.height, undefined);
+  env.slider.setMode('side');
+  assert.equal(frame.style.width, '338px');
+  env.slider.zoom(1);
+  assert.equal(frame.style.width, '818px');
+  assert.equal(frame.style.height, '600px');
+  env.slider.setMode('split');
+  assert.equal(frame.style.width, '400px');
   env.flush();
-  const handle = env.viewport.child.child.querySelector('.comparison-divider');
+  const handle = frame.querySelector('.comparison-divider');
   env.viewport.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 200, clientY: 0 });
   for (const x of [250, 300, 1000]) env.viewport.dispatch('pointermove', { pointerId: 1, clientX: x });
   assert.equal(env.frames.size, 1);
@@ -76,7 +88,6 @@ test('comparison coalesces pointer movement, clamps split, supports keyboard and
   handle.dispatch('keydown', { key: 'ArrowRight', shiftKey: true }); env.flush();
   assert.equal(handle.attrs['aria-valuenow'], '10');
   env.slider.dispose();
-  assert.equal(env.disconnected(), true);
   assert.equal(env.viewport.events.size, 0);
   assert.equal(env.frames.size, 0);
 });

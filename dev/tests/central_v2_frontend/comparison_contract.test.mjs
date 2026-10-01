@@ -56,4 +56,7 @@ test('slider preserves image semantics, split interaction and exact side gap', a
   assert.match(css, /width: calc\(50% - var\(--comparison-side-gap\) \/ 2\)/);
   assert.match(css, /\.is-focus-mode \.comparison-focus-navigation \{ display: flex/);
   assert.match(css, /\.comparison-focus-navigation \{ display: none/);
+  assert.match(css, /\.comparison-stage \{[^}]*width: max-content; height: max-content;[^}]*box-sizing: border-box/);
+  assert.doesNotMatch(source, /stage\.style\.(?:width|height)|viewport\.client(?:Width|Height)/);
+  assert.doesNotMatch(source, /ResizeObserver/);
 });

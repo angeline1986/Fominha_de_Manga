@@ -32,13 +32,9 @@ export function createSlider(viewport, onState) {
     const imageWidth = width * zoom;
     const frameWidth = imageWidth * (side ? 2 : 1) + (side ? SIDE_BY_SIDE_GAP : 0);
     const frameHeight = height * zoom;
-    stage.style.width = `${Math.max(viewport.clientWidth, frameWidth + 48)}px`;
-    stage.style.height = `${Math.max(viewport.clientHeight, frameHeight + 48)}px`;
     frame.style.width = `${frameWidth}px`; frame.style.height = `${frameHeight}px`;
     schedule();
   }
-  const observer = new ResizeObserver(layout);
-  observer.observe(viewport);
   function down(event) {
     if (!ready || drag || ![0, 1].includes(event.button)) return;
     const wantsPan = space || event.button === 1;
@@ -110,7 +106,7 @@ export function createSlider(viewport, onState) {
     getZoom() { return zoom; },
     setMode(mode) { frame.classList.toggle("is-side-by-side", mode === "side"); layout(); },
     dispose() {
-      disposed = true; revision++; observer.disconnect(); cancelAnimationFrame(raf);
+      disposed = true; revision++; cancelAnimationFrame(raf);
       images.forEach((img) => { img.removeAttribute("src"); img.remove(); });
       viewport.removeEventListener("pointerdown", down); viewport.removeEventListener("pointermove", move);
       for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) viewport.removeEventListener(type, end);
