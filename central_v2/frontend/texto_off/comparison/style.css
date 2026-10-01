@@ -52,7 +52,7 @@
 .comparison-residue-row select { min-width: 0; width: 100%; min-height: 30px; border: 1px solid var(--color-border-primary); border-radius: 6px; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-small); }
 .comparison-residue-row.is-highlighted { border-color: var(--color-primary); background: var(--color-primary-soft); }
 .comparison-residue-number { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 4px; background: #337ab7; color: #fff; font-size: var(--font-size-small); font-weight: var(--font-weight-bold); }
-.comparison-residue-delete { display: grid; width: 28px; height: 28px; place-items: center; padding: 0; border-radius: 50%; background: #337ab7; color: #fff; }
+.comparison-residue-delete { display: grid; width: 28px; height: 28px; min-width: 28px; min-height: 28px; flex: none; aspect-ratio: 1; place-items: center; padding: 0; border-radius: 50%; background: #337ab7; color: #fff; line-height: 0; }
 .comparison-residue-delete .ui-icon { width: 12px; height: 12px; }
 .comparison-residue-delete:hover { transform: scale(1.06); background: #dc2626; }
 .comparison-residue-box { position: absolute; box-sizing: border-box; border: 2px solid #337ab7; background: rgba(51, 122, 183, .08); }
