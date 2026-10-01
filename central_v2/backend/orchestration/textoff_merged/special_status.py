@@ -32,4 +32,5 @@ def query_special_worklist(manga: Path, level: str) -> dict:
         else:
             status = "no_change"
         row["cleaner_status"] = status
+        row["comparison_available"] = row["level1_ready"] and bool(completed)
     return result

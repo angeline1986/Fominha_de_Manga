@@ -1,3 +1,4 @@
+import { createComparisonLauncher } from "/texto_off/comparison/launcher.js";
 import { matchesOutcome, drawOutcomeFilters } from "/texto_off/merged/outcome_filters.js";
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchMergedTextoff } from "/_app/api/textoff.js";
@@ -58,6 +59,7 @@ export function createMergedLevel2View(onRun) {
   const status = element.querySelector(".auto-merge-status");
   const results = element.querySelector(".auto-merge-results");
   const execute = element.querySelector("[data-execute]");
+  const comparison = createComparisonLauncher(element, "2");
   const pagination = createPagination();
   const selected = new Set();
   const progress = createJobProgress("Texto Off — Merged Nível II");
@@ -95,6 +97,7 @@ export function createMergedLevel2View(onRun) {
         draw();
       },
     });
+    columns.push(comparison.column);
     results.replaceChildren(createTable(columns, page.rows, "Casos para Texto Off Merged Nível II", {
       emptyMessage: state.status === "ready" ? "Nenhum capítulo corresponde ao filtro." : "",
     }));
@@ -123,7 +126,7 @@ export function createMergedLevel2View(onRun) {
     },
     setExecution(job) { executionBusy = Boolean(job.busy); progress.update(job); draw(); },
     clearSelection() { selected.clear(); draw(); },
-    dispose() { query.removeEventListener("input", onQuery); execute.removeEventListener("click", handleExecute); },
+    dispose() { comparison.dispose(); query.removeEventListener("input", onQuery); execute.removeEventListener("click", handleExecute); },
   };
 }
 

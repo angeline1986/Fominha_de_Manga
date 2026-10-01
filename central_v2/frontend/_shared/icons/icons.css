@@ -37,3 +37,6 @@
 .ui-icon--scissors { -webkit-mask-image: url("/_shared/icons/scissors-solid-full.svg"); mask-image: url("/_shared/icons/scissors-solid-full.svg"); }
 
 .ui-icon--check { -webkit-mask-image: url("/_shared/icons/check.svg"); mask-image: url("/_shared/icons/check.svg"); }
+
+.ui-icon--eye { -webkit-mask-image: url("/_shared/icons/eye-solid-full.svg"); mask-image: url("/_shared/icons/eye-solid-full.svg"); }
+.ui-icon--comparison { -webkit-mask-image: url("/_shared/icons/arrows-turn-to-dots-solid-full.svg"); mask-image: url("/_shared/icons/arrows-turn-to-dots-solid-full.svg"); }

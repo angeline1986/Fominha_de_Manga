@@ -1,3 +1,4 @@
+import { createComparisonLauncher } from "/texto_off/comparison/launcher.js";
 import { matchesOutcome, drawOutcomeFilters } from "/texto_off/merged/outcome_filters.js";
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchMergedTextoff, startMergedSpecialTextoff, waitForTextoffJob } from "/_app/api/textoff.js";
@@ -31,6 +32,7 @@ export function renderSpecial(container, level) {
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>`;
   container.replaceChildren(root);
+  const comparison = createComparisonLauncher(root, level === "IV" ? "3" : "4");
   const query = root.querySelector("[data-query]"), filters = root.querySelector(".auto-merge-filters");
   const results = root.querySelector("[data-results]"), status = root.querySelector("[data-status]");
   const execute = root.querySelector("[data-run]"), progress = createJobProgress(`Texto Off Merged Nível ${level}`);
@@ -54,6 +56,7 @@ export function renderSpecial(container, level) {
       }) },
       { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
       ...createOutcomeColumns(),
+      comparison.column,
     ];
     results.replaceChildren(createTable(columns, page.rows, `Capítulos elegíveis para Nível ${level}`, {
       emptyMessage: "Nenhum capítulo corresponde ao filtro.",
@@ -100,7 +103,7 @@ export function renderSpecial(container, level) {
     selected.clear(); filter = "pending"; query.value = ""; pagination.reset(); load();
   });
   load();
-  return () => { disposed = true; request?.abort(); unsubscribe(); query.removeEventListener("input", onQuery); root.remove(); };
+  return () => { comparison.dispose(); disposed = true; request?.abort(); unsubscribe(); query.removeEventListener("input", onQuery); root.remove(); };
 }
 
 function checkbox(label, checked, onChange) {

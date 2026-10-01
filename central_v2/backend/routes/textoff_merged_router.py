@@ -3,6 +3,7 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
 from config.data_paths import OUTPUT_ROOT
+from central_v2.backend.routes.textoff_comparison import comparison_response
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.textoff_merged import (
     execute_textoff_merged_level1_response, execute_textoff_merged_level2_response,
@@ -13,6 +14,9 @@ from central_v2.backend.routes.textoff_merged import (
 
 
 def dispatch_textoff_merged_get(request, output_root: Path) -> RouteResponse | None:
+    if request.path in {"/api/textoff/comparison", "/api/textoff/comparison/image"}:
+        return comparison_response(parse_qs(request.query), output_root,
+                                   image=request.path.endswith("/image"))
     if request.path == "/api/textoff/merged":
         return textoff_merged_response(parse_qs(request.query), output_root)
     levels = {"level1": "I", "level2": "II", "level3": "III",

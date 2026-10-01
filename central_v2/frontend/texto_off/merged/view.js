@@ -1,3 +1,4 @@
+import { createComparisonLauncher } from "/texto_off/comparison/launcher.js";
 import { MAPPING_FILTERS, matchesMapping } from "/texto_off/merged/mapping.js";
 import { createStageFilters } from "/texto_off/merged/stage_filters.js";
 import { createTable } from "/_shared/table/table.js";
@@ -31,6 +32,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   const execute = element.querySelector("[data-execute]");
   const results = element.querySelector(".auto-merge-results");
   const filters = element.querySelector(".auto-merge-filters");
+  const comparison = mode === "overview" ? createComparisonLauncher(element, "1") : null;
   const pagination = createPagination();
   const selected = new Set();
   const progress = createJobProgress(title);
@@ -97,6 +99,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
         draw();
       },
     });
+    if (comparison) columns.push(comparison.column);
     results.append(createTable(columns, selection.rows, `Capítulos para ${title}`, {
       emptyMessage: state.status === "ready" ? "Nenhum capítulo corresponde ao filtro." : "",
     }));
@@ -125,6 +128,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
       if (row) onInspect?.(row);
     },
     dispose() {
+      comparison?.dispose();
       query.removeEventListener("input", resetAndDraw);
       execute.removeEventListener("click", handleExecute);
     },
