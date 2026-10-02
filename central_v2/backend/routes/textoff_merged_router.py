@@ -4,6 +4,10 @@ from urllib.parse import parse_qs, urlparse
 
 from config.data_paths import OUTPUT_ROOT
 from central_v2.backend.routes.textoff_comparison import comparison_response
+from central_v2.backend.routes.textoff_residue_occurrences import (
+    ROUTE as RESIDUE_OCCURRENCES_ROUTE, residue_occurrences_get_response,
+    residue_occurrences_post_response,
+)
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.textoff_merged import (
     execute_textoff_merged_level1_response, execute_textoff_merged_level2_response,
@@ -14,6 +18,8 @@ from central_v2.backend.routes.textoff_merged import (
 
 
 def dispatch_textoff_merged_get(request, output_root: Path) -> RouteResponse | None:
+    if request.path == RESIDUE_OCCURRENCES_ROUTE:
+        return residue_occurrences_get_response(parse_qs(request.query), output_root)
     if request.path in {"/api/textoff/comparison", "/api/textoff/comparison/image"}:
         return comparison_response(parse_qs(request.query), output_root,
                                    image=request.path.endswith("/image"))
@@ -32,6 +38,8 @@ def dispatch_textoff_merged_get(request, output_root: Path) -> RouteResponse | N
 def dispatch_textoff_merged_post(path: str, payload: object,
                                  output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
     route = urlparse(path).path
+    if route == RESIDUE_OCCURRENCES_ROUTE:
+        return residue_occurrences_post_response(payload, output_root)
     handlers = {
         "/api/textoff/merged/execute": execute_textoff_merged_response,
         "/api/textoff/merged/level1/execute": execute_textoff_merged_level1_response,

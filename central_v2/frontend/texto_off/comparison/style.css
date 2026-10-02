@@ -42,6 +42,9 @@
 .comparison-residue-action, .comparison-residue-catalog { width: 100%; min-height: 36px; }
 .comparison-residue-action[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); color: var(--color-primary-hover); }
 .comparison-residue-step p { margin: 0; color: var(--color-text-muted); font-size: var(--font-size-small); }
+.comparison-residue-feedback { display: grid; gap: var(--space-xs); }
+.comparison-residue-retry { justify-self: start; min-height: 30px; padding: 5px 9px; font-size: var(--font-size-small); }
+.comparison-residue-retry[hidden] { display: none; }
 .comparison-residue-action:disabled, .comparison-residue-catalog:disabled { opacity: .5; cursor: default; }
 .comparison-residue-layers { display: flex; min-height: 0; flex: 1; flex-direction: column; gap: var(--space-sm); overflow: auto; padding: 0 var(--space-md); }
 .comparison-residue-layers > header { padding: var(--space-sm) 0; border-bottom: 1px solid var(--color-border); }

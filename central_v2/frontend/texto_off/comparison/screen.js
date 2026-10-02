@@ -63,7 +63,7 @@ export function createComparisonScreen(context, onBack) {
     else if (nextState === "ready") { pageState = "ready"; state.textContent = ""; }
     drawState();
   });
-  const catalog = createResidueCatalog({ workspace: query(".comparison-workspace"), slider,
+  const catalog = createResidueCatalog({ workspace: query(".comparison-workspace"), slider, context,
     onOpenChange: (open) => {
       const button = query("[data-panel-toggle]");
       button.setAttribute("aria-expanded", String(open)); button.setAttribute("aria-pressed", String(open));
@@ -94,7 +94,7 @@ export function createComparisonScreen(context, onBack) {
     if (!page) return;
     state.textContent = "Carregando imagens da comparação…"; pageState = "loading"; drawState();
     query("[data-summary]").textContent = `Cap. ${context.chapter} · ${page.name} · ${index + 1} de ${pages.length}`;
-    catalog.setPage(`${context.step}:${page.name}`);
+    catalog.setPage(page.name);
     query("[data-focus-count]").textContent = `${index + 1} / ${pages.length}`;
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index >= pages.length - 1;

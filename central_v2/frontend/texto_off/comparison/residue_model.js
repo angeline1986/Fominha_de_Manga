@@ -25,7 +25,10 @@ export function renderedBoxSize(box, rect) {
   return { width: box.width * rect.width, height: box.height * rect.height };
 }
 
-export function createPageDraft() { return { nextNumber: 1, occurrences: [] }; }
+export function createPageDraft() {
+  return { occurrences: [], loaded: false, persisted: false,
+    dirty: false, loadState: "idle", saveState: "idle" };
+}
 
 export function createPageDraftStore() {
   const pages = new Map();
@@ -39,8 +42,9 @@ export function createPageDraftStore() {
 }
 
 export function addOccurrence(draft, box, id) {
-  const occurrence = { id, number: draft.nextNumber++, type: "residuo_transparencia", note: null, box };
+  const occurrence = { id, type: "residuo_transparencia", note: null, box };
   draft.occurrences.push(occurrence);
+  draft.dirty = true;
   return occurrence;
 }
 
@@ -48,10 +52,15 @@ export function removeFromDraft(draft, id) {
   const index = draft.occurrences.findIndex((item) => item.id === id);
   if (index < 0) return false;
   draft.occurrences.splice(index, 1);
+  draft.dirty = true;
   return true;
 }
 
 export function updateOccurrenceType(occurrence, type) {
   occurrence.type = type;
   if (type !== "outro") occurrence.note = null;
+}
+
+export function updateOccurrenceNote(occurrence, note) {
+  occurrence.note = note || null;
 }

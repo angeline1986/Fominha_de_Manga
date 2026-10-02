@@ -1,8 +1,10 @@
-import { RESIDUE_TYPES, addOccurrence, createPageDraftStore, normalizedBox,
-  normalizedPoint, removeFromDraft, renderedBoxSize, updateOccurrenceType } from "/texto_off/comparison/residue_model.js";
+import { RESIDUE_TYPES, normalizedBox, normalizedPoint, renderedBoxSize } from "/texto_off/comparison/residue_model.js";
+import { createResidueCatalogState } from "/texto_off/comparison/residue_catalog_state.js";
+import { renderResidueOccurrences } from "/texto_off/comparison/residue_catalog_view.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { showMessage } from "/_shared/messages/messages.js";
 
-export function createResidueCatalog({ workspace, slider, onOpenChange = () => {} }) {
+export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {} }) {
   const panel = document.createElement("aside");
   panel.className = "comparison-residue-panel";
   panel.setAttribute("aria-label", "Catalogação de resíduos");
@@ -16,30 +18,46 @@ export function createResidueCatalog({ workspace, slider, onOpenChange = () => {
     <section class="comparison-residue-layers"><header><h3>Camadas / áreas</h3><output data-count>0</output></header>
       <div data-layers></div></section>
     <footer class="comparison-residue-step"><h3>Passo 2</h3>
-      <button class="btn comparison-residue-catalog" type="button" disabled>Catalogar Resíduo</button></footer>`;
+      <button class="btn comparison-residue-catalog" type="button" data-catalog disabled>Catalogar Resíduo</button>
+      <div class="comparison-residue-feedback"><p data-feedback role="status" aria-live="polite"></p>
+        <button class="btn comparison-residue-retry" type="button" data-retry hidden>Recarregar ocorrências</button></div></footer>`;
   const overlay = document.createElement("div");
   overlay.className = "comparison-residue-overlay";
   overlay.setAttribute("aria-hidden", "true");
   slider.mountAfterOverlay(overlay);
   panel.inert = true;
 
-  const drafts = createPageDraftStore(), query = (selector) => panel.querySelector(selector);
+  const query = (selector) => panel.querySelector(selector);
   let currentPage = "", state = "idle", drag = null, hoveredId = null;
   const options = RESIDUE_TYPES.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  const catalogState = createResidueCatalogState(context, render);
 
-  function draft() {
-    return drafts.get(currentPage);
-  }
+  function draft() { return catalogState.current(); }
   function setState(next) {
+    if (next === "drawing" && draft().loadState !== "ready") return;
     state = next;
     const drawing = state === "drawing", armed = state !== "idle";
     query("[data-signal]").setAttribute("aria-pressed", String(armed));
-    query("[data-draw]").disabled = !armed;
+    query("[data-draw]").disabled = !armed || draft().loadState !== "ready";
     query("[data-draw]").setAttribute("aria-pressed", String(drawing));
     query("[data-hint]").textContent = drawing ? "Clique e arraste sobre Auto Cleaner para demarcar o resíduo."
       : armed ? "Sinalização ativa. Selecione uma área para começar." : "Ative a sinalização para selecionar áreas.";
     overlay.classList.toggle("is-drawing", drawing);
     slider.setInteractionMode(drawing ? "residue-selection" : "normal");
+  }
+  function syncStatus() {
+    const item = draft();
+    query("[data-catalog]").disabled = !catalogState.canSave();
+    query("[data-retry]").hidden = item.loadState !== "error";
+    query("[data-draw]").disabled = state === "idle" || item.loadState !== "ready";
+    const message = item.loadState === "loading" ? "Carregando ocorrências desta página…"
+      : item.loadState === "error" ? `Falha ao carregar: ${item.error || "tente novamente."}`
+        : item.saveState === "saving" ? "Salvando ocorrências…"
+          : item.saveState === "error" ? `Falha ao catalogar: ${item.error || "tente novamente."}`
+            : item.dirty ? "Há alterações ainda não catalogadas."
+              : item.persisted ? "Ocorrências catalogadas."
+                : "Nenhuma ocorrência catalogada nesta página.";
+    query("[data-feedback]").textContent = message;
   }
   function setOpen(open) {
     workspace.classList.toggle("has-residue-panel", open);
@@ -55,33 +73,15 @@ export function createResidueCatalog({ workspace, slider, onOpenChange = () => {
     query("[data-layers]").querySelectorAll("[data-occurrence-id]").forEach((row) => row.classList.toggle("is-highlighted", row.dataset.occurrenceId === id));
   }
   function removeOccurrence(id) {
-    if (removeFromDraft(draft(), id)) { if (hoveredId === id) highlight(null); render(); }
+    if (hoveredId === id) highlight(null);
+    catalogState.remove(id);
   }
   function render() {
     const occurrences = draft().occurrences;
     query("[data-count]").value = String(occurrences.length);
-    overlay.querySelectorAll("[data-box-id], [data-live-box]").forEach((box) => box.remove());
-    const rows = [];
-    for (const item of occurrences) {
-      const box = document.createElement("div");
-      box.className = "comparison-residue-box"; box.dataset.boxId = item.id;
-      box.style.left = `${item.box.left * 100}%`; box.style.top = `${item.box.top * 100}%`;
-      box.style.width = `${item.box.width * 100}%`; box.style.height = `${item.box.height * 100}%`;
-      box.innerHTML = `<span class="comparison-residue-number">${item.number}</span><button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${item.number}">${iconMarkup("close")}</button>`;
-      overlay.append(box);
-      const row = document.createElement("div");
-      row.className = "comparison-residue-row"; row.dataset.occurrenceId = item.id;
-      row.innerHTML = `<span class="comparison-residue-number">${item.number}</span><select aria-label="Tipo da área ${item.number}" data-type="${item.id}">${options}</select><button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${item.number}">${iconMarkup("close")}</button>`;
-      row.querySelector("select").value = item.type;
-      if (item.type === "outro") {
-        const note = document.createElement("input"); note.type = "text"; note.placeholder = "Descreva o defeito...";
-        note.setAttribute("aria-label", `Descrição da área ${item.number}`); note.dataset.note = item.id; note.value = item.note || "";
-        row.append(note);
-      }
-      rows.push(row);
-    }
-    query("[data-layers]").replaceChildren(...rows);
+    renderResidueOccurrences(overlay, query("[data-layers]"), occurrences, options);
     if (hoveredId) highlight(hoveredId);
+    syncStatus();
   }
   function point(event) { return normalizedPoint(event, overlay.getBoundingClientRect()); }
   function paintLive(box) {
@@ -91,7 +91,8 @@ export function createResidueCatalog({ workspace, slider, onOpenChange = () => {
     live.style.width = `${box.width * 100}%`; live.style.height = `${box.height * 100}%`;
   }
   function pointerDown(event) {
-    if (state !== "drawing" || event.button !== 0 || event.target.closest("[data-remove]")) return;
+    if (state !== "drawing" || draft().loadState !== "ready" || event.button !== 0
+        || event.target.closest("[data-remove]")) return;
     const rect = overlay.getBoundingClientRect();
     if (!rect.width || !rect.height) return;
     drag = { id: event.pointerId, start: point(event) };
@@ -110,26 +111,26 @@ export function createResidueCatalog({ workspace, slider, onOpenChange = () => {
     if (event.type !== "pointerup") return;
     const box = normalizedBox(start, point(event)), size = renderedBoxSize(box, overlay.getBoundingClientRect());
     if (size.width < 20 || size.height < 20) return;
-    addOccurrence(draft(), box, crypto.randomUUID()); render();
+    catalogState.add(box, crypto.randomUUID());
   }
 
   function onClick(event) {
+    if (event.target.closest("[data-retry]")) { catalogState.setPage(currentPage); return; }
     if (event.target.closest("[data-close]")) setOpen(false);
     if (event.target.closest("[data-signal]")) setState(state === "idle" ? "armed" : "idle");
     if (event.target.closest("[data-draw]")) setState(state === "drawing" ? "armed" : "drawing");
     const remove = event.target.closest("[data-remove]");
     if (remove) removeOccurrence(remove.dataset.remove);
+    if (event.target.closest("[data-catalog]")) void catalogOccurrences();
   }
   function onChange(event) {
     const select = event.target.closest("[data-type]");
     if (!select) return;
-    const item = draft().occurrences.find((occurrence) => occurrence.id === select.dataset.type);
-    if (item) { updateOccurrenceType(item, select.value); render(); }
+    catalogState.setType(select.dataset.type, select.value);
   }
   function onInput(event) {
     const input = event.target.closest("[data-note]");
-    const item = input && draft().occurrences.find((occurrence) => occurrence.id === input.dataset.note);
-    if (item) item.note = input.value || null;
+    if (input && catalogState.setNote(input.dataset.note, input.value)) syncStatus();
   }
   function onPointerOver(event) {
     const box = event.target.closest("[data-box-id]");
@@ -159,10 +160,15 @@ export function createResidueCatalog({ workspace, slider, onOpenChange = () => {
   overlay.addEventListener("pointerout", onPointerOut);
 
   function setPage(pageKey) {
-    currentPage = String(pageKey || ""); hoveredId = null; render();
+    currentPage = String(pageKey || ""); hoveredId = null; catalogState.setPage(currentPage);
+  }
+  async function catalogOccurrences() {
+    const result = await catalogState.save(slider.getImageMetrics());
+    if (result.ok) await showMessage({ title: "Ocorrências catalogadas", message: "As áreas desta página foram salvas no manifesto." });
+    else if (result.error) await showMessage({ title: "Falha ao catalogar", message: result.error });
   }
   function dispose() {
-    setState("idle");
+    setState("idle"); catalogState.dispose();
     panel.removeEventListener("click", onClick); panel.removeEventListener("change", onChange);
     panel.removeEventListener("input", onInput); panel.removeEventListener("pointerover", onPointerOver);
     panel.removeEventListener("pointerout", onPointerOut);
@@ -171,7 +177,7 @@ export function createResidueCatalog({ workspace, slider, onOpenChange = () => {
     overlay.removeEventListener("pointerup", pointerEnd); overlay.removeEventListener("pointercancel", pointerEnd);
     overlay.removeEventListener("lostpointercapture", pointerEnd);
     overlay.removeEventListener("pointerover", onPointerOver); overlay.removeEventListener("pointerout", onPointerOut);
-    overlay.remove(); panel.remove(); drafts.clear();
+    overlay.remove(); panel.remove();
   }
   return { element: panel, setPage, setOpen, toggle: () => setOpen(!panel.classList.contains("is-open")), dispose };
 }
