@@ -19,7 +19,10 @@ class Handler(BaseHTTPRequestHandler):
         if self.path.startswith("/api/") or self.path == "/health":
             self.send_header("Cache-Control", "no-store")
         self.end_headers()
-        self.wfile.write(response.body)
+        try:
+            self.wfile.write(response.body)
+        except (BrokenPipeError, ConnectionResetError):
+            return
 
     def do_GET(self):
         self._send_response(dispatch_get(self.path))

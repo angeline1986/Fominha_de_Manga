@@ -55,12 +55,12 @@ export function createComparisonScreen(context, onBack) {
   const canvas = query("[data-viewport]");
   const state = query("[data-state]"), preview = query("[data-preview]");
   const controller = new AbortController();
-  let pages = [], index = 0, pageState = "loading", mode = "split", zoom = INITIAL_ZOOM, disposed = false;
+  let pages = [], index = 0, activeImageIndex = null, pageState = "loading", mode = "split", zoom = INITIAL_ZOOM, disposed = false;
   const slider = createSlider(canvas, (nextState, error) => {
     canvas.setAttribute("aria-busy", String(nextState === "loading"));
     element.querySelectorAll("[data-zoom]").forEach((button) => { button.disabled = nextState !== "ready"; });
-    if (nextState === "error") { pageState = "error"; state.textContent = error; }
-    else if (nextState === "ready") { pageState = "ready"; state.textContent = ""; }
+    if (nextState === "error") { activeImageIndex = null; pageState = "error"; state.textContent = error; }
+    else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; }
     drawState();
   });
   const catalog = createResidueCatalog({ workspace: query(".comparison-workspace"), slider, context,
@@ -87,7 +87,9 @@ export function createComparisonScreen(context, onBack) {
     if (pageState === "error" && !state.textContent) state.textContent = "Não foi possível carregar a comparação.";
   }
   function selectPage(next) {
-    index = next; preview.hidden = true; showPage();
+    preview.hidden = true;
+    if (next === index && activeImageIndex === next) return;
+    index = next; showPage();
   }
   function showPage() {
     const page = pages[index];
@@ -99,6 +101,7 @@ export function createComparisonScreen(context, onBack) {
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index >= pages.length - 1;
     pageList.render(pages, index);
+    activeImageIndex = index;
     slider.load(comparisonImageUrl(context, page, "before"), comparisonImageUrl(context, page, "after"));
     slider.setMode(mode); slider.zoom(zoom / 100); updateZoom();
   }
