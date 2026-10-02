@@ -81,7 +81,7 @@ def apply_balloon_authorization(source_images, output_dir, report_path, *, progr
                     if np.count_nonzero(interior):
                         bm=interior
                 balloon_masks.append(bm)
-                metrics=measure_transparency(original,bm)
+                metrics=measure_transparency(original,bm,cleaner_mask)
                 if metrics["transparent"]:
                     x,y,w,h=cv2.boundingRect(pts)
                     transparent_mask|=bm>0

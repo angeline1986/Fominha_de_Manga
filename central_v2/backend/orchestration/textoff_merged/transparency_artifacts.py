@@ -43,7 +43,7 @@ def save_deferred_artifacts(images, raw_masks, output_dir: Path, report: dict) -
         except Exception as exc:
             raise RuntimeError(f"V2 falhou ao produzir a máscara de balões de {image.name}.") from exc
 
-        labels, transparent_mask, mask_labels = _transparent_balloon_masks(original, prediction, cv2, np)
+        labels, transparent_mask, mask_labels = _transparent_balloon_masks(original, raw_mask, prediction, cv2, np)
         reported_count = len(page.get("transparent_balloons", []))
         if len(mask_labels) != reported_count:
             raise RuntimeError(f"Detecção transparente divergente em {image.name}; Nível I cancelado.")
@@ -79,7 +79,7 @@ def _bind_mask_labels(balloons: list[dict], mask_labels: dict[int, dict], source
         balloon["mask_label"] = mapping["mask_label"]
 
 
-def _transparent_balloon_masks(original, prediction, cv2, np):
+def _transparent_balloon_masks(original, raw_mask, prediction, cv2, np):
     shape = original.shape[:2]
     labels = np.zeros(shape, dtype=np.uint16)
     combined = np.zeros(shape, dtype=bool)
@@ -103,7 +103,7 @@ def _transparent_balloon_masks(original, prediction, cv2, np):
             interior = cv2.erode(mask, cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (size, size)))
             if np.count_nonzero(interior):
                 mask = interior
-        if not policy.measure_transparency(original, mask)["transparent"]:
+        if not policy.measure_transparency(original, mask, raw_mask)["transparent"]:
             continue
         transparent_count += 1
         labels[mask > 0] = transparent_count

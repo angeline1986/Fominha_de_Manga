@@ -83,9 +83,19 @@ class MergedLevel1AdapterTests(unittest.TestCase):
                     np.array([[65, 65], [95, 65], [95, 95], [65, 95]])]
         prediction = SimpleNamespace(masks=SimpleNamespace(xy=polygons))
         image = np.full((100, 100, 3), 255, dtype=np.uint8)
-        with patch("central_v2.backend.orchestration.textoff_merged.transparency_artifacts.policy.measure_transparency",
-                   side_effect=[{"transparent": True}, {"transparent": False}, {"transparent": True}]):
-            _labels, _combined, mapping = _transparent_balloon_masks(image, prediction, cv2, np)
+        raw_mask = np.zeros((100, 100), dtype=np.uint8)
+        raw_mask[10:20, 10:20] = 255
+        with patch(
+            "central_v2.backend.orchestration.textoff_merged.transparency_artifacts.policy.measure_transparency",
+            side_effect=[{"transparent": True}, {"transparent": False}, {"transparent": True}],
+        ) as measure:
+            _labels, _combined, mapping = _transparent_balloon_masks(
+                image, raw_mask, prediction, cv2, np
+            )
+        self.assertEqual(measure.call_count, 3)
+        for call in measure.call_args_list:
+            self.assertIs(call.args[0], image)
+            self.assertIs(call.args[2], raw_mask)
         mapping[1]["bbox"] = [5, 5, 26, 26]
         mapping[3]["bbox"] = [65, 65, 31, 31]
         balloons = [{"balloon": 1, "bbox": [5, 5, 26, 26]}, {"balloon": 3, "bbox": [65, 65, 31, 31]}]
