@@ -29,7 +29,7 @@ venv independente. Modelos permanecem fora do repositório nos caches já
 configurados pelo projeto.
 
 Reconstrução e proveniência completas estão em
-`docs/Refatoracao/01_ambientes_virtuais.md`, seção 15. Para recriar, use
+`docs/Refatoracao/00_arquitetura/01_ambientes_virtuais.md`, seção 15. Para recriar, use
 Python 3.12.7 e o lock da feature. Os locks atuais foram validados em macOS
 arm64. Não versionar diretórios `.venv` nem trocar o runtime de uma feature
 antes de validar seus workers.

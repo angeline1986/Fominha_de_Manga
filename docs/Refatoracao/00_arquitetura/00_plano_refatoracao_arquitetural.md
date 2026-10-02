@@ -119,7 +119,7 @@ e modelos aplicáveis.
 Existe baseline lógica em:
 
 ``` text
-docs/Refatoracao/environment_baseline/2026-09-25/
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/
 ```
 
 Existe backup físico externo das venvs e modelos críticos, com hashes
@@ -128,7 +128,7 @@ verificados.
 Documentação:
 
 ``` text
-docs/Refatoracao/ambientes_virtuais_fominha_de_manga.md
+docs/Refatoracao/00_arquitetura/01_ambientes_virtuais.md
 ```
 
 ### Gate
@@ -159,7 +159,7 @@ suficiente para alterar produção.
 Documento:
 
 ``` text
-docs/Refatoracao/baseline_testes_e_contratos_protegidos.md
+docs/Refatoracao/00_arquitetura/02_baseline_testes_e_contratos.md
 ```
 
 Categorias adotadas:
@@ -275,7 +275,7 @@ Não mover nem excluir nesta etapa.
 **Saída atualizada sugerida:**
 
 ``` text
-docs/Refatoracao/estado_atual_e_inventario_estrutural.md
+docs/Refatoracao/00_arquitetura/estado_atual_e_inventario_estrutural.md
 ```
 
 ## 3.7 Catálogo dos fluxos críticos e smoke baseline
@@ -312,7 +312,7 @@ entrada
 **Saída sugerida:**
 
 ``` text
-docs/Refatoracao/catalogo_fluxos_criticos.md
+docs/Refatoracao/00_arquitetura/catalogo_fluxos_criticos.md
 ```
 
 ## 3.8 Gate de saída da Fase 0
@@ -415,7 +415,7 @@ Identificar:
 **Saída:**
 
 ``` text
-docs/Refatoracao/mapa_componentes_e_dependencias.md
+docs/Refatoracao/00_arquitetura/mapa_componentes_e_dependencias.md
 ```
 
 ## 4.3 Mapa de autoridade
@@ -542,7 +542,7 @@ Decisões relevantes devem gerar ADR curto contendo:
 Destino sugerido:
 
 ``` text
-docs/Refatoracao/adr/
+docs/Refatoracao/00_arquitetura/adr/
 ```
 
 ------------------------------------------------------------------------

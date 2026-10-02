@@ -314,4 +314,4 @@ Contrato atual documentado:
 
 O resultado deste checkpoint deve ser incorporado posteriormente ao documento canônico:
 
-`docs/Refatoracao/mapa_metro_fluxos_manifestos.md`
+`docs/Refatoracao/00_arquitetura/04a_mapa_metro_fluxos_manifestos.md`

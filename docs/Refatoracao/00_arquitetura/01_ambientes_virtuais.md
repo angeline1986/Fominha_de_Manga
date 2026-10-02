@@ -98,7 +98,7 @@ Para reprodução fiel, consultar o snapshot lógico da baseline.
 Além das versões dos pacotes, o Cleaner possui configuração operacional preservada em:
 
 ```text
-docs/Refatoracao/environment_baseline/2026-09-25/cleaner_v2_outlined-text.ini
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_outlined-text.ini
 ```
 
 Esse arquivo corresponde à configuração validada no ambiente funcional no momento da baseline.
@@ -150,7 +150,7 @@ SHA-256:
 Os hashes portáteis estão registrados em:
 
 ```text
-docs/Refatoracao/environment_baseline/2026-09-25/cleaner_v2_models_SHA256SUMS.txt
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_models_SHA256SUMS.txt
 ```
 
 ---
@@ -194,7 +194,7 @@ Observe que esse arquivo **não fixa as versões**.
 Para saber exatamente quais versões estavam funcionando na baseline de 25/09/2026, utilizar:
 
 ```text
-docs/Refatoracao/environment_baseline/2026-09-25/gradiente_suave_pip_freeze.txt
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/gradiente_suave_pip_freeze.txt
 ```
 
 ---
@@ -251,7 +251,7 @@ Isso significa que **o `requirements.txt` atual não deve ser considerado, sozin
 A fonte de verdade da baseline é:
 
 ```text
-docs/Refatoracao/environment_baseline/2026-09-25/level3_regional_pip_freeze.txt
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/level3_regional_pip_freeze.txt
 ```
 
 ---
@@ -261,7 +261,7 @@ docs/Refatoracao/environment_baseline/2026-09-25/level3_regional_pip_freeze.txt
 A baseline consolidada dos ambientes está em:
 
 ```text
-docs/Refatoracao/environment_baseline/2026-09-25/
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/
 ```
 
 Ela contém os registros necessários para consultar o estado exato das três venvs sem versionar os diretórios `.venv`.
@@ -498,7 +498,7 @@ Não substituir um modelo apenas porque possui o mesmo nome.
 Para validar os manifests das venvs que possuem arquivos SHA portáteis:
 
 ```bash
-cd docs/Refatoracao/environment_baseline/2026-09-25
+cd docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25
 
 shasum -a 256 -c gradiente_suave_SHA256SUMS.txt
 shasum -a 256 -c level3_regional_SHA256SUMS.txt
@@ -559,13 +559,13 @@ Este documento
 ### Saber as versões exatas instaladas na baseline
 
 ```text
-docs/Refatoracao/environment_baseline/2026-09-25/*_pip_freeze.txt
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/*_pip_freeze.txt
 ```
 
 ### Saber quais pacotes parecem ter sido instalados diretamente
 
 ```text
-docs/Refatoracao/environment_baseline/2026-09-25/*_direct_packages.txt
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/*_direct_packages.txt
 ```
 
 No Cleaner V2, consultar também:
@@ -639,7 +639,7 @@ Não sobrescrever uma baseline histórica.
 Criar um novo diretório datado, por exemplo:
 
 ```text
-docs/Refatoracao/environment_baseline/AAAA-MM-DD/
+docs/Refatoracao/99_evidencias_transversais/environment_baseline/AAAA-MM-DD/
 ```
 
 Assim o projeto mantém rastreabilidade sobre qual ambiente estava operacional em cada marco relevante.
@@ -695,7 +695,7 @@ de 86 pacotes, derivados da baseline Merged I. `pip check` passou em ambos.
 O executor V2 em `backend/orchestration/textoff_special/` roda em subprocesso
 dedicado e vincula também Cleaner/LaMa ao Python da feature; não usa a venv
 V1. Snapshots instalados estão em
-`evidencias/textoff_especiais/2026-09-29/*_runtime.json` e as instruções em
+`docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/*_runtime.json` e as instruções em
 `central_v2/runtime/textoff/especiais/README.md`.
 
 **Atualização de 30/09/2026 — Especiais VI–VIII:** a Central V2 ganhou fluxo
@@ -704,7 +704,7 @@ Degradê (VI), Patch Balão Estilizado (VII) e Gradiente Suave (VIII). Os locks
 e provisionamento ficam em `central_v2/runtime/textoff/especiais/`; os níveis
 VI/VII usam os 86 pacotes do tratamento com Cleaner/YOLO, e o VIII usa o lock
 OpenCV/NumPy e psutil do worker. Proveniência e versões instaladas estão
-registradas em `evidencias/textoff_especiais/2026-09-30/`. Os resultados
+registradas em `docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/`. Os resultados
 partem dos artefatos do Nível I.
 
 ## 15.4 Funcionalidades sem venv dedicada

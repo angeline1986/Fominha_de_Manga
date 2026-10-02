@@ -1,12 +1,12 @@
 # Auto-Merge Nível I — fronteiras, lacunas e primeira unidade V2
 
-Data: 2026-09-27. Base: [contrato observado](06a_auto_merge_nivel1_contrato.md).
+Data: 2026-09-27. Base: [contrato observado](contrato.md).
 Status original: auditoria concluída antes da implementação de execução V2.
 
 Atualização posterior: a consulta AM1-A (checkpoint 07) e as unidades AM1-B,
 AM1-C e AM1-D foram implementadas. O caso real controlado da obra de teste
 continua pendente; estado atualizado, testes e política operacional estão no
-[checkpoint 08](08_auto_merge_nivel1_estrategia_v2.md).
+[checkpoint 08](estrategia_v2.md).
 
 ## Restrições confirmadas
 
@@ -147,7 +147,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 dev/diagnostics/audit_auto_merge_level1.py
 ```
 
 Resultado persistido em
-`docs/Refatoracao/evidencias/auto_merge_level1/cenarios_sinteticos.jsonl`.
+`docs/Refatoracao/02_processamento/auto_merge/evidencias/nivel_1/cenarios_sinteticos.jsonl`.
 Integridade de 93 arquivos de V1/domínio/orquestração e do teste local
 monitorado foi comparada por SHA-256 antes/depois, sem alterações.
 

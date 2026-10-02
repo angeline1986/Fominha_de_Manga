@@ -148,4 +148,4 @@ do Nível I. `_merge_manifest_state` lê metadados sem abrir pixels;
 `is_chapter_merged` faz reconhecimento físico. Essas operações não são
 intercambiáveis e precisam de nomes e contratos distintos na V2.
 
-Ver [decisões e evidências](06b_auto_merge_nivel1_plano_e_evidencias.md).
+Ver [decisões e evidências](plano_e_evidencias.md).

@@ -17,9 +17,9 @@ Os ambientes foram criados separadamente; não compartilham `site-packages`
 nem dependem da venv de outra feature. `pip check` passou nos cinco ambientes.
 
 Snapshots instalados estão em
-`docs/Refatoracao/evidencias/textoff_especiais/2026-09-29/*_runtime.json`.
+`docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/*_runtime.json`.
 Os snapshots dos runtimes VI–VIII estão em
-`docs/Refatoracao/evidencias/textoff_especiais/2026-09-30/`.
+`docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/`.
 Não atualizar versões como efeito colateral da migração.
 
 ## Reconstrução
@@ -81,7 +81,7 @@ qualidade visual permanece pendente. Falhas preservam diagnóstico e duração.
 
 ```sh
 python3 dev/tools/textoff_special_matrix.py \
-  --inventory docs/Refatoracao/evidencias/textoff_especiais/2026-09-29/entradas_autorizadas.json \
+  --inventory docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/entradas_autorizadas.json \
   --report reports/experimentos/textoff_especiais_v2/matrix.json
 ```
 

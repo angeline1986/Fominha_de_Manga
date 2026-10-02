@@ -51,7 +51,7 @@ Merged I, instalados em Python 3.12.7/macOS arm64. `pip check` passou nos
 dois. O Legado conserva inicialmente as bibliotecas de autorização no lock
 para reduzir variáveis de ambiente, mas não chama essa etapa.
 
-Snapshots em `../evidencias/textoff_especiais/2026-09-29/*_runtime.json`.
+Snapshots em `evidencias/2026-09-29/*_runtime.json`.
 Reconstrução e uso em `central_v2/runtime/textoff/especiais/README.md`.
 
 O worker compara as versões instaladas com seu lock antes de processar.
@@ -94,7 +94,7 @@ coordenadas por página. Nenhum parâmetro visual foi alterado entre casos.
 válidas e 11 falhas de geração por ausência de componentes**. Os hashes das
 oito entradas permaneceram iguais. Todas as cinco propostas tiveram zero
 pixels alterados fora da máscara autorizada. Dados versionáveis em
-`../evidencias/textoff_especiais/2026-09-29/matriz_resultados.json`.
+`evidencias/2026-09-29/matriz_resultados.json`.
 
 | Entrada | Transparente | Legado | Pixels alterados pelo Legado |
 |---|---|---|---:|

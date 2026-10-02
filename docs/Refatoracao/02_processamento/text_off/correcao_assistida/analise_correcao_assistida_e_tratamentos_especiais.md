@@ -6,10 +6,10 @@ Este documento registra a análise do fluxo atual de **TextOff Correção Assist
 
 Fontes consultadas:
 
-- `docs/Refatoracao/03_arquitetura_interface_alvo.md`
-- `docs/Refatoracao/mapa_componentes_e_dependencias.md`
-- `docs/Refatoracao/catalogo_fluxos_criticos.md`
-- `docs/Refatoracao/checkpoints/04b_mapa_metro_auditoria_proveniencia.md`
+- `docs/Refatoracao/00_arquitetura/03_arquitetura_interface_alvo.md`
+- `docs/Refatoracao/00_arquitetura/mapa_componentes_e_dependencias.md`
+- `docs/Refatoracao/00_arquitetura/catalogo_fluxos_criticos.md`
+- `docs/Refatoracao/00_arquitetura/04b_mapa_metro_auditoria_proveniencia.md`
 - `analise_tecnica_textoff_correcao_assistida_tratamentos_especiais.md`, fornecido em Downloads
 - Implementações atuais na interface e no domínio TextOff.
 
@@ -166,13 +166,13 @@ As referências de baseline registram falta de testes automatizados específicos
 
 Atualização de 29/09/2026: o inventário dos dois tratamentos transparentes e
 o contrato inicial proposto para Casos Especiais V2 estão em
-[`checkpoints/14_textoff_especiais_inventario_e_contrato_v2.md`](checkpoints/14_textoff_especiais_inventario_e_contrato_v2.md).
+[`../especiais/inventario_e_contrato_v2.md`](../especiais/inventario_e_contrato_v2.md).
 Esse levantamento também registra o efeito do gate atual de adiamento de
 balões transparentes, os runtimes efetivamente chamados e a integridade de
 34 resultados históricos. Não representa validação visual nem implementação
 da feature V2.
 
-`docs/Refatoracao/03_arquitetura_interface_alvo.md` define a Central V2 como camada isolada de interface/orquestração, reutilizando a lógica de domínio existente. O mapa de dependências documenta as ações da Correção Assistida e as rotas próprias dos Especiais. A interface atual da Correção Assistida ainda está em `interface_web`; a tela V2 não deve duplicar limiares, algoritmos, validações de manifesto, hashes ou regras de autorização.
+`docs/Refatoracao/00_arquitetura/03_arquitetura_interface_alvo.md` define a Central V2 como camada isolada de interface/orquestração, reutilizando a lógica de domínio existente. O mapa de dependências documenta as ações da Correção Assistida e as rotas próprias dos Especiais. A interface atual da Correção Assistida ainda está em `interface_web`; a tela V2 não deve duplicar limiares, algoritmos, validações de manifesto, hashes ou regras de autorização.
 
 Para a implementação, manter separadas as responsabilidades abaixo:
 

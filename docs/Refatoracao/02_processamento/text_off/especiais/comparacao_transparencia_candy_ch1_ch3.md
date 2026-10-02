@@ -67,7 +67,7 @@ Relatório portátil com dez regiões e páginas completas, 48 PNGs incorporados
 São cerca de 21 MB; não depende de PNGs vizinhos nem de servidor HTTP.
 
 Evidência versionável:
-`../evidencias/textoff_especiais/2026-09-29/candy_comparison.json`.
+`evidencias/2026-09-29/candy_comparison.json`.
 Inclui entradas, hashes, preparação, relatórios do Nível II, execuções dos
 especiais, versões/locks, hashes de código/modelos e validação independente.
 As duas execuções de Nível II registraram `device=mps` no Mac ARM64.

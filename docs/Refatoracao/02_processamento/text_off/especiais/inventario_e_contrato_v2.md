@@ -156,7 +156,7 @@ não apresentar arquivos parciais como resultado válido.
 ## Evidências históricas recuperadas
 
 Inventário em
-`../evidencias/textoff_especiais/2026-09-29/execucoes_v1.json`:
+`evidencias/2026-09-29/execucoes_v1.json`:
 
 - 34 execuções: 23 Transparente e 11 Legado.
 - 34 arquivos de resultado encontrados e SHA-256 iguais aos manifestos.
@@ -195,7 +195,7 @@ Obra: **Things that deserve to die**, provedor RIDI, capítulo 3. Usar
 `page-156-163_clean.png`, `page-051-059_clean.png`,
 `page-078-083_clean.png` e `page-179-187_clean.png`, **nos Níveis I e II**.
 Os caminhos, dimensões e hashes estão em
-`../evidencias/textoff_especiais/2026-09-29/entradas_autorizadas.json`.
+`evidencias/2026-09-29/entradas_autorizadas.json`.
 
 São oito entradas e dezesseis execuções previstas: dois tratamentos para
 cada entrada. Para cada página, fixar as mesmas ROIs nos dois níveis e nos

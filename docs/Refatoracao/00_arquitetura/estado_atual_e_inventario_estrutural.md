@@ -262,7 +262,7 @@ Contém testes de:
 
 A baseline completa atual está documentada separadamente em:
 
-`docs/Refatoracao/02_baseline_testes_e_contratos.md`
+`docs/Refatoracao/00_arquitetura/02_baseline_testes_e_contratos.md`
 
 ### 7.2 `tests/`
 
@@ -305,7 +305,7 @@ Foram observados ambientes locais em áreas especializadas, incluindo Cleaner V2
 
 Sua proteção e recuperação estão documentadas em:
 
-`docs/Refatoracao/01_ambientes_virtuais.md`
+`docs/Refatoracao/00_arquitetura/01_ambientes_virtuais.md`
 
 ---
 

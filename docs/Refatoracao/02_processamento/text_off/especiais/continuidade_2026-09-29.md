@@ -66,5 +66,5 @@ O próximo trabalho deve começar por levantamento e contrato, antes de implemen
 1. Atualizar `develop` e confirmar que os três commits acima estão presentes.
 2. Verificar se a Central V2 em execução foi reiniciada para carregar as mudanças.
 3. Conferir os manifestos do Capítulo 3 e abrir as quatro imagens de validação para estabelecer a linha de base atual.
-4. Ler `docs/Refatoracao/analise_textoff_correcao_assistida_e_tratamentos_especiais.md`, `docs/Refatoracao/01_ambientes_virtuais.md` e o contrato arquitetural da Central V2 antes de desenhar a feature.
+4. Ler `docs/Refatoracao/02_processamento/text_off/correcao_assistida/analise_correcao_assistida_e_tratamentos_especiais.md`, `docs/Refatoracao/00_arquitetura/01_ambientes_virtuais.md` e o contrato arquitetural da Central V2 antes de desenhar a feature.
 5. Começar por um inventário comparativo dos tratamentos V1 e uma proposta de contrato V2; só depois implementar.
