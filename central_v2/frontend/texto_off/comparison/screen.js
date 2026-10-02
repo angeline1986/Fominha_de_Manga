@@ -64,6 +64,12 @@ export function createComparisonScreen(context, onBack) {
     drawState();
   });
   const catalog = createResidueCatalog({ workspace: query(".comparison-workspace"), slider, context,
+    onPersistedCount: (pageName, count) => {
+      const page = pages.find((item) => item.name === pageName);
+      if (!page) return;
+      page.residue_occurrence_count = count;
+      pageList.setOccurrenceCount(pageName, count);
+    },
     onOpenChange: (open) => {
       const button = query("[data-panel-toggle]");
       button.setAttribute("aria-expanded", String(open)); button.setAttribute("aria-pressed", String(open));

@@ -5,16 +5,19 @@ import { browserModules } from './modules.mjs';
 const savedItem = { id: 'persisted-id', numero: 3, tipo: 'texto_residual', observacao: null,
   box_normalized: { left: .1, top: .2, width: .3, height: .2 }, box_pixels: { x: 10, y: 20, width: 30, height: 20 } };
 
-async function setup({ get = [], postError = null } = {}) {
+async function setup({ get = [], postError = null, onPersistedCount = () => {} } = {}) {
   const calls = []; let getIndex = 0;
   const fetch = async (url, options = {}) => {
     calls.push({ url, options });
-    if (options.method === 'POST') return response(postError ? { error: postError } : { ok: true }, !postError);
+    if (options.method === 'POST') {
+      const body = JSON.parse(options.body);
+      return response(postError ? { error: postError } : { ok: true, total_occurrences: body.occurrences.length }, !postError);
+    }
     return response(get[getIndex++] || { occurrences: [], cataloged: false });
   };
   const load = browserModules({ fetch, AbortController });
   const { createResidueCatalogState } = await load('/texto_off/comparison/residue_catalog_state.js');
-  const state = createResidueCatalogState({ provider: 'ridi', manga: 'obra', chapter: '12', step: '1' });
+  const state = createResidueCatalogState({ provider: 'ridi', manga: 'obra', chapter: '12', step: '1' }, () => {}, onPersistedCount);
   return { state, calls };
 }
 
@@ -27,11 +30,13 @@ test('catalog page GET restores persisted boxes and revisiting does not append d
   assert.equal(env.state.current().occurrences.length, 1);
   assert.equal(env.state.current().occurrences[0].box.left, .1);
   assert.equal(env.state.current().persisted, true);
-  assert.equal(env.state.canSave(), true);
+  assert.equal(env.state.canSave(), false);
   env.state.setType('persisted-id', 'outro');
   assert.equal(env.state.current().dirty, true);
+  assert.equal(env.state.canSave(), false);
   env.state.setNote('persisted-id', 'mancha visível');
   assert.equal(env.state.current().occurrences[0].note, 'mancha visível');
+  assert.equal(env.state.canSave(), true);
   await env.state.setPage('page-B.png');
   await env.state.setPage('page-A.png');
   assert.equal(env.state.current().occurrences.length, 1);
@@ -102,4 +107,42 @@ test('catalog POST errors preserve editable draft and leave retry enabled', asyn
   assert.equal(env.state.current().occurrences[0].note, 'marca clara');
   assert.equal(env.state.current().dirty, true);
   assert.equal(env.state.canSave(), true);
+});
+
+test('removing every persisted occurrence stays saveable until empty POST succeeds', async () => {
+  const persisted = [savedItem, { ...savedItem, id: 'persisted-id-2', numero: 4 }];
+  const indicators = [];
+  const env = await setup({ get: [{ occurrences: persisted, cataloged: true }],
+    onPersistedCount: (page, count) => indicators.push([page, count]) });
+  await env.state.setPage('page-A.png');
+  assert.equal(env.state.canSave(), false);
+  env.state.remove('persisted-id');
+  assert.equal(env.state.canSave(), true);
+  env.state.remove('persisted-id-2');
+  assert.equal(env.state.canSave(), true);
+  const saved = await env.state.save({ naturalWidth: 100, naturalHeight: 100 });
+  assert.equal(saved.ok, true);
+  assert.deepEqual(JSON.parse(env.calls.find((call) => call.options.method === 'POST').options.body).occurrences, []);
+  assert.equal(env.state.current().dirty, false);
+  assert.equal(env.state.current().persisted, false);
+  assert.equal(env.state.canSave(), false);
+  assert.deepEqual(indicators, [['page-A.png', 0]]);
+});
+
+test('persisted count callback changes only after successful POST and reports actual total', async () => {
+  const indicators = [];
+  const failed = await setup({ get: [{ occurrences: [savedItem], cataloged: true }], postError: 'Falha.',
+    onPersistedCount: (page, count) => indicators.push([page, count]) });
+  await failed.state.setPage('page-A.png');
+  failed.state.remove('persisted-id');
+  assert.equal((await failed.state.save({ naturalWidth: 100, naturalHeight: 100 })).ok, false);
+  assert.deepEqual(indicators, []);
+
+  const success = await setup({ get: [{ occurrences: [], cataloged: false }],
+    onPersistedCount: (page, count) => indicators.push([page, count]) });
+  await success.state.setPage('page-A.png');
+  success.state.add({ left: .1, top: .2, width: .3, height: .2 }, 'new-id');
+  assert.deepEqual(indicators, []);
+  await success.state.save({ naturalWidth: 100, naturalHeight: 100 });
+  assert.deepEqual(indicators, [['page-A.png', 1]]);
 });

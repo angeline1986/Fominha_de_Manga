@@ -4,7 +4,7 @@ import { RESIDUE_TYPES, addOccurrence, createPageDraftStore, removeFromDraft,
 
 const TYPES = new Set(RESIDUE_TYPES.map(([value]) => value));
 
-export function createResidueCatalogState(context, onChange = () => {}) {
+export function createResidueCatalogState(context, onChange = () => {}, onPersistedCount = () => {}) {
   const drafts = createPageDraftStore(), getControllers = new Set(), saveControllers = new Set();
   let currentPage = "", revision = 0, disposed = false;
   const current = () => drafts.get(currentPage);
@@ -41,8 +41,9 @@ export function createResidueCatalogState(context, onChange = () => {}) {
   }
   function canSave() {
     const draft = current();
-    return draft.saveState !== "saving" && draft.occurrences.length > 0
-      && draft.occurrences.every(isValidOccurrence);
+    if (draft.saveState === "saving" || !draft.dirty) return false;
+    if (!draft.occurrences.length) return draft.persisted;
+    return draft.occurrences.every(isValidOccurrence);
   }
   async function save(metrics) {
     if (!canSave()) return { ok: false, error: "Adicione uma ocorrência válida antes de catalogar." };
@@ -60,10 +61,11 @@ export function createResidueCatalogState(context, onChange = () => {}) {
     try {
       const result = await saveResidueOccurrences(payload, controller.signal);
       if (disposed) return { ok: false, cancelled: true };
-      draft.persisted = true;
+      const totalOccurrences = Number(result.total_occurrences) || 0;
+      draft.persisted = totalOccurrences > 0;
       draft.dirty = JSON.stringify(draft.occurrences.map(toPayload)) !== submittedState;
       draft.saveState = draft.dirty ? "idle" : "saved"; draft.error = null;
-      onChange(); return { ok: true, result };
+      onPersistedCount(page, totalOccurrences); onChange(); return { ok: true, result };
     } catch (error) {
       if (!disposed) { draft.saveState = "error"; draft.error = error.message; onChange(); }
       return disposed ? { ok: false, cancelled: true } : { ok: false, error: error.message };

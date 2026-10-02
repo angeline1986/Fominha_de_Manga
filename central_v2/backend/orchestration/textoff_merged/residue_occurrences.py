@@ -19,8 +19,8 @@ TYPE_LABELS = {
 
 
 def validate_occurrences(raw, natural_width: int, natural_height: int) -> list[dict]:
-    if not isinstance(raw, list) or not raw:
-        raise ValueError("Adicione pelo menos uma ocorrência antes de catalogar.")
+    if not isinstance(raw, list):
+        raise ValueError("A lista de ocorrências é inválida.")
     if natural_width <= 0 or natural_height <= 0:
         raise ValueError("Dimensões da imagem processada inválidas.")
     result, ids = [], set()
@@ -89,6 +89,11 @@ def occurrences_for(manifest: dict, page: str, step: str) -> list[dict]:
     record = steps.get(step, {}) if isinstance(steps, dict) else {}
     occurrences = record.get("ocorrencias", []) if isinstance(record, dict) else []
     return occurrences if isinstance(occurrences, list) else []
+
+
+def occurrence_counts_for_step(manifest: dict, step: str) -> dict[str, int]:
+    return {page: len(rows) for page in manifest.get("pages", {})
+            if (rows := occurrences_for(manifest, page, step))}
 
 
 def update_page(path: Path, document: dict, page: str, step: str, occurrences: list[dict]) -> dict:

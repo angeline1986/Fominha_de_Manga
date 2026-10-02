@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 from central_v2.backend.routes.router import dispatch_get
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, LEVEL2
+from central_v2.backend.orchestration.textoff_merged.residue_occurrences import update_page
 
 
 class ComparisonTests(unittest.TestCase):
@@ -99,6 +100,31 @@ class ComparisonTests(unittest.TestCase):
             self.assertEqual(self.request(**params).status, 404)
         self.assertEqual(json.loads(self.request("3").body)["pages"], [])
         self.assertEqual(self.request(side="before", page="999", version="bad").status, 404)
+
+    def test_comparison_aggregates_persisted_counts_once_for_current_step(self):
+        from unittest.mock import patch
+        from central_v2.backend.routes import textoff_comparison
+
+        pairs = [{"name": f"page-{index}.png", "before": self.manga / "FLUXO_SECUNDARIO/02_MERGE/1/page.png",
+                  "after": self.level1 / "clean/page_clean.png"} for index in range(5)]
+        manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/RESIDUE_OCCURRENCES/1/residue-occurrences-manifest.json"
+        document = {"provider": "ridi", "obra": "obra", "capitulo": "1"}
+        update_page(manifest, document, "page-1.png", "1", [{"id": "a"}, {"id": "b"}])
+        update_page(manifest, document, "page-1.png", "2", [{"id": "other-step"}])
+
+        with patch.object(textoff_comparison, "comparison_pairs", return_value=pairs), \
+             patch.object(textoff_comparison, "read_manifest", wraps=textoff_comparison.read_manifest) as read:
+            response = self.request()
+
+        self.assertEqual(response.status, 200)
+        pages = json.loads(response.body)["pages"]
+        self.assertEqual([page["residue_occurrence_count"] for page in pages], [0, 2, 0, 0, 0])
+        read.assert_called_once()
+
+    def test_comparison_without_manifest_reports_zero_counts(self):
+        pages = json.loads(self.request().body)["pages"]
+        self.assertTrue(pages)
+        self.assertTrue(all(page["residue_occurrence_count"] == 0 for page in pages))
 
     def test_experimental_comparison_uses_matching_step_and_latest_snapshot(self):
         from unittest.mock import patch

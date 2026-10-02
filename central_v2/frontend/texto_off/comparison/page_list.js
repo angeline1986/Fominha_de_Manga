@@ -9,9 +9,11 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
     for (const { page, originalIndex } of result.rows) {
       const button = document.createElement("button");
       button.type = "button"; button.className = "comparison-page-item";
+      button.dataset.pageName = page.name;
       button.classList.toggle("is-selected", originalIndex === selectedIndex);
       button.setAttribute("role", "option"); button.setAttribute("aria-selected", String(originalIndex === selectedIndex));
-      button.textContent = page.name; button.addEventListener("click", () => onSelect(originalIndex));
+      button.textContent = page.name; applyOccurrenceIndicator(button, page.residue_occurrence_count);
+      button.addEventListener("click", () => onSelect(originalIndex));
       list.append(button);
     }
     drawPagination(result);
@@ -35,6 +37,13 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
   let currentPages = [], currentSelected = 0;
   function renderCurrent() { render(currentPages, currentSelected); }
   function onSearch() { pagination.reset(); renderCurrent(); }
+  function setOccurrenceCount(pageName, count) {
+    const page = currentPages.find((item) => item.name === pageName);
+    if (page) page.residue_occurrence_count = count;
+    const button = Array.from(list.querySelectorAll("[data-page-name]"))
+      .find((item) => item.dataset.pageName === pageName);
+    if (button) applyOccurrenceIndicator(button, count);
+  }
   function onPointerOver(event) {
     const item = event.target.closest(".comparison-page-item");
     if (item && !item.contains(event.relatedTarget)) onPreview(item.textContent, item);
@@ -47,9 +56,17 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
   search.addEventListener("input", onSearch);
   return {
     render(pages, selectedIndex) { currentPages = pages; currentSelected = selectedIndex; renderCurrent(); },
+    setOccurrenceCount,
     dispose() {
       list.removeEventListener("pointerover", onPointerOver); list.removeEventListener("pointerout", onPointerOut);
       search.removeEventListener("input", onSearch);
     },
   };
+}
+
+function applyOccurrenceIndicator(button, count) {
+  const hasOccurrences = Number(count) > 0;
+  button.dataset.hasResidueOccurrences = String(hasOccurrences);
+  if (hasOccurrences) button.title = "Possui resíduo catalogado";
+  else button.removeAttribute("title");
 }

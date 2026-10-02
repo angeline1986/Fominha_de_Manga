@@ -78,14 +78,32 @@ class ResidueOccurrenceRouteTests(unittest.TestCase):
         response, _ = self.post(self.context(r"C:\\page-A.png"), [self.occurrence()])
         self.assertEqual(response.status, 400)
 
-    def test_post_rejects_empty_unknown_type_invalid_box_and_missing_other_note(self):
-        invalid = [([], "ocorrência"), ([self.occurrence(type="unknown")], "Tipo"),
+    def test_post_rejects_unknown_type_invalid_box_and_missing_other_note(self):
+        invalid = [([self.occurrence(type="unknown")], "Tipo"),
                    ([self.occurrence(box_normalized={"left": .8, "top": 0, "width": .3, "height": .2})], "limites"),
                    ([self.occurrence(type="outro", note="  ")], "Descreva")]
         for rows, expected in invalid:
             response, data = self.post(occurrences=rows)
             self.assertEqual(response.status, 400)
             self.assertIn(expected.lower(), data["error"].lower())
+
+    def test_post_empty_clears_only_current_page_and_step_and_returns_zero(self):
+        self.post()
+        self.post(self.context("page-B.png"), [self.occurrence(id="occ-b")])
+        self.post(self.context(step="2"), [self.occurrence(id="occ-step-2")])
+
+        response, data = self.post(occurrences=[])
+        self.assertEqual(response.status, 200)
+        self.assertEqual(data["total_occurrences"], 0)
+        self.assertEqual(data["occurrences"], [])
+        _, current = self.get(self.context())
+        _, page_b = self.get(self.context("page-B.png"))
+        _, step_two = self.get(self.context(step="2"))
+        self.assertEqual(current["occurrences"], [])
+        self.assertEqual(page_b["occurrences"][0]["id"], "occ-b")
+        self.assertEqual(step_two["occurrences"][0]["id"], "occ-step-2")
+        manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/RESIDUE_OCCURRENCES/12/residue-occurrences-manifest.json"
+        self.assertTrue(manifest.is_file())
 
 
 if __name__ == "__main__":

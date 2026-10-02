@@ -4,7 +4,7 @@ import { renderResidueOccurrences } from "/texto_off/comparison/residue_catalog_
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { showMessage } from "/_shared/messages/messages.js";
 
-export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {} }) {
+export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {}, onPersistedCount = () => {} }) {
   const panel = document.createElement("aside");
   panel.className = "comparison-residue-panel";
   panel.setAttribute("aria-label", "Catalogação de resíduos");
@@ -30,7 +30,7 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   const query = (selector) => panel.querySelector(selector);
   let currentPage = "", state = "idle", drag = null, hoveredId = null;
   const options = RESIDUE_TYPES.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
-  const catalogState = createResidueCatalogState(context, render);
+  const catalogState = createResidueCatalogState(context, render, onPersistedCount);
 
   function draft() { return catalogState.current(); }
   function setState(next) {
