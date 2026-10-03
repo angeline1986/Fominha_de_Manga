@@ -39,6 +39,10 @@ export const routes = {
     context: "processamento",
     module: "/processamento/balanceamento/novos_cortes.js",
   },
+  "bubble-sommelier": {
+    context: "texto-off",
+    module: "/texto_off/sommelier/index.js",
+  },
   "texto-off-merged-i": {
     context: "texto-off",
     module: "/texto_off/merged/level1.js",

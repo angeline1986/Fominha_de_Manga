@@ -12,6 +12,7 @@ from central_v2.backend.routes.auto_merge.folder import open_auto_merge_folder_r
 from central_v2.backend.routes.catalog import catalog_response
 from central_v2.backend.routes.health import health_response
 from central_v2.backend.routes.jobs import job_response
+from central_v2.backend.routes.bubble_sommelier import response as bubble_sommelier_response, execute_response as execute_bubble_sommelier_response
 from central_v2.backend.routes.shutdown import shutdown_response
 from central_v2.backend.routes.state import state_response
 from central_v2.backend.routes.merge_manual import (
@@ -60,6 +61,9 @@ def dispatch_get(
 
     if request.path == "/api/merge-manual/image":
         return merge_manual_image_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/textoff/sommelier":
+        return bubble_sommelier_response(parse_qs(request.query), output_root)
 
     textoff_response = dispatch_textoff_merged_get(request, output_root)
     if textoff_response is not None:
@@ -158,6 +162,9 @@ def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -
         return execute_level5_response(payload, output_root)
     if urlparse(path).path == "/api/merge-manual/proposal":
         return merge_manual_proposal_response(payload, output_root)
+    if urlparse(path).path == "/api/textoff/sommelier/execute":
+        return execute_bubble_sommelier_response(payload, output_root)
+
     textoff_response = dispatch_textoff_merged_post(path, payload, output_root)
     if textoff_response is not None:
         return textoff_response

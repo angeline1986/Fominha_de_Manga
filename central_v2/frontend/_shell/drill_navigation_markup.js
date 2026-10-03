@@ -26,11 +26,16 @@ export function groupMarkup(group, { selectedValues = new Map(), currentAction =
 function itemMarkup(item, hasSubitems, isCurrent) {
   const variant = item.variant ? ` drill-action-${item.variant}` : "";
   const current = isCurrent ? " is-current" : "";
-  const iconName = item.icon ?? (hasSubitems ? (item.id === "validar-faixa" ? "crop-simple" : "scissors") : null);
+  const iconName = item.variant === "sommelier" ? null : (item.icon ?? (hasSubitems ? (item.id === "validar-faixa" ? "crop-simple" : "scissors") : null));
   const icon = iconName ? iconMarkup(iconName) : "";
   const labelClass = hasSubitems ? "drill-subitem-label" : "drill-action-label";
-  return `<button class="drill-item${hasSubitems ? " drill-subitem" : ""}${variant}${current}" type="button" data-action="${item.id}">
-    <span class="${labelClass}">${icon}<span>${item.label}</span></span>
-    ${["primary", "secondary"].includes(item.variant) ? `<span class="drill-action-arrow">${iconMarkup("next")}</span>` : ""}
+  const caption = item.caption
+    ? `<small class="drill-action-caption">${item.caption}</small>`
+    : "";
+  const arrow = item.arrow || ["primary", "secondary"].includes(item.variant);
+  const title = item.title ? ` title="${item.title}"` : "";
+  return `<button class="drill-item${hasSubitems ? " drill-subitem" : ""}${variant}${current}" type="button" data-action="${item.id}"${title}>
+    <span class="${labelClass}">${icon}<span class="drill-action-copy"><span>${item.label}</span>${caption}</span></span>
+    ${arrow ? `<span class="drill-action-arrow">${iconMarkup("next")}</span>` : ""}
   </button>`;
 }

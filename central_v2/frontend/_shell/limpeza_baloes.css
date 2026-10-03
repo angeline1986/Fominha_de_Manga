@@ -1,3 +1,44 @@
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier {
+  min-height: 62px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-border);
+  border-radius: 15px;
+  background: var(--color-surface);
+  font-weight: var(--font-weight-semibold);
+}
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier:hover,
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier:focus-visible {
+  border-color: var(--color-border-primary);
+  color: var(--color-primary-hover);
+}
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier.is-current {
+  border-color: var(--color-border-primary);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-progress);
+}
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier .drill-subitem-label {
+  min-width: 0;
+  gap: 0;
+}
+.drill-navigation.is-limpeza-baloes .drill-action-copy {
+  display: grid;
+  gap: 3px;
+}
+.drill-navigation.is-limpeza-baloes .drill-action-caption {
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.25;
+}
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier .drill-action-arrow {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier .drill-action-arrow .ui-icon {
+  width: 18px;
+  height: 18px;
+}
+
 .drill-navigation.is-limpeza-baloes .segmented-shell--captioned { margin: 0; }
 .drill-navigation.is-limpeza-baloes .segmented-header { margin: 0 0 7px; }
 .drill-navigation.is-limpeza-baloes .segmented-header strong {
@@ -84,3 +125,72 @@
 @media (max-width: 360px) {
   .drill-navigation.is-limpeza-baloes .segmented-card { padding-right: 8px; padding-left: 8px; }
 }
+
+/* BubbleSommelier / Limpeza de Balões — compactação v3 */
+.drill-navigation.is-limpeza-baloes .drill-layer-detail {
+  overflow-y: hidden;
+}
+.drill-navigation.is-limpeza-baloes .drill-detail-content {
+  padding-top: 2px;
+}
+.drill-navigation.is-limpeza-baloes .drill-group {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier {
+  min-height: 44px;
+  padding: 7px 12px;
+}
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier .drill-subitem-label {
+  gap: 0;
+}
+.drill-navigation.is-limpeza-baloes .drill-action-copy {
+  display: block;
+}
+.drill-navigation.is-limpeza-baloes .segmented-header {
+  margin-bottom: 4px;
+}
+.drill-navigation.is-limpeza-baloes .segmented-card {
+  padding: 7px 9px;
+}
+.drill-navigation.is-limpeza-baloes .segmented-button {
+  min-height: 30px;
+  padding: 2px 3px;
+}
+.drill-navigation.is-limpeza-baloes .segmented-caption {
+  margin-top: 5px;
+  padding-top: 5px;
+}
+
+/* BubbleSommelier / Curadoria - pagina v1 */
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier,
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier:hover,
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier:focus-visible,
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier.is-current {
+  border-color: #126887;
+  background: #126887;
+  color: #fff;
+}
+
+.drill-navigation.is-limpeza-baloes .drill-action-sommelier .drill-action-arrow { color: #fff; }
+
+.sommelier-page .auto-merge-results { overflow-x: auto; }
+.sommelier-page .data-table { min-width: 760px; }
+.sommelier-page .data-table th,
+.sommelier-page .data-table td { text-align: center; vertical-align: middle; }
+.sommelier-page .data-table [data-column="select"] { width: 44px; }
+.sommelier-page .data-table [data-column="chapter"] { width: 88px; }
+.sommelier-page .data-table [data-column="merges"] { width: 80px; }
+.sommelier-page .data-table [data-column="balloons"],
+.sommelier-page .data-table [data-column="normal"],
+.sommelier-page .data-table [data-column="special"] { width: 92px; }
+.sommelier-page .data-table [data-column="review"] { width: 112px; }
+.sommelier-page .sommelier-review {
+  min-height: 30px;
+  padding: 5px 9px;
+  font-size: var(--font-size-small);
+}
+
+/* BubbleSommelier eye action v2 */
+.sommelier-page .sommelier-review { display:inline-flex; width:42px; min-width:42px; height:36px; min-height:36px; padding:0; align-items:center; justify-content:center; }
+.sommelier-page .sommelier-review .ui-icon { width:16px; height:16px; }

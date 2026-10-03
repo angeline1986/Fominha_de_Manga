@@ -32,14 +32,14 @@ export function segmentedMarkup(control) {
               type="button"
               data-segment-value="${option.value}"
               data-action="${option.action}"
-              ${option.preview ? previews(option) : option.title ? `title="${option.title}" aria-label="Nível ${option.value}: ${option.title}"` : ""}
+              ${option.preview ? previews(option) : (option.title || option.caption) ? `title="${option.title ?? option.caption}" aria-label="${option.label}: ${option.title ?? option.caption}"` : ""}
               aria-pressed="${option.value === control.defaultValue}"
             >
               ${control.plainLabels ? option.label : `<span class="segmented-option-content">${option.icon ? iconMarkup(option.icon) : ""}<span>${option.label}</span></span>`}
             </button>
           `).join("")}
         </div>
-        ${control.options.some((option) => option.caption) ? `<div class="segmented-caption"><strong data-segment-caption>${selected?.caption ?? ""}</strong></div>` : ""}
+        ${control.hideCaption !== true && control.options.some((option) => option.caption) ? `<div class="segmented-caption"><strong data-segment-caption>${selected?.caption ?? ""}</strong></div>` : ""}
       </div>
     </div>
   `;

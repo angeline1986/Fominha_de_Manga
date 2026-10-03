@@ -85,6 +85,12 @@ export const navigation = [
     defaultAction: "texto-off-merged-i",
     groups: [
       {
+        label: "BUBBLE SOMMELIER",
+        items: [
+          { id: "bubble-sommelier", label: "Curadoria de balões", title: "Pré-análise antes da limpeza", variant: "sommelier", arrow: true },
+        ],
+      },
+      {
         label: "AUTO-CLEANER",
         control: {
           type: "segmented",
@@ -93,6 +99,7 @@ export const navigation = [
           defaultValue: "1",
           badgeFormat: "PASSO {value}/4",
           plainLabels: true,
+          hideCaption: true,
           options: [
             { value: "1", action: "texto-off-merged-i", label: "1", caption: "Balões sólidos (padrão)" },
             { value: "2", action: "texto-off-merged-ii", label: "2", caption: "Balões transparentes" },

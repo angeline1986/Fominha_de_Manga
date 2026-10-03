@@ -1,0 +1,9 @@
+{
+  "name": "central-v2-bubble-sommelier-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "onnxruntime-node": "1.30.0",
+    "sharp": "0.35.5"
+  }
+}

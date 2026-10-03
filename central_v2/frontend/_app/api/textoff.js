@@ -66,3 +66,17 @@ export async function waitForTextoffJob(job, onProgress = () => {}) {
   if (current.status === "failed") throw new Error(current.error || "A execução de TextOff falhou.");
   return current.results || [];
 }
+
+export async function fetchBubbleSommelier(provider, manga, signal) {
+  const query = new URLSearchParams({ provider, manga });
+  return requestJson(`/api/textoff/sommelier?${query}`, { signal, cache: "no-store" });
+}
+
+export async function startBubbleSommelier(provider, manga, chapters) {
+  return requestJson("/api/textoff/sommelier/execute", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ provider, manga, chapters }),
+  });
+}
+

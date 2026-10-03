@@ -138,3 +138,6 @@
   width: 18px;
   height: 18px;
 }
+
+/* BubbleSommelier sidebar width v2 */
+.app-body { --sidebar-width: 305px; }
