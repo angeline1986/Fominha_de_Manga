@@ -6,7 +6,9 @@ from central_v2.backend.jobs.manager import submit
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.catalog import build_catalog
 from central_v2.backend.state.manga_state import resolve_manga
-from central_v2.backend.orchestration.bubble_sommelier import execute, query, validate_selection
+from central_v2.backend.orchestration.bubble_sommelier import (
+    execute, query, validate_profile_id, validate_selection,
+)
 
 
 def response(query_values: dict, output_root: Path) -> RouteResponse:
@@ -27,9 +29,10 @@ def execute_response(payload: object, output_root: Path) -> RouteResponse:
         provider, name = _context(payload, output_root)
         manga = resolve_manga(output_root, provider, name)
         chapters = validate_selection(manga, payload.get("chapters"))
+        profile_id = validate_profile_id(payload.get("profile_id"))
 
         def operation(progress, _job_id):
-            return execute(manga, chapters, progress)
+            return execute(manga, chapters, progress, profile_id=profile_id)
 
         return RouteResponse(202, _json({"job": submit(operation, total=len(chapters))}))
     except ValueError as exc:
