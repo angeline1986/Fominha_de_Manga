@@ -6,6 +6,7 @@ import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
+import { showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 
 const FILTERS = [
   ["all", "ALL"],
@@ -47,6 +48,26 @@ function filterButton(label, count, active, onClick) {
   return button;
 }
 
+function operationSummary(results) {
+  return {
+    headline: `${results.length} capítulo(s) analisado(s)`,
+    breakdown: `${results.length} concluído(s)`,
+    items: results.map((item) => ({
+      chapter: item.chapter,
+      status: "Concluído",
+      count: `${Number(item.candidates || 0)} candidato(s)`,
+      warning: false,
+      details: [
+        { label: "Perfil", value: item.profile_id || "—" },
+        { label: "Páginas analisadas", value: String(Number(item.pages || 0)) },
+        { label: "Balões", value: String(Number(item.balloons || 0)) },
+        { label: "Coverage ≥ 0.75", value: String(Number(item.coverage_ge_075 || 0)) },
+        { label: "Candidatos", value: String(Number(item.candidates || 0)) },
+      ],
+    })),
+  };
+}
+
 export function render(container) {
   let disposed = false;
   let requestId = 0;
@@ -81,7 +102,6 @@ export function render(container) {
       <button class="auto-merge-execute sommelier-execute" type="button" data-execute
               title="Selecione capítulos e um perfil">Executar Curadoria</button>
     </div>
-    <div data-progress></div>
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>
     </div>
@@ -97,8 +117,8 @@ export function render(container) {
   const profile = root.querySelector("[data-profile]");
   const listView = root.querySelector("[data-list-view]");
   const reviewHost = root.querySelector("[data-review-host]");
-  const progress = createJobProgress("Curadoria de Balões", { inline: true, countUnit: "páginas" });
-  root.querySelector("[data-progress]").append(progress.element);
+  const progress = createJobProgress("Curadoria de Balões", { countUnit: "páginas" });
+  root.querySelector(".auto-merge-toolbar").after(progress.element);
   let closeReview;
   let executionBusy = false;
 
@@ -213,7 +233,7 @@ export function render(container) {
       message: "Na fila para execução…", percent: 0, completed: 0, total: totalPages });
     try {
       const { job } = await startBubbleSommelier(provider, manga, chapters, profile.value);
-      await waitForTextoffJob(job, (current) => {
+      const jobResults = await waitForTextoffJob(job, (current) => {
         progress.update(aggregateSommelierProgress(current, chapters, pagesByChapter));
       });
       progress.update({ busy: true, title: "Curadoria de Balões · completed",
@@ -221,12 +241,12 @@ export function render(container) {
         percent: 100, completed: totalPages, total: totalPages });
       selected.clear();
       await load();
-      status.textContent = "Curadoria concluída.";
-      status.hidden = false;
+      await showOperationSummary({
+        title: "Resumo da Curadoria de Balões",
+        summary: operationSummary(jobResults),
+      });
     } catch (error) {
-      progress.update({ busy: false });
-      status.textContent = error.message;
-      status.hidden = false;
+      await showMessage({ title: "Falha na Curadoria de Balões", message: error.message });
     } finally {
       progress.update({ busy: false });
       executionBusy = false;

@@ -36,14 +36,14 @@ test('shared progress bar exposes chapter count, detail and accessible percentag
   assert.equal(document.element.hidden, true);
 });
 
-test('shared progress component supports inline placement and page counts', async () => {
+test('Curadoria uses standard shared progress placement and page counts', async () => {
   const document = progressDocument();
   const load = browserModules({ document });
   const { createJobProgress } = await load('/_shared/progress/progress.js');
-  const progress = createJobProgress('Curadoria de Balões', { inline: true, countUnit: 'páginas' });
+  const progress = createJobProgress('Curadoria de Balões', { countUnit: 'páginas' });
   progress.update({ busy: true, percent: 11, completed: 2, total: 18 });
 
-  assert.equal(document.element.className, 'job-progress job-progress--inline');
+  assert.equal(document.element.className, 'job-progress');
   assert.equal(document.nodes.get('[data-count]').textContent, '2 de 18 páginas · 11%');
   progress.update({ busy: false });
   assert.equal(document.element.hidden, true);
