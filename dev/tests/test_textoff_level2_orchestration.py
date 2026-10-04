@@ -33,6 +33,7 @@ class TextoffLevel2OrchestrationTests(unittest.TestCase):
                 (level1_dir / ref).write_bytes(b"level1")
                 clean_artifacts.append(ref)
             level1_manifest = {"clean_artifacts": clean_artifacts, "source_artifacts": [p.name for p in images]}
+            worker_jobs = []
 
             class SuccessfulWorker:
                 returncode = 0
@@ -40,6 +41,7 @@ class TextoffLevel2OrchestrationTests(unittest.TestCase):
                 def __init__(self, command, **_kwargs):
                     batch_manifest = Path(command[command.index("--batch-manifest") + 1])
                     job = json.loads(batch_manifest.read_text())[0]
+                    worker_jobs.append(job)
                     staged = Path(job["output_dir"])
                     pages = []
                     for index, source in enumerate(candidates):
@@ -80,14 +82,19 @@ class TextoffLevel2OrchestrationTests(unittest.TestCase):
                  patch.object(level2.subprocess, "Popen", side_effect=SuccessfulWorker), \
                  patch("central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated",
                        return_value={"outputs": 18, "level2_outputs_used": 8}):
-                result = level2.execute_merged_level2(manga, ["1"], lambda *_args: None)
+                result = level2.execute_merged_level2(
+                    manga, ["1"], lambda *_args: None, provider="comix", manga_name="title")
 
             self.assertEqual(result[0]["status"], "ok", result)
+            self.assertEqual(worker_jobs[0]["protected_occurrences"], {})
             manifest = json.loads((target / "json/clean-manifest.json").read_text())
             self.assertEqual(manifest["pages_total"], 10)
             self.assertEqual(manifest["analyzed_pages_total"], 10)
             self.assertEqual(manifest["outputs_total"], 8)
             self.assertEqual(len(manifest["unchanged_source_artifacts"]), 2)
+            self.assertEqual(manifest["protected_occurrences"], 0)
+            self.assertEqual(manifest["mask_pixels_before_protection"], 0)
+            self.assertEqual(manifest["mask_pixels_after_protection"], 0)
             self.assertEqual(len(list((target / "clean").glob("*.png"))), 8)
             self.assertEqual(len(list((target / "mask").glob("*.png"))), 10)
 

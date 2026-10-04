@@ -2,14 +2,14 @@
 
 ## Baseline e uso
 
-- **HEAD desta revisão:** `8ccf35d7` — `docs(central-v2): consolida pendencias e conformidade de enderecamentos`.
-- O índice foi revisado contra o código vigente em `8ccf35d7`; a atualização de conformidade de endereçamentos mencionada no histórico já está nesse commit.
+- **HEAD desta revisão:** `561d413d` — `feat(central-v2): cataloga residuos por capitulo`.
+- A revisão documental anterior foi baseada em `8ccf35d7`; P1.1 foi publicado em `561d413d` e P1.2 está registrado nesta revisão.
 - Este arquivo consolida estado, evidência e próxima investigação. Não substitui os documentos especializados nem transforma hipóteses em diagnósticos.
 - Prioridades são orientação prática, não bloqueios automáticos ao desenvolvimento funcional.
 
 ## P1 — Catálogo de resíduos por capítulo
 
-**Status:** IMPLEMENTADO — AGUARDANDO VALIDAÇÃO FUNCIONAL MANUAL
+**Status:** CONCLUÍDO — validado funcionalmente e publicado em `561d413d`.
 
 - **Implementado:** estado confirmado separado do estado editável por página; dirty state determinístico por identidade/conteúdo, independente da ordem do array; bolinha consultando o estado atual do catálogo, incluindo rascunhos válidos e remoções locais.
 - **Implementado:** rascunhos permanecem na store por página ao navegar; “Catalogar resíduo” considera páginas dirty do capítulo, inclusive quando outra página está selecionada.
@@ -20,15 +20,15 @@
 
 ## P1 — Autoridade do catálogo sobre o Auto-Cleaner Passo 2
 
-**Status:** PENDENTE — NÃO IMPLEMENTADO NESTA ENTREGA
+**Status:** IMPLEMENTADO — AGUARDANDO VALIDAÇÃO FUNCIONAL
 
-- **Fato confirmado:** o Auto-Cleaner Passo 2 **não consulta** `RESIDUE_OCCURRENCES`. A elegibilidade vem do relatório/manifesto do Passo 1; a máscara processada vem das máscaras de balão transparente e de texto adiado do Passo 1.
-- **Fato observado:** há classificações manuais de regiões como degradê/gradiente no resultado do Passo 1.
-- **Objetivo:** proteger somente as regiões classificadas manualmente com tipos fora da responsabilidade de transparência do Passo 2, sem excluir toda a página; outras regiões candidatas da mesma página devem continuar elegíveis.
-- **Tipos atualmente persistidos:** `residuo_degrade` (“Resíduo do degradê”) e `residuo_gradiente` (“Resíduo do gradiente”). Não renomear nem ampliar os tipos protegidos sem decisão funcional.
-- **Ponto de integração recomendado:** orquestração backend carrega e valida as ocorrências do Passo 1 e as passa como exclusões estruturadas por página; o processamento do Passo 2 subtrai as regiões protegidas da máscara efetiva antes do inpainting. Usar a interseção espacial com a máscara real, sem threshold geométrico novo e sem tornar a página inteira inelegível.
-- **Evidência:** `query_merged_level2()` deriva páginas candidatas do relatório do Passo 1; `execute_merged_level2()` envia esses nomes ao worker; `level2_process.process()` constrói a máscara a partir de texto adiado ∩ balão transparente. Não há leitura de `RESIDUE_OCCURRENCES` nesses módulos.
-- **Próxima etapa:** integrar leitura do catálogo, exclusão regional e testes de coexistência na mesma página; preservar detector, thresholds, inpainting, candidate discovery e manifests existentes.
+- **Implementado:** a orquestração do Passo 2 lê o manifesto oficial `RESIDUE_OCCURRENCES/<capítulo>` via `stage_chapter()` e `read_manifest()`, validando provider, obra e capítulo. Consome exclusivamente `pages[page].steps["1"].ocorrencias`; o catálogo continua sem depender da UI durante o runtime.
+- **Autoridade:** `residuo_degrade` e `residuo_gradiente` protegem pixels da região catalogada. `texto_residual` e `residuo_transparencia` não protegem nem forçam limpeza. `fragmento_balao` e `outro` permanecem neutros.
+- **Ordem:** máscara automática por balão → dilatações normais do Passo 2 → subtração da protection mask → inpainting. A proteção usa `box_normalized` rasterizado na dimensão real da imagem, sem padding/dilatação adicional. Não altera elegibilidade da página.
+- **No-change:** se a proteção remover toda a máscara automática, o inpainting é ignorado; a página gera máscara vazia, `clean: null` e `no_change_reason=manual_protection_removed_all_level2_mask`, preservando o contrato de fallback do Nível I.
+- **Observabilidade estruturada:** relatório e manifesto Nível II incluem `protected_occurrences`, `protected_pixels` (pixels removidos da máscara automática), `mask_pixels_before_protection`, `mask_pixels_after_protection`, `protected_types` e motivo de no-change por página. O detalhe de progresso informa proteção aplicada somente quando pixels foram removidos; não inclui bboxes.
+- **Testes automatizados:** cobertura para catálogo ausente, seis tipos, step/página/contexto, proteção parcial e total, página mista, dilatação, bordas/coordenadas, não chamada do inpainting no no-change e encaminhamento pelo worker batch. Testes focados de catálogo, comparação, Passo 2, máscaras, manifest, query, consolidação/fallback e processamento incompleto passaram.
+- **Pendente:** comparar manualmente imagem, catálogo, máscara automática, região protegida e saída. Não executar Passo 2 real antes dessa revisão.
 
 ## P1 — Diagnósticos funcionais dos Passos 3 e 4
 

@@ -128,16 +128,30 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
             (level1 / "clean-manifest.json").write_text(json.dumps(level1_manifest), encoding="utf-8")
             level2 = stage / "MERGED_NIVEL_II" / "1"
             level2.mkdir(parents=True)
-            (level2 / clean_name).write_bytes(b"final")
             from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest_sha256
             from central_v2.backend.orchestration.textoff_merged.level2_vision import ALGORITHM
+            mask_name = "mask/page-001-005_text_mask.png"
+            report_name = "json/level2-transparent-report.json"
+            (level2 / "mask").mkdir(); (level2 / "json").mkdir()
+            (level2 / mask_name).write_bytes(b"mask")
+            page = {"source": "page-001-005.png", "clean": None,
+                    "level1_clean": f"clean/{clean_name}",
+                    "mask": mask_name, "mask_pixels": 0, "changed_pixels": 0,
+                    "changed_outside_mask": 0}
+            (level2 / report_name).write_text(json.dumps({"integrity_ok": True,
+                "pages_analyzed": 1, "pages": [page]}), encoding="utf-8")
             (level2 / "clean-manifest.json").write_text(json.dumps({
-                "algorithm": ALGORITHM, "integrity_ok": True, "outcome": "no_visual_change",
-                "candidate_source_artifacts": ["page-001-005.png"], "pages_total": 1,
-                "source_level1_artifacts": [clean_name],
+                "algorithm": ALGORITHM, "source_stage": "TO_MERGED_NIVEL_I",
+                "integrity_ok": True, "outcome": "no_visual_change",
+                "candidate_source_artifacts": ["page-001-005.png"],
+                "analyzed_source_artifacts": ["page-001-005.png"],
+                "changed_source_artifacts": [], "unchanged_source_artifacts": ["page-001-005.png"],
+                "page_results": [page], "pages_total": 1, "analyzed_pages_total": 1,
+                "changed_pages_total": 0, "source_level1_artifacts": [clean_name],
                 "source_level1_manifest_sha256": _stage_manifest_sha256(manga, "MERGED_NIVEL_I", "1"),
-                "source_artifacts": ["page-001-005.png"], "clean_artifacts": [clean_name], "outputs_total": 1,
-                "pages_with_text": 1, "changed_pixels": 0,
+                "source_artifacts": ["page-001-005.png"], "clean_artifacts": [],
+                "changed_artifacts": [], "outputs_total": 0, "mask_artifacts": [mask_name],
+                "report": report_name, "pages_with_text": 0, "changed_pixels": 0,
             }), encoding="utf-8")
             row = query_merged_level2(manga)["chapters"][0]
             self.assertEqual(row["level2_status"], "no_change")

@@ -16,11 +16,13 @@ from .level2_vision import (
     SUPPORTED, _atomic_json, _authorized_deferred_mask, _inpaint, _lama_model,
     _release_inference_cache,
 )
+from .level2_manual_protection import progress_detail, protect_level2_masks
 from .stages import LEVEL1
 
 def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             report_path: Path, progress_path: Path | None = None,
-            runtime: dict | None = None, candidate_pages: set[str] | None = None) -> dict:
+            runtime: dict | None = None, candidate_pages: set[str] | None = None,
+            protected_occurrences: dict[str, list[dict]] | None = None) -> dict:
     started = time.perf_counter()
     source_dir, level1_dir, output_dir = source_dir.resolve(), level1_dir.resolve(), output_dir.resolve()
     report_file = artifact_file(level1_dir, "json/level1-balloon-report.json", "json")
@@ -57,7 +59,11 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     prepare_artifact_dirs(output_dir)
     page_results = []
     changed_total = mask_total = 0
+    protection_totals = {key: 0 for key in ("protected_occurrences", "protected_pixels",
+        "mask_pixels_before_protection", "mask_pixels_after_protection")}
+    protected_types = set()
     analyzed_total = 0
+    protected_occurrences = protected_occurrences or {}
     for index, source in enumerate(sources, 1):
         page = pages.get(source.name)
         if page is None:
@@ -104,7 +110,14 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
                              "mask_pixels": int(np.count_nonzero(balloon_mask)),
                              "deferred_cleaner_pixels": int(np.count_nonzero(
                                  (deferred > 0) & balloon_area))})
-        if deferred_components and not np.any(mask):
+        mask_before_protection = int(np.count_nonzero(mask))
+        protected = protected_occurrences.get(source.name, [])
+        balloon_masks, protection = protect_level2_masks(balloon_masks, protected, labels.shape)
+        mask = np.zeros(labels.shape, dtype=np.uint8)
+        for balloon_row, balloon_mask in zip(balloons, balloon_masks):
+            balloon_row["mask_pixels"] = int(np.count_nonzero(balloon_mask))
+            mask = cv2.bitwise_or(mask, balloon_mask)
+        if deferred_components and mask_before_protection == 0:
             raise RuntimeError(f"Nível II não formou máscara para resíduos adiados em {source.name}.")
         final = original.copy()
         for balloon_mask in balloon_masks:
@@ -137,16 +150,19 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             Image.fromarray(result).save(output_dir / clean_reference)
         Image.fromarray(mask, mode="L").save(output_dir / mask_reference)
         mask_pixels = int(np.count_nonzero(mask))
+        for key in protection_totals:
+            protection_totals[key] += protection[key]
+        protected_types.update(protection["protected_types"])
         changed_total += changed
         mask_total += mask_pixels
         page_results.append({"source": source.name, "clean": clean_reference if changed else None,
                              "level1_clean": clean_reference,
                              "mask": mask_reference, "transparent_balloons": balloons,
                              "mask_pixels": mask_pixels, "changed_pixels": changed,
-                             "changed_outside_mask": outside})
+                             "changed_outside_mask": outside, **protection})
         if progress_path:
             _atomic_json(progress_path, {"percent": round(index * 95 / len(sources)),
-                                         "detail": f"Reconstruindo texto autorizado ({analyzed_total}/{len(candidate_pages)})"})
+                "detail": progress_detail(analyzed_total, len(candidate_pages), source.name, protection)})
 
     result = {
         "schema_version": 1,
@@ -167,6 +183,10 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         "duration_seconds": round(time.perf_counter() - started, 3),
         "pages_with_text": sum(page["mask_pixels"] > 0 for page in page_results),
         "mask_pixels": mask_total,
+        **protection_totals,
+        "protected_types": sorted(protected_types),
+        "fully_protected_pages": sum(page["no_change_reason"] is not None for page in page_results),
+        "protection_pixel_semantics": "protected_pixels counts automatic mask pixels removed by manual protection",
         "changed_pixels": changed_total,
         "outcome": "visual_changes" if changed_total else "no_visual_change",
         "integrity_ok": all(page["changed_outside_mask"] == 0 for page in page_results),

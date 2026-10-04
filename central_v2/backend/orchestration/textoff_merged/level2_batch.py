@@ -17,7 +17,8 @@ def process_batch(jobs: list[dict], progress_path: Path | None = None) -> list[d
         report = process(Path(job["source_dir"]), Path(job["level1_dir"]),
                          Path(job["output_dir"]), Path(job["report"]),
                          chapter_progress, runtime,
-                         candidate_pages=set(job.get("candidate_pages", [])))
+                         candidate_pages=set(job.get("candidate_pages", [])),
+                         protected_occurrences=job.get("protected_occurrences", {}))
         results.append({"chapter": job["chapter"], "report": report})
         if progress_path:
             detail = f"Cap. {job['chapter']}: capítulo concluído ({index}/{total})"

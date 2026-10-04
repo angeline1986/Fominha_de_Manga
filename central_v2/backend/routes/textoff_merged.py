@@ -82,7 +82,8 @@ def execute_textoff_merged_level1_response(payload: object, output_root: Path) -
 
 
 def execute_textoff_merged_level2_response(payload: object, output_root: Path) -> RouteResponse:
-    return _execute_response(payload, output_root, execute_merged_level2, validate_level2_selection)
+    return _execute_response(payload, output_root, execute_merged_level2, validate_level2_selection,
+                             include_catalog_context=True)
 
 
 def execute_textoff_merged_level3_response(payload: object, output_root: Path) -> RouteResponse:
@@ -125,7 +126,8 @@ def execute_textoff_merged_special_response(level: str, payload: object,
 
 
 def _execute_response(payload: object, output_root: Path, runner, validator=None,
-                      component: str | None = None) -> RouteResponse:
+                      component: str | None = None,
+                      include_catalog_context: bool = False) -> RouteResponse:
     try:
         if not isinstance(payload, dict):
             raise ValueError("Corpo da solicitação inválido.")
@@ -138,12 +140,10 @@ def _execute_response(payload: object, output_root: Path, runner, validator=None
         def operation(progress, job_id):
             if legacy_server_active():
                 raise RuntimeError("Central V1 ativa; execução TextOff cancelada por segurança.")
-            return runner(
-                manga,
-                chapters,
-                progress,
-                preflight=lambda: _ensure_v2_session(),
-            )
+            runner_args = {"preflight": lambda: _ensure_v2_session()}
+            if include_catalog_context:
+                runner_args.update(provider=provider, manga_name=name)
+            return runner(manga, chapters, progress, **runner_args)
 
         return RouteResponse(202, _json({
             "job": submit(operation, total=len(chapters), component=component)
