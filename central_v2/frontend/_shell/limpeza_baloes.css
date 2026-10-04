@@ -220,3 +220,56 @@
 /* BubbleSommelier eye action v2 */
 .sommelier-page .sommelier-review { display:inline-flex; width:42px; min-width:42px; height:36px; min-height:36px; padding:0; align-items:center; justify-content:center; }
 .sommelier-page .sommelier-review .ui-icon { width:16px; height:16px; }
+
+.sommelier-review-page {
+  display: grid;
+  gap: 18px;
+  min-width: 0;
+}
+.sommelier-review-header { display: grid; gap: 10px; }
+.sommelier-review-header h2 { margin: 0; color: var(--color-text); font-size: 22px; }
+.sommelier-review-back,
+.sommelier-review-retry,
+.sommelier-review-filter {
+  width: fit-content;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 7px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  cursor: pointer;
+}
+.sommelier-review-back { border-color: transparent; padding-left: 0; color: var(--color-primary); font-weight: var(--font-weight-semibold); }
+.sommelier-review-summary { display: grid; grid-template-columns: repeat(4, minmax(110px, 1fr)); gap: 10px; margin: 0; }
+.sommelier-review-summary-item { padding: 10px 12px; border-radius: 8px; background: var(--color-surface); }
+.sommelier-review-summary dt,
+.sommelier-crop-metrics dt { color: var(--color-text-muted); font-size: 11px; font-weight: var(--font-weight-semibold); letter-spacing: .04em; }
+.sommelier-review-summary dd { margin: 4px 0 0; color: var(--color-text); font-size: 18px; font-weight: var(--font-weight-semibold); }
+.sommelier-review-filters { display: flex; flex-wrap: wrap; gap: 8px; }
+.sommelier-review-filter { color: var(--color-text-secondary); font-size: var(--font-size-small); font-weight: var(--font-weight-semibold); }
+.sommelier-review-filter.active { border-color: var(--color-border-primary); color: var(--color-primary); }
+.sommelier-review-content { display: grid; gap: 22px; min-width: 0; }
+.sommelier-review-group { display: grid; gap: 10px; min-width: 0; }
+.sommelier-review-group h3 { margin: 0; color: var(--color-text-secondary); font-size: 15px; }
+.sommelier-crop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+.sommelier-crop-card { display: grid; grid-template-rows: minmax(160px, 230px) auto; overflow: hidden; min-width: 0; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-surface); }
+.sommelier-crop-image { display: block; width: 100%; height: 100%; padding: 10px; object-fit: contain; background: var(--color-background-subtle, #f4f5f6); }
+.sommelier-crop-details { display: grid; gap: 7px; padding: 11px; }
+.sommelier-crop-details h4,
+.sommelier-crop-identity { margin: 0; color: var(--color-text); }
+.sommelier-crop-details h4 { font-size: 14px; }
+.sommelier-crop-identity { overflow: hidden; color: var(--color-text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
+.sommelier-crop-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 2px 0 0; }
+.sommelier-crop-metrics dd { margin: 3px 0 0; color: var(--color-text); font-size: 13px; font-weight: var(--font-weight-semibold); }
+.sommelier-crop-candidate { width: fit-content; padding: 4px 7px; border-radius: 999px; background: #e6f4ee; color: #176c4b; font-size: 10px; font-weight: var(--font-weight-bold); letter-spacing: .04em; }
+.sommelier-review-empty,
+.sommelier-review-state { margin: 0; padding: 16px; color: var(--color-text-secondary); }
+.sommelier-review-error { margin: 0; color: var(--color-danger, #a32f2f); }
+
+@media (max-width: 620px) {
+  .sommelier-review-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sommelier-crop-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
+  .sommelier-crop-card { grid-template-rows: minmax(145px, 205px) auto; }
+}

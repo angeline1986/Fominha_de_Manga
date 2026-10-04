@@ -1,5 +1,6 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchBubbleSommelier, startBubbleSommelier, waitForTextoffJob } from "/_app/api/textoff.js";
+import { renderBubbleSommelierReview } from "./review.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
@@ -35,6 +36,7 @@ export function render(container) {
   const root = document.createElement("section");
   root.className = "auto-merge-page textoff-merged-page cleaner-overview sommelier-page";
   root.innerHTML = `
+    <div data-list-view>
     <header>
       <h1 class="textoff-page-title-hint" data-tooltip="Pré-análise antes da limpeza"
           tabindex="0" aria-description="Pré-análise antes da limpeza">Curadoria de Balões</h1>
@@ -58,6 +60,8 @@ export function render(container) {
     </div>
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>
+    </div>
+    <div data-review-host hidden></div>
   `;
   container.replaceChildren(root);
 
@@ -67,6 +71,30 @@ export function render(container) {
   const results = root.querySelector("[data-results]");
   const execute = root.querySelector("[data-execute]");
   const profile = root.querySelector("[data-profile]");
+  const listView = root.querySelector("[data-list-view]");
+  const reviewHost = root.querySelector("[data-review-host]");
+  let closeReview;
+
+  function leaveReview() {
+    closeReview?.();
+    closeReview = undefined;
+    reviewHost.replaceChildren();
+    reviewHost.hidden = true;
+    listView.hidden = false;
+  }
+
+  function openReview(chapter) {
+    if (closeReview) return;
+    const { provider, manga } = getContext();
+    listView.hidden = true;
+    reviewHost.hidden = false;
+    closeReview = renderBubbleSommelierReview(reviewHost, {
+      provider,
+      manga,
+      chapter,
+      onBack: leaveReview,
+    });
+  }
 
   function updateExecuteState() {
     execute.disabled = selected.size === 0 || profile.value === "";
@@ -127,6 +155,7 @@ export function render(container) {
         button.setAttribute("aria-label", "Visualizar capítulo");
         button.disabled = !row.sommelier?.analyzed;
         button.title = row.sommelier?.analyzed ? "Visualizar resultado da curadoria" : "Disponível após a análise do BubbleSommelier";
+        button.addEventListener("click", () => openReview(row.chapter));
         return button;
       }},
     ];
@@ -204,6 +233,7 @@ export function render(container) {
   query.addEventListener("input", onQuery);
 
   const unsubscribe = subscribeContext(() => {
+    leaveReview();
     query.value = "";
     activeFilter = "all";
     selected.clear();
@@ -218,6 +248,7 @@ export function render(container) {
 
   return () => {
     disposed = true;
+    leaveReview();
     requestId += 1;
     request?.abort();
     unsubscribe();
