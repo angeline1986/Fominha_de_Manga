@@ -1,7 +1,11 @@
 async function requestJson(url, options = {}) {
   const response = await fetch(url, options);
   const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+  if (!response.ok) {
+    const error = new Error(payload.error || `Falha HTTP ${response.status}`);
+    error.status = response.status;
+    throw error;
+  }
   return payload;
 }
 

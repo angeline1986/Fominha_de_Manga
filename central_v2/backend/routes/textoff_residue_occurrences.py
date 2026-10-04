@@ -7,7 +7,8 @@ from PIL import Image
 from config.data_paths import OUTPUT_ROOT
 from central_v2.backend.orchestration.textoff_merged.comparison import comparison_pairs
 from central_v2.backend.orchestration.textoff_merged.residue_occurrences import (
-    MANIFEST_NAME, occurrences_for, read_manifest, update_page, validate_occurrences,
+    MANIFEST_NAME, occurrences_for, read_manifest, update_page, update_pages,
+    validate_occurrences,
 )
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 from central_v2.backend.routes.response import RouteResponse
@@ -34,6 +35,8 @@ def residue_occurrences_post_response(payload: object, output_root: Path = OUTPU
     try:
         if not isinstance(payload, dict):
             raise ValueError("Payload de catalogação inválido.")
+        if "pages" in payload:
+            return _batch_post_response(payload, output_root)
         context, manga, pair, page, step = _resolve_context(payload, output_root)
         with Image.open(pair["after"]) as image:
             natural_width, natural_height = image.size
@@ -48,25 +51,64 @@ def residue_occurrences_post_response(payload: object, output_root: Path = OUTPU
         return _json_response(500, {"error": "Não foi possível persistir as ocorrências."})
 
 
+def _batch_post_response(payload: dict, output_root: Path) -> RouteResponse:
+    if "page" in payload:
+        raise ValueError("Informe page ou pages, não ambos.")
+    context, manga, pairs, step = _resolve_catalog_context(payload, output_root)
+    raw_pages = payload.get("pages")
+    if not isinstance(raw_pages, list) or not raw_pages:
+        raise ValueError("O lote precisa conter ao menos uma página.")
+    pair_by_name = {pair["name"]: pair for pair in pairs}
+    validated, names = [], set()
+    for item in raw_pages:
+        if not isinstance(item, dict):
+            raise ValueError("Página do lote inválida.")
+        page = _required(item, "page")
+        _validate_page_name(page)
+        if page in names or page not in pair_by_name:
+            raise ValueError("Página repetida ou fora da comparação selecionada.")
+        names.add(page)
+        with Image.open(pair_by_name[page]["after"]) as image:
+            occurrences = validate_occurrences(
+                item.get("occurrences"), image.width, image.height,
+            )
+        validated.append((page, occurrences))
+    path = _manifest_path(manga, context["capitulo"])
+    manifest = update_pages(path, _document(context), step, validated)
+    results = [{"page": page, "occurrences": occurrences,
+                "total_occurrences": len(occurrences)} for page, occurrences in validated]
+    return _json_response(200, {"ok": True, "step": step, "pages": results,
+                                "updated_at": manifest["meta"]["atualizado_em"]})
+
+
 def _resolve_context(values: dict, output_root: Path):
+    context, manga, pairs, step = _resolve_catalog_context(values, output_root)
+    page = _required(values, "page")
+    _validate_page_name(page)
+    pair = next((item for item in pairs if item.get("name") == page), None)
+    if pair is None:
+        raise ValueError("A página não pertence à comparação selecionada.")
+    return context, manga, pair, page, step
+
+
+def _resolve_catalog_context(values: dict, output_root: Path):
     provider = _required(values, "provider")
     name = _required(values, "manga")
     chapter = _required(values, "chapter")
-    page = _required(values, "page")
     step = _required(values, "step")
     if step not in {"1", "2", "3", "4"}:
         raise ValueError("Passo de comparação inválido.")
     if Path(chapter).name != chapter or chapter in {".", ".."} or "\\" in chapter:
         raise ValueError("Capitulo invalido.")
+    manga = resolve_manga(output_root, provider, name)
+    pairs = comparison_pairs(manga, chapter, step)
+    return {"provider": provider, "obra": name, "capitulo": chapter}, manga, pairs, step
+
+
+def _validate_page_name(page: str) -> None:
     if (Path(page).name != page or page in {".", ".."} or Path(page).is_absolute()
             or "\\" in page):
         raise ValueError("Nome de página inválido.")
-    manga = resolve_manga(output_root, provider, name)
-    pairs = comparison_pairs(manga, chapter, step)
-    pair = next((item for item in pairs if item.get("name") == page), None)
-    if pair is None:
-        raise ValueError("A página não pertence à comparação selecionada.")
-    return {"provider": provider, "obra": name, "capitulo": chapter}, manga, pair, page, step
 
 
 def _manifest_path(manga: Path, chapter: str) -> Path:

@@ -1,7 +1,8 @@
 import { createPagination } from "/_shared/pagination/model.js";
 import { COMPARISON_PAGE_SIZE, filterComparisonPages } from "/texto_off/comparison/model.js";
 
-export function createPageList({ list, search, paginationRoot, onSelect, onPreview, onPreviewPosition }) {
+export function createPageList({ list, search, paginationRoot, onSelect, onPreview, onPreviewPosition,
+  getDraftOccurrenceCount = () => null }) {
   const pagination = createPagination(COMPARISON_PAGE_SIZE);
   function render(pages, selectedIndex) {
     const result = pagination.select(filterComparisonPages(pages, search.value));
@@ -12,7 +13,8 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
       button.dataset.pageName = page.name;
       button.classList.toggle("is-selected", originalIndex === selectedIndex);
       button.setAttribute("role", "option"); button.setAttribute("aria-selected", String(originalIndex === selectedIndex));
-      button.textContent = page.name; applyOccurrenceIndicator(button, page.residue_occurrence_count);
+      button.textContent = page.name;
+      applyOccurrenceIndicator(button, getDraftOccurrenceCount(page.name), page.residue_occurrence_count);
       button.addEventListener("click", () => onSelect(originalIndex));
       list.append(button);
     }
@@ -42,7 +44,14 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
     if (page) page.residue_occurrence_count = count;
     const button = Array.from(list.querySelectorAll("[data-page-name]"))
       .find((item) => item.dataset.pageName === pageName);
-    if (button) applyOccurrenceIndicator(button, count);
+    if (button) applyOccurrenceIndicator(button, getDraftOccurrenceCount(pageName), count);
+  }
+  function setDraftOccurrenceCount(pageName, count) {
+    const page = currentPages.find((item) => item.name === pageName);
+    if (!page) return;
+    const button = Array.from(list.querySelectorAll("[data-page-name]"))
+      .find((item) => item.dataset.pageName === pageName);
+    if (button) applyOccurrenceIndicator(button, count, page.residue_occurrence_count);
   }
   function onPointerOver(event) {
     const item = event.target.closest(".comparison-page-item");
@@ -56,7 +65,7 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
   search.addEventListener("input", onSearch);
   return {
     render(pages, selectedIndex) { currentPages = pages; currentSelected = selectedIndex; renderCurrent(); },
-    setOccurrenceCount,
+    setOccurrenceCount, setDraftOccurrenceCount,
     dispose() {
       list.removeEventListener("pointerover", onPointerOver); list.removeEventListener("pointerout", onPointerOut);
       search.removeEventListener("input", onSearch);
@@ -64,9 +73,10 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
   };
 }
 
-function applyOccurrenceIndicator(button, count) {
+function applyOccurrenceIndicator(button, currentCount, persistedCount) {
+  const count = currentCount == null ? persistedCount : currentCount;
   const hasOccurrences = Number(count) > 0;
   button.dataset.hasResidueOccurrences = String(hasOccurrences);
-  if (hasOccurrences) button.title = "Possui resíduo catalogado";
+  if (hasOccurrences) button.title = "Possui ocorrência no estado atual da revisão";
   else button.removeAttribute("title");
 }

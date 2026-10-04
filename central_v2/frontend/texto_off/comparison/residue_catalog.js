@@ -4,7 +4,8 @@ import { renderResidueOccurrences } from "/texto_off/comparison/residue_catalog_
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { showMessage } from "/_shared/messages/messages.js";
 
-export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {}, onPersistedCount = () => {} }) {
+export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {},
+  onPersistedCount = () => {}, onDraftState = () => {} }) {
   const panel = document.createElement("aside");
   panel.className = "comparison-residue-panel";
   panel.setAttribute("aria-label", "Catalogação de resíduos");
@@ -30,7 +31,7 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   const query = (selector) => panel.querySelector(selector);
   let currentPage = "", state = "idle", drag = null, hoveredId = null;
   const options = RESIDUE_TYPES.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
-  const catalogState = createResidueCatalogState(context, render, onPersistedCount);
+  const catalogState = createResidueCatalogState(context, render, onPersistedCount, onDraftState);
 
   function draft() { return catalogState.current(); }
   function setState(next) {
@@ -47,14 +48,15 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   }
   function syncStatus() {
     const item = draft();
-    query("[data-catalog]").disabled = !catalogState.canSave();
+    const dirtyPages = catalogState.dirtyPageCount();
+    query("[data-catalog]").disabled = !catalogState.canSaveChapter();
     query("[data-retry]").hidden = item.loadState !== "error";
     query("[data-draw]").disabled = state === "idle" || item.loadState !== "ready";
     const message = item.loadState === "loading" ? "Carregando ocorrências desta página…"
       : item.loadState === "error" ? `Falha ao carregar: ${item.error || "tente novamente."}`
-        : item.saveState === "saving" ? "Salvando ocorrências…"
-          : item.saveState === "error" ? `Falha ao catalogar: ${item.error || "tente novamente."}`
-            : item.dirty ? "Há alterações ainda não catalogadas."
+        : catalogState.isSaving() ? "Salvando catálogo do capítulo…"
+          : item.saveState === "error" ? `Falha ao catalogar capítulo: ${item.error || "tente novamente."}`
+            : dirtyPages ? `Há alterações não catalogadas em ${dirtyPages} página(s) do capítulo.`
               : item.persisted ? "Ocorrências catalogadas."
                 : "Nenhuma ocorrência catalogada nesta página.";
     query("[data-feedback]").textContent = message;
@@ -163,9 +165,10 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
     currentPage = String(pageKey || ""); hoveredId = null; catalogState.setPage(currentPage);
   }
   async function catalogOccurrences() {
-    const result = await catalogState.save(slider.getImageMetrics());
-    if (result.ok) await showMessage({ title: "Ocorrências catalogadas", message: "As áreas desta página foram salvas no manifesto." });
-    else if (result.error) await showMessage({ title: "Falha ao catalogar", message: result.error });
+    const result = await catalogState.saveChapter();
+    if (result.ok) await showMessage({ title: "Ocorrências catalogadas",
+      message: `As alterações de ${result.savedPages} página(s) foram salvas no manifesto do capítulo.` });
+    else if (result.error) await showMessage({ title: "Falha ao catalogar capítulo", message: result.error });
   }
   function dispose() {
     setState("idle"); catalogState.dispose();
@@ -179,5 +182,7 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
     overlay.removeEventListener("pointerover", onPointerOver); overlay.removeEventListener("pointerout", onPointerOut);
     overlay.remove(); panel.remove();
   }
-  return { element: panel, setPage, setOpen, toggle: () => setOpen(!panel.classList.contains("is-open")), dispose };
+  return { element: panel, setPage, setOpen,
+    draftOccurrenceCount: (pageName) => catalogState.draftOccurrenceCount(pageName),
+    toggle: () => setOpen(!panel.classList.contains("is-open")), dispose };
 }

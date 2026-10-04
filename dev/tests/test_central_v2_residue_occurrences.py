@@ -41,6 +41,13 @@ class ResidueOccurrenceRouteTests(unittest.TestCase):
         response = dispatch_post("/api/textoff/residue-occurrences", payload, self.root)
         return response, json.loads(response.body)
 
+    def post_batch(self, pages, context=None):
+        values = {**(context or self.context())}
+        values.pop("page", None)
+        response = dispatch_post("/api/textoff/residue-occurrences",
+                                 {**values, "pages": pages}, self.root)
+        return response, json.loads(response.body)
+
     def get(self, context=None):
         response = dispatch_get("/api/textoff/residue-occurrences?" + urlencode(context or self.context()), self.root)
         return response, json.loads(response.body)
@@ -104,6 +111,39 @@ class ResidueOccurrenceRouteTests(unittest.TestCase):
         self.assertEqual(step_two["occurrences"][0]["id"], "occ-step-2")
         manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/RESIDUE_OCCURRENCES/12/residue-occurrences-manifest.json"
         self.assertTrue(manifest.is_file())
+
+    def test_batch_persists_multiple_pages_once_and_replay_does_not_duplicate(self):
+        pages = [{"page": "page-A.png", "occurrences": [self.occurrence()]},
+                 {"page": "page-B.png", "occurrences": [self.occurrence(id="occ-b")]}]
+        response, saved = self.post_batch(pages)
+        self.assertEqual(response.status, 200)
+        self.assertEqual([row["page"] for row in saved["pages"]], ["page-A.png", "page-B.png"])
+        self.assertEqual([row["total_occurrences"] for row in saved["pages"]], [1, 1])
+        self.post_batch(pages)
+        _, page_a = self.get(self.context("page-A.png"))
+        _, page_b = self.get(self.context("page-B.png"))
+        self.assertEqual([row["id"] for row in page_a["occurrences"]], ["occ-1"])
+        self.assertEqual([row["id"] for row in page_b["occurrences"]], ["occ-b"])
+
+    def test_invalid_occurrence_in_batch_leaves_every_page_unchanged(self):
+        self.post(occurrences=[self.occurrence(id="kept")])
+        pages = [{"page": "page-A.png", "occurrences": [self.occurrence(id="replacement")]},
+                 {"page": "page-B.png", "occurrences": [self.occurrence(type="unknown")]}]
+        response, data = self.post_batch(pages)
+        self.assertEqual(response.status, 400)
+        self.assertIn("Tipo", data["error"])
+        _, page_a = self.get(self.context("page-A.png"))
+        _, page_b = self.get(self.context("page-B.png"))
+        self.assertEqual([row["id"] for row in page_a["occurrences"]], ["kept"])
+        self.assertEqual(page_b["occurrences"], [])
+
+    def test_batch_empty_occurrences_clear_persisted_page(self):
+        self.post(occurrences=[self.occurrence()])
+        response, saved = self.post_batch([{"page": "page-A.png", "occurrences": []}])
+        self.assertEqual(response.status, 200)
+        self.assertEqual(saved["pages"][0]["total_occurrences"], 0)
+        _, page = self.get(self.context("page-A.png"))
+        self.assertEqual(page["occurrences"], [])
 
 
 if __name__ == "__main__":

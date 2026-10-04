@@ -66,3 +66,13 @@ test('page-keyed draft map preserves independent pages during navigation', () =>
   assert.equal(drafts.get('step:page-b').occurrences[0].id, 'b');
   assert.deepEqual(Array.from(drafts.get('step:page-a').occurrences, (item) => item.id), ['a']);
 });
+
+test('confirmed and edited occurrence snapshots compare independently of array order', () => {
+  const a = { id: 'a', type: 'texto_residual', note: null,
+    box: { left: .1, top: .2, width: .3, height: .4 } };
+  const b = { id: 'b', type: 'residuo_degrade', note: null,
+    box: { left: .5, top: .6, width: .1, height: .2 } };
+  assert.equal(model.occurrencesEqual([a, b], [b, a]), true);
+  assert.equal(model.occurrencesEqual([a], [b]), false);
+  assert.equal(JSON.stringify(model.cloneOccurrences([a])[0].box), JSON.stringify(a.box));
+});

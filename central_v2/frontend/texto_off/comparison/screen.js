@@ -70,6 +70,7 @@ export function createComparisonScreen(context, onBack) {
       page.residue_occurrence_count = count;
       pageList.setOccurrenceCount(pageName, count);
     },
+    onDraftState: (pageName, count) => pageList.setDraftOccurrenceCount(pageName, count),
     onOpenChange: (open) => {
       const button = query("[data-panel-toggle]");
       button.setAttribute("aria-expanded", String(open)); button.setAttribute("aria-pressed", String(open));
@@ -82,6 +83,7 @@ export function createComparisonScreen(context, onBack) {
     list: query("[data-pages]"), search: query("[data-search]"),
     paginationRoot: query("[data-pagination]"), onSelect: selectPage,
     onPreview: showPreview, onPreviewPosition: drawPreviewPosition,
+    getDraftOccurrenceCount: (pageName) => catalog.draftOccurrenceCount(pageName),
   });
   const disposeFocus = bindFocusMode(element, { button: focusButton });
   document.body.append(preview);

@@ -2,14 +2,37 @@
 
 ## Baseline e uso
 
-- **HEAD de referência:** `0f8a7a76` — `fix(central-v2): padroniza feedback da curadoria de baloes`.
-- O working tree já continha uma atualização não commitada de `docs/central_v2_conformidade_enderecamentos.md`; ela foi preservada e é referência deste índice.
+- **HEAD desta revisão:** `8ccf35d7` — `docs(central-v2): consolida pendencias e conformidade de enderecamentos`.
+- O índice foi revisado contra o código vigente em `8ccf35d7`; a atualização de conformidade de endereçamentos mencionada no histórico já está nesse commit.
 - Este arquivo consolida estado, evidência e próxima investigação. Não substitui os documentos especializados nem transforma hipóteses em diagnósticos.
 - Prioridades são orientação prática, não bloqueios automáticos ao desenvolvimento funcional.
 
-## P1 — Regressões funcionais confirmadas
+## P1 — Catálogo de resíduos por capítulo
 
-**Nenhuma pendência P1 confirmada registrada neste índice.** Uma mensagem de falha em um fluxo ainda não prova regressão; os Passos 3 e 4 abaixo permanecem em diagnóstico.
+**Status:** IMPLEMENTADO — AGUARDANDO VALIDAÇÃO FUNCIONAL MANUAL
+
+- **Implementado:** estado confirmado separado do estado editável por página; dirty state determinístico por identidade/conteúdo, independente da ordem do array; bolinha consultando o estado atual do catálogo, incluindo rascunhos válidos e remoções locais.
+- **Implementado:** rascunhos permanecem na store por página ao navegar; “Catalogar resíduo” considera páginas dirty do capítulo, inclusive quando outra página está selecionada.
+- **Implementado:** POST retrocompatível aceita `pages` para batch do mesmo passo/capítulo. O backend valida todas as páginas e ocorrências antes de atualizar o manifesto com uma única substituição atômica. Página dirty com `occurrences=[]` remove o conteúdo persistido daquela página/passo.
+- **Implementado:** falha de validação preserva estado dirty; erro de rede ou HTTP 5xx reconcilia o snapshot via GET; retry substitui por IDs estáveis e não duplica ocorrências.
+- **Validação automatizada:** testes focados de comparação/catálogo frontend e backend passaram; sintaxe JS/Python e `git diff --check` passaram.
+- **Pendente:** validação funcional manual pela sequência descrita no pedido de implementação. Não marcar concluído nem avançar à integração com o Passo 2 antes dessa revisão.
+
+## P1 — Autoridade do catálogo sobre o Auto-Cleaner Passo 2
+
+**Status:** PENDENTE — NÃO IMPLEMENTADO NESTA ENTREGA
+
+- **Fato confirmado:** o Auto-Cleaner Passo 2 **não consulta** `RESIDUE_OCCURRENCES`. A elegibilidade vem do relatório/manifesto do Passo 1; a máscara processada vem das máscaras de balão transparente e de texto adiado do Passo 1.
+- **Fato observado:** há classificações manuais de regiões como degradê/gradiente no resultado do Passo 1.
+- **Objetivo:** proteger somente as regiões classificadas manualmente com tipos fora da responsabilidade de transparência do Passo 2, sem excluir toda a página; outras regiões candidatas da mesma página devem continuar elegíveis.
+- **Tipos atualmente persistidos:** `residuo_degrade` (“Resíduo do degradê”) e `residuo_gradiente` (“Resíduo do gradiente”). Não renomear nem ampliar os tipos protegidos sem decisão funcional.
+- **Ponto de integração recomendado:** orquestração backend carrega e valida as ocorrências do Passo 1 e as passa como exclusões estruturadas por página; o processamento do Passo 2 subtrai as regiões protegidas da máscara efetiva antes do inpainting. Usar a interseção espacial com a máscara real, sem threshold geométrico novo e sem tornar a página inteira inelegível.
+- **Evidência:** `query_merged_level2()` deriva páginas candidatas do relatório do Passo 1; `execute_merged_level2()` envia esses nomes ao worker; `level2_process.process()` constrói a máscara a partir de texto adiado ∩ balão transparente. Não há leitura de `RESIDUE_OCCURRENCES` nesses módulos.
+- **Próxima etapa:** integrar leitura do catálogo, exclusão regional e testes de coexistência na mesma página; preservar detector, thresholds, inpainting, candidate discovery e manifests existentes.
+
+## P1 — Diagnósticos funcionais dos Passos 3 e 4
+
+As ocorrências abaixo permanecem em diagnóstico e **não estão confirmadas como regressões**. Uma mensagem de falha isolada não determina se houve ausência legítima de insumo, capítulo não elegível, incompatibilidade de contrato ou regressão.
 
 ## P2 — Auto-Cleaner: diagnosticar Passos 3 e 4
 

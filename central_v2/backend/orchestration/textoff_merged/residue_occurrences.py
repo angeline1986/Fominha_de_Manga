@@ -97,13 +97,21 @@ def occurrence_counts_for_step(manifest: dict, step: str) -> dict[str, int]:
 
 
 def update_page(path: Path, document: dict, page: str, step: str, occurrences: list[dict]) -> dict:
+    return update_pages(path, document, step, [(page, occurrences)])
+
+
+def update_pages(path: Path, document: dict, step: str,
+                 pages: list[tuple[str, list[dict]]]) -> dict:
     manifest = read_manifest(path, document)
-    page_record = manifest["pages"].setdefault(page, {"steps": {}})
-    if not isinstance(page_record, dict) or not isinstance(page_record.get("steps", {}), dict):
-        raise ValueError("A entrada existente da página é inválida.")
-    page_record.setdefault("steps", {})[step] = {
-        "total_ocorrencias": len(occurrences), "ocorrencias": occurrences,
-    }
+    if not pages:
+        raise ValueError("O lote não contém páginas.")
+    for page, occurrences in pages:
+        page_record = manifest["pages"].setdefault(page, {"steps": {}})
+        if not isinstance(page_record, dict) or not isinstance(page_record.get("steps", {}), dict):
+            raise ValueError("A entrada existente da página é inválida.")
+        page_record.setdefault("steps", {})[step] = {
+            "total_ocorrencias": len(occurrences), "ocorrencias": occurrences,
+        }
     manifest["meta"] = {"versao": 1, "atualizado_em": datetime.now(timezone.utc).isoformat()}
     manifest["documento"] = {**document, "step": step}
     _write_atomic(path, manifest)

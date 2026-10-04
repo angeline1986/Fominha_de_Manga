@@ -43,7 +43,7 @@ test('persisted counts render/update the page dot and zero removes it without ch
   assert.equal(empty.dataset.hasResidueOccurrences, 'false');
   assert.equal(empty.attrs.title, undefined);
   assert.equal(cataloged.dataset.hasResidueOccurrences, 'true');
-  assert.equal(cataloged.title, 'Possui resíduo catalogado');
+  assert.equal(cataloged.title, 'Possui ocorrência no estado atual da revisão');
   assert.equal(cataloged.attrs['aria-selected'], 'true');
 
   pageList.setOccurrenceCount('page-cataloged.png', 0);
@@ -52,6 +52,15 @@ test('persisted counts render/update the page dot and zero removes it without ch
   assert.equal(cataloged.attrs.title, undefined);
   pageList.setOccurrenceCount('page-empty.png', 1);
   assert.equal(empty.dataset.hasResidueOccurrences, 'true');
-  assert.equal(empty.title, 'Possui resíduo catalogado');
+  assert.equal(empty.title, 'Possui ocorrência no estado atual da revisão');
+  pageList.setDraftOccurrenceCount('page-empty.png', 0);
+  assert.equal(empty.dataset.hasResidueOccurrences, 'false');
+  pageList.setDraftOccurrenceCount('page-cataloged.png', 0);
+  assert.equal(cataloged.dataset.hasResidueOccurrences, 'false');
+  pageList.setDraftOccurrenceCount('page-cataloged.png', 1);
+  assert.equal(cataloged.dataset.hasResidueOccurrences, 'true');
+  pageList.setDraftOccurrenceCount('page-cataloged.png', null);
+  pageList.setOccurrenceCount('page-cataloged.png', 3);
+  assert.equal(cataloged.dataset.hasResidueOccurrences, 'true');
   pageList.dispose();
 });

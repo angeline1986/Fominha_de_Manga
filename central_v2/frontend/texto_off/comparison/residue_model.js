@@ -26,7 +26,7 @@ export function renderedBoxSize(box, rect) {
 }
 
 export function createPageDraft() {
-  return { occurrences: [], loaded: false, persisted: false,
+  return { occurrences: [], confirmedOccurrences: [], loaded: false, persisted: false,
     dirty: false, loadState: "idle", saveState: "idle" };
 }
 
@@ -37,6 +37,8 @@ export function createPageDraftStore() {
       if (!pages.has(key)) pages.set(key, createPageDraft());
       return pages.get(key);
     },
+    peek(key) { return pages.get(key); },
+    entries() { return pages.entries(); },
     clear() { pages.clear(); },
   };
 }
@@ -63,4 +65,22 @@ export function updateOccurrenceType(occurrence, type) {
 
 export function updateOccurrenceNote(occurrence, note) {
   occurrence.note = note || null;
+}
+
+export function cloneOccurrences(occurrences) {
+  return occurrences.map((item) => ({ ...item, box: { ...item.box } }));
+}
+
+export function occurrencesEqual(left, right) {
+  return JSON.stringify(canonicalOccurrences(left)) === JSON.stringify(canonicalOccurrences(right));
+}
+
+function canonicalOccurrences(occurrences) {
+  return occurrences.map((item) => ({
+    id: String(item.id), type: item.type, note: item.note || null,
+    box: {
+      left: Number(item.box.left), top: Number(item.box.top),
+      width: Number(item.box.width), height: Number(item.box.height),
+    },
+  })).sort((a, b) => a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
 }
