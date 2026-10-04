@@ -3,11 +3,11 @@ import {
   fetchBubbleSommelierReview,
 } from "/_app/api/textoff.js";
 
-function makeElement(tag, className, text) {
-  const element = document.createElement(tag);
-  if (className) element.className = className;
-  if (text !== undefined) element.textContent = text;
-  return element;
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
 }
 
 function formatNumber(value, digits = 2) {
@@ -25,10 +25,14 @@ function formatPercent(value) {
 }
 
 function backButton(onBack) {
-  const button = makeElement("button", "sommelier-review-back", "← Voltar para Curadoria");
+  const button = element("button", "sommelier-review-back", "← Voltar para Curadoria");
   button.type = "button";
   button.addEventListener("click", onBack);
   return button;
+}
+
+function pageCandidateCount(page) {
+  return page.bubbles.filter((bubble) => bubble.candidate === true).length;
 }
 
 export function renderBubbleSommelierReview(container, { provider, manga, chapter, onBack }) {
@@ -36,128 +40,204 @@ export function renderBubbleSommelierReview(container, { provider, manga, chapte
   let requestId = 0;
   let request;
   let report;
+  let activePageId = null;
   let activeFilter = "all";
-  const root = makeElement("section", "sommelier-review-page");
+  const root = element("section", "sommelier-review-page");
   container.replaceChildren(root);
 
   function showLoading() {
     root.replaceChildren(
       backButton(onBack),
-      makeElement("p", "sommelier-review-state", `Carregando revisão do capítulo ${chapter}…`),
+      element("p", "sommelier-review-state", `Carregando revisão do capítulo ${chapter}…`),
     );
   }
 
   function showError(error) {
-    const message = makeElement(
+    const message = element(
       "p",
       "sommelier-review-error",
       `Não foi possível carregar a revisão: ${error?.message || "erro desconhecido"}`,
     );
-    const retry = makeElement("button", "sommelier-review-retry", "Tentar novamente");
+    const retry = element("button", "sommelier-review-retry", "Tentar novamente");
     retry.type = "button";
     retry.addEventListener("click", load);
     root.replaceChildren(backButton(onBack), message, retry);
   }
 
-  function draw() {
-    const pages = Array.isArray(report?.pages) ? report.pages : [];
-    const bubbles = pages.flatMap((page) =>
-      (Array.isArray(page.bubbles) ? page.bubbles : []).map((bubble) => ({ page, bubble })));
-    const candidates = bubbles.filter(({ bubble }) => bubble.candidate === true);
-    const visible = activeFilter === "candidates" ? candidates : bubbles;
-    const summary = report.summary || {};
-
-    const header = makeElement("header", "sommelier-review-header");
-    header.append(
-      backButton(onBack),
-      makeElement("h2", "", `Revisão da Curadoria — Capítulo ${chapter}`),
-    );
-
-    const summaryNode = makeElement("dl", "sommelier-review-summary");
-    const summaryValues = [
-      ["PERFIL", report.profile_id ?? "—"],
-      ["BALÕES", summary.balloons ?? bubbles.length],
-      ["CANDIDATOS", summary.candidates ?? candidates.length],
-      ["COVERAGE ≥ 0.75", summary.coverage_ge_075 ?? "—"],
-    ];
-    for (const [label, value] of summaryValues) {
-      const item = makeElement("div", "sommelier-review-summary-item");
-      item.append(makeElement("dt", "", label), makeElement("dd", "", String(value)));
-      summaryNode.append(item);
+  function drawMain(page) {
+    const main = root.querySelector("[data-review-main]");
+    main.replaceChildren();
+    if (!page) {
+      main.append(element("p", "sommelier-review-empty", "Nenhuma página corresponde à busca."));
+      return;
     }
 
-    const filters = makeElement("div", "sommelier-review-filters");
+    const pageCandidates = pageCandidateCount(page);
+    const subheadText = `${page.page_id} · ${page.bubbles.length} balões${pageCandidates ? ` · ${pageCandidates} candidatos` : ""}`;
+    const subhead = element("div", "sommelier-review-page-heading");
+    subhead.append(element("h2", "", subheadText));
+
+    const table = element("div", "sommelier-review-table");
+    const columns = element("div", "sommelier-review-columns");
+    columns.setAttribute("aria-hidden", "true");
+    for (const label of ["RECORTE", "IDENTIFICAÇÃO", "MÉTRICAS", "STATUS"]) {
+      columns.append(element("span", "", label));
+    }
+    table.append(columns);
+
+    const bubbles = activeFilter === "candidates"
+      ? page.bubbles.filter((bubble) => bubble.candidate === true)
+      : page.bubbles;
+    if (!page.bubbles.length) {
+      table.append(element("p", "sommelier-review-empty", "Nenhum balão disponível para revisão."));
+    } else if (!bubbles.length && activeFilter === "candidates") {
+      table.append(element("p", "sommelier-review-empty", "Nenhum candidato nesta página."));
+    } else {
+      const rows = element("div", "sommelier-review-rows");
+      for (const bubble of bubbles) {
+        const row = element("article", `sommelier-review-row${bubble.candidate === true ? " is-candidate" : ""}`);
+
+        const crop = element("div", "sommelier-review-crop");
+        const image = document.createElement("img");
+        image.className = "sommelier-review-image";
+        image.loading = "lazy";
+        image.alt = `Crop ${bubble.identity} — ${page.page_id}`;
+        image.src = bubbleSommelierCropUrl(provider, manga, chapter, bubble.identity);
+        crop.append(image);
+
+        const identity = element("div", "sommelier-review-identity");
+        identity.append(
+          element("strong", "", `Bubble ${String(bubble.bubble_index ?? "—").padStart(2, "0")}`),
+          element("span", "", bubble.identity ?? "Identidade ausente"),
+        );
+
+        const metrics = element("dl", "sommelier-review-metrics");
+        for (const [label, value] of [
+          ["Conf.", formatPercent(bubble.confidence)],
+          ["Coverage", formatPercent(bubble.metrics?.coverage)],
+          ["Luma MAD", formatNumber(bubble.metrics?.lumaMad)],
+        ]) {
+          const metric = element("div", "sommelier-review-metric");
+          metric.append(element("dt", "", label), element("dd", "", value));
+          metrics.append(metric);
+        }
+
+        const status = element("div", "sommelier-review-status");
+        status.append(bubble.candidate === true
+          ? element("span", "sommelier-review-candidate", "CANDIDATO")
+          : element("span", "sommelier-review-not-candidate", "—"));
+        row.append(crop, identity, metrics, status);
+        rows.append(row);
+      }
+      table.append(rows);
+    }
+    main.append(subhead, table);
+  }
+
+  function drawSidebar() {
+    const pages = Array.isArray(report.pages) ? report.pages : [];
+    const list = root.querySelector("[data-review-pages]");
+    const query = root.querySelector("[data-page-query]").value.trim().toLocaleLowerCase("pt-BR");
+    const matches = pages.filter((page) => page.page_id.toLocaleLowerCase("pt-BR").includes(query));
+    list.replaceChildren();
+
+    if (!pages.length) {
+      list.append(element("p", "sommelier-review-empty", "Nenhuma página disponível."));
+      root.querySelector("[data-review-main]").replaceChildren(
+        element("p", "sommelier-review-empty", "Nenhum balão disponível para revisão."),
+      );
+      return;
+    }
+
+    if (!matches.length) {
+      list.append(element("p", "sommelier-review-empty", "Nenhuma página corresponde à busca."));
+      drawMain(null);
+      return;
+    }
+
+    for (const page of matches) {
+      const candidateCount = pageCandidateCount(page);
+      const item = element("button", `sommelier-review-page-item${page.page_id === activePageId ? " is-active" : ""}`);
+      item.type = "button";
+      item.setAttribute("aria-current", String(page.page_id === activePageId));
+      item.addEventListener("click", () => {
+        activePageId = page.page_id;
+        drawSidebar();
+      });
+      item.append(element("span", "sommelier-review-page-name", page.page_id));
+      const counts = element("span", "sommelier-review-page-counts");
+      counts.append(element("span", "sommelier-review-total", String(page.bubbles.length)));
+      if (candidateCount) counts.append(element("span", "sommelier-review-candidate-count", `●${candidateCount}`));
+      item.append(counts);
+      list.append(item);
+    }
+
+    drawMain(pages.find((page) => page.page_id === activePageId) ?? null);
+  }
+
+  function draw() {
+    const pages = Array.isArray(report.pages) ? report.pages : [];
+    const summary = report.summary || {};
+    activePageId = pages[0]?.page_id ?? null;
+
+    const header = element("header", "sommelier-review-top-header");
+    const title = element("strong", "sommelier-review-global-title", "CLASSIFICAÇÃO & TRIAGEM DE BALÕES");
+    const chapterSummary = element(
+      "div",
+      "sommelier-review-global-summary",
+      `Capítulo ${report.chapter ?? chapter} · ${summary.balloons ?? 0} balões catalogados em ${pages.length} páginas`,
+    );
+    const profile = element("span", "sommelier-review-profile", `Perfil: ${report.profile_id ?? "—"}`);
+    const headingRight = element("div", "sommelier-review-heading-right");
+    headingRight.append(chapterSummary, profile);
+    header.append(title, headingRight);
+
+    const workspace = element("div", "sommelier-review-workspace");
+    const sidebar = element("aside", "sommelier-review-sidebar");
+    const totalBubbles = pages.reduce((total, page) => total + page.bubbles.length, 0);
+    const totalCandidates = pages.reduce((total, page) => total + pageCandidateCount(page), 0);
+    const filters = element("div", "sommelier-review-filter-pills");
     filters.setAttribute("role", "group");
-    filters.setAttribute("aria-label", "Filtrar crops");
+    filters.setAttribute("aria-label", "Filtrar balões");
     for (const [key, label, count] of [
-      ["all", "TODOS", bubbles.length],
-      ["candidates", "CANDIDATOS", candidates.length],
+      ["all", "Todos", totalBubbles],
+      ["candidates", "Candidatos", totalCandidates],
     ]) {
-      const button = makeElement("button", "sommelier-review-filter", `${label} (${count})`);
+      const button = element("button", `sommelier-review-filter-pill${activeFilter === key ? " is-active" : ""}`, `${label} (${count})`);
       button.type = "button";
-      button.classList.toggle("active", activeFilter === key);
       button.setAttribute("aria-pressed", String(activeFilter === key));
       button.addEventListener("click", () => {
         activeFilter = key;
-        draw();
+        drawSidebar();
+        for (const pill of filters.querySelectorAll("button")) {
+          const active = pill === button;
+          pill.classList.toggle("is-active", active);
+          pill.setAttribute("aria-pressed", String(active));
+        }
       });
       filters.append(button);
     }
 
-    const content = makeElement("div", "sommelier-review-content");
-    if (!bubbles.length) {
-      content.append(makeElement("p", "sommelier-review-empty", "Nenhum balão disponível para revisão."));
-    } else if (!visible.length && activeFilter === "candidates") {
-      content.append(makeElement("p", "sommelier-review-empty", "Nenhum candidato neste capítulo."));
-    } else {
-      const byPage = new Map();
-      for (const item of visible) {
-        const pageId = item.page.page_id ?? "Página sem identificação";
-        if (!byPage.has(pageId)) byPage.set(pageId, []);
-        byPage.get(pageId).push(item.bubble);
-      }
-      for (const [pageId, pageBubbles] of byPage) {
-        const group = makeElement("section", "sommelier-review-group");
-        group.append(makeElement("h3", "", `Página ${pageId}`));
-        const grid = makeElement("div", "sommelier-crop-grid");
-        for (const bubble of pageBubbles) {
-          const card = makeElement("article", "sommelier-crop-card");
-          const image = document.createElement("img");
-          image.className = "sommelier-crop-image";
-          image.loading = "lazy";
-          image.alt = `Crop ${bubble.identity} — página ${pageId}`;
-          image.src = bubbleSommelierCropUrl(provider, manga, chapter, bubble.identity);
-          card.append(image);
+    const pageControls = element("div", "sommelier-review-page-controls");
+    pageControls.append(element("span", "sommelier-review-chapter-badge", `Cap. ${report.chapter ?? chapter}`));
+    const search = document.createElement("input");
+    search.className = "sommelier-review-page-search";
+    search.type = "search";
+    search.placeholder = "Busca Pág.";
+    search.setAttribute("aria-label", "Busca Pág.");
+    search.setAttribute("data-page-query", "");
+    search.addEventListener("input", drawSidebar);
+    pageControls.append(search);
 
-          const details = makeElement("div", "sommelier-crop-details");
-          const title = `Bubble ${String(bubble.bubble_index ?? "—").padStart(2, "0")}`;
-          details.append(makeElement("h4", "", title));
-          const identity = makeElement("p", "sommelier-crop-identity", bubble.identity ?? "Identidade ausente");
-          identity.title = bubble.identity ?? "";
-          details.append(identity);
-          const metrics = bubble.metrics || {};
-          const values = makeElement("dl", "sommelier-crop-metrics");
-          for (const [label, value] of [
-            ["Confidence", formatPercent(bubble.confidence)],
-            ["Coverage", formatPercent(metrics.coverage)],
-            ["Luma MAD", formatNumber(metrics.lumaMad)],
-          ]) {
-            const item = makeElement("div", "");
-            item.append(makeElement("dt", "", label), makeElement("dd", "", value));
-            values.append(item);
-          }
-          details.append(values);
-          if (bubble.candidate === true) {
-            details.append(makeElement("span", "sommelier-crop-candidate", "CANDIDATO"));
-          }
-          card.append(details);
-          grid.append(card);
-        }
-        group.append(grid);
-        content.append(group);
-      }
-    }
-    root.replaceChildren(header, summaryNode, filters, content);
+    const pagesList = element("nav", "sommelier-review-page-list");
+    pagesList.setAttribute("aria-label", "Páginas do capítulo");
+    const main = element("main", "sommelier-review-main");
+    main.setAttribute("data-review-main", "");
+    pagesList.setAttribute("data-review-pages", "");
+    sidebar.append(filters, pageControls, pagesList);
+    workspace.append(sidebar, main);
+    root.replaceChildren(header, workspace);
+    drawSidebar();
   }
 
   async function load() {

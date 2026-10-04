@@ -54,3 +54,13 @@
     left: var(--space-sm);
   }
 }
+
+.job-progress.job-progress--inline {
+  position: static;
+  z-index: auto;
+  width: auto;
+  margin: 0 0 var(--space-md);
+  right: auto;
+  bottom: auto;
+  left: auto;
+}

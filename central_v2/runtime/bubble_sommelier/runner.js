@@ -35,10 +35,23 @@ async function runBubbleSommelier(options) {
   await prepareOutputDirectory(absoluteOutputDir);
 
   const persistedCrops = new Map();
+  const progressContext = options.progressContext || {};
+  if (options.onProgress) {
+    await options.onProgress({
+      type: "run_started",
+      provider: progressContext.provider || "—",
+      manga: progressContext.manga || path.basename(absoluteInputDir),
+      chapter: progressContext.chapter || "—",
+      profile_id: profileId,
+      total_pages: pages.length
+    });
+  }
+
   const pipelineResult = await runPipeline({
     pages,
     profile: profileId,
     modelPath: absoluteModelPath,
+    onProgress: options.onProgress,
     onCrop: async crop => {
       const persisted = await persistCrop(absoluteOutputDir, crop);
       persistedCrops.set(crop.identity, persisted);

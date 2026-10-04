@@ -36,7 +36,14 @@ def execute_response(payload: object, output_root: Path) -> RouteResponse:
         profile_id = validate_profile_id(payload.get("profile_id"))
 
         def operation(progress, _job_id):
-            return execute(manga, chapters, progress, profile_id=profile_id)
+            return execute(
+                manga,
+                chapters,
+                progress,
+                profile_id=profile_id,
+                provider=provider,
+                manga_name=name,
+            )
 
         return RouteResponse(202, _json({"job": submit(operation, total=len(chapters))}))
     except ValueError as exc:

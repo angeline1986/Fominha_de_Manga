@@ -35,7 +35,7 @@ function sumRawLabels(pages) {
   return counts;
 }
 
-async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop }) {
+async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop, onProgress }) {
   if (!Array.isArray(pages)) throw new TypeError("pages deve ser um array");
   if (!PROFILES[profile]) throw new Error(`Perfil desconhecido: ${profile}`);
   if (!modelPath) throw new Error("modelPath é obrigatório");
@@ -43,43 +43,33 @@ async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop }) 
   const session = await createSession(modelPath);
   try {
     const pageRuns = [];
-
-    for (const inputPage of pages) {
-      const inference = await inferPage(session, inputPage.path);
-      pageRuns.push({ inputPage, inference });
-    }
-
-    const inferenceCheckpoint = {
-      pages: pageRuns.length,
-      tiles: pageRuns.reduce((total, page) => total + page.inference.tiles.length, 0),
-      rawDetections: pageRuns.reduce((total, page) => total + page.inference.detections.length, 0),
-      rawLabels: sumRawLabels(pageRuns.map(page => ({ inference: page.inference })))
-    };
-    if (onCheckpoint) await onCheckpoint("inference", inferenceCheckpoint);
-
-    for (const page of pageRuns) {
-      page.strategy = applyStrategy(page.inference.detections, profile);
-    }
-
-    const strategyCounts = sumStrategyCounts(pageRuns);
-    const strategyCheckpoint = {
-      ...strategyCounts,
-      postNmsBeforeFinalLabelSelection: strategyCounts.afterNms
-    };
-    if (onCheckpoint) await onCheckpoint("strategy", strategyCheckpoint);
-
+    let tileCount = 0;
+    let rawDetectionCount = 0;
     let crops = 0;
     let coverageGe075 = 0;
     let candidateCount = 0;
     const resultPages = [];
 
-    for (const page of pageRuns) {
-      const pageId = inputPageId(page.inputPage);
-      const bubbles = [];
+    for (let pageIndex = 0; pageIndex < pages.length; pageIndex++) {
+      const inputPage = pages[pageIndex];
+      const pageId = inputPageId(inputPage);
+      const current = pageIndex + 1;
+      if (onProgress) {
+        await onProgress({ type: "page_started", current, total: pages.length, page_id: pageId });
+      }
 
-      for (let index = 0; index < page.strategy.detections.length; index++) {
-        const detection = page.strategy.detections[index];
-        const crop = await cropRegion(page.inputPage.path, detection, profile);
+      const inference = await inferPage(session, inputPage.path);
+      tileCount += inference.tiles.length;
+      rawDetectionCount += inference.detections.length;
+      const strategy = applyStrategy(inference.detections, profile);
+      const page = { inputPage, inference, strategy };
+      pageRuns.push(page);
+
+      const bubbles = [];
+      let pageCandidates = 0;
+      for (let index = 0; index < strategy.detections.length; index++) {
+        const detection = strategy.detections[index];
+        const crop = await cropRegion(inputPage.path, detection, profile);
         const cropIdentity = `${path.parse(pageId).name}-bubble-${String(index + 1).padStart(2, "0")}`;
 
         if (onCrop) {
@@ -106,7 +96,10 @@ async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop }) 
 
         crops++;
         if (metrics.coverage >= 0.75) coverageGe075++;
-        if (candidate) candidateCount++;
+        if (candidate) {
+          candidateCount++;
+          pageCandidates++;
+        }
 
         bubbles.push({
           identity: cropIdentity,
@@ -130,16 +123,44 @@ async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop }) 
 
       resultPages.push({
         page_id: pageId,
-        input_sha256: page.inputPage.sha256 || null,
-        width: page.inference.page.width,
-        height: page.inference.page.height,
-        tiles: page.inference.tiles.length,
-        raw_detections: page.inference.detections.length,
-        raw_labels: countLabels(page.inference.detections),
-        strategy: page.strategy.counts,
+        input_sha256: inputPage.sha256 || null,
+        width: inference.page.width,
+        height: inference.page.height,
+        tiles: inference.tiles.length,
+        raw_detections: inference.detections.length,
+        raw_labels: countLabels(inference.detections),
+        strategy: strategy.counts,
         bubbles
       });
+
+      if (onProgress) {
+        await onProgress({
+          type: "page_completed",
+          current,
+          total: pages.length,
+          page_id: pageId,
+          raw_detections: inference.detections.length,
+          bubbles: bubbles.length,
+          candidates: pageCandidates,
+          percent: Math.floor(current * 100 / pages.length)
+        });
+      }
     }
+
+    const inferenceCheckpoint = {
+      pages: pageRuns.length,
+      tiles: tileCount,
+      rawDetections: rawDetectionCount,
+      rawLabels: sumRawLabels(pageRuns.map(page => ({ inference: page.inference })))
+    };
+    if (onCheckpoint) await onCheckpoint("inference", inferenceCheckpoint);
+
+    const strategyCounts = sumStrategyCounts(pageRuns);
+    const strategyCheckpoint = {
+      ...strategyCounts,
+      postNmsBeforeFinalLabelSelection: strategyCounts.afterNms
+    };
+    if (onCheckpoint) await onCheckpoint("strategy", strategyCheckpoint);
 
     return {
       profile_id: profile,

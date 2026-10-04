@@ -223,53 +223,112 @@
 
 .sommelier-review-page {
   display: grid;
-  gap: 18px;
+  gap: 16px;
   min-width: 0;
-}
-.sommelier-review-header { display: grid; gap: 10px; }
-.sommelier-review-header h2 { margin: 0; color: var(--color-text); font-size: 22px; }
-.sommelier-review-back,
-.sommelier-review-retry,
-.sommelier-review-filter {
-  width: fit-content;
-  min-height: 36px;
-  padding: 7px 11px;
-  border: 1px solid var(--color-border);
-  border-radius: 7px;
-  background: var(--color-surface);
   color: var(--color-text);
+}
+.sommelier-review-top-header {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+.sommelier-review-global-title { color: var(--color-primary); font-size: 14px; font-weight: var(--font-weight-bold); letter-spacing: .04em; }
+.sommelier-review-heading-right { display: grid; justify-items: end; gap: 2px; min-width: 0; }
+.sommelier-review-global-summary { color: var(--color-text-secondary); font-size: 13px; text-align: right; }
+.sommelier-review-profile { color: var(--color-text-muted); font-size: 11px; }
+.sommelier-review-workspace { display: grid; grid-template-columns: 310px minmax(0, 1fr); align-items: start; gap: 1rem; min-width: 0; }
+.sommelier-review-sidebar {
+  position: sticky;
+  top: 0;
+  display: grid;
+  align-content: start;
+  gap: 14px;
+  width: 310px;
+  max-height: calc(100vh - 36px);
+  overflow: auto;
+  padding: 14px;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+.sommelier-review-filter-pills { display: flex; flex-wrap: wrap; gap: 7px; }
+.sommelier-review-filter-pill {
+  min-height: 32px;
+  padding: 6px 11px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
   font: inherit;
+  font-size: 12px;
+  font-weight: var(--font-weight-semibold);
   cursor: pointer;
 }
-.sommelier-review-back { border-color: transparent; padding-left: 0; color: var(--color-primary); font-weight: var(--font-weight-semibold); }
-.sommelier-review-summary { display: grid; grid-template-columns: repeat(4, minmax(110px, 1fr)); gap: 10px; margin: 0; }
-.sommelier-review-summary-item { padding: 10px 12px; border-radius: 8px; background: var(--color-surface); }
-.sommelier-review-summary dt,
-.sommelier-crop-metrics dt { color: var(--color-text-muted); font-size: 11px; font-weight: var(--font-weight-semibold); letter-spacing: .04em; }
-.sommelier-review-summary dd { margin: 4px 0 0; color: var(--color-text); font-size: 18px; font-weight: var(--font-weight-semibold); }
-.sommelier-review-filters { display: flex; flex-wrap: wrap; gap: 8px; }
-.sommelier-review-filter { color: var(--color-text-secondary); font-size: var(--font-size-small); font-weight: var(--font-weight-semibold); }
-.sommelier-review-filter.active { border-color: var(--color-border-primary); color: var(--color-primary); }
-.sommelier-review-content { display: grid; gap: 22px; min-width: 0; }
-.sommelier-review-group { display: grid; gap: 10px; min-width: 0; }
-.sommelier-review-group h3 { margin: 0; color: var(--color-text-secondary); font-size: 15px; }
-.sommelier-crop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
-.sommelier-crop-card { display: grid; grid-template-rows: minmax(160px, 230px) auto; overflow: hidden; min-width: 0; border: 1px solid var(--color-border); border-radius: 9px; background: var(--color-surface); }
-.sommelier-crop-image { display: block; width: 100%; height: 100%; padding: 10px; object-fit: contain; background: var(--color-background-subtle, #f4f5f6); }
-.sommelier-crop-details { display: grid; gap: 7px; padding: 11px; }
-.sommelier-crop-details h4,
-.sommelier-crop-identity { margin: 0; color: var(--color-text); }
-.sommelier-crop-details h4 { font-size: 14px; }
-.sommelier-crop-identity { overflow: hidden; color: var(--color-text-muted); font-size: 11px; text-overflow: ellipsis; white-space: nowrap; }
-.sommelier-crop-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 2px 0 0; }
-.sommelier-crop-metrics dd { margin: 3px 0 0; color: var(--color-text); font-size: 13px; font-weight: var(--font-weight-semibold); }
-.sommelier-crop-candidate { width: fit-content; padding: 4px 7px; border-radius: 999px; background: #e6f4ee; color: #176c4b; font-size: 10px; font-weight: var(--font-weight-bold); letter-spacing: .04em; }
+.sommelier-review-filter-pill.is-active { border-color: var(--color-primary); background: var(--color-primary); color: var(--color-surface); }
+.sommelier-review-page-controls { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; gap: 8px; }
+.sommelier-review-chapter-badge { padding: 6px 8px; border-radius: 5px; background: var(--color-primary-soft); color: var(--color-text); font-size: 12px; font-weight: var(--font-weight-semibold); white-space: nowrap; }
+.sommelier-review-page-search { width: 100%; min-width: 0; height: 32px; padding: 6px 8px; border: 1px solid var(--color-border); border-radius: 5px; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: 12px; }
+.sommelier-review-page-list { display: grid; align-content: start; gap: 4px; }
+.sommelier-review-page-item { display: flex; width: 100%; min-width: 0; min-height: 34px; align-items: center; justify-content: space-between; gap: 8px; padding: 6px 8px 6px 10px; border: 0; border-left: 3px solid transparent; border-radius: 0 5px 5px 0; background: transparent; color: var(--color-text-secondary); font: inherit; text-align: left; cursor: pointer; }
+.sommelier-review-page-item:hover { background: var(--color-primary-soft); }
+.sommelier-review-page-item.is-active { border-left-color: #0284c7; background: #f0f9ff; color: var(--color-text); font-weight: var(--font-weight-semibold); }
+.sommelier-review-page-name { overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+.sommelier-review-page-counts { display: inline-flex; flex: 0 0 auto; align-items: center; gap: 7px; font-size: 11px; }
+.sommelier-review-total { color: var(--color-text-muted); }
+.sommelier-review-candidate-count { color: var(--color-primary); font-weight: var(--font-weight-bold); }
+.sommelier-review-main { min-width: 0; overflow: hidden; padding: 14px; border: 1px solid var(--color-border); border-radius: 8px; background: var(--color-surface); }
+.sommelier-review-page-heading { display: flex; min-height: 34px; align-items: center; margin-bottom: 12px; }
+.sommelier-review-page-heading h2 { margin: 0; color: var(--color-text); font-size: 14px; font-weight: var(--font-weight-semibold); }
+.sommelier-review-table { min-width: 0; }
+.sommelier-review-columns,
+.sommelier-review-row { display: grid; grid-template-columns: 60px 140px minmax(0, 1fr) 160px; align-items: center; column-gap: 12px; }
+.sommelier-review-columns { min-height: 32px; padding: 0 10px; border-bottom: 1px solid var(--color-border); color: var(--color-text-muted); font-size: 10px; font-weight: var(--font-weight-bold); letter-spacing: .05em; }
+.sommelier-review-columns span:last-child { text-align: right; }
+.sommelier-review-rows { display: grid; gap: 6px; padding-top: 6px; }
+.sommelier-review-row { min-height: 68px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); transition: background-color .12s ease, border-color .12s ease; }
+.sommelier-review-row:hover { border-color: var(--color-border-primary); background: var(--color-surface-soft); }
+.sommelier-review-row.is-candidate { border-left: 3px solid var(--color-primary); }
+.sommelier-review-crop { display: grid; width: 54px; height: 54px; place-items: center; overflow: hidden; }
+.sommelier-review-image { display: block; width: 54px; height: 54px; object-fit: contain; }
+.sommelier-review-identity { display: grid; min-width: 0; gap: 4px; }
+.sommelier-review-identity strong { color: var(--color-text); font-size: 12px; }
+.sommelier-review-identity span { overflow: hidden; color: var(--color-text-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.sommelier-review-metrics { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin: 0; }
+.sommelier-review-metric { display: grid; gap: 3px; min-width: 0; }
+.sommelier-review-metric dt { color: var(--color-text-muted); font-size: 10px; }
+.sommelier-review-metric dd { margin: 0; color: var(--color-text); font-size: 12px; font-weight: var(--font-weight-semibold); }
+.sommelier-review-status { display: flex; justify-content: flex-end; }
+.sommelier-review-candidate { padding: 5px 9px; border-radius: 999px; background: var(--color-primary-soft); color: var(--color-primary-hover); font-size: 10px; font-weight: var(--font-weight-bold); letter-spacing: .04em; white-space: nowrap; }
+.sommelier-review-not-candidate { color: var(--color-text-muted); font-size: 13px; }
 .sommelier-review-empty,
-.sommelier-review-state { margin: 0; padding: 16px; color: var(--color-text-secondary); }
+.sommelier-review-state { margin: 0; padding: 16px 10px; color: var(--color-text-secondary); font-size: 13px; }
 .sommelier-review-error { margin: 0; color: var(--color-danger, #a32f2f); }
+.sommelier-review-back,
+.sommelier-review-retry { width: fit-content; min-height: 34px; padding: 6px 10px; border: 1px solid var(--color-border); border-radius: 6px; background: var(--color-surface); color: var(--color-primary); font: inherit; cursor: pointer; }
 
-@media (max-width: 620px) {
-  .sommelier-review-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .sommelier-crop-grid { grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); }
-  .sommelier-crop-card { grid-template-rows: minmax(145px, 205px) auto; }
+@media (max-width: 900px) {
+  .sommelier-review-workspace { grid-template-columns: 260px minmax(0, 1fr); }
+  .sommelier-review-sidebar { width: 260px; }
+  .sommelier-review-columns,
+  .sommelier-review-row { grid-template-columns: 60px 120px minmax(0, 1fr) 110px; column-gap: 8px; }
+  .sommelier-review-metrics { grid-template-columns: 1fr; gap: 2px; }
+  .sommelier-review-metric { grid-template-columns: 66px minmax(0, 1fr); align-items: center; }
+}
+@media (max-width: 680px) {
+  .sommelier-review-top-header { align-items: flex-start; flex-direction: column; gap: 6px; }
+  .sommelier-review-heading-right { justify-items: start; }
+  .sommelier-review-global-summary { text-align: left; }
+  .sommelier-review-workspace { grid-template-columns: minmax(0, 1fr); }
+  .sommelier-review-sidebar { position: static; width: auto; max-height: 260px; }
+  .sommelier-review-columns,
+  .sommelier-review-row { grid-template-columns: 60px minmax(90px, 130px) minmax(120px, 1fr) 86px; column-gap: 6px; padding-right: 6px; padding-left: 6px; }
+  .sommelier-review-main { padding: 10px 6px; }
+  .sommelier-review-status { font-size: 9px; }
+  .sommelier-review-candidate { padding: 4px 5px; font-size: 8px; }
 }

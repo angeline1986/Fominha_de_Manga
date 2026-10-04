@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 from central_v2.backend.routes.router import dispatch_get
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, LEVEL2
+from central_v2.backend.orchestration.textoff_merged.level2_vision import ALGORITHM
 from central_v2.backend.orchestration.textoff_merged.residue_occurrences import update_page
 
 
@@ -81,13 +82,27 @@ class ComparisonTests(unittest.TestCase):
         target = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF" / LEVEL2 / "1"
         (target / "json").mkdir(parents=True)
         (target / "clean").mkdir()
+        (target / "mask").mkdir()
         (target / "clean/page_clean.png").write_bytes(b"step-two")
+        (target / "mask/page_text_mask.png").write_bytes(b"mask")
+        report_row = {"source": "page.png", "clean": "clean/page_clean.png",
+                      "level1_clean": "clean/page_clean.png", "mask": "mask/page_text_mask.png",
+                      "changed_pixels": 1, "mask_pixels": 1, "changed_outside_mask": 0}
+        (target / "json/level2-report.json").write_text(json.dumps({
+            "integrity_ok": True, "pages_analyzed": 1, "pages": [report_row],
+        }))
         (target / "json/clean-manifest.json").write_text(json.dumps({
-            "source_stage": LEVEL1, "integrity_ok": True,
+            "algorithm": ALGORITHM, "source_stage": LEVEL1, "integrity_ok": True,
             "source_level1_manifest_sha256": hashlib.sha256(self.manifest.read_bytes()).hexdigest(),
+            "source_level1_artifacts": ["clean/page_clean.png"],
             "source_artifacts": ["page.png"], "candidate_source_artifacts": ["page.png"],
+            "analyzed_source_artifacts": ["page.png"], "changed_source_artifacts": ["page.png"],
+            "unchanged_source_artifacts": [], "page_results": [{key: value for key, value in report_row.items()
+                                                                   if key != "changed_outside_mask"}],
             "clean_artifacts": ["clean/page_clean.png"], "changed_artifacts": ["clean/page_clean.png"],
-            "pages_total": 1,
+            "mask_artifacts": ["mask/page_text_mask.png"], "report": "json/level2-report.json",
+            "pages_total": 1, "analyzed_pages_total": 1, "changed_pages_total": 1,
+            "outputs_total": 1, "outcome": "visual_changes",
         }))
         page = json.loads(self.request("2").body)["pages"][0]
         for side, expected in [("before", b"step-one"), ("after", b"step-two")]:

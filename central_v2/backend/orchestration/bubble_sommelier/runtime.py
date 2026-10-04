@@ -1,7 +1,9 @@
+import json
 import os
 import shutil
 import subprocess
 import tempfile
+import threading
 from pathlib import Path
 
 
@@ -49,7 +51,14 @@ def resolve_runtime() -> tuple[str, Path, Path, Path]:
     return node, cli, model, modules
 
 
-def run(source: Path, output_dir: Path, profile_id: str) -> subprocess.CompletedProcess:
+def run(
+    source: Path,
+    output_dir: Path,
+    profile_id: str,
+    *,
+    on_progress=None,
+    progress_context: dict | None = None,
+) -> subprocess.CompletedProcess:
     profile_id = validate_profile_id(profile_id)
     node, cli, model, modules = resolve_runtime()
     env = os.environ.copy()
@@ -62,16 +71,52 @@ def run(source: Path, output_dir: Path, profile_id: str) -> subprocess.Completed
         "--model", str(model),
         "--profile", profile_id,
     ]
+    for key, value in (progress_context or {}).items():
+        if key in {"provider", "manga", "chapter"} and value is not None:
+            env[f"BUBBLE_SOMMELIER_{key.upper()}"] = str(value)
 
     with tempfile.TemporaryDirectory(prefix="bubble-sommelier-runtime-") as working_directory:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=working_directory,
             env=env,
             text=True,
+            encoding="utf-8",
+            errors="replace",
+            bufsize=1,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
-            check=False,
+        )
+        stdout_lines = []
+        stderr_lines = []
+        stderr_reader = threading.Thread(
+            target=lambda: stderr_lines.extend(process.stderr),
+            name="bubble-sommelier-stderr",
+            daemon=True,
+        )
+        stderr_reader.start()
+        try:
+            for line in process.stdout:
+                stdout_lines.append(line)
+                try:
+                    message = json.loads(line)
+                except (TypeError, ValueError):
+                    continue
+                if isinstance(message, dict) and message.get("type") == "progress" and on_progress:
+                    on_progress(message.get("payload") or {})
+            returncode = process.wait()
+        except BaseException:
+            if process.poll() is None:
+                process.kill()
+            process.wait()
+            stderr_reader.join()
+            raise
+        stderr_reader.join()
+        completed = subprocess.CompletedProcess(
+            command,
+            returncode,
+            "".join(stdout_lines),
+            "".join(stderr_lines),
         )
     if completed.returncode:
         diagnostic = "\n".join(

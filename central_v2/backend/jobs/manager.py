@@ -27,7 +27,11 @@ def _run(job_id: str, operation) -> None:
             job["progress"] = dict(progress)
             job["updated_at"] = _now()
             percent = int(progress.get("percent") or 0)
-            marker = (chapter, progress.get("stage"), percent // 25)
+            stage = progress.get("stage")
+            if stage in {"page_started", "page"}:
+                marker = (chapter, stage, progress.get("page_index"))
+            else:
+                marker = (chapter, stage, percent // 25)
             if marker != job.get("_terminal_marker"):
                 job["_terminal_marker"] = marker
                 message = progress.get("message") or progress.get("stage") or "Processando"
@@ -39,13 +43,17 @@ def _run(job_id: str, operation) -> None:
     print(f"[central-v2][job {job_id[:8]}] execução iniciada", flush=True)
     try:
         results = operation(update, job_id)
-        status, error = "completed", ""
+        failures = [item for item in results if isinstance(item, dict) and item.get("status") == "failed"]
+        status = "failed" if failures else "completed"
+        error = (f"{len(failures)} de {len(results)} capítulo(s) falharam. "
+                 + "; ".join(str(item.get("error") or f"Cap. {item.get('chapter', '?')}")
+                              for item in failures)) if failures else ""
     except Exception as exc:
         results, status, error = [], "failed", str(exc)
     with _lock:
         job = _jobs[job_id]
         job.update(status=status, error=error, results=results, updated_at=_now())
-    summary = f"{len(results)} capítulo(s)" if results else error or status
+    summary = error or (f"{len(results)} capítulo(s)" if results else status)
     print(f"[central-v2][job {job_id[:8]}] {status}: {summary}", flush=True)
 
 

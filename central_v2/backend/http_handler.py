@@ -1,12 +1,16 @@
 from http.server import BaseHTTPRequestHandler
 import json
+import re
 import threading
+from urllib.parse import urlsplit
 
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.router import dispatch_get, dispatch_post
 
 
 class Handler(BaseHTTPRequestHandler):
+    _JOB_POLL_PATH = re.compile(r"/api/jobs/[a-f0-9]{32}\Z")
+
     def _send_response(self, response):
         if response is None:
             self.send_response(404)
@@ -44,4 +48,12 @@ class Handler(BaseHTTPRequestHandler):
             threading.Thread(target=self.server.shutdown, daemon=True).start()
 
     def log_message(self, format, *args):
+        status = str(args[1]) if len(args) > 1 else ""
+        path = urlsplit(self.path).path
+        if (
+            self.command == "GET"
+            and self._JOB_POLL_PATH.fullmatch(path)
+            and status.startswith(("2", "304"))
+        ):
+            return
         print(f"[central-v2] {format % args}", flush=True)

@@ -5,6 +5,7 @@ import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { createJobProgress } from "/_shared/progress/progress.js";
 
 const FILTERS = [
   ["all", "ALL"],
@@ -12,6 +13,28 @@ const FILTERS = [
   ["analyzed", "ANALISADO"],
   ["candidates", "CANDIDATOS"],
 ];
+
+export function aggregateSommelierProgress(job, chapters, pagesByChapter) {
+  const jobProgress = job.progress || job;
+  const chapterIndex = chapters.indexOf(job.chapter);
+  const completedBefore = chapterIndex < 0
+    ? 0
+    : chapters.slice(0, chapterIndex).reduce((sum, chapter) => sum + (pagesByChapter.get(chapter) || 0), 0);
+  const chapterPages = pagesByChapter.get(job.chapter) || 0;
+  const completedInChapter = jobProgress.stage === "completed"
+    ? chapterPages
+    : Math.max(0, Math.min(chapterPages, Number(jobProgress.completed) || 0));
+  const total = [...pagesByChapter.values()].reduce((sum, count) => sum + count, 0);
+  const completed = Math.min(total, completedBefore + completedInChapter);
+  return {
+    busy: job.status !== "failed",
+    title: `Curadoria de Balões · ${job.status}`,
+    message: jobProgress.message || "Preparando Curadoria…",
+    percent: total ? Math.round(completed * 100 / total) : 0,
+    completed,
+    total,
+  };
+}
 
 function filterButton(label, count, active, onClick) {
   const button = document.createElement("button");
@@ -58,6 +81,7 @@ export function render(container) {
       <button class="auto-merge-execute sommelier-execute" type="button" data-execute
               title="Selecione capítulos e um perfil">Executar Curadoria</button>
     </div>
+    <div data-progress></div>
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>
     </div>
@@ -73,7 +97,10 @@ export function render(container) {
   const profile = root.querySelector("[data-profile]");
   const listView = root.querySelector("[data-list-view]");
   const reviewHost = root.querySelector("[data-review-host]");
+  const progress = createJobProgress("Curadoria de Balões", { inline: true, countUnit: "páginas" });
+  root.querySelector("[data-progress]").append(progress.element);
   let closeReview;
+  let executionBusy = false;
 
   function leaveReview() {
     closeReview?.();
@@ -97,7 +124,7 @@ export function render(container) {
   }
 
   function updateExecuteState() {
-    execute.disabled = selected.size === 0 || profile.value === "";
+    execute.disabled = executionBusy || selected.size === 0 || profile.value === "";
   }
 
   const matches = (row, key) => {
@@ -173,23 +200,36 @@ export function render(container) {
   execute.addEventListener("click", async () => {
     if (!selected.size || !profile.value || execute.disabled) return;
     const { provider, manga } = getContext();
-    execute.disabled = true;
-    status.textContent = `Executando Curadoria em ${selected.size} capítulo(s)…`;
-    status.hidden = false;
+    const chapters = [...selected];
+    const pagesByChapter = new Map(chapters.map((chapter) => [
+      chapter, Math.max(0, Number(rows.find((row) => row.chapter === chapter)?.merge_count) || 0),
+    ]));
+    const totalPages = [...pagesByChapter.values()].reduce((sum, count) => sum + count, 0);
+    executionBusy = true;
+    updateExecuteState();
+    status.textContent = "";
+    status.hidden = true;
+    progress.update({ busy: true, title: "Curadoria de Balões · queued",
+      message: "Na fila para execução…", percent: 0, completed: 0, total: totalPages });
     try {
-      const { job } = await startBubbleSommelier(provider, manga, [...selected], profile.value);
+      const { job } = await startBubbleSommelier(provider, manga, chapters, profile.value);
       await waitForTextoffJob(job, (current) => {
-        const done = current.completed ?? current.done ?? 0;
-        const total = current.total ?? selected.size;
-        status.textContent = `Curadoria em andamento: ${done}/${total}`;
+        progress.update(aggregateSommelierProgress(current, chapters, pagesByChapter));
       });
+      progress.update({ busy: true, title: "Curadoria de Balões · completed",
+        message: "Execução concluída; atualizando resultados…",
+        percent: 100, completed: totalPages, total: totalPages });
       selected.clear();
       await load();
       status.textContent = "Curadoria concluída.";
       status.hidden = false;
     } catch (error) {
+      progress.update({ busy: false });
       status.textContent = error.message;
       status.hidden = false;
+    } finally {
+      progress.update({ busy: false });
+      executionBusy = false;
       updateExecuteState();
     }
   });

@@ -125,7 +125,11 @@ export function createMergedLevel2View(onRun) {
       draw();
     },
     setExecution(job) { executionBusy = Boolean(job.busy); progress.update(job); draw(); },
-    clearSelection() { selected.clear(); draw(); },
+    completeSuccessfulExecution() {
+      selected.clear();
+      selectedFilter = "all";
+      pagination.reset();
+    },
     dispose() { comparison.dispose(); query.removeEventListener("input", onQuery); execute.removeEventListener("click", handleExecute); },
   };
 }
@@ -140,7 +144,7 @@ export function render(container) {
   execution = createMergedExecution({
     level: "2",
     onStatus: view.setExecution,
-    onComplete: async () => { view.clearSelection(); await load(); },
+    onComplete: async () => { view.completeSuccessfulExecution(); await load(); },
   });
   async function load() {
     const id = ++requestId;

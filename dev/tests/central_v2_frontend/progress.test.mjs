@@ -35,3 +35,58 @@ test('shared progress bar exposes chapter count, detail and accessible percentag
   progress.update({ busy: false });
   assert.equal(document.element.hidden, true);
 });
+
+test('shared progress component supports inline placement and page counts', async () => {
+  const document = progressDocument();
+  const load = browserModules({ document });
+  const { createJobProgress } = await load('/_shared/progress/progress.js');
+  const progress = createJobProgress('Curadoria de Balões', { inline: true, countUnit: 'páginas' });
+  progress.update({ busy: true, percent: 11, completed: 2, total: 18 });
+
+  assert.equal(document.element.className, 'job-progress job-progress--inline');
+  assert.equal(document.nodes.get('[data-count]').textContent, '2 de 18 páginas · 11%');
+  progress.update({ busy: false });
+  assert.equal(document.element.hidden, true);
+});
+
+test('Sommelier page progress aggregates chapters and completes failed jobs cleanly', async () => {
+  const document = progressDocument();
+  const load = browserModules({ document }, { './review.js': 'export function renderBubbleSommelierReview() {};' });
+  const { aggregateSommelierProgress } = await load('/texto_off/sommelier/index.js');
+  const chapters = ['1', '2'];
+  const pages = new Map([['1', 18], ['2', 12]]);
+  const oneChapter = ['1'];
+  const oneChapterPages = new Map([['1', 18]]);
+
+  const start = aggregateSommelierProgress({ status: 'running', chapter: '', progress: {
+    stage: 'queued', completed: 0, total: 1, message: 'Na fila',
+  } }, oneChapter, oneChapterPages);
+  assert.equal(start.percent, 0);
+  assert.equal(aggregateSommelierProgress({ status: 'running', chapter: '1', progress: {
+    stage: 'page', completed: 1, total: 18,
+  } }, oneChapter, oneChapterPages).percent, 6);
+  assert.equal(aggregateSommelierProgress({ status: 'running', chapter: '1', progress: {
+    stage: 'page', completed: 2, total: 18,
+  } }, oneChapter, oneChapterPages).percent, 11);
+  const complete = aggregateSommelierProgress({ status: 'running', chapter: '1', progress: {
+    stage: 'completed', completed: 1, total: 1,
+  } }, oneChapter, oneChapterPages);
+  assert.equal(complete.percent, 100);
+  assert.equal(complete.completed, 18);
+
+  assert.deepEqual({ ...aggregateSommelierProgress({ status: 'running', chapter: '1', progress: {
+    stage: 'page', completed: 1, total: 18, message: 'Página 1/18',
+  } }, chapters, pages) }, {
+    busy: true, title: 'Curadoria de Balões · running', message: 'Página 1/18',
+    percent: 3, completed: 1, total: 30,
+  });
+  assert.deepEqual({ ...aggregateSommelierProgress({ status: 'running', chapter: '2', progress: {
+    stage: 'page', completed: 2, total: 12, message: 'Página 2/12',
+  } }, chapters, pages) }, {
+    busy: true, title: 'Curadoria de Balões · running', message: 'Página 2/12',
+    percent: 67, completed: 20, total: 30,
+  });
+  assert.deepEqual(aggregateSommelierProgress({ status: 'failed', chapter: '2', progress: {
+    stage: 'page', completed: 2, total: 12, message: 'Falha no processamento',
+  } }, chapters, pages).busy, false);
+});

@@ -5,6 +5,15 @@ const { runBubbleSommelier } = require("./runner");
 
 const REQUIRED_OPTIONS = new Set(["--input", "--output", "--model", "--profile"]);
 
+function writeProgress(event) {
+  return new Promise((resolve, reject) => {
+    process.stdout.write(`${JSON.stringify({ type: "progress", payload: event })}\n`, error => {
+      if (error) reject(error);
+      else resolve();
+    });
+  });
+}
+
 function parseArguments(args) {
   const options = new Map();
   for (let index = 0; index < args.length; index += 2) {
@@ -30,7 +39,15 @@ function parseArguments(args) {
 
 async function main() {
   const options = parseArguments(process.argv.slice(2));
-  const report = await runBubbleSommelier(options);
+  const report = await runBubbleSommelier({
+    ...options,
+    progressContext: {
+      provider: process.env.BUBBLE_SOMMELIER_PROVIDER,
+      manga: process.env.BUBBLE_SOMMELIER_MANGA,
+      chapter: process.env.BUBBLE_SOMMELIER_CHAPTER
+    },
+    onProgress: writeProgress
+  });
   console.log(JSON.stringify({
     status: report.status,
     profile_id: report.profile_id,

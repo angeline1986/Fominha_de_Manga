@@ -1,6 +1,6 @@
-export function createJobProgress(defaultTitle = "Auto-Merge Nível I") {
+export function createJobProgress(defaultTitle = "Auto-Merge Nível I", options = {}) {
   const element = document.createElement("section");
-  element.className = "job-progress";
+  element.className = options.inline ? "job-progress job-progress--inline" : "job-progress";
   element.hidden = true;
   element.setAttribute("role", "status");
   element.setAttribute("aria-live", "polite");
@@ -28,8 +28,9 @@ export function createJobProgress(defaultTitle = "Auto-Merge Nível I") {
       const percent = Math.round(Math.max(0, Math.min(100, Number(state.percent) || 0)));
       const completed = Math.max(0, Number(state.completed) || 0);
       const total = Math.max(0, Number(state.total) || 0);
+      const unit = state.countUnit || options.countUnit || "capítulo(s)";
       count.textContent = total
-        ? `${completed} de ${total} capítulo(s) · ${percent}%`
+        ? `${completed} de ${total} ${unit} · ${percent}%`
         : "Preparando…";
       bar.value = percent;
       bar.setAttribute("aria-valuenow", String(percent));

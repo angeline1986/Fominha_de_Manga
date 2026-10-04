@@ -124,29 +124,42 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             images = v3.merge_artifact_files(source_dir)
             level1_manifest = _stage_manifest(manga, LEVEL1, name)
             if (report.get("merge_pages_total", report.get("pages_analyzed")) != len(images)
-                    or report.get("integrity_ok") is not True):
+                    or report.get("integrity_ok") is not True
+                    or report.get("pages_analyzed") != len(candidate_names)):
                 raise RuntimeError(f"Relatório Nível II incompleto ou inválido para Cap. {name}.")
-            pages = [item for item in report.get("pages", [])
-                     if item.get("source") in candidate_names]
-            clean_names = [item["clean"] for item in pages if item.get("clean")]
-            if len(pages) != len(candidate_names) or any(not item.get("clean") for item in pages) or any(
-                artifact_file(staged, filename, "clean") is None for filename in clean_names
-            ):
-                raise RuntimeError(f"Nível II não gerou as imagens candidatas do Cap. {name}.")
+            pages = _validated_candidate_pages(report, candidate_names, staged, level1_dir)
+            clean_names = [item["clean"] for item in pages if item["clean"] is not None]
+            changed_sources = [item["source"] for item in pages if item["clean"] is not None]
+            unchanged_sources = [item["source"] for item in pages if item["clean"] is None]
+            level1_clean_by_source = {
+                item["source"]: item["level1_clean"] for item in pages
+            }
+            page_results = [{
+                "source": item["source"], "clean": item["clean"],
+                "level1_clean": item["level1_clean"], "mask": item["mask"],
+                "changed_pixels": item["changed_pixels"], "mask_pixels": item["mask_pixels"],
+            } for item in pages]
             output_manifest = {
                 "schema_version": 1, "algorithm": ALGORITHM,
                 "source_stage": LEVEL1, "integrity_ok": True,
                 "source_artifacts": [path.name for path in images],
                 "candidate_source_artifacts": sorted(candidate_names),
+                "analyzed_source_artifacts": sorted(candidate_names),
+                "changed_source_artifacts": sorted(changed_sources),
+                "unchanged_source_artifacts": sorted(unchanged_sources),
+                "page_results": page_results,
                 "source_level1_artifacts": [item for item in level1_manifest.get("clean_artifacts", [])
                                             if Path(item).name.replace("_clean", "") in candidate_names],
                 "source_level1_manifest_sha256": _stage_manifest_sha256(
                     manga, LEVEL1, name
                 ),
                 "clean_artifacts": clean_names, "outputs_total": len(clean_names),
-                "pages_total": len(candidate_names),
+                "pages_total": len(candidate_names), "analyzed_pages_total": len(pages),
+                "changed_pages_total": len(changed_sources),
                 "changed_artifacts": clean_names,
-                "mask_artifacts": [item["mask"] for item in report["pages"]],
+                "mask_artifacts": [item["mask"] for item in pages],
+                "level1_fallback_artifacts": [level1_clean_by_source[source]
+                                               for source in unchanged_sources],
                 "recipe": {"reference": REFERENCE_RECIPE, "base_dilation": BASE_DILATION,
                            "authorized_dilation": AUTHORIZED_DILATION, "lama_padding": LAMA_PADDING},
                 "pages_with_text": report.get("pages_with_text", 0),
@@ -165,15 +178,18 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                 page["source"] for page in report.get("pages", [])
                 if isinstance(page, dict) and page.get("transparent_balloons")
             ]
-            prepared.append((name, target, staged, report, len(images), clean_names, transparent_pages))
-        for name, target, staged, report, image_count, clean_names, transparent_pages in prepared:
+            prepared.append((name, target, staged, report, len(images), clean_names,
+                             transparent_pages, len(pages)))
+        for name, target, staged, report, image_count, clean_names, transparent_pages, analyzed_count in prepared:
             _promote_stage(staged, target)
             from .consolidated import rebuild_consolidated
             consolidated = rebuild_consolidated(manga, name)
             outcome = report.get("outcome")
             results.append({"chapter": name, "status": "ok" if outcome == "visual_changes" else "no_change",
                             "outcome": outcome, "pages": image_count,
-                            "outputs": len(clean_names), "masks": len(pages),
+                            "outputs": len(clean_names), "masks": analyzed_count,
+                            "analyzed_pages": analyzed_count,
+                            "unchanged_pages": analyzed_count - len(clean_names),
                             "transparent_page_count": len(transparent_pages),
                             "transparent_pages": transparent_pages,
                             "text_pages": report.get("pages_with_text", 0),
@@ -190,9 +206,59 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
     result_by_chapter = {item["chapter"]: item for item in results}
     for index, name in enumerate(chapters, 1):
         item = result_by_chapter.get(name, {})
-        message = (f"Cap. {name}: sem pixels alterados; revisar máscaras e resultado."
-                   if item.get("status") == "no_change" else f"Cap. {name}: Nível II finalizado.")
+        message = (f"Cap. {name}: falha no Nível II: {item.get('error', 'resultado inválido')}"
+                   if item.get("status") == "failed" else
+                   f"Cap. {name}: sem pixels alterados; revisão concluída."
+                   if item.get("status") == "no_change" else
+                   f"Cap. {name}: Nível II finalizado.")
         progress(name, {"stage": "done", "percent": round(index * 100 / len(chapters)),
                         "completed": index, "total": len(chapters),
                         "message": message})
     return results
+
+
+def _validated_candidate_pages(report, candidate_names, staged, level1_dir):
+    """Validate one analytical row per candidate, allowing unchanged rows without a new PNG."""
+    candidates = set(candidate_names)
+    raw_pages = report.get("pages")
+    if not isinstance(raw_pages, list) or not candidates:
+        raise RuntimeError("Nível II não gerou resultados analíticos para as páginas candidatas.")
+    by_source = {}
+    for item in raw_pages:
+        if not isinstance(item, dict):
+            raise RuntimeError("Nível II gerou uma linha de resultado inválida.")
+        source = item.get("source")
+        if not isinstance(source, str) or source not in candidates or source in by_source:
+            raise RuntimeError("Nível II gerou fontes ausentes, duplicadas ou inesperadas.")
+        by_source[source] = item
+    if set(by_source) != candidates:
+        raise RuntimeError("Nível II não analisou todas as páginas candidatas.")
+
+    validated = []
+    for source in sorted(candidates):
+        item = by_source[source]
+        expected_clean = artifact_ref("clean", Path(source).stem + "_clean" + Path(source).suffix)
+        level1_clean = item.get("level1_clean")
+        if level1_clean != expected_clean or artifact_file(level1_dir, level1_clean, "clean") is None:
+            raise RuntimeError(f"Nível II não referenciou o Nível I de {source}.")
+        mask = item.get("mask")
+        if not mask or artifact_file(staged, mask, "mask") is None:
+            raise RuntimeError(f"Nível II não gerou máscara analítica válida para {source}.")
+        changed_pixels = item.get("changed_pixels")
+        if not isinstance(changed_pixels, int) or isinstance(changed_pixels, bool) or changed_pixels < 0:
+            raise RuntimeError(f"Nível II gerou contagem de alteração inválida para {source}.")
+        mask_pixels = item.get("mask_pixels")
+        if not isinstance(mask_pixels, int) or isinstance(mask_pixels, bool) or mask_pixels < 0:
+            raise RuntimeError(f"Nível II gerou contagem de máscara inválida para {source}.")
+        clean = item.get("clean")
+        if clean is None:
+            if changed_pixels != 0:
+                raise RuntimeError(f"Nível II omitiu PNG alterado para {source}.")
+        elif clean != expected_clean or changed_pixels == 0 or artifact_file(staged, clean, "clean") is None:
+            raise RuntimeError(f"Nível II referenciou PNG clean inválido para {source}.")
+        if item.get("changed_outside_mask") != 0:
+            raise RuntimeError(f"Nível II violou a máscara analítica em {source}.")
+        validated.append({**item, "level1_clean": level1_clean})
+    if report.get("pages_analyzed") != len(candidates):
+        raise RuntimeError("Nível II informou uma contagem incompatível de páginas analisadas.")
+    return validated
