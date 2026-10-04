@@ -12,7 +12,12 @@ from central_v2.backend.routes.auto_merge.folder import open_auto_merge_folder_r
 from central_v2.backend.routes.catalog import catalog_response
 from central_v2.backend.routes.health import health_response
 from central_v2.backend.routes.jobs import job_response
-from central_v2.backend.routes.bubble_sommelier import response as bubble_sommelier_response, execute_response as execute_bubble_sommelier_response
+from central_v2.backend.routes.bubble_sommelier import (
+    crop_response as bubble_sommelier_crop_response,
+    execute_response as execute_bubble_sommelier_response,
+    response as bubble_sommelier_response,
+    review_response as bubble_sommelier_review_response,
+)
 from central_v2.backend.routes.shutdown import shutdown_response
 from central_v2.backend.routes.state import state_response
 from central_v2.backend.routes.merge_manual import (
@@ -64,6 +69,12 @@ def dispatch_get(
 
     if request.path == "/api/textoff/sommelier":
         return bubble_sommelier_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/textoff/sommelier/review":
+        return bubble_sommelier_review_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/textoff/sommelier/crop":
+        return bubble_sommelier_crop_response(parse_qs(request.query), output_root)
 
     textoff_response = dispatch_textoff_merged_get(request, output_root)
     if textoff_response is not None:

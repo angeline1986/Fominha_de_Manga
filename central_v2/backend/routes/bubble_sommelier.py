@@ -9,6 +9,10 @@ from central_v2.backend.state.manga_state import resolve_manga
 from central_v2.backend.orchestration.bubble_sommelier import (
     execute, query, validate_profile_id, validate_selection,
 )
+from central_v2.backend.orchestration.bubble_sommelier.artifacts import (
+    crop_path, crop_sha256, load_review_report, validate_chapter_id,
+    validate_crop_identity,
+)
 
 
 def response(query_values: dict, output_root: Path) -> RouteResponse:
@@ -41,6 +45,68 @@ def execute_response(payload: object, output_root: Path) -> RouteResponse:
         return RouteResponse(500, _json({"error": "Não foi possível iniciar o BubbleSommelier."}))
 
 
+def review_response(query_values: dict, output_root: Path) -> RouteResponse:
+    try:
+        provider, name = _context(query_values, output_root)
+        manga = resolve_manga(output_root, provider, name)
+        chapter = validate_chapter_id(_required(query_values, "chapter"))
+        report = load_review_report(manga, chapter)
+        result = report["checkpoints"]["result"]
+        pages = []
+        for page in report["pages"]:
+            pages.append({
+                "page_id": page["page_id"],
+                "bubbles": [_review_bubble(bubble) for bubble in page["bubbles"]],
+            })
+        return RouteResponse(200, _json({
+            "chapter": chapter,
+            "profile_id": report["profile_id"],
+            "summary": {
+                "balloons": result["crops"],
+                "candidates": result["candidates"],
+                "coverage_ge_075": result["coverageGe075"],
+            },
+            "pages": pages,
+        }))
+    except ValueError as exc:
+        return RouteResponse(400, _json({"error": str(exc)}))
+    except FileNotFoundError as exc:
+        return RouteResponse(404, _json({"error": str(exc)}))
+    except RuntimeError as exc:
+        return RouteResponse(422, _json({"error": str(exc)}))
+    except OSError:
+        return RouteResponse(500, _json({"error": "Não foi possível ler a revisão do BubbleSommelier."}))
+
+
+def crop_response(query_values: dict, output_root: Path) -> RouteResponse:
+    try:
+        provider, name = _context(query_values, output_root)
+        manga = resolve_manga(output_root, provider, name)
+        chapter = validate_chapter_id(_required(query_values, "chapter"))
+        identity = validate_crop_identity(_required(query_values, "identity"))
+        report = load_review_report(manga, chapter)
+        bubble = next(
+            (bubble for page in report["pages"] for bubble in page["bubbles"]
+             if bubble["identity"] == identity),
+            None,
+        )
+        if bubble is None:
+            raise FileNotFoundError(f"Identity não pertence ao capítulo {chapter}: {identity}")
+
+        path = crop_path(manga, chapter, identity)
+        if crop_sha256(path) != bubble["crop"]["sha256"]:
+            return RouteResponse(409, _json({"error": "SHA-256 do crop diverge do report."}))
+        return RouteResponse(200, path.read_bytes(), "image/png")
+    except ValueError as exc:
+        return RouteResponse(400, _json({"error": str(exc)}))
+    except FileNotFoundError as exc:
+        return RouteResponse(404, _json({"error": str(exc)}))
+    except RuntimeError as exc:
+        return RouteResponse(422, _json({"error": str(exc)}))
+    except OSError:
+        return RouteResponse(500, _json({"error": "Não foi possível ler o crop do BubbleSommelier."}))
+
+
 def _context(payload: dict, output_root: Path) -> tuple[str, str]:
     provider, name = _value(payload, "provider"), _value(payload, "manga")
     if not isinstance(provider, str) or not provider or not isinstance(name, str) or not name:
@@ -53,6 +119,18 @@ def _context(payload: dict, output_root: Path) -> tuple[str, str]:
 def _value(payload: dict, key: str):
     value = payload.get(key)
     return value[0] if isinstance(value, list) and value else value
+
+
+def _required(payload: dict, key: str) -> str:
+    value = _value(payload, key)
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{key} é obrigatório.")
+    return value
+
+
+def _review_bubble(bubble: dict) -> dict:
+    fields = ("identity", "bubble_index", "confidence", "bbox", "crop", "metrics", "candidate")
+    return {field: bubble[field] for field in fields if field in bubble}
 
 
 def _json(payload: dict) -> bytes:
