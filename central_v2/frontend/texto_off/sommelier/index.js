@@ -9,7 +9,7 @@ const FILTERS = [
   ["all", "ALL"],
   ["pending", "PENDENTE"],
   ["analyzed", "ANALISADO"],
-  ["special", "ESPECIAL"],
+  ["candidates", "CANDIDATOS"],
 ];
 
 function filterButton(label, count, active, onClick) {
@@ -21,12 +21,6 @@ function filterButton(label, count, active, onClick) {
   button.setAttribute("aria-pressed", String(active));
   button.addEventListener("click", onClick);
   return button;
-}
-
-function statusOf(row) {
-  if (row.sommelier?.special > 0) return "special";
-  if (row.sommelier?.analyzed) return "analyzed";
-  return "pending";
 }
 
 export function render(container) {
@@ -51,8 +45,16 @@ export function render(container) {
         <input type="search" data-query placeholder="Buscar capítulo">
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar curadoria"></div>
+      <label class="sommelier-profile">
+        <span>Perfil</span>
+        <select data-profile aria-label="Perfil">
+          <option value="">Selecione o perfil</option>
+          <option value="poc_a_v1">poc_a_v1</option>
+          <option value="poc_b_v1">poc_b_v1</option>
+        </select>
+      </label>
       <button class="auto-merge-execute sommelier-execute" type="button" data-execute
-              title="Será habilitado com a integração do BubbleSommelier">Executar Curadoria</button>
+              title="Selecione capítulos e um perfil">Executar Curadoria</button>
     </div>
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>
@@ -64,8 +66,21 @@ export function render(container) {
   const status = root.querySelector("[data-status]");
   const results = root.querySelector("[data-results]");
   const execute = root.querySelector("[data-execute]");
+  const profile = root.querySelector("[data-profile]");
 
-  const matches = (row, key) => key === "all" || statusOf(row) === key;
+  function updateExecuteState() {
+    execute.disabled = selected.size === 0 || profile.value === "";
+  }
+
+  const matches = (row, key) => {
+    if (key === "all") return true;
+    if (key === "pending") return !row.sommelier?.analyzed;
+    if (key === "analyzed") return Boolean(row.sommelier?.analyzed);
+    if (key === "candidates") {
+      return Boolean(row.sommelier?.analyzed && row.sommelier.candidates > 0);
+    }
+    return false;
+  };
 
   function drawFilters() {
     filters.replaceChildren();
@@ -95,15 +110,15 @@ export function render(container) {
         input.addEventListener("change", () => {
           if (input.checked) selected.add(row.chapter);
           else selected.delete(row.chapter);
-          execute.disabled = selected.size === 0;
+          updateExecuteState();
         });
         return input;
       }},
       { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
       { id: "merges", label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },
       { id: "balloons", label: "BALÕES", render: (row) => row.sommelier?.balloons ?? "—" },
-      { id: "normal", label: "NORMAIS", render: (row) => row.sommelier?.normal ?? "—" },
-      { id: "special", label: "ESPECIAIS", render: (row) => row.sommelier?.special ?? "—" },
+      { id: "candidates", label: "CANDIDATOS", render: (row) => row.sommelier?.candidates ?? "—" },
+      { id: "profile", label: "PERFIL", render: (row) => row.sommelier?.analyzed ? row.sommelier.profile_id : "—" },
       { id: "review", label: "REVISAR", render: (row) => {
         const button = document.createElement("button");
         button.type = "button";
@@ -123,31 +138,34 @@ export function render(container) {
       pagination.move(delta);
       draw();
     }));
-    execute.disabled = selected.size === 0;
+    updateExecuteState();
   }
 
   execute.addEventListener("click", async () => {
-    if (!selected.size || execute.disabled) return;
+    if (!selected.size || !profile.value || execute.disabled) return;
     const { provider, manga } = getContext();
     execute.disabled = true;
     status.textContent = `Executando Curadoria em ${selected.size} capítulo(s)…`;
     status.hidden = false;
     try {
-      const { job } = await startBubbleSommelier(provider, manga, [...selected]);
+      const { job } = await startBubbleSommelier(provider, manga, [...selected], profile.value);
       await waitForTextoffJob(job, (current) => {
         const done = current.completed ?? current.done ?? 0;
         const total = current.total ?? selected.size;
         status.textContent = `Curadoria em andamento: ${done}/${total}`;
       });
       selected.clear();
-      status.textContent = "Curadoria concluída.";
       await load();
+      status.textContent = "Curadoria concluída.";
+      status.hidden = false;
     } catch (error) {
       status.textContent = error.message;
       status.hidden = false;
-      execute.disabled = selected.size === 0;
+      updateExecuteState();
     }
   });
+
+  profile.addEventListener("change", updateExecuteState);
 
   async function load() {
     const id = ++requestId;
@@ -189,7 +207,9 @@ export function render(container) {
     query.value = "";
     activeFilter = "all";
     selected.clear();
+    profile.value = "";
     pagination.reset();
+    updateExecuteState();
     load();
   });
 
@@ -202,6 +222,7 @@ export function render(container) {
     request?.abort();
     unsubscribe();
     query.removeEventListener("input", onQuery);
+    profile.removeEventListener("change", updateExecuteState);
     root.remove();
   };
 }

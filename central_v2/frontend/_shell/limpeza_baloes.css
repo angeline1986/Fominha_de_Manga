@@ -182,9 +182,35 @@
 .sommelier-page .data-table [data-column="chapter"] { width: 88px; }
 .sommelier-page .data-table [data-column="merges"] { width: 80px; }
 .sommelier-page .data-table [data-column="balloons"],
-.sommelier-page .data-table [data-column="normal"],
-.sommelier-page .data-table [data-column="special"] { width: 92px; }
+.sommelier-page .data-table [data-column="candidates"] { width: 100px; }
+.sommelier-page .data-table [data-column="profile"] { width: 120px; }
 .sommelier-page .data-table [data-column="review"] { width: 112px; }
+.sommelier-page .sommelier-profile {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-text-secondary);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+  white-space: nowrap;
+}
+.sommelier-page .sommelier-profile select {
+  width: 142px;
+  min-height: 38px;
+  padding: 6px 9px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 6px;
+  background: var(--color-surface);
+  color: var(--color-text);
+  font: inherit;
+  font-weight: 400;
+}
+.sommelier-page .sommelier-profile select:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
 .sommelier-page .sommelier-review {
   min-height: 30px;
   padding: 5px 9px;

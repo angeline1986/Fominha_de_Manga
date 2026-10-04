@@ -72,11 +72,23 @@ export async function fetchBubbleSommelier(provider, manga, signal) {
   return requestJson(`/api/textoff/sommelier?${query}`, { signal, cache: "no-store" });
 }
 
-export async function startBubbleSommelier(provider, manga, chapters) {
+export async function startBubbleSommelier(provider, manga, chapters, profileId) {
+  if (typeof profileId !== "string" || !profileId) {
+    throw new Error("Selecione um perfil para executar a Curadoria.");
+  }
   return requestJson("/api/textoff/sommelier/execute", {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ provider, manga, chapters }),
+    body: JSON.stringify({ provider, manga, chapters, profile_id: profileId }),
   });
 }
 
+export async function fetchBubbleSommelierReview(provider, manga, chapter, signal) {
+  const query = new URLSearchParams({ provider, manga, chapter });
+  return requestJson(`/api/textoff/sommelier/review?${query}`, { signal, cache: "no-store" });
+}
+
+export function bubbleSommelierCropUrl(provider, manga, chapter, identity) {
+  const query = new URLSearchParams({ provider, manga, chapter, identity });
+  return `/api/textoff/sommelier/crop?${query}`;
+}
