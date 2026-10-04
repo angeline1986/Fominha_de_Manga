@@ -37,3 +37,13 @@ def static_response(
         body=target.read_bytes(),
         content_type=content_type,
     )
+
+
+def is_static_asset(request_path: str, frontend_root: Path = FRONTEND_ROOT) -> bool:
+    """Return whether a non-API path resolves to a real frontend asset."""
+    if request_path.startswith("/api/"):
+        return False
+    base = frontend_root.resolve()
+    relative_path = "index.html" if request_path in {"", "/"} else request_path.lstrip("/")
+    target = (base / relative_path).resolve()
+    return target.is_relative_to(base) and target.is_file()

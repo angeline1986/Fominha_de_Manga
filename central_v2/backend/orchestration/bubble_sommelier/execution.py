@@ -30,43 +30,40 @@ def execute(
         output_dir = execution_dir(manga, chapter)
         path = report_path(manga, chapter)
         runtime_started = time.monotonic()
+        page_started = {}
 
         def report_runtime_progress(event: dict) -> None:
             event_type = event.get("type")
             if event_type == "run_started":
                 total_pages = int(event.get("total_pages") or 0)
-                message = "\n".join((
-                    "[BubbleSommelier] EXECUÇÃO INICIADA",
-                    f"  Provider: {provider or manga.parent.name}",
-                    f"  Manga: {manga_name or manga.name}",
-                    f"  Capítulo: {chapter}",
-                    f"  Profile: {profile_id}",
-                    f"  Páginas: {total_pages}",
-                ))
+                message = "Execução do capítulo iniciada"
                 progress(chapter, {
                     "stage": "run_started", "percent": 0, "completed": 0,
                     "total": total_pages, "message": message,
+                    "provider": provider or manga.parent.name,
+                    "manga": manga_name or manga.name, "profile_id": profile_id,
                 })
             elif event_type == "page_started":
                 current, total = int(event["current"]), int(event["total"])
+                page_started[current] = time.perf_counter()
                 progress(chapter, {
                     "stage": "page_started", "page_index": current,
                     "percent": int((current - 1) * 100 / total) if total else 0,
                     "completed": current - 1, "total": total,
-                    "message": f"[{current:02}/{total:02}] {event['page_id']} · inferência em andamento",
+                    "message": f"{event['page_id']} · inferência em andamento",
                 })
             elif event_type == "page_completed":
                 current, total = int(event["current"]), int(event["total"])
                 percent = int(event["percent"])
+                duration = (time.perf_counter() - page_started.pop(current)
+                            if current in page_started else None)
                 progress(chapter, {
                     "stage": "page", "page_index": current,
                     "percent": percent, "completed": current, "total": total,
-                    "message": (
-                        f"[{current:02}/{total:02}] {event['page_id']} · "
-                        f"inferência concluída · detecções {event['raw_detections']} · "
-                        f"balões {event['bubbles']} · candidatos {event['candidates']} · "
-                        f"progresso {percent}%"
-                    ),
+                    "duration": duration,
+                    "bubbles": event.get("bubbles"),
+                    "candidates": event.get("candidates"),
+                    "message": f"{event['page_id']} · página concluída",
                 })
 
         with replace_execution_artifacts(output_dir):
@@ -106,13 +103,9 @@ def execute(
             "max": total,
             "percent": int(index * 100 / total) if total else 100,
             "stage": "completed",
-            "message": "\n".join((
-                "[BubbleSommelier] CONCLUÍDO",
-                f"  Páginas: {counts['pages']}",
-                f"  Balões: {counts['crops']}",
-                f"  Candidatos: {counts['candidates']}",
-                f"  Tempo: {elapsed:.1f}s",
-            )),
+            "message": "Execução do capítulo concluída",
+            "pages": counts["pages"], "bubbles": counts["crops"],
+            "candidates": counts["candidates"], "duration": elapsed,
         })
 
     return results

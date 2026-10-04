@@ -77,7 +77,8 @@ def execute_textoff_merged_response(payload: object, output_root: Path) -> Route
 
 
 def execute_textoff_merged_level1_response(payload: object, output_root: Path) -> RouteResponse:
-    return _execute_response(payload, output_root, execute_merged_level1)
+    return _execute_response(payload, output_root, execute_merged_level1,
+                             component="CLEANER-I")
 
 
 def execute_textoff_merged_level2_response(payload: object, output_root: Path) -> RouteResponse:
@@ -123,7 +124,8 @@ def execute_textoff_merged_special_response(level: str, payload: object,
         return RouteResponse(500, _json({"error": "Não foi possível iniciar o nível Merged."}))
 
 
-def _execute_response(payload: object, output_root: Path, runner, validator=None) -> RouteResponse:
+def _execute_response(payload: object, output_root: Path, runner, validator=None,
+                      component: str | None = None) -> RouteResponse:
     try:
         if not isinstance(payload, dict):
             raise ValueError("Corpo da solicitação inválido.")
@@ -143,7 +145,9 @@ def _execute_response(payload: object, output_root: Path, runner, validator=None
                 preflight=lambda: _ensure_v2_session(),
             )
 
-        return RouteResponse(202, _json({"job": submit(operation, total=len(chapters))}))
+        return RouteResponse(202, _json({
+            "job": submit(operation, total=len(chapters), component=component)
+        }))
     except ValueError as exc:
         return RouteResponse(400, _json({"error": str(exc)}))
     except OSError:

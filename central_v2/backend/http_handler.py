@@ -6,6 +6,8 @@ from urllib.parse import urlsplit
 
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.router import dispatch_get, dispatch_post
+from central_v2.backend.routes.static import is_static_asset
+from central_v2.backend.operational_log import emit
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -42,6 +44,7 @@ class Handler(BaseHTTPRequestHandler):
             response = RouteResponse(400, json.dumps({"error": str(exc)}, ensure_ascii=False).encode())
         else:
             response = dispatch_post(self.path, payload)
+        self._request_job_id = _response_job_id(response)
         self._send_response(response)
         if response is not None and self.path == "/api/shutdown":
             # Shutdown must run outside the serving thread.
@@ -49,11 +52,32 @@ class Handler(BaseHTTPRequestHandler):
 
     def log_message(self, format, *args):
         status = str(args[1]) if len(args) > 1 else ""
-        path = urlsplit(self.path).path
+        request_path = getattr(self, "path", "")
+        method = getattr(self, "command", "")
+        path = urlsplit(request_path).path
         if (
-            self.command == "GET"
+            method == "GET"
             and self._JOB_POLL_PATH.fullmatch(path)
             and status.startswith(("2", "304"))
         ):
             return
-        print(f"[central-v2] {format % args}", flush=True)
+        status_code = int(status) if status.isdigit() else 0
+        if method == "GET" and (200 <= status_code < 300 or status_code == 304) and is_static_asset(path):
+            return
+        level = "ERROR" if status_code >= 500 else "WARNING" if status_code >= 400 else "INFO"
+        fields = {"método": method or "?", "rota": path or "?", "status": status or "?"}
+        if len(args) > 2 and str(args[2]).isdigit():
+            fields["bytes"] = int(args[2])
+        emit(level, "acesso HTTP", component="HTTP",
+             job_id=getattr(self, "_request_job_id", None), **fields)
+
+
+def _response_job_id(response):
+    if response is None or response.status != 202:
+        return None
+    try:
+        job = json.loads(response.body.decode("utf-8")).get("job")
+        identifier = job.get("id") if isinstance(job, dict) else None
+        return identifier if isinstance(identifier, str) else None
+    except (AttributeError, UnicodeDecodeError, ValueError):
+        return None

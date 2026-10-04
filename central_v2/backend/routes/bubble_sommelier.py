@@ -45,7 +45,9 @@ def execute_response(payload: object, output_root: Path) -> RouteResponse:
                 manga_name=name,
             )
 
-        return RouteResponse(202, _json({"job": submit(operation, total=len(chapters))}))
+        return RouteResponse(202, _json({
+            "job": submit(operation, total=len(chapters), component="SOMMELIER")
+        }))
     except ValueError as exc:
         return RouteResponse(400, _json({"error": str(exc)}))
     except OSError:

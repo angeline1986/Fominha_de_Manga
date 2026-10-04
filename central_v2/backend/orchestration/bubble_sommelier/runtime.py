@@ -6,6 +6,8 @@ import tempfile
 import threading
 from pathlib import Path
 
+from central_v2.backend.operational_log import emit
+
 
 PROFILE_IDS = frozenset({"poc_a_v1", "poc_b_v1"})
 
@@ -101,6 +103,8 @@ def run(
                 try:
                     message = json.loads(line)
                 except (TypeError, ValueError):
+                    emit("WARNING", "saída inesperada do runtime Node",
+                         detalhe=line.strip()[:1000])
                     continue
                 if isinstance(message, dict) and message.get("type") == "progress" and on_progress:
                     on_progress(message.get("payload") or {})
@@ -112,6 +116,9 @@ def run(
             stderr_reader.join()
             raise
         stderr_reader.join()
+        for line in stderr_lines:
+            if line.strip():
+                emit("WARNING", "stderr do runtime Node", detalhe=line.strip()[:1000])
         completed = subprocess.CompletedProcess(
             command,
             returncode,
