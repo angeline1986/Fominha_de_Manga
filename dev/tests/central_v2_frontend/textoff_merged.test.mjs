@@ -6,7 +6,7 @@ import { browserModules } from './modules.mjs';
 
 const frontend = fileURLToPath(new URL('../../../central_v2/frontend/', import.meta.url));
 
-test('Limpeza de Balões maps all cleaner and brush choices to their existing routes', async () => {
+test('Limpeza de Balões keeps each flow and brush action on its existing route', async () => {
   const load = browserModules();
   const { resolveRoute, routes } = await load('/_app/router/routes.js');
   const level1 = resolveRoute('texto-off-merged-i');
@@ -28,20 +28,22 @@ test('Limpeza de Balões maps all cleaner and brush choices to their existing ro
   const { navigation } = await load('/_shell/navigation.js');
   const menu = navigation.find((section) => section.id === 'texto-off');
   assert.equal(menu.label, 'Limpeza de Balões');
-  const auto = menu.groups.find((group) => group.control?.id === 'textoff-auto-cleaner').control;
-  assert.equal(Array.from(auto.options, (option) => option.action).join(','), [
-    'texto-off-merged-i', 'texto-off-merged-ii', 'texto-off-merged-iv', 'texto-off-merged-v',
+  const [timeline, brush] = menu.groups;
+  assert.equal(timeline.items.map((item) => item.id).join(','), [
+    'texto-off-merged-i', 'texto-off-merged-iii', 'bubble-sommelier',
   ].join(','));
-  assert.equal(auto.badgeFormat, 'PASSO {value}/4');
-  const brush = menu.groups.find((group) => group.control?.id === 'textoff-brush').control;
-  assert.equal(Array.from(brush.options, (option) => option.action).join(','), [
-    'texto-off-merged-iii', 'texto-off-especiais-vi', 'texto-off-especiais-vii', 'texto-off-especiais-viii',
+  assert.equal(timeline.control.options.map((option) => option.action).join(','), [
+    'texto-off-merged-ii', 'texto-off-merged-iv', 'texto-off-merged-v',
   ].join(','));
-  assert.equal(brush.options[0].label, 'Mapear');
-  for (const option of [...auto.options, ...brush.options]) {
-    assert.ok(resolveRoute(option.action), `Rota ausente para ${option.action}`);
+  assert.equal(brush.control.options.map((option) => option.action).join(','), [
+    'texto-off-especiais-vi', 'texto-off-especiais-vii', 'texto-off-especiais-viii',
+  ].join(','));
+  for (const action of [...timeline.items.map((item) => item.id),
+    ...timeline.control.options.map((option) => option.action),
+    ...brush.control.options.map((option) => option.action)]) {
+    assert.ok(resolveRoute(action), `Rota ausente para ${action}`);
   }
-  for (const option of brush.options.slice(1)) {
+  for (const option of brush.control.options) {
     assert.ok(option.preview, `Preview ausente para ${option.label}`);
     await access(`${frontend}${option.preview.before}`);
     await access(`${frontend}${option.preview.after}`);
@@ -53,22 +55,21 @@ test('Limpeza de Balões maps all cleaner and brush choices to their existing ro
   assert.equal(auditAction, 'texto-off-quality-audit');
   assert.notEqual(auditAction, 'texto-off-merged-i');
   assert.equal(resolveRoute(auditAction).module, '/texto_off/comparison/audit.js');
-  assert.equal(menu.groups.find((group) => group.items?.[0]?.id === 'texto-off-legacy').label, '');
+  assert.equal(menu.groups.find((group) => group.items?.[0]?.id === 'texto-off-legacy').label, 'LEGADO');
   assert.equal(legacy.context, 'texto-off');
   assert.equal(legacy.module, '/texto_off/merged/index.js');
   await load(level1.module);
   await load(level2.module);
 });
 
-test('captioned segmented controls update pass, selected action and caption together', async () => {
+test('transparency pills update selection while keeping route actions', async () => {
   const load = browserModules();
   const { navigation } = await load('/_shell/navigation.js');
-  const control = navigation.find((section) => section.id === 'texto-off').groups
-    .find((group) => group.control?.id === 'textoff-auto-cleaner').control;
+  const control = navigation.find((section) => section.id === 'texto-off').groups[0].control;
   const { segmentedMarkup, selectMergeLevel } = await load('/_shell/merge_levels.js');
   const markup = segmentedMarkup(control);
-  assert.match(markup, /PASSO 1\/4/);
-  assert.match(markup, /Balões sólidos \(padrão\)/);
+  assert.match(markup, /Básica/);
+  assert.match(markup, /Passo 3 — Transparência Normal/);
 
   const buttons = control.options.map((option, index) => ({
     dataset: { segmentValue: option.value },
@@ -76,19 +77,19 @@ test('captioned segmented controls update pass, selected action and caption toge
     setAttribute(name, value) { this[name] = value; },
     index,
   }));
-  const badge = { textContent: '' }, caption = { textContent: '' };
+  const caption = { textContent: '' };
   const segmented = {
-    dataset: { badgeFormat: control.badgeFormat },
+    dataset: {},
     querySelectorAll: () => buttons,
-    querySelector: (selector) => selector === '.segmented-badge' ? badge : caption,
+    querySelector: (selector) => selector === '.segmented-badge' ? null : caption,
   };
-  buttons[2].closest = () => segmented;
-  selectMergeLevel(buttons[2], control);
-  assert.equal(buttons[2].classList.active, true);
+  buttons[1].closest = () => segmented;
+  selectMergeLevel(buttons[1], control);
+  assert.equal(buttons[1].classList.active, true);
   assert.equal(buttons[0].classList.active, false);
-  assert.equal(buttons[2]['aria-pressed'], 'true');
-  assert.equal(badge.textContent, 'PASSO 3/4');
-  assert.equal(caption.textContent, 'Transparência normal');
+  assert.equal(buttons[1]['aria-pressed'], 'true');
+  assert.equal(segmented.dataset.value, 'normal');
+  assert.equal(caption.textContent, '');
 });
 
 test('TextOff Merged confirms, submits selected chapters and summarizes the job', async () => {

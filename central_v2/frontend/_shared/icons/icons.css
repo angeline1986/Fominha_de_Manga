@@ -40,3 +40,6 @@
 
 .ui-icon--eye { -webkit-mask-image: url("/_shared/icons/eye-solid-full.svg"); mask-image: url("/_shared/icons/eye-solid-full.svg"); }
 .ui-icon--comparison { -webkit-mask-image: url("/_shared/icons/arrows-turn-to-dots-solid-full.svg"); mask-image: url("/_shared/icons/arrows-turn-to-dots-solid-full.svg"); }
+.ui-icon--sparkles { -webkit-mask-image: url("/_shared/icons/sparkles.svg"); mask-image: url("/_shared/icons/sparkles.svg"); }
+.ui-icon--diamond { -webkit-mask-image: url("/_shared/icons/diamond.svg"); mask-image: url("/_shared/icons/diamond.svg"); }
+.ui-icon--circle-dot { -webkit-mask-image: url("/_shared/icons/circle-dot.svg"); mask-image: url("/_shared/icons/circle-dot.svg"); }

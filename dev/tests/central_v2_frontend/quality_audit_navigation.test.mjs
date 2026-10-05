@@ -37,7 +37,8 @@ test('Antes & Depois menu action resolves to the read-only triptych audit screen
   }, sources);
   const { navigation } = await load('/_shell/navigation.js');
   const menu = navigation.find((section) => section.id === 'texto-off');
-  const action = menu.groups[3].items.find((item) => item.label === 'Antes & Depois').id;
+  const action = menu.groups.flatMap((group) => group.items ?? [])
+    .find((item) => item.label === 'Antes & Depois').id;
   const { resolveRoute } = await load('/_app/router/routes.js');
   assert.equal(action, 'texto-off-quality-audit');
   assert.notEqual(action, 'texto-off-merged-i');

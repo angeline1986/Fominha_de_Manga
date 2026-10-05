@@ -14,13 +14,47 @@ export function groupMarkup(group, { selectedValues = new Map(), currentAction =
   const control = group.control?.type === "segmented"
     ? { ...group.control, defaultValue: selectedValues.get(group.control.id) ?? group.control.defaultValue }
     : null;
-  const content = control
-    ? segmentedMarkup(control)
-    : `<div class="drill-group-items${hasSubitems ? " drill-subitem-list" : ""}">
+  const content = group.type === "timeline"
+    ? timelineMarkup(group, selectedValues, currentAction)
+    : control
+      ? segmentedMarkup(control)
+      : `<div class="drill-group-items${hasSubitems ? " drill-subitem-list" : ""}">
       ${(group.items ?? []).map((item) => itemMarkup(item, hasSubitems, item.id === currentAction)).join("")}
     </div>`;
-  const title = control || !group.label ? "" : `<div class="drill-group-title${hasSubitems ? " drill-group-title-subitems" : ""}">${group.label}</div>`;
+  const title = control && group.type !== "timeline" || !group.label ? "" : `<div class="drill-group-title${hasSubitems ? " drill-group-title-subitems" : ""}">${group.label}</div>`;
   return `<section class="drill-group">${title}${content}</section>`;
+}
+
+function timelineMarkup(group, selectedValues, currentAction) {
+  const items = (group.items ?? []).map((item) => timelineItemMarkup(
+    item, item.id === currentAction,
+  )).join("");
+  const control = { ...group.control,
+    defaultValue: selectedValues.get(group.control.id) ?? group.control.defaultValue };
+  return `<ol class="cleaning-timeline" aria-label="${group.label}">${items}${timelineControlMarkup(control)}</ol>`;
+}
+
+function timelineItemMarkup(item, isCurrent) {
+  const tooltip = item.tooltip ?? "";
+  const described = tooltip
+    ? ` title="${tooltip}" data-tooltip="${tooltip}" aria-description="${tooltip}" aria-label="${item.label} — ${tooltip}"`
+    : ` aria-label="${item.label}"`;
+  return `<li class="cleaning-timeline-item">
+    <span class="cleaning-timeline-number" aria-hidden="true">${item.number}</span>
+    <button class="cleaning-timeline-card${isCurrent ? " is-current" : ""}" type="button" data-action="${item.id}"${described}>
+      ${iconMarkup(item.icon)}<span>${item.label}</span>
+    </button>
+  </li>`;
+}
+
+function timelineControlMarkup(control) {
+  return `<li class="cleaning-timeline-item cleaning-timeline-item-control">
+    <span class="cleaning-timeline-number" aria-hidden="true">${control.number}</span>
+    <div class="cleaning-timeline-control">
+      ${segmentedMarkup(control)}
+      ${control.options.map((option) => `<button class="cleaning-timeline-next" type="button" data-selected-value="${option.value}" data-action="${option.action}" aria-label="Abrir ${option.label}" title="Abrir ${option.label}">${iconMarkup("next")}</button>`).join("")}
+    </div>
+  </li>`;
 }
 
 function itemMarkup(item, hasSubitems, isCurrent) {
@@ -33,8 +67,10 @@ function itemMarkup(item, hasSubitems, isCurrent) {
     ? `<small class="drill-action-caption">${item.caption}</small>`
     : "";
   const arrow = item.arrow || ["primary", "secondary"].includes(item.variant);
-  const title = item.title ? ` title="${item.title}"` : "";
-  return `<button class="drill-item${hasSubitems ? " drill-subitem" : ""}${variant}${current}" type="button" data-action="${item.id}"${title}>
+  const tooltip = item.tooltip ?? item.title;
+  const title = tooltip ? ` title="${tooltip}"` : "";
+  const description = item.tooltip ? ` data-tooltip="${item.tooltip}" aria-description="${item.tooltip}"` : "";
+  return `<button class="drill-item${hasSubitems ? " drill-subitem" : ""}${variant}${current}" type="button" data-action="${item.id}"${title}${description}>
     <span class="${labelClass}">${icon}<span class="drill-action-copy"><span>${item.label}</span>${caption}</span></span>
     ${arrow ? `<span class="drill-action-arrow">${iconMarkup("next")}</span>` : ""}
   </button>`;

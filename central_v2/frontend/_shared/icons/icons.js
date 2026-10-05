@@ -3,6 +3,7 @@ const iconNames = new Set([
   "exportar-arquivos", "sync", "power", "next", "back", "close",
   "focus-exit", "expand", "collapse", "menu", "ruler", "search", "compare", "highlighter",
   "crop-simple", "scissors", "check", "eye", "comparison",
+  "sparkles", "diamond", "circle-dot",
 ]);
 
 export function iconMarkup(name) {

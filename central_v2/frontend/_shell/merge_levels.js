@@ -7,7 +7,14 @@ export function segmentedMarkup(control) {
               data-preview-title="${option.title}"
               data-preview-before="${option.preview.before}"
               data-preview-after="${option.preview.after}"
-              aria-label="${option.label}: ${option.title}"` : "";
+              aria-label="${option.label}: ${option.title}"`
+    : option.tooltip ? ` title="${option.tooltip}" data-tooltip="${option.tooltip}"
+              aria-description="${option.tooltip}" aria-label="${option.label}: ${option.tooltip}"`
+      : (option.title || option.caption) ? `title="${option.title ?? option.caption}" aria-label="${option.label}: ${option.title ?? option.caption}"` : "";
+  const accessibleLabel = control.ariaLabel ?? control.label;
+  const headerTooltip = control.tooltip
+    ? ` title="${control.tooltip}" data-tooltip="${control.tooltip}" aria-description="${control.tooltip}" tabindex="0"`
+    : "";
   return `
     <div
       class="segmented-shell${control.options.some((option) => option.caption) ? " segmented-shell--captioned" : ""}"
@@ -16,7 +23,7 @@ export function segmentedMarkup(control) {
       data-badge-format="${badgeFormat}"
     >
       <div class="segmented-header">
-        <strong>${control.label}</strong>
+        <strong${headerTooltip} aria-label="${accessibleLabel}">${control.icon ? iconMarkup(control.icon) : ""}${control.label}</strong>
         ${control.showBadge === false ? "" : `<span class="segmented-badge">${badgeFormat.replace("{value}", control.defaultValue)}</span>`}
       </div>
 
@@ -24,7 +31,7 @@ export function segmentedMarkup(control) {
         <div
           class="segmented-control"
           role="group"
-          aria-label="Opções de ${control.label}"
+          aria-label="${control.ariaLabel ?? `Opções de ${control.label}`}"
         >
           ${control.options.map((option) => `
             <button
@@ -32,7 +39,7 @@ export function segmentedMarkup(control) {
               type="button"
               data-segment-value="${option.value}"
               data-action="${option.action}"
-              ${option.preview ? previews(option) : (option.title || option.caption) ? `title="${option.title ?? option.caption}" aria-label="${option.label}: ${option.title ?? option.caption}"` : ""}
+              ${previews(option)}
               aria-pressed="${option.value === control.defaultValue}"
             >
               ${control.plainLabels ? option.label : `<span class="segmented-option-content">${option.icon ? iconMarkup(option.icon) : ""}<span>${option.label}</span></span>`}
