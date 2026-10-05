@@ -52,6 +52,7 @@ async function runBubbleSommelier(options) {
     profile: profileId,
     modelPath: absoluteModelPath,
     onProgress: options.onProgress,
+    visualAnalysisEnabled: options.visualAnalysisEnabled === true,
     onCrop: async crop => {
       const persisted = await persistCrop(absoluteOutputDir, crop);
       persistedCrops.set(crop.identity, persisted);

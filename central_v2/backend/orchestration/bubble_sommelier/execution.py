@@ -1,11 +1,14 @@
 import json
+import os
 from pathlib import Path
+import tempfile
 import time
 
 from .artifacts import (
     execution_dir, merge_dir, replace_execution_artifacts, report_path, validate_report,
 )
 from .runtime import run, validate_profile_id
+from .mapear_results import incorporate_mapear_results
 
 
 def execute(
@@ -85,6 +88,8 @@ def execute(
                     f"Não foi possível carregar o report do capítulo {chapter}."
                 ) from exc
             report = validate_report(report, profile_id)
+            report = incorporate_mapear_results(report, manga, chapter)
+            _write_report_atomic(path, report)
         counts = report["checkpoints"]["result"]
         results.append({
             "chapter": chapter,
@@ -109,3 +114,19 @@ def execute(
         })
 
     return results
+
+
+def _write_report_atomic(path: Path, report: dict) -> None:
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", dir=path.parent,
+            prefix=".report-mapear-", suffix=".tmp", delete=False,
+        ) as stream:
+            temporary = Path(stream.name)
+            json.dump(report, stream, indent=2, ensure_ascii=False)
+            stream.write("\n")
+        os.replace(temporary, path)
+    finally:
+        if temporary is not None and temporary.exists():
+            temporary.unlink()

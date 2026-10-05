@@ -8,34 +8,10 @@ const { PROFILES, applyStrategy } = require("./detector/strategies");
 const { cropRegion } = require("./detector/crop");
 const { analyzeCrop } = require("./analysis/metrics");
 const { isCandidate } = require("./analysis/candidate_gate");
+const { countLabels, inputPageId, sumRawLabels, sumStrategyCounts } = require("./pipeline_summary");
 
-function sumStrategyCounts(pages) {
-  return pages.reduce((totals, page) => {
-    totals.input += page.strategy.counts.input;
-    totals.afterInitialLabelSelection += page.strategy.counts.after_initial_label_selection;
-    totals.afterNms += page.strategy.counts.after_nms;
-    totals.finalDetections += page.strategy.counts.final;
-    return totals;
-  }, {
-    input: 0,
-    afterInitialLabelSelection: 0,
-    afterNms: 0,
-    finalDetections: 0
-  });
-}
-
-function sumRawLabels(pages) {
-  const counts = {};
-  for (const page of pages) {
-    for (const detection of page.inference.detections) {
-      const label = String(detection.label);
-      counts[label] = (counts[label] || 0) + 1;
-    }
-  }
-  return counts;
-}
-
-async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop, onProgress }) {
+async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop, onProgress,
+  visualAnalysisEnabled = false, visualAnalyzer = null }) {
   if (!Array.isArray(pages)) throw new TypeError("pages deve ser um array");
   if (!PROFILES[profile]) throw new Error(`Perfil desconhecido: ${profile}`);
   if (!modelPath) throw new Error("modelPath é obrigatório");
@@ -101,7 +77,25 @@ async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop, on
           pageCandidates++;
         }
 
-        bubbles.push({
+        let visualAnalysis;
+        if (visualAnalysisEnabled === true) {
+          visualAnalysis = await safeVisualAnalysis({
+            cropPng: Buffer.from(crop.png),
+            analyzer: visualAnalyzer,
+            context: {
+              identity: cropIdentity,
+              page_id: pageId,
+              profile_id: profile,
+              detection,
+              geometry: crop.geometry,
+              metrics,
+              cells: measured.cells,
+              candidate
+            }
+          });
+        }
+
+        const bubble = {
           identity: cropIdentity,
           page_id: pageId,
           bubble_index: index + 1,
@@ -118,7 +112,9 @@ async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop, on
           },
           metrics,
           candidate
-        });
+        };
+        if (visualAnalysisEnabled === true) bubble.visual_analysis = visualAnalysis;
+        bubbles.push(bubble);
       }
 
       resultPages.push({
@@ -187,17 +183,14 @@ async function runPipeline({ pages, profile, modelPath, onCheckpoint, onCrop, on
   }
 }
 
-function inputPageId(inputPage) {
-  return inputPage.id || inputPage.file || path.basename(inputPage.path);
-}
-
-function countLabels(detections) {
-  const counts = {};
-  for (const detection of detections) {
-    const label = String(detection.label);
-    counts[label] = (counts[label] || 0) + 1;
+async function safeVisualAnalysis(input) {
+  try {
+    return await require("./analysis/visual_analysis").runOptionalVisualAnalysis(input);
+  } catch (error) {
+    return { status: "failed", error: {
+      name: error.name || "Error", message: error.message || String(error)
+    } };
   }
-  return counts;
 }
 
 module.exports = { runPipeline };

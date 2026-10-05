@@ -16,13 +16,20 @@ function writeProgress(event) {
 
 function parseArguments(args) {
   const options = new Map();
-  for (let index = 0; index < args.length; index += 2) {
+  for (let index = 0; index < args.length;) {
     const key = args[index];
+    if (key === "--visual-analysis") {
+      if (options.has(key)) throw new Error(`Argumento duplicado: ${key}`);
+      options.set(key, true);
+      index++;
+      continue;
+    }
     const value = args[index + 1];
     if (!REQUIRED_OPTIONS.has(key)) throw new Error(`Argumento desconhecido: ${key}`);
     if (options.has(key)) throw new Error(`Argumento duplicado: ${key}`);
     if (!value || value.startsWith("--")) throw new Error(`Valor ausente para ${key}`);
     options.set(key, value);
+    index += 2;
   }
 
   for (const key of REQUIRED_OPTIONS) {
@@ -33,7 +40,8 @@ function parseArguments(args) {
     inputDir: path.resolve(options.get("--input")),
     outputDir: path.resolve(options.get("--output")),
     modelPath: path.resolve(options.get("--model")),
-    profileId: options.get("--profile")
+    profileId: options.get("--profile"),
+    visualAnalysisEnabled: options.has("--visual-analysis")
   };
 }
 
@@ -56,7 +64,11 @@ async function main() {
   }));
 }
 
-main().catch(error => {
-  console.error(`BubbleSommelier: ${error && error.message ? error.message : error}`);
-  process.exitCode = 1;
-});
+if (require.main === module) {
+  main().catch(error => {
+    console.error(`BubbleSommelier: ${error && error.message ? error.message : error}`);
+    process.exitCode = 1;
+  });
+}
+
+module.exports = { parseArguments };
