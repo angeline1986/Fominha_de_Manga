@@ -7,7 +7,8 @@ from processamento.limpeza_baloes.cleaner_v2 import integration
 from .level1_cleaner import clean_level1_chapter
 
 
-def run_cleaner_v2(images, target, *, source_stage, progress_job, chapter_name, level1_only=False):
+def run_cleaner_v2(images, target, *, source_stage, progress_job, chapter_name,
+                   level1_only=False, diagnostics=False, provider=None, manga_name=None):
     if level1_only:
         return clean_level1_chapter(
             images,
@@ -15,6 +16,9 @@ def run_cleaner_v2(images, target, *, source_stage, progress_job, chapter_name, 
             source_stage=source_stage,
             progress_job=progress_job,
             chapter_name=chapter_name,
+            diagnostics=diagnostics,
+            provider=provider,
+            manga_name=manga_name,
         )
     options = {
         "source_stage": source_stage,

@@ -18,10 +18,12 @@ class Element {
     this.style = { setProperty: (key, value) => { this.attrs[key] = value; } };
     this.clientWidth = 800; this.clientHeight = 600;
   }
+  set innerHTML(value) { this._innerHTML = value; this.panels = null; }
+  get innerHTML() { return this._innerHTML || ''; }
   querySelector(key) { if (!this.nodes.has(key)) this.nodes.set(key, new Element()); return this.nodes.get(key); }
   querySelectorAll(key) {
     if (key === '.comparison-image-panel') {
-      if (!this.panels) this.panels = Array.from({ length: 3 }, () => {
+      if (!this.panels) this.panels = Array.from({ length: (this.innerHTML.match(/<figure class="comparison-image-panel/g) || []).length }, () => {
         const panel = new Element(); panel.nodes.set('.comparison-image-holder', new Element());
         panel.nodes.set('[data-stage-status]', new Element()); return panel;
       });
@@ -46,7 +48,7 @@ class Element {
   remove() { this.removed = true; }
 }
 
-async function setup(sizes = [[400, 600], [400, 600], [400, 600]], step = '1') {
+async function setup(mode = 'before_after', sizes = Array.from({ length: mode === 'before_after' ? 3 : 2 }, () => [400, 600])) {
   const states = [];
   let image = 0;
   class Image extends Element {
@@ -59,7 +61,7 @@ async function setup(sizes = [[400, 600], [400, 600], [400, 600]], step = '1') {
   const { createSlider } = await load('/texto_off/comparison/slider.js');
   const viewport = new Element();
   viewport.canvas = { scrollTop: 120, scrollLeft: 45 };
-  const slider = createSlider(viewport, (...state) => states.push(state), step);
+  const slider = createSlider(viewport, (...state) => states.push(state), mode);
   return { slider, viewport, canvas: viewport.canvas, states };
 }
 
@@ -83,7 +85,7 @@ test('triptych loads three aligned images and applies one zoom to all columns', 
 });
 
 test('comparison refuses mismatched dimensions before enabling interaction', async () => {
-  const env = await setup([[400, 600], [400, 600], [400, 601]]);
+  const env = await setup('before_after', [[400, 600], [400, 600], [400, 601]]);
   await env.slider.load(['original', 'level1', 'level2']);
   assert.equal(env.states.at(-1)[0], 'error');
   assert.match(env.states.at(-1)[1], /dimensões diferentes/);
@@ -93,15 +95,15 @@ test('comparison refuses mismatched dimensions before enabling interaction', asy
   env.slider.dispose();
 });
 
-test('triptych exposes metrics and mounts residue selection on the active result stage', async () => {
-  const env = await setup(undefined, '2');
+test('triptych exposes metrics and mounts residue selection on the middle N1 stage', async () => {
+  const env = await setup('before_after');
   await env.slider.load(['original', 'level1', 'level2']);
   const metrics = env.slider.getImageMetrics();
   assert.equal(metrics.naturalWidth, 400); assert.equal(metrics.naturalHeight, 600);
-  assert.equal(metrics.zoom, 0.4); assert.equal(metrics.mode, 'triptych');
+  assert.equal(metrics.zoom, 0.4); assert.equal(metrics.mode, 'before_after');
   const overlay = new Element();
   env.slider.mountAfterOverlay(overlay);
-  assert.equal(env.viewport.child.child.panels[2].nodes.get('.comparison-image-holder').child, overlay);
+  assert.equal(env.viewport.child.child.panels[1].nodes.get('.comparison-image-holder').child, overlay);
   assert.equal(overlay.classList.contains('comparison-after-overlay'), true);
   env.slider.setInteractionMode('residue-selection');
   assert.equal(env.viewport.child.child.classList.contains('is-residue-selection'), true);
@@ -110,12 +112,41 @@ test('triptych exposes metrics and mounts residue selection on the active result
   env.slider.dispose();
 });
 
-test('triptych availability follows the valid Level I prerequisite', async () => {
+test('Auto-Cleaner Passos 1 e 2 render exactly their two contract panels', async () => {
+  for (const [mode, urls, labels, cssClass] of [
+    ['level1', ['original', 'level1'], ['ORIGINAL', 'AUTO-CLEANER I'], 'comparison-pair'],
+    ['level2', ['level1', 'level2'], ['AUTO-CLEANER I', 'AUTO-CLEANER II'], 'comparison-pair'],
+  ]) {
+    const env = await setup(mode);
+    await env.slider.load(urls);
+    const frame = env.viewport.child.child;
+    assert.equal(frame.panels.length, 2, mode);
+    assert.ok(frame.className.includes(cssClass), mode);
+    for (const label of labels) assert.ok(frame.innerHTML.includes(label), `${mode}: ${label}`);
+    assert.equal(env.slider.getImageMetrics().mode, mode);
+    env.slider.dispose();
+  }
+});
+
+test('Before & Depois retains exactly the three audit panels', async () => {
+  const env = await setup('before_after');
+  await env.slider.load(['original', 'level1', 'level2']);
+  const frame = env.viewport.child.child;
+  assert.equal(frame.panels.length, 3);
+  assert.ok(frame.className.includes('comparison-triptych'));
+  for (const label of ['ORIGINAL', 'AUTO-CLEANER I', 'AUTO-CLEANER II']) {
+    assert.ok(frame.innerHTML.includes(label));
+  }
+  env.slider.dispose();
+});
+
+test('comparison availability is scoped to the navigation mode', async () => {
   const { canCompare } = await browserModules()('/texto_off/comparison/launcher.js');
   const row = { cleaned: true, level2_status: 'pending', comparison_available: false };
-  assert.equal(canCompare(row, '1'), true);
-  assert.equal(canCompare(row, '2'), true);
-  assert.equal(canCompare(row, '3'), false);
+  assert.equal(canCompare(row, '1', 'level1'), true);
+  assert.equal(canCompare(row, '2', 'level2'), true);
+  assert.equal(canCompare(row, '1', 'before_after'), true);
+  assert.equal(canCompare(row, '3', 'preview'), false);
   assert.equal(canCompare({ level2_status: 'no_change' }, '2'), false);
   assert.equal(canCompare({ comparison_available: true }, '4'), true);
 });

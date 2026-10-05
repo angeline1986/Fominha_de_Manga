@@ -103,6 +103,7 @@
 .comparison-frame { position: relative; flex: none; }
 .comparison-frame[hidden] { display: none; }
 .comparison-triptych { display: grid; grid-template-columns: repeat(3, var(--comparison-image-width)); gap: var(--comparison-panel-gap); }
+.comparison-pair { display: grid; grid-template-columns: repeat(2, var(--comparison-image-width)); gap: var(--comparison-panel-gap); }
 .comparison-image-panel { display: grid; box-sizing: border-box; grid-template-rows: 44px minmax(0, 1fr); min-width: 0; margin: 0; border: 1px solid var(--color-border-primary); border-radius: 8px; overflow: hidden; background: var(--color-surface); }
 .comparison-image-panel figcaption { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 6px; padding: 0 9px; border-bottom: 1px solid var(--color-border); color: var(--color-primary-hover); font-size: var(--font-size-small); }
 .comparison-image-panel figcaption small { overflow: hidden; color: var(--color-text-muted); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }

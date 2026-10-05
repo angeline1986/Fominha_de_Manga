@@ -47,6 +47,10 @@ export const routes = {
     context: "texto-off",
     module: "/texto_off/merged/level1.js",
   },
+  "texto-off-quality-audit": {
+    context: "texto-off",
+    module: "/texto_off/comparison/audit.js",
+  },
   "texto-off-merged-ii": {
     context: "texto-off",
     module: "/texto_off/merged/level2.js",

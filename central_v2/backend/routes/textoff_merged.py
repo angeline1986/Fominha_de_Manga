@@ -78,7 +78,7 @@ def execute_textoff_merged_response(payload: object, output_root: Path) -> Route
 
 def execute_textoff_merged_level1_response(payload: object, output_root: Path) -> RouteResponse:
     return _execute_response(payload, output_root, execute_merged_level1,
-                             component="CLEANER-I")
+                             component="CLEANER-I", include_level1_diagnostics=True)
 
 
 def execute_textoff_merged_level2_response(payload: object, output_root: Path) -> RouteResponse:
@@ -127,7 +127,8 @@ def execute_textoff_merged_special_response(level: str, payload: object,
 
 def _execute_response(payload: object, output_root: Path, runner, validator=None,
                       component: str | None = None,
-                      include_catalog_context: bool = False) -> RouteResponse:
+                      include_catalog_context: bool = False,
+                      include_level1_diagnostics: bool = False) -> RouteResponse:
     try:
         if not isinstance(payload, dict):
             raise ValueError("Corpo da solicitação inválido.")
@@ -143,6 +144,12 @@ def _execute_response(payload: object, output_root: Path, runner, validator=None
             runner_args = {"preflight": lambda: _ensure_v2_session()}
             if include_catalog_context:
                 runner_args.update(provider=provider, manga_name=name)
+            if include_level1_diagnostics:
+                runner_args.update(
+                    diagnostics=payload.get("diagnostics") is True,
+                    provider=provider,
+                    manga_name=name,
+                )
             return runner(manga, chapters, progress, **runner_args)
 
         return RouteResponse(202, _json({

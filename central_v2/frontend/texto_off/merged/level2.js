@@ -59,7 +59,7 @@ export function createMergedLevel2View(onRun) {
   const status = element.querySelector(".auto-merge-status");
   const results = element.querySelector(".auto-merge-results");
   const execute = element.querySelector("[data-execute]");
-  const comparison = createComparisonLauncher(element, "2");
+  const comparison = createComparisonLauncher(element, "2", "level2");
   const pagination = createPagination();
   const selected = new Set();
   const progress = createJobProgress("Texto Off — Merged Nível II");

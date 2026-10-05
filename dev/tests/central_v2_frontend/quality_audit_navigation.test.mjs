@@ -21,46 +21,36 @@ class Element {
   remove() { this.removed = true; }
 }
 
-test('Antes & Depois menu action resolves through router and opens its comparison screen', async () => {
-  let tableColumns, openedContext, started = false;
-  const row = { chapter: '1', cleaned: true };
+test('Antes & Depois menu action resolves to the read-only triptych audit screen', async () => {
+  const audit = {};
   const sources = {
     '/_app/state/context.js': 'export const getContext = () => ({ provider: "comix", manga: "Gazing at you" }); export const subscribeContext = () => () => {};',
-    '/_app/api/textoff.js': 'export const fetchMergedTextoff = async () => ({ provider: "comix", manga: "Gazing at you", chapters: [globalThis.row] });',
-    '/texto_off/merged/execution.js': 'export const createMergedExecution = () => ({ execute() {}, dispose() {} });',
-    '/_shared/icons/icons.js': 'export const iconMarkup = (name) => name;',
-    '/texto_off/comparison/screen.js': 'export const createComparisonScreen = (context) => { setOpenedContext(context); return { element: globalThis.screenElement, start() { setStarted(true); }, dispose() {} }; };',
-    '/texto_off/merged/stage_filters.js': 'export const createStageFilters = () => ({ matches: () => true, draw() {}, reset() {} });',
-    '/_shared/table/table.js': 'export const createTable = (columns) => { setTableColumns(columns); return globalThis.tableElement; };',
-    '/_shared/pagination/model.js': 'export const createPagination = () => ({ select: (rows) => ({ rows }), reset() {}, move() {} });',
-    '/_shared/pagination/pagination.js': 'export const createPaginationControls = () => globalThis.paginationElement;',
-    '/_shared/progress/progress.js': 'export const createJobProgress = () => ({ element: globalThis.progressElement, update() {} });',
-    '/texto_off/merged/columns.js': 'export const createMergedColumns = () => [];',
+    '/_app/api/textoff.js': 'export const fetchMergedTextoff = async () => ({ provider: "comix", manga: "Gazing at you", chapters: [] });',
+    '/texto_off/merged/view.js': `export const createMergedView = (onExecute, options) => {
+      globalThis.audit.options = options;
+      return { element: globalThis.viewElement, update(state) { globalThis.audit.state = state; }, dispose() {} };
+    };`,
   };
   const load = browserModules({
-    document: { createElement: () => new Element() }, AbortController, row,
-    tableElement: new Element(), paginationElement: new Element(), progressElement: new Element(),
-    screenElement: new Element(),
-    setTableColumns(value) { tableColumns = value; },
-    setOpenedContext(value) { openedContext = value; },
-    setStarted(value) { started = value; },
+    document: { createElement: () => new Element() }, AbortController, audit,
+    viewElement: new Element(),
   }, sources);
   const { navigation } = await load('/_shell/navigation.js');
   const menu = navigation.find((section) => section.id === 'texto-off');
   const action = menu.groups[3].items.find((item) => item.label === 'Antes & Depois').id;
   const { resolveRoute } = await load('/_app/router/routes.js');
-  assert.equal(action, 'texto-off-merged-i');
-  assert.equal(resolveRoute(action).module, '/texto_off/merged/level1.js');
+  assert.equal(action, 'texto-off-quality-audit');
+  assert.notEqual(action, 'texto-off-merged-i');
+  assert.equal(resolveRoute(action).module, '/texto_off/comparison/audit.js');
 
   const router = await load('/_app/router/router.js');
   const container = new Element();
   await router.navigate(action, container);
   await new Promise((resolve) => setImmediate(resolve));
-  assert.ok(tableColumns.some((column) => column.id === 'comparison'));
-
-  const button = tableColumns.find((column) => column.id === 'comparison').render(row);
-  assert.equal(button.disabled, false);
-  button.events.get('click')();
-  assert.equal(JSON.stringify(openedContext), JSON.stringify({ provider: 'comix', manga: 'Gazing at you', chapter: '1', step: '1' }));
-  assert.equal(started, true);
+  assert.equal(audit.options.title, 'Auditoria de Qualidade — Antes & Depois');
+  assert.equal(audit.options.mode, 'overview');
+  assert.equal(audit.options.comparisonMode, 'before_after');
+  assert.equal(audit.options.showExecute, false);
+  assert.equal(audit.options.selectionEnabled, false);
+  assert.equal(audit.state.status, 'ready');
 });

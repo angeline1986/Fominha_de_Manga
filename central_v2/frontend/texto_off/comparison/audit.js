@@ -1,25 +1,19 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchMergedTextoff } from "/_app/api/textoff.js";
-import { createMergedExecution } from "/texto_off/merged/execution.js";
 import { createMergedView } from "/texto_off/merged/view.js";
 
 export function render(container) {
   let requestId = 0;
   let abortController;
   let disposed = false;
-  const view = createMergedView((chapters) => execution.execute(chapters), {
-    title: "Auto-Cleaner — Passo 1: Balões Sólidos",
-    description: "Limpeza geral padrão e proteção de áreas translúcidas.",
-    executeLabel: "Executar Passo 1",
+  const view = createMergedView(null, {
+    title: "Auditoria de Qualidade — Antes & Depois",
     mode: "overview",
-    comparisonMode: "level1",
+    comparisonMode: "before_after",
+    showExecute: false,
+    selectionEnabled: false,
   });
   container.replaceChildren(view.element);
-  const execution = createMergedExecution({
-    level: "1",
-    onStatus: view.setExecution,
-    onComplete: async () => { view.clearSelection(); await load(); },
-  });
 
   async function load() {
     const id = ++requestId;
@@ -48,7 +42,6 @@ export function render(container) {
     requestId += 1;
     abortController?.abort();
     unsubscribe();
-    execution.dispose();
     view.dispose();
   };
 }

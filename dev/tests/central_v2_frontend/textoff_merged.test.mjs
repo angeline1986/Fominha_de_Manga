@@ -48,6 +48,11 @@ test('Limpeza de Balões maps all cleaner and brush choices to their existing ro
   }
   assert.equal(menu.groups.find((group) => group.label === 'AUDITORIA DE QUALIDADE')
     .items.map((item) => item.label).join('|'), 'Antes & Depois|Correção Assistida');
+  const auditAction = menu.groups.find((group) => group.label === 'AUDITORIA DE QUALIDADE')
+    .items.find((item) => item.label === 'Antes & Depois').id;
+  assert.equal(auditAction, 'texto-off-quality-audit');
+  assert.notEqual(auditAction, 'texto-off-merged-i');
+  assert.equal(resolveRoute(auditAction).module, '/texto_off/comparison/audit.js');
   assert.equal(menu.groups.find((group) => group.items?.[0]?.id === 'texto-off-legacy').label, '');
   assert.equal(legacy.context, 'texto-off');
   assert.equal(legacy.module, '/texto_off/merged/index.js');

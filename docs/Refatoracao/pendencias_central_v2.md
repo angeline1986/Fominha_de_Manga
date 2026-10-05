@@ -57,6 +57,16 @@ As ocorrências abaixo permanecem em diagnóstico e **não estão confirmadas co
 
 **Limite de nomenclatura da interface:** existem exatamente quatro passos de Auto-Cleaner: Passo 1; Passo 2; Passo 3 — Transparência Normal; Passo 4 — Transparência Legada. Nível IV e Nível V só aparecem como nomes técnicos internos entre parênteses quando ajudam a localizar código, rotas, manifests ou mensagens.
 
+## P2 — Auto-Cleaner Passo 1: boxes pequenos `unknown` descartados antes da Raw Mask
+
+**Status:** DIAGNÓSTICO CONCLUÍDO — CORREÇÃO FUTURA
+
+- **Casos comprovados em `comix / Gazing at you / capítulo 1`:** `page-009-013.png` — `IT'S COLD.`, bbox `[659,2769,807,2800]`, área `4.588 px²`, máscara refinada com `1.132 px` na ROI; `page-021-025.png` — `REALLY?`, bbox `[429,408,565,438]`, área `4.080 px²`, máscara refinada com `2.205 px` na ROI. Nos dois casos a Raw Mask exportada do Cleaner tem `0` pixels na ROI.
+- **Causa comprovada:** o ComicTextDetector detecta ambos e os classifica como `unknown`. O pré-processador do Panel Cleaner converte `unknown` para idioma nulo e descarta boxes abaixo de `suspicious_box_min_size = 40.000`; a perda ocorre antes da Raw Mask exportada. Não é falha da autorização N1, deferred/transparência, Nível II, LaMa, proteção manual P1.2, Sommelier, catálogo de resíduos nem do `min_area=20`.
+- **Diretriz para a correção:** revisar o descarte de boxes pequenos `unknown`; não reduzir globalmente `suspicious_box_min_size`. Preservar a proteção contra falsos positivos e evitar regressão no tratamento dos balões transparentes.
+- **Validação futura obrigatória:** confirmar `IT'S COLD.` e `REALLY?` na Raw Mask, verificar a remoção final dos dois textos, executar regressão do capítulo 1, avaliar falsos positivos e confirmar que balões transparentes continuam funcionando.
+- **Proveniência diagnóstica:** MERGE SHA-256 `14067e5df29960233f0ff57605cbeb8add23a314a1facb8ac0b2df3c92614789`; execução isolada em `/private/tmp/fominha_level1_rawmask_diagnostic/n1/1/diagnostics/`.
+
 ## P2 — Auditoria de Qualidade: Antes & Depois
 
 **Status:** IMPLEMENTADO — AGUARDANDO VALIDAÇÃO FUNCIONAL
@@ -84,6 +94,23 @@ As ocorrências abaixo permanecem em diagnóstico e **não estão confirmadas co
 **Status:** RESOLVIDO em `0f8a7a76` (`fix(central-v2): padroniza feedback da curadoria de baloes`).
 
 A Curadoria usa a barra compartilhada na posição padrão, sem variante inline; mantém contagem/agregação em páginas; apresenta `showOperationSummary()` no sucesso e `showMessage()` no erro. Esses itens não são pendências abertas.
+
+### Nomenclatura Bubble Sommelier
+
+**Status:** PENDÊNCIA VISUAL / UX
+
+- **Fato observado:** ainda existe nomenclatura relacionada a “Curadoria” na navegação/tela da feature cuja nomenclatura oficial escolhida é “Bubble Sommelier”.
+- **Diretriz futura:** substituir a nomenclatura de Curadoria por “Bubble Sommelier”. Quando o contexto da tela/navegação já identificar a feature, evitar repetir “BUBBLE SOMMELIER” como título externo redundante; revisar a hierarquia visual sem alterar a funcionalidade.
+- **Não fazer nesta pendência:** não alterar execução, contratos ou comportamento funcional.
+
+### Breadcrumb na navegação
+
+**Status:** PENDÊNCIA VISUAL / UX
+
+- **Fato observado:** “Limpeza de Balões” não comunica claramente a posição da tela na hierarquia e funciona como retorno genérico para a seção.
+- **Diretriz futura:** substituir essa apresentação por breadcrumb/migalhas de pão que reflita a hierarquia oficial das rotas e nomenclaturas, por exemplo `Texto OFF > Limpeza de Balões > Bubble Sommelier` ou `Texto OFF > Limpeza de Balões > Pincel & Retoques de Arte > Degradê`.
+- **Pré-condição:** ao retomar, conferir primeiro as rotas e nomenclaturas oficiais existentes. Os exemplos são conceituais, não uma decisão fechada de hierarquia.
+- **Não fazer nesta pendência:** não implementar breadcrumb nem alterar navegação nesta etapa documental.
 
 ## P4 — Sanitização arquitetural
 

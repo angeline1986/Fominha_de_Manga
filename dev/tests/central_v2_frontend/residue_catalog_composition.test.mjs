@@ -51,7 +51,8 @@ test('Comparar Capítulo composes real catalog facade, state, and page list', as
   };
   const load = browserModules({ document, fetch, AbortController }, sources);
   const { createComparisonScreen } = await load('/texto_off/comparison/screen.js');
-  const screen = createComparisonScreen({ provider: 'comix', manga: 'work', chapter: '1', step: '1' }, () => {});
+  const screen = createComparisonScreen({ provider: 'comix', manga: 'work', chapter: '1', step: '1',
+    comparisonMode: 'level1' }, () => {});
 
   await screen.start();
   await new Promise((resolve) => setImmediate(resolve));

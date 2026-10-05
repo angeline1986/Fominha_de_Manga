@@ -1,14 +1,14 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { comparisonModeForStep } from "/texto_off/comparison/model.js";
 import { createComparisonScreen } from "/texto_off/comparison/screen.js";
 
-export function canCompare(row, step) {
-  if (step === "1") return row.cleaned === true;
-  if (step === "2") return row.cleaned === true;
+export function canCompare(row, step, mode = comparisonModeForStep(step)) {
+  if (mode === "level1" || mode === "level2" || mode === "before_after") return row.cleaned === true;
   return row.comparison_available === true;
 }
 
-export function createComparisonLauncher(origin, step) {
+export function createComparisonLauncher(origin, step, mode = comparisonModeForStep(step)) {
   let screen = null, unsubscribe = null, focus = null, scroll = 0;
   function close(restore = true) {
     unsubscribe?.(); unsubscribe = null;
@@ -24,7 +24,8 @@ export function createComparisonLauncher(origin, step) {
     const { provider, manga } = getContext();
     focus = button;
     scroll = origin.parentElement.scrollTop;
-    screen = createComparisonScreen({ provider, manga, chapter: row.chapter, step }, close);
+    screen = createComparisonScreen({ provider, manga, chapter: row.chapter, step,
+      comparisonMode: mode }, close);
     origin.classList.add("comparison-origin-hidden");
     origin.after(screen.element);
     screen.start();
@@ -49,7 +50,7 @@ export function createComparisonLauncher(origin, step) {
         button.type = "button";
         button.className = "btn comparison-open";
         button.innerHTML = iconMarkup("eye");
-        button.disabled = !canCompare(row, step);
+        button.disabled = !canCompare(row, step, mode);
         button.title = button.disabled ? "Sem resultado atual para comparar neste passo"
           : `Comparar capítulo ${row.chapter} — Passo ${step}`;
         button.setAttribute("aria-label", button.title);

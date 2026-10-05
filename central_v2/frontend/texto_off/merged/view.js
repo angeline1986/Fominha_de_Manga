@@ -12,7 +12,8 @@ const FILTERS = [
   ["processed", "Concluído"], ["invalid", "MERGE inválido"],
 ];
 
-export function createMergedView(onExecute, { title = "Texto Off — Merged", executeLabel, mode, description = "", onInspect } = {}) {
+export function createMergedView(onExecute, { title = "Texto Off — Merged", executeLabel, mode,
+  description = "", onInspect, comparisonMode, showExecute = true, selectionEnabled = true } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page textoff-merged-page";
   if (mode === "overview") element.classList.add("cleaner-overview");
@@ -22,7 +23,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar capítulo"></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
-      <button class="auto-merge-execute" type="button" data-execute>${executeLabel ?? `Executar ${title.replace("Texto Off — ", "")}`}</button>
+      ${showExecute ? `<button class="auto-merge-execute" type="button" data-execute>${executeLabel ?? `Executar ${title.replace("Texto Off — ", "")}`}</button>` : ""}
     </div>
     <p class="auto-merge-status" role="status" aria-live="polite"></p>
     <div class="auto-merge-results"></div>
@@ -32,11 +33,12 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   const execute = element.querySelector("[data-execute]");
   const results = element.querySelector(".auto-merge-results");
   const filters = element.querySelector(".auto-merge-filters");
-  const comparison = mode === "overview" ? createComparisonLauncher(element, "1") : null;
+  const comparison = mode === "overview" && comparisonMode
+    ? createComparisonLauncher(element, "1", comparisonMode) : null;
   const pagination = createPagination();
   const selected = new Set();
-  const progress = createJobProgress(title);
-  element.querySelector(".auto-merge-toolbar").after(progress.element);
+  const progress = showExecute ? createJobProgress(title) : null;
+  if (progress) element.querySelector(".auto-merge-toolbar").after(progress.element);
   let state = { status: "idle", chapters: [], manga: null, busy: false };
   let selectedFilter = mode === "level3" ? "map" : "pending";
   const stageFilters = mode === "overview" ? createStageFilters(filters, () => { pagination.reset(); draw(); }) : null;
@@ -92,6 +94,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
     const columns = createMergedColumns({
       rows: selection.rows, selected, pageChapters,
       mode,
+      selectionEnabled,
       onInspect,
       onSelect: (chapter, checked) => { checked ? selected.add(chapter) : selected.delete(chapter); draw(); },
       onSelectPage: (checked) => {
@@ -104,13 +107,13 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
       emptyMessage: state.status === "ready" ? "Nenhum capítulo corresponde ao filtro." : "",
     }));
     if (rows.length) results.append(createPaginationControls(selection, (delta) => { pagination.move(delta); draw(); }));
-    execute.disabled = state.busy || selected.size === 0;
+    if (execute) execute.disabled = state.busy || selected.size === 0;
   }
 
   function resetAndDraw() { pagination.reset(); draw(); }
   function handleExecute() { onExecute?.([...selected]); }
   query.addEventListener("input", resetAndDraw);
-  execute.addEventListener("click", handleExecute);
+  execute?.addEventListener("click", handleExecute);
   return {
     element,
     update(next) {
@@ -121,7 +124,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
       state = { ...next, busy: state.busy };
       draw();
     },
-    setExecution(job) { state.busy = Boolean(job.busy); progress.update(job); draw(); },
+    setExecution(job) { state.busy = Boolean(job.busy); progress?.update(job); draw(); },
     clearSelection() { selected.clear(); draw(); },
     inspect(chapter) {
       const row = state.chapters.find((item) => item.chapter === String(chapter));
@@ -130,7 +133,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
     dispose() {
       comparison?.dispose();
       query.removeEventListener("input", resetAndDraw);
-      execute.removeEventListener("click", handleExecute);
+      execute?.removeEventListener("click", handleExecute);
     },
   };
 }

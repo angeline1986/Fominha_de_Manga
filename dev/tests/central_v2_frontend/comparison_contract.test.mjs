@@ -7,7 +7,8 @@ const model = await browserModules()('/texto_off/comparison/model.js');
 const root = new URL('../../../central_v2/frontend/texto_off/comparison/', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
 
-test('triptych contract preserves zoom, shared gap, paging and searchable page names', () => {
+test('comparison modes preserve pair/triptych provenance and shared navigation controls', () => {
+  const { COMPARISON_MODES, comparisonModeForStep } = model;
   assert.equal(model.INITIAL_ZOOM, 40);
   assert.equal(model.TRIPTYCH_PANEL_GAP, 18);
   assert.equal(model.COMPARISON_PAGE_SIZE, 13);
@@ -21,14 +22,21 @@ test('triptych contract preserves zoom, shared gap, paging and searchable page n
   assert.equal(model.pageComparisonItems(pages, 2).start, 14);
   assert.equal(model.pageComparisonItems(pages, 2).end, 18);
   assert.equal(model.filterComparisonPages(pages, 'PÁGINA-2').length, 1);
+  assert.deepEqual(Array.from(COMPARISON_MODES.level1.panels, (panel) => panel[1]), ['ORIGINAL', 'AUTO-CLEANER I']);
+  assert.deepEqual(Array.from(COMPARISON_MODES.level2.panels, (panel) => panel[1]), ['AUTO-CLEANER I', 'AUTO-CLEANER II']);
+  assert.deepEqual(Array.from(COMPARISON_MODES.before_after.panels, (panel) => panel[1]),
+    ['ORIGINAL', 'AUTO-CLEANER I', 'AUTO-CLEANER II']);
+  assert.equal(comparisonModeForStep('1'), 'level1');
+  assert.equal(comparisonModeForStep('2'), 'level2');
 });
 
-test('screen exposes the fixed three-stage toolbar, page preview and focus navigation', async () => {
+test('screen exposes mode-driven comparison, page preview and focus navigation', async () => {
   const source = await read('screen.js');
   assert.match(source, /Buscar página/);
-  assert.match(source, /AUDITORIA DE QUALIDADE/);
-  assert.match(source, /level1/);
-  assert.match(source, /level2/);
+  assert.match(source, /comparisonModeConfig\(context\.comparisonMode\)/);
+  assert.match(source, /mode\.heading/);
+  assert.match(source, /mode\.sides\.map/);
+  assert.match(source, /mode\.layout/);
   assert.doesNotMatch(source, /Visão única|data-mode/);
   assert.match(source, /aria-label="Diminuir zoom"/);
   assert.match(source, /aria-label="Aumentar zoom"/);
@@ -47,17 +55,19 @@ test('screen exposes the fixed three-stage toolbar, page preview and focus navig
   assert.match(source, /aria-expanded="false"/);
 });
 
-test('triptych preserves image semantics, equal columns and fixed page alignment', async () => {
+test('pair and triptych preserve image semantics, equal columns and page alignment', async () => {
   const source = await read('slider.js');
+  const modeSource = await read('model.js');
   const css = await read('style.css');
   assert.match(css, /\.comparison-origin-hidden \{ display: none/);
   assert.match(source, /TRIPTYCH_PANEL_GAP/);
-  assert.match(source, /Imagem \$\{PANELS\[index\]\[1\]\}/);
-  assert.match(source, /AUTO-CLEANER I/);
-  assert.match(source, /AUTO-CLEANER II/);
-  assert.match(source, /batch\.length !== 3/);
+  assert.match(source, /Imagem \$\{panelsConfig\[index\]\[1\]\}/);
+  assert.match(modeSource, /AUTO-CLEANER I/);
+  assert.match(modeSource, /AUTO-CLEANER II/);
+  assert.match(source, /batch\.length !== panels\.length/);
   assert.match(source, /image\.naturalWidth !== batch\[0\]\.naturalWidth/);
   assert.match(css, /grid-template-columns: repeat\(3, var\(--comparison-image-width\)\)/);
+  assert.match(css, /\.comparison-pair \{ display: grid; grid-template-columns: repeat\(2, var\(--comparison-image-width\)\)/);
   assert.match(css, /\.comparison-image-panel \{[^}]*grid-template-rows: 44px/);
   assert.match(css, /\.is-focus-mode \.comparison-focus-navigation \{ display: flex/);
   assert.match(css, /\.comparison-focus-navigation \{ display: none/);

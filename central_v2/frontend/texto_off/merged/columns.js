@@ -11,10 +11,11 @@ function checkbox(label, checked, onChange) {
   return input;
 }
 
-export function createMergedColumns({ rows, selected, pageChapters, onSelect, onSelectPage, onInspect, mode }) {
+export function createMergedColumns({ rows, selected, pageChapters, onSelect, onSelectPage,
+  onInspect, mode, selectionEnabled = true }) {
   const eligible = pageChapters.filter((chapter) => rows.find((row) => row.chapter === chapter)?.selectable);
   return [
-    {
+    ...(selectionEnabled ? [{
       id: "select",
       header: () => {
         const input = checkbox("Selecionar todos os capítulos desta página", eligible.length > 0 && eligible.every((name) => selected.has(name)), onSelectPage);
@@ -26,7 +27,7 @@ export function createMergedColumns({ rows, selected, pageChapters, onSelect, on
         input.disabled = !row.selectable;
         return input;
       },
-    },
+    }] : []),
     { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
     ...(mode === "level3" ? createMappingColumns(onInspect) : [
       { id: "merges", label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },

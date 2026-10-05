@@ -24,7 +24,9 @@ def validate_selection(manga: Path, chapters: object) -> list[str]:
 
 
 def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
-                   *, output_stage: str = "MERGED", include_legacy_level2: bool = True) -> list[dict]:
+                   *, output_stage: str = "MERGED", include_legacy_level2: bool = True,
+                   diagnostics: bool = False, provider: str | None = None,
+                   manga_name: str | None = None) -> list[dict]:
     """Run Cleaner V2 over official MERGEs into an explicitly named stage."""
     if output_stage not in {"MERGED", LEVEL1, "MERGED_NIVEL_I"}:
         raise ValueError("Destino de Texto Off inválido.")
@@ -54,11 +56,17 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
             "message": f"Capítulo {index}/{len(chapters)}: iniciando Cleaner V2 nos merges oficiais.",
         })
         try:
+            runner_args = {
+                "source_stage": "MERGE",
+                "progress_job": _CleanerProgress(progress, name, index, len(chapters)),
+                "chapter_name": name,
+                "level1_only": not include_legacy_level2,
+            }
+            if target_stage == LEVEL1:
+                runner_args.update(diagnostics=diagnostics, provider=provider, manga_name=manga_name)
             result = run_cleaner_v2(
-                images,
-                stage_chapter(manga, target_stage, name, read_legacy=False),
-                source_stage="MERGE", progress_job=_CleanerProgress(progress, name, index, len(chapters)),
-                chapter_name=name, level1_only=not include_legacy_level2,
+                images, stage_chapter(manga, target_stage, name, read_legacy=False),
+                **runner_args,
             )
             results.append({"chapter": name, **result})
         except Exception as exc:
@@ -71,11 +79,14 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
     return results
 
 
-def execute_merged_level1(manga: Path, chapters: list[str], progress, preflight=None) -> list[dict]:
+def execute_merged_level1(manga: Path, chapters: list[str], progress, preflight=None,
+                          *, diagnostics: bool = False, provider: str | None = None,
+                          manga_name: str | None = None) -> list[dict]:
     """Run only Merged Nível I into its isolated output tree."""
     results = execute_merged(
         manga, chapters, progress, preflight,
         output_stage=LEVEL1, include_legacy_level2=False,
+        diagnostics=diagnostics, provider=provider, manga_name=manga_name,
     )
     from .consolidated import rebuild_consolidated
     for result in results:
