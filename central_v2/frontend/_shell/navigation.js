@@ -130,7 +130,7 @@ export const navigation = [
       {
         label: "AUDITORIA DE QUALIDADE",
         items: [
-          { id: "comparar-resultados", label: "Antes & Depois", variant: "primary", icon: "compare" },
+          { id: "texto-off-merged-i", label: "Antes & Depois", variant: "primary", icon: "compare" },
           { id: "correcao-assistida", label: "Correção Assistida", variant: "secondary", icon: "highlighter" },
         ],
       },

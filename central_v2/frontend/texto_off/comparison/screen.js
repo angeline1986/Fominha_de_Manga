@@ -9,8 +9,8 @@ import { createResidueCatalog } from "/texto_off/comparison/residue_catalog.js";
 export function createComparisonScreen(context, onBack) {
   const element = document.createElement("section");
   element.className = "comparison-screen focus-mode-root";
-  element.setAttribute("aria-label", "Comparar Capítulo");
-  element.innerHTML = `<header class="comparison-page-heading">COMPARAR CAPÍTULO</header>
+  element.setAttribute("aria-label", "Auditoria de Qualidade: Antes & Depois");
+  element.innerHTML = `<header class="comparison-page-heading">AUDITORIA DE QUALIDADE · ANTES &amp; DEPOIS</header>
     <div class="comparison-workspace">
       <aside class="comparison-sidebar">
         <div class="comparison-sidebar-heading"><h2>Páginas</h2><span>Cap. ${escapeHtml(context.chapter)}</span></div>
@@ -21,11 +21,7 @@ export function createComparisonScreen(context, onBack) {
       </aside>
       <main class="comparison-canvas-panel">
         <header class="comparison-canvas-toolbar">
-          <div class="comparison-canvas-title"><strong>Comparação do capítulo</strong><span data-summary></span></div>
-          <div class="comparison-view-toggle" role="group" aria-label="Modo de comparação">
-            <button type="button" data-mode="split" aria-pressed="true">Visão única</button>
-            <button type="button" data-mode="side" aria-pressed="false">Lado a lado</button>
-          </div>
+          <div class="comparison-canvas-title"><strong>Antes &amp; Depois</strong><span data-summary></span></div>
           <div class="comparison-canvas-controls">
             <div class="zoom-control comparison-zoom" aria-label="Controles de zoom">
               <button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button>
@@ -38,7 +34,7 @@ export function createComparisonScreen(context, onBack) {
           </div>
         </header>
         <div class="comparison-canvas-viewport"><div class="comparison-state" data-state role="status" aria-live="polite"></div><div data-viewport></div></div>
-        <footer class="comparison-canvas-footer"><span data-footer-context>Original ↔ Auto Cleaner</span>
+        <footer class="comparison-canvas-footer"><span>Zoom e rolagem sincronizados</span>
           <div class="comparison-focus-navigation" data-focus-navigation aria-label="Navegação entre páginas">
             <button type="button" data-prev aria-label="Página anterior" title="Página anterior">${iconMarkup("back")}</button>
             <output data-focus-count></output>
@@ -55,14 +51,14 @@ export function createComparisonScreen(context, onBack) {
   const canvas = query("[data-viewport]");
   const state = query("[data-state]"), preview = query("[data-preview]");
   const controller = new AbortController();
-  let pages = [], index = 0, activeImageIndex = null, pageState = "loading", mode = "split", zoom = INITIAL_ZOOM, disposed = false;
+  let pages = [], index = 0, activeImageIndex = null, pageState = "loading", zoom = INITIAL_ZOOM, disposed = false;
   const slider = createSlider(canvas, (nextState, error) => {
     canvas.setAttribute("aria-busy", String(nextState === "loading"));
     element.querySelectorAll("[data-zoom]").forEach((button) => { button.disabled = nextState !== "ready"; });
     if (nextState === "error") { activeImageIndex = null; pageState = "error"; state.textContent = error; }
     else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; }
     drawState();
-  });
+  }, context.step);
   const catalog = createResidueCatalog({ workspace: query(".comparison-workspace"), slider, context,
     onPersistedCount: (pageName, count) => {
       const page = pages.find((item) => item.name === pageName);
@@ -110,8 +106,9 @@ export function createComparisonScreen(context, onBack) {
     query("[data-next]").disabled = index >= pages.length - 1;
     pageList.render(pages, index);
     activeImageIndex = index;
-    slider.load(comparisonImageUrl(context, page, "before"), comparisonImageUrl(context, page, "after"));
-    slider.setMode(mode); slider.zoom(zoom / 100); updateZoom();
+    slider.load(["original", "level1", "level2"].map((side) => comparisonImageUrl({ ...context, layout: "triptych" }, page, side)),
+      level2StatusText(page.level2_status));
+    slider.zoom(zoom / 100); updateZoom();
   }
   function drawPreviewPosition(button) {
     if (!button || preview.hidden) return;
@@ -131,7 +128,7 @@ export function createComparisonScreen(context, onBack) {
     if (name === null) { preview.hidden = true; return; }
     const page = pages.find((entry) => entry.name === name);
     if (!page) return;
-    preview.querySelector("img").src = comparisonImageUrl(context, page, "before");
+    preview.querySelector("img").src = comparisonImageUrl({ ...context, layout: "triptych" }, page, "original");
     preview.querySelector("[data-preview-name]").textContent = name;
     preview.hidden = false; drawPreviewPosition(item);
   }
@@ -142,12 +139,6 @@ export function createComparisonScreen(context, onBack) {
     slider.zoom(zoom / 100); updateZoom();
   }
   function updateZoom() { query("[data-zoom-value]").textContent = `${zoom}%`; }
-  function onMode(event) {
-    const button = event.target.closest("[data-mode]");
-    if (!button) return;
-    mode = button.dataset.mode; slider.setMode(mode);
-    element.querySelectorAll("[data-mode]").forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
-  }
   function onKeyDown(event) {
     if (event.key === "Escape") {
       if (!element.classList.contains("is-focus-mode")) { event.preventDefault(); onBack(); }
@@ -166,7 +157,6 @@ export function createComparisonScreen(context, onBack) {
   function onPanel(event) { if (event.target.closest("[data-panel-toggle]")) catalog.toggle(); }
   const disposePageList = pageList.dispose;
   element.addEventListener("click", onZoom);
-  element.addEventListener("click", onMode);
   element.addEventListener("click", onMove);
   element.addEventListener("click", onPanel);
   element.addEventListener("keydown", onKeyDown);
@@ -174,10 +164,9 @@ export function createComparisonScreen(context, onBack) {
   async function load() {
     pageState = "loading"; drawState();
     try {
-      const result = await fetchComparison(context, controller.signal);
+      const result = await fetchComparison({ ...context, layout: "triptych" }, controller.signal);
       if (disposed) return;
       pages = result.pages || [];
-      query("[data-footer-context]").textContent = result.experimental ? "Prévia experimental · Original ↔ Auto Cleaner" : "Original ↔ Auto Cleaner";
       if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
       showPage();
     } catch (error) {
@@ -187,7 +176,7 @@ export function createComparisonScreen(context, onBack) {
   function dispose() {
     disposed = true; controller.abort(); preview.hidden = true; preview.querySelector("img").removeAttribute("src"); preview.remove();
     disposePageList();
-    element.removeEventListener("click", onZoom); element.removeEventListener("click", onMode);
+    element.removeEventListener("click", onZoom);
     element.removeEventListener("click", onMove); element.removeEventListener("click", onPanel);
     element.removeEventListener("keydown", onKeyDown);
     catalog.dispose(); slider.dispose(); disposeFocus();
@@ -197,3 +186,10 @@ export function createComparisonScreen(context, onBack) {
 }
 
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
+
+function level2StatusText(status) {
+  return ({ changed: "Nível II: com alterações", no_change: "Nível II: analisado sem alterações",
+    not_candidate: "Nível II: página não candidata", pending: "Nível II: aguardando análise",
+    unavailable: "Nível II: pré-requisito indisponível" })[status]
+    || "Nível II: status indisponível";
+}

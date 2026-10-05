@@ -7,10 +7,9 @@ const model = await browserModules()('/texto_off/comparison/model.js');
 const root = new URL('../../../central_v2/frontend/texto_off/comparison/', import.meta.url);
 const read = (file) => readFile(new URL(file, root), 'utf8');
 
-test('comparison visual contract sets zoom, modes, gap, paging and searchable page names', () => {
+test('triptych contract preserves zoom, shared gap, paging and searchable page names', () => {
   assert.equal(model.INITIAL_ZOOM, 40);
-  assert.equal(model.SIDE_BY_SIDE_GAP, 18);
-  assert.equal(Array.from(model.COMPARISON_MODES).join(','), 'split,side');
+  assert.equal(model.TRIPTYCH_PANEL_GAP, 18);
   assert.equal(model.COMPARISON_PAGE_SIZE, 13);
   assert.equal(model.clampZoom(40, '+'), 50);
   assert.equal(model.clampZoom(40, '-'), 30);
@@ -24,15 +23,18 @@ test('comparison visual contract sets zoom, modes, gap, paging and searchable pa
   assert.equal(model.filterComparisonPages(pages, 'PÁGINA-2').length, 1);
 });
 
-test('screen exposes accessible toolbar, chapter context, image preview and focus navigation', async () => {
+test('screen exposes the fixed three-stage toolbar, page preview and focus navigation', async () => {
   const source = await read('screen.js');
   assert.match(source, /Buscar página/);
-  assert.match(source, /aria-label="Modo de comparação"/);
-  assert.match(source, /data-mode="split"/);
-  assert.match(source, /data-mode="side"/);
+  assert.match(source, /AUDITORIA DE QUALIDADE/);
+  assert.match(source, /level1/);
+  assert.match(source, /level2/);
+  assert.doesNotMatch(source, /Visão única|data-mode/);
   assert.match(source, /aria-label="Diminuir zoom"/);
   assert.match(source, /aria-label="Aumentar zoom"/);
   assert.match(source, /data-zoom="one"/);
+  assert.match(source, /slider\.zoom\(zoom \/ 100\)/);
+  assert.match(source, /comparison-canvas-viewport"><div class="comparison-state"[^]*data-viewport/);
   assert.match(source, /bindFocusMode\(element/);
   assert.match(source, /data-focus-navigation/);
   assert.match(source, /role="tooltip"/);
@@ -45,18 +47,18 @@ test('screen exposes accessible toolbar, chapter context, image preview and focu
   assert.match(source, /aria-expanded="false"/);
 });
 
-test('slider preserves image semantics, split interaction and exact side gap', async () => {
+test('triptych preserves image semantics, equal columns and fixed page alignment', async () => {
   const source = await read('slider.js');
   const css = await read('style.css');
   assert.match(css, /\.comparison-origin-hidden \{ display: none/);
-  assert.match(source, /SIDE_BY_SIDE_GAP/);
-  assert.match(source, /"Imagem original"/);
-  assert.match(source, /"Imagem Auto Cleaner"/);
-  assert.match(source, /AUTO CLEANER/);
-  assert.match(source, /aria-label="Divisor Antes e Depois"/);
-  assert.match(source, /pair\[0\]\.naturalWidth !== pair\[1\]\.naturalWidth/);
-  assert.match(css, /--comparison-side-gap: 18px/);
-  assert.match(css, /width: calc\(50% - var\(--comparison-side-gap\) \/ 2\)/);
+  assert.match(source, /TRIPTYCH_PANEL_GAP/);
+  assert.match(source, /Imagem \$\{PANELS\[index\]\[1\]\}/);
+  assert.match(source, /AUTO-CLEANER I/);
+  assert.match(source, /AUTO-CLEANER II/);
+  assert.match(source, /batch\.length !== 3/);
+  assert.match(source, /image\.naturalWidth !== batch\[0\]\.naturalWidth/);
+  assert.match(css, /grid-template-columns: repeat\(3, var\(--comparison-image-width\)\)/);
+  assert.match(css, /\.comparison-image-panel \{[^}]*grid-template-rows: 44px/);
   assert.match(css, /\.is-focus-mode \.comparison-focus-navigation \{ display: flex/);
   assert.match(css, /\.comparison-focus-navigation \{ display: none/);
   assert.match(css, /\.comparison-stage \{[^}]*width: max-content; height: max-content;[^}]*box-sizing: border-box/);
@@ -65,6 +67,7 @@ test('slider preserves image semantics, split interaction and exact side gap', a
   assert.match(source, /getImageMetrics\(\)/);
   assert.match(source, /mountAfterOverlay\(element\)/);
   assert.match(source, /setInteractionMode\(nextMode\)/);
-  assert.match(css, /\.comparison-frame\.is-side-by-side \.comparison-after-overlay/);
+  assert.match(css, /\.comparison-image-holder \{ position: relative/);
+  assert.doesNotMatch(css, /\.comparison-image-panel \{[^}]*overflow:\s*(?:auto|scroll)/);
   assert.match(css, /\.comparison-workspace\.has-residue-panel/);
 });

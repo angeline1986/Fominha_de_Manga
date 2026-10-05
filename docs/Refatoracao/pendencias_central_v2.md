@@ -2,8 +2,8 @@
 
 ## Baseline e uso
 
-- **HEAD desta revisão:** `561d413d` — `feat(central-v2): cataloga residuos por capitulo`.
-- A revisão documental anterior foi baseada em `8ccf35d7`; P1.1 foi publicado em `561d413d` e P1.2 está registrado nesta revisão.
+- **HEAD base desta revisão:** `8c0b443e` — `feat(central-v2): protege residuos manuais no nivel II`.
+- A revisão documental anterior registrava P1.1 em `561d413d`; P1.2 foi publicado em `8c0b443e`.
 - Este arquivo consolida estado, evidência e próxima investigação. Não substitui os documentos especializados nem transforma hipóteses em diagnósticos.
 - Prioridades são orientação prática, não bloqueios automáticos ao desenvolvimento funcional.
 
@@ -56,6 +56,17 @@ As ocorrências abaixo permanecem em diagnóstico e **não estão confirmadas co
 - **Não fazer:** não tratar a mensagem como diagnóstico definitivo. Nível V é apenas o identificador técnico interno do Passo 4 atual; a interface continua com quatro passos.
 
 **Limite de nomenclatura da interface:** existem exatamente quatro passos de Auto-Cleaner: Passo 1; Passo 2; Passo 3 — Transparência Normal; Passo 4 — Transparência Legada. Nível IV e Nível V só aparecem como nomes técnicos internos entre parênteses quando ajudam a localizar código, rotas, manifests ou mensagens.
+
+## P2 — Auditoria de Qualidade: Antes & Depois
+
+**Status:** IMPLEMENTADO — AGUARDANDO VALIDAÇÃO FUNCIONAL
+
+- **Estado anterior:** a tela abria um par por etapa (`Original ↔ Nível I` ou `Nível I ↔ Nível II`) com alternância entre divisor/visão única e lado a lado; a lista do Passo 2 omitia páginas não candidatas.
+- **Implementado:** a resposta de comparação em layout `triptych` fornece uma lista única de páginas e metadados para ORIGINAL, AUTO-CLEANER I e AUTO-CLEANER II. As imagens são resolvidas pelos helpers oficiais de MERGE, manifesto Nível I e `_valid_level2`; o par legado continua disponível para consumidores existentes.
+- **Fallback/status:** Nível II alterado usa seu `clean`; candidato analisado sem alteração usa Nível I; página não candidata também usa Nível I com status próprio. Candidato pendente é identificado separadamente. Falta de imagem Nível I ou falta de saída Nível II declarada como alterada retorna erro visível.
+- **Interface:** três colunas fixas sem visão única, mesmo zoom/ponto de scroll numa viewport compartilhada, troca atômica de página, 13 páginas por página na sidebar, busca, preview da imagem original, foco e catálogo de resíduos preservados. O estado do Nível II aparece discretamente no cabeçalho dessa coluna.
+- **Automatizado:** testes focados frontend/backend, navegação/paginação, zoom, catálogo compartilhado, fallback e artefato obrigatório ausente passaram nesta revisão.
+- **Pendente:** validar visualmente em `comix / Gazing at you / capítulo 1`, nas páginas `page-050-057.png` e `page-013-016.png`. Não inferir eficácia da proteção manual apenas pela tela.
 
 ## P3 — Inconsistência visual da Curadoria
 

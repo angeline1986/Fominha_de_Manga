@@ -141,6 +141,38 @@ class ComparisonTests(unittest.TestCase):
         self.assertTrue(pages)
         self.assertTrue(all(page["residue_occurrence_count"] == 0 for page in pages))
 
+    def test_triptych_response_binds_three_stage_images_and_level2_status(self):
+        from unittest.mock import patch
+        from central_v2.backend.routes import textoff_comparison
+        paths = []
+        for label in ("original", "level1", "level2"):
+            path = self.root / f"{label}.png"
+            path.write_bytes(label.encode())
+            paths.append(path)
+        page = {"name": "page.png", "original": paths[0], "level1": paths[1],
+                "level2": paths[2], "level2_status": "changed",
+                "level2_chapter_status": "processed"}
+        with patch.object(textoff_comparison, "comparison_triplets", return_value=[page]):
+            response = self.request("1", layout="triptych")
+            self.assertEqual(response.status, 200)
+            result = json.loads(response.body)["pages"][0]
+            self.assertEqual(result["level2_status"], "changed")
+            self.assertEqual(result["level2_chapter_status"], "processed")
+            for side, expected in zip(("original", "level1", "level2"),
+                                      (b"original", b"level1", b"level2")):
+                image = self.request("1", layout="triptych", side=side, page=result["id"],
+                                     version=result["version"])
+                self.assertEqual(image.body, expected)
+
+    def test_triptych_does_not_hide_a_missing_required_artifact(self):
+        from unittest.mock import patch
+        from central_v2.backend.routes import textoff_comparison
+        with patch.object(textoff_comparison, "comparison_triplets",
+                          side_effect=OSError("imagem obrigatória ausente")):
+            response = self.request("1", layout="triptych")
+        self.assertEqual(response.status, 500)
+        self.assertIn("Não foi possível carregar", response.body.decode())
+
     def test_experimental_comparison_uses_matching_step_and_latest_snapshot(self):
         from unittest.mock import patch
         from central_v2.backend.orchestration.textoff_merged import comparison

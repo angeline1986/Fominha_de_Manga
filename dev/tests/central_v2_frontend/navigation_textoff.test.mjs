@@ -7,15 +7,15 @@ test('Limpeza de Balões renders captions and keeps special hover previews in Pi
   const { navigation } = await load('/_shell/navigation.js');
   const { groupMarkup } = await load('/_shell/drill_navigation_markup.js');
   const menu = navigation.find((section) => section.id === 'texto-off');
-  const autoGroup = menu.groups[0];
-  const brushGroup = menu.groups[1];
+  const autoGroup = menu.groups[1];
+  const brushGroup = menu.groups[2];
 
   const autoMarkup = groupMarkup(autoGroup);
   assert.match(autoMarkup, /Auto-Cleaner/);
   assert.match(autoMarkup, /PASSO 1\/4/);
   const passButtons = autoMarkup.match(/<button[\s\S]*?<\/button>/g);
   assert.deepEqual(passButtons.map((button) => button.replace(/<[^>]+>/g, '').trim()), ['1', '2', '3', '4']);
-  assert.ok(passButtons.every((button) => !/Balões|Transparência/.test(button)));
+  assert.ok(passButtons.every((button) => !/Balões|Transparência/.test(button.replace(/<[^>]+>/g, ''))));
   assert.match(autoMarkup, /Balões sólidos \(padrão\)/);
 
   const brushMarkup = groupMarkup(brushGroup);
@@ -26,12 +26,12 @@ test('Limpeza de Balões renders captions and keeps special hover previews in Pi
     assert.match(brushMarkup, new RegExp(`${preview}_depois\\.png`));
   }
 
-  const audit = groupMarkup(menu.groups[2]);
+  const audit = groupMarkup(menu.groups[3]);
   assert.match(audit, /drill-action-primary/);
   assert.match(audit, /drill-action-secondary/);
   assert.match(audit, /ui-icon--compare/);
   assert.match(audit, /ui-icon--highlighter/);
-  const legacy = groupMarkup(menu.groups[3]);
+  const legacy = groupMarkup(menu.groups[4]);
   assert.doesNotMatch(legacy, /OUTROS/);
   assert.match(legacy, /Texto Off Legado/);
   assert.match(legacy, /drill-action-muted/);

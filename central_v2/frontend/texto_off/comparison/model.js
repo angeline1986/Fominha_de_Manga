@@ -5,8 +5,7 @@ export const INITIAL_ZOOM = 40;
 export const MIN_ZOOM = 20;
 export const MAX_ZOOM = 200;
 export const ZOOM_STEP = 10;
-export const SIDE_BY_SIDE_GAP = 18;
-export const COMPARISON_MODES = Object.freeze(["split", "side"]);
+export const TRIPTYCH_PANEL_GAP = 18;
 
 export function filterComparisonPages(pages, query) {
   const term = String(query || "").trim().toLocaleLowerCase("pt-BR");

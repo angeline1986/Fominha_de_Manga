@@ -19,6 +19,16 @@ class Element {
     this.clientWidth = 800; this.clientHeight = 600;
   }
   querySelector(key) { if (!this.nodes.has(key)) this.nodes.set(key, new Element()); return this.nodes.get(key); }
+  querySelectorAll(key) {
+    if (key === '.comparison-image-panel') {
+      if (!this.panels) this.panels = Array.from({ length: 3 }, () => {
+        const panel = new Element(); panel.nodes.set('.comparison-image-holder', new Element());
+        panel.nodes.set('[data-stage-status]', new Element()); return panel;
+      });
+      return this.panels;
+    }
+    return [];
+  }
   append(value) { this.child = value; }
   prepend(value) { this.firstChild = value; }
   replaceChildren(...children) { this.children = children; }
@@ -36,66 +46,45 @@ class Element {
   remove() { this.removed = true; }
 }
 
-async function setup(sizes = [[400, 600], [400, 600]]) {
-  const frames = new Map(), states = [];
-  let next = 0, image = 0;
+async function setup(sizes = [[400, 600], [400, 600], [400, 600]], step = '1') {
+  const states = [];
+  let image = 0;
   class Image extends Element {
     constructor() { super(); [this.naturalWidth, this.naturalHeight] = sizes[image++]; }
     async decode() {}
   }
   const load = browserModules({
     document: { createElement: () => new Element() }, Image,
-    requestAnimationFrame: (fn) => { frames.set(++next, fn); return next; },
-    cancelAnimationFrame: (id) => frames.delete(id),
   });
-  const { createSlider, splitAt } = await load('/texto_off/comparison/slider.js');
+  const { createSlider } = await load('/texto_off/comparison/slider.js');
   const viewport = new Element();
   viewport.canvas = { scrollTop: 120, scrollLeft: 45 };
-  const slider = createSlider(viewport, (...state) => states.push(state));
-  return { slider, viewport, canvas: viewport.canvas, frames, states, splitAt,
-    flush() { const pending = [...frames.values()]; frames.clear(); pending.forEach((fn) => fn()); } };
+  const slider = createSlider(viewport, (...state) => states.push(state), step);
+  return { slider, viewport, canvas: viewport.canvas, states };
 }
 
-test('comparison coalesces pointer movement, clamps split, supports keyboard and cleans up', async () => {
+test('triptych loads three aligned images and applies one zoom to all columns', async () => {
   const env = await setup();
-  await env.slider.load('before', 'after');
+  await env.slider.load(['original', 'level1', 'level2'], 'Nível II: com alterações');
   assert.equal(env.states.at(-1)[0], 'ready');
   assert.equal(env.canvas.scrollTop, 0);
   assert.equal(env.canvas.scrollLeft, 0);
   const stage = env.viewport.child;
   const frame = stage.child;
-  assert.equal(frame.style.width, '160px');
-  assert.equal(frame.style.height, '240px');
-  assert.equal(stage.style.width, undefined);
-  assert.equal(stage.style.height, undefined);
-  env.slider.setMode('side');
-  assert.equal(frame.style.width, '338px');
+  assert.equal(frame.style.width, '516px');
+  assert.equal(frame.style.height, '284px');
   env.slider.zoom(1);
-  assert.equal(frame.style.width, '818px');
-  assert.equal(frame.style.height, '600px');
-  env.slider.setMode('split');
-  assert.equal(frame.style.width, '400px');
-  env.flush();
-  const handle = frame.querySelector('.comparison-divider');
-  env.viewport.dispatch('pointerdown', { pointerId: 1, button: 0, clientX: 200, clientY: 0 });
-  for (const x of [250, 300, 1000]) env.viewport.dispatch('pointermove', { pointerId: 1, clientX: x });
-  assert.equal(env.frames.size, 1);
-  env.flush();
-  assert.equal(handle.attrs['aria-valuenow'], '100');
-  env.viewport.dispatch('pointercancel', { pointerId: 1 });
-  assert.equal(env.viewport.capture, null);
-  handle.dispatch('keydown', { key: 'Home' }); env.flush();
-  assert.equal(handle.attrs['aria-valuenow'], '0');
-  handle.dispatch('keydown', { key: 'ArrowRight', shiftKey: true }); env.flush();
-  assert.equal(handle.attrs['aria-valuenow'], '10');
+  assert.equal(frame.style.width, '1236px');
+  assert.equal(frame.style.height, '644px');
+  assert.deepEqual(frame.panels.map((panel) => panel.style.width), ['400px', '400px', '400px']);
+  assert.deepEqual(frame.panels.map((panel) => panel.style.width), ['400px', '400px', '400px']);
+  assert.equal(env.slider.getImageMetrics().zoom, 1);
   env.slider.dispose();
-  assert.equal(env.viewport.events.size, 0);
-  assert.equal(env.frames.size, 0);
 });
 
 test('comparison refuses mismatched dimensions before enabling interaction', async () => {
-  const env = await setup([[400, 600], [400, 601]]);
-  await env.slider.load('before', 'after');
+  const env = await setup([[400, 600], [400, 600], [400, 601]]);
+  await env.slider.load(['original', 'level1', 'level2']);
   assert.equal(env.states.at(-1)[0], 'error');
   assert.match(env.states.at(-1)[1], /dimensões diferentes/);
   assert.equal(env.viewport.child.child.hidden, true);
@@ -104,37 +93,30 @@ test('comparison refuses mismatched dimensions before enabling interaction', asy
   env.slider.dispose();
 });
 
-test('comparison exposes after metrics and gives residue selection exclusive left-pointer ownership', async () => {
-  const env = await setup();
-  await env.slider.load('before', 'after');
-  env.slider.setMode('side');
-  env.slider.zoom(1);
+test('triptych exposes metrics and mounts residue selection on the active result stage', async () => {
+  const env = await setup(undefined, '2');
+  await env.slider.load(['original', 'level1', 'level2']);
   const metrics = env.slider.getImageMetrics();
   assert.equal(metrics.naturalWidth, 400); assert.equal(metrics.naturalHeight, 600);
-  assert.equal(metrics.zoom, 1); assert.equal(metrics.mode, 'side');
+  assert.equal(metrics.zoom, 0.4); assert.equal(metrics.mode, 'triptych');
   const overlay = new Element();
   env.slider.mountAfterOverlay(overlay);
-  assert.equal(env.viewport.child.child.child, overlay);
+  assert.equal(env.viewport.child.child.panels[2].nodes.get('.comparison-image-holder').child, overlay);
   assert.equal(overlay.classList.contains('comparison-after-overlay'), true);
-  env.slider.setMode('split'); env.slider.setInteractionMode('residue-selection');
-  env.viewport.dispatch('pointerdown', { pointerId: 5, button: 0, clientX: 200, clientY: 80 });
-  assert.equal(env.viewport.capture, undefined);
+  env.slider.setInteractionMode('residue-selection');
   assert.equal(env.viewport.child.child.classList.contains('is-residue-selection'), true);
   env.slider.setInteractionMode('normal');
   assert.equal(env.viewport.child.child.classList.contains('is-residue-selection'), false);
-  env.viewport.dispatch('pointerdown', { pointerId: 6, button: 0, clientX: 200, clientY: 80 });
-  assert.equal(env.viewport.capture, 6);
-  env.viewport.dispatch('pointercancel', { pointerId: 6 });
   env.slider.dispose();
 });
 
-test('comparison availability follows the calling step, not another stage', async () => {
+test('triptych availability follows the valid Level I prerequisite', async () => {
   const { canCompare } = await browserModules()('/texto_off/comparison/launcher.js');
   const row = { cleaned: true, level2_status: 'pending', comparison_available: false };
   assert.equal(canCompare(row, '1'), true);
-  assert.equal(canCompare(row, '2'), false);
+  assert.equal(canCompare(row, '2'), true);
   assert.equal(canCompare(row, '3'), false);
-  assert.equal(canCompare({ level2_status: 'no_change' }, '2'), true);
+  assert.equal(canCompare({ level2_status: 'no_change' }, '2'), false);
   assert.equal(canCompare({ comparison_available: true }, '4'), true);
 });
 

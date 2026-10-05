@@ -4,7 +4,7 @@ import { createComparisonScreen } from "/texto_off/comparison/screen.js";
 
 export function canCompare(row, step) {
   if (step === "1") return row.cleaned === true;
-  if (step === "2") return ["processed", "no_change"].includes(row.level2_status);
+  if (step === "2") return row.cleaned === true;
   return row.comparison_available === true;
 }
 

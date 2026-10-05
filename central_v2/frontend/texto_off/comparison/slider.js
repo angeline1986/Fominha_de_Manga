@@ -1,140 +1,79 @@
-export const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
-export function splitAt(clientX, left, width) {
-  return width > 0 ? clamp((clientX - left) / width * 100, 0, 100) : 50;
-}
+import { TRIPTYCH_PANEL_GAP } from "/texto_off/comparison/model.js";
 
-import { SIDE_BY_SIDE_GAP } from "/texto_off/comparison/model.js";
+const PANELS = [
+  ["original", "ORIGINAL"],
+  ["level1", "AUTO-CLEANER I"],
+  ["level2", "AUTO-CLEANER II"],
+];
 
-export function createSlider(viewport, onState) {
+export function createSlider(viewport, onState, catalogStep = "1") {
   const stage = document.createElement("div");
   stage.className = "comparison-stage";
   const frame = document.createElement("div");
-  frame.className = "comparison-frame";
-  frame.innerHTML = `<div class="comparison-after"><span class="comparison-image-label">AUTO CLEANER</span></div><div class="comparison-before"><span class="comparison-image-label">ORIGINAL</span></div>
-    <div class="comparison-divider" role="slider" tabindex="0" aria-label="Divisor Antes e Depois"
-      aria-valuemin="0" aria-valuemax="100" aria-valuenow="50"><span aria-hidden="true">↔</span></div>`;
+  frame.className = "comparison-frame comparison-triptych";
+  frame.innerHTML = PANELS.map(([key, label]) => `<figure class="comparison-image-panel" data-stage="${key}">
+    <figcaption><strong>${label}</strong><small data-stage-status></small></figcaption>
+    <div class="comparison-image-holder"></div></figure>`).join("");
   stage.append(frame); viewport.append(stage);
-  const handle = frame.querySelector(".comparison-divider");
-  let split = 50, zoom = 0.4, x = 0, y = 0, width = 0, height = 0;
-  let ready = false, revision = 0, disposed = false, raf = 0, drag = null, space = false;
-  let interactionMode = "normal", mode = "split", afterOverlay = null;
-  let images = [];
-  function paint() {
-    raf = 0;
-    frame.style.setProperty("--split-position", `${split}%`);
-    frame.style.setProperty("--pan-x", `${x}px`); frame.style.setProperty("--pan-y", `${y}px`);
-    handle.setAttribute("aria-valuenow", String(Math.round(split)));
-    handle.setAttribute("aria-valuetext", `${Math.round(split)}% da imagem original visível`);
-  }
-  function schedule() { if (!raf) raf = requestAnimationFrame(paint); }
+  const panels = [...frame.querySelectorAll(".comparison-image-panel")];
+  const holders = panels.map((panel) => panel.querySelector(".comparison-image-holder"));
+  let images = [], zoom = 0.4, width = 0, height = 0, ready = false, revision = 0, disposed = false;
+  let overlay = null, interactionMode = "normal";
+
   function layout() {
     if (!ready) return;
-    const side = frame.classList.contains("is-side-by-side");
-    const imageWidth = width * zoom;
-    const frameWidth = imageWidth * (side ? 2 : 1) + (side ? SIDE_BY_SIDE_GAP : 0);
-    const frameHeight = height * zoom;
-    frame.style.width = `${frameWidth}px`; frame.style.height = `${frameHeight}px`;
-    schedule();
+    const imageWidth = width * zoom, imageHeight = height * zoom;
+    frame.style.setProperty("--comparison-image-width", `${imageWidth}px`);
+    frame.style.setProperty("--comparison-panel-gap", `${TRIPTYCH_PANEL_GAP}px`);
+    frame.style.width = `${imageWidth * 3 + TRIPTYCH_PANEL_GAP * 2}px`;
+    frame.style.height = `${imageHeight + 44}px`;
+    panels.forEach((panel) => { panel.style.width = `${imageWidth}px`; panel.style.height = `${imageHeight + 44}px`; });
   }
-  function down(event) {
-    if (!ready || drag || ![0, 1].includes(event.button)) return;
-    if (event.target?.closest?.(".comparison-after-overlay")) return;
-    if (interactionMode === "residue-selection" && event.button === 0) return;
-    const wantsPan = space || event.button === 1;
-    const pan = wantsPan && zoom > 1;
-    if (!pan && frame.classList.contains("is-side-by-side")) return;
-    event.preventDefault();
-    drag = { id: event.pointerId, pan, startX: event.clientX, startY: event.clientY, x, y,
-      rect: frame.getBoundingClientRect() };
-    viewport.setPointerCapture(event.pointerId); handle.focus({ preventScroll: true });
-    if (!pan) { split = splitAt(event.clientX, drag.rect.left, drag.rect.width); schedule(); }
+  function clearImages() {
+    images.forEach((image) => { image.removeAttribute("src"); image.remove(); });
+    images = [];
   }
-  function move(event) {
-    if (!drag || event.pointerId !== drag.id) return;
-    if (drag.pan) { x = drag.x + event.clientX - drag.startX; y = drag.y + event.clientY - drag.startY; }
-    else split = splitAt(event.clientX, drag.rect.left, drag.rect.width);
-    schedule();
+  function mountOverlay() {
+    if (!overlay || !ready) return;
+    const index = catalogStep === "2" ? 2 : 1;
+    holders[index].append(overlay);
   }
-  function end(event) {
-    if (!drag || event.pointerId !== drag.id) return;
-    drag = null;
-    if (viewport.hasPointerCapture(event.pointerId)) viewport.releasePointerCapture(event.pointerId);
-  }
-  function keydown(event) {
-    if (event.code === "Space") { event.preventDefault(); space = true; return; }
-    if (!ready || interactionMode !== "normal") return;
-    const delta = event.shiftKey ? 10 : 1;
-    if (event.key === "ArrowLeft") split = clamp(split - delta, 0, 100);
-    else if (event.key === "ArrowRight") split = clamp(split + delta, 0, 100);
-    else if (event.key === "Home") split = 0;
-    else if (event.key === "End") split = 100;
-    else return;
-    event.preventDefault(); schedule();
-  }
-  function keyup(event) { if (event.code === "Space") space = false; }
-  function blur() { space = false; }
-  viewport.addEventListener("pointerdown", down); viewport.addEventListener("pointermove", move);
-  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) viewport.addEventListener(type, end);
-  handle.addEventListener("keydown", keydown); handle.addEventListener("keyup", keyup); handle.addEventListener("blur", blur);
   return {
-    async load(beforeUrl, afterUrl) {
+    async load(urls, status = "") {
       const id = ++revision;
       const canvas = viewport.closest?.(".comparison-canvas-viewport");
-      ready = false; frame.hidden = true; drag = null; onState("loading");
-      images.forEach((img) => { img.removeAttribute("src"); img.remove(); }); images = [new Image(), new Image()];
-      const pair = images;
-      pair[0].alt = "Imagem original"; pair[1].alt = "Imagem Auto Cleaner";
-      pair.forEach((img) => { img.draggable = false; });
-      pair[0].src = beforeUrl; pair[1].src = afterUrl;
+      ready = false; frame.hidden = true; onState("loading"); clearImages();
+      images = urls.map(() => new Image());
+      const batch = images;
+      batch.forEach((image, index) => { image.alt = `Imagem ${PANELS[index][1]}`; image.draggable = false; image.src = urls[index]; });
       try {
-        await Promise.all(pair.map((img) => img.decode()));
+        if (batch.length !== 3) throw new Error("A comparação exige três imagens.");
+        await Promise.all(batch.map((image) => image.decode()));
         if (disposed || revision !== id) return;
-        if (!pair[0].naturalWidth || pair[0].naturalWidth !== pair[1].naturalWidth
-            || pair[0].naturalHeight !== pair[1].naturalHeight) {
+        if (!batch[0].naturalWidth || batch.some((image) => image.naturalWidth !== batch[0].naturalWidth
+            || image.naturalHeight !== batch[0].naturalHeight)) {
           throw new Error("As imagens têm dimensões diferentes. A comparação foi bloqueada para evitar desalinhamento.");
         }
-        width = pair[0].naturalWidth; height = pair[0].naturalHeight;
-        pair[0].className = "comparison-image"; pair[1].className = "comparison-image";
-        frame.querySelector(".comparison-before").prepend(pair[0]);
-        frame.querySelector(".comparison-after").prepend(pair[1]);
-        split = 50; x = 0; y = 0; ready = true; frame.hidden = false; layout();
+        width = batch[0].naturalWidth; height = batch[0].naturalHeight;
+        batch.forEach((image, index) => { image.className = "comparison-image"; holders[index].replaceChildren(image); });
+        panels[2].querySelector("[data-stage-status]").textContent = status;
+        ready = true; layout(); mountOverlay(); frame.hidden = false;
         if (canvas) { canvas.scrollTop = 0; canvas.scrollLeft = 0; }
         onState("ready");
       } catch (error) {
         if (!disposed && revision === id) onState("error", error.message.includes("dimensões")
-          ? error.message : "Não foi possível carregar as duas imagens. Tente novamente.");
+          ? error.message : "Não foi possível carregar as três imagens. Tente novamente.");
       }
     },
-    zoom(value) { zoom = clamp(value, 0.2, 2); layout(); return zoom; },
+    zoom(value) { zoom = Math.max(0.2, Math.min(2, value)); layout(); return zoom; },
     getZoom() { return zoom; },
-    setMode(nextMode) {
-      mode = nextMode;
-      frame.classList.toggle("is-side-by-side", mode === "side"); layout();
-    },
-    getImageMetrics() { return { naturalWidth: width, naturalHeight: height, zoom, mode }; },
-    mountAfterOverlay(element) {
-      if (afterOverlay && afterOverlay !== element) afterOverlay.remove();
-      afterOverlay = element;
-      element.classList.add("comparison-after-overlay");
-      frame.append(element);
-    },
+    getImageMetrics() { return { naturalWidth: width, naturalHeight: height, zoom, mode: "triptych" }; },
+    mountAfterOverlay(element) { overlay?.remove(); overlay = element; element.classList.add("comparison-after-overlay"); mountOverlay(); },
     setInteractionMode(nextMode) {
       if (!["normal", "residue-selection"].includes(nextMode)) throw new TypeError("Modo de interação inválido.");
       interactionMode = nextMode;
-      frame.classList.toggle("is-residue-selection", nextMode === "residue-selection");
-      if (nextMode !== "normal" && drag) {
-        const pointerId = drag.id; drag = null;
-        if (viewport.hasPointerCapture(pointerId)) viewport.releasePointerCapture(pointerId);
-      }
+      frame.classList.toggle("is-residue-selection", interactionMode === "residue-selection");
     },
-    dispose() {
-      disposed = true; revision++; cancelAnimationFrame(raf);
-      images.forEach((img) => { img.removeAttribute("src"); img.remove(); });
-      viewport.removeEventListener("pointerdown", down); viewport.removeEventListener("pointermove", move);
-      for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) viewport.removeEventListener(type, end);
-      handle.removeEventListener("keydown", keydown); handle.removeEventListener("keyup", keyup);
-      handle.removeEventListener("blur", blur); stage.remove();
-      afterOverlay = null;
-    },
+    dispose() { disposed = true; revision++; clearImages(); stage.remove(); overlay = null; },
   };
 }
