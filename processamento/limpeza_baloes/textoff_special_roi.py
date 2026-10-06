@@ -11,6 +11,7 @@ def run_degrade_roi(
     target: Path,
     selections,
     base_snapshot: Path | None = None,
+    approved_check_rois: bool = False,
 ):
     from processamento.limpeza_baloes import patch_degrade_experimento as base
     if isinstance(selections, dict):
@@ -30,7 +31,16 @@ def run_degrade_roi(
     started=time.perf_counter()
     target.mkdir(parents=True,exist_ok=True)
     t=time.perf_counter(); clean,mask=base._run_cleaner(source,target); cleaner=time.perf_counter()-t
+    raw_clean=cv2.imread(str(clean)) if approved_check_rois else None
+    raw_mask=cv2.imread(str(mask),cv2.IMREAD_GRAYSCALE) if approved_check_rois else None
+    if approved_check_rois and (raw_clean is None or raw_mask is None):
+        raise RuntimeError("Clean/mask candidatos ausentes para autorização especial.")
     t=time.perf_counter(); base._authorize_balloon(source,clean,mask,target); auth=time.perf_counter()-t
+    special_components=[]
+    if approved_check_rois:
+        from processamento.limpeza_baloes.textoff_special_approval import apply_approved_rois
+        special_components=apply_approved_rois(
+            original,clean,mask,raw_clean,raw_mask,target/"balloon_authorization.json",boxes)
     clean_img=cv2.imread(str(clean)); authorized=cv2.imread(str(mask),cv2.IMREAD_GRAYSCALE)
     if clean_img is None or authorized is None:
         raise RuntimeError("Clean/mask autorizados ausentes.")
@@ -112,6 +122,8 @@ def run_degrade_roi(
           "authorized_pixels_after_roi":int(np.count_nonzero(restricted)),
           "components_before_count":len(before),"components_selected_count":len(selected),
           "components_selected_by_roi":selected,"processed_components":int(processed),
+          "approved_check_rois":approved_check_rois,
+          "special_components":special_components,
           "pixels_filled":int(filled),
           "composition_mode":composition_mode,
           "effective_changed_pixels":effective_changed_pixels,

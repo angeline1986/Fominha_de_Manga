@@ -29,7 +29,9 @@ def run(request: dict, folder: Path) -> dict:
         result, treatment, timings = run_pre_authorized_treatment(
             key, request["merged_level"], source, target, mask)
     else:
-        result, treatment, timings = run_treatment(key, source, target, request["selections"])
+        result, treatment, timings = run_treatment(
+            key, source, target, request["selections"],
+            approved_check_rois=request.get("approved_check_rois") is True)
     expected_algorithm = (
         f"textoff_merged_level{request['merged_level']}_from_level1_mask_v1"
         if request.get("preauthorized_mask") else

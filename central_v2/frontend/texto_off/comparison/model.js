@@ -34,7 +34,19 @@ export const COMPARISON_MODES = Object.freeze({
     sides: ["before", "after"], panels: [["before", "ORIGINAL"], ["after", "RESULTADO"]],
     catalogPanelIndex: 1,
   }),
+  degrade: Object.freeze({
+    layout: "pair", heading: "PINCEL & RETOQUES · DEGRADÊ", title: "Revisão Degradê",
+    sides: ["before", "after"], panels: [["before", "ANTES"], ["after", "DEPOIS"]],
+    catalogPanelIndex: 1,
+  }),
 });
+
+export function level2StatusText(status) {
+  return ({ changed: "Nível II: com alterações", no_change: "Nível II: analisado sem alterações",
+    not_candidate: "Nível II: página não candidata", pending: "Nível II: aguardando análise",
+    unavailable: "Nível II: pré-requisito indisponível" })[status]
+    || "Nível II: status indisponível";
+}
 
 export function comparisonModeForStep(step) {
   if (step === "1") return "level1";

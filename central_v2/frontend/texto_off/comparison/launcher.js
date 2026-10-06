@@ -26,6 +26,13 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
     scroll = origin.parentElement.scrollTop;
     screen = createComparisonScreen({ provider, manga, chapter: row.chapter, step,
       comparisonMode: mode, ...(scope ? { scope } : {}) }, close);
+    if (mode === "degrade") {
+      const back = document.createElement("button");
+      back.type = "button"; back.className = "btn comparison-back";
+      back.innerHTML = `${iconMarkup("back")} Voltar ao Degradê`;
+      back.addEventListener("click", () => close());
+      screen.element.querySelector(".comparison-page-heading").prepend(back);
+    }
     origin.classList.add("comparison-origin-hidden");
     origin.after(screen.element);
     screen.start();
@@ -35,6 +42,7 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
     });
   }
   return {
+    open,
     column: {
       id: "comparison",
       header() {

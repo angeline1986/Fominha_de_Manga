@@ -80,6 +80,19 @@ class PreviewExecutionTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, "fora da obra"):
             self.run_preview()
 
+    def test_approved_mode_requires_explicit_backend_keyword(self):
+        self.payload["treatment"] = "degrade"
+        self.payload["approved_check_rois"] = True
+        ordinary = self.run_preview()
+        ordinary_request = read_json(self.staging / ordinary["run_id"] / "request.json")
+        self.assertNotIn("approved_check_rois", ordinary_request)
+        with patch.object(execution, "python_for", return_value=Path("worker-python")), \
+             patch.object(execution, "run_worker", side_effect=self.fake_worker):
+            approved = execution.preview(self.manga, self.payload, staging=self.staging,
+                                         approved_check_rois=True)
+        approved_request = read_json(self.staging / approved["run_id"] / "request.json")
+        self.assertIs(approved_request["approved_check_rois"], True)
+
 
 if __name__ == "__main__":
     unittest.main()

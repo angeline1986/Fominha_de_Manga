@@ -15,15 +15,23 @@ export function createSlider(viewport, onState, comparisonMode) {
   const holders = panels.map((panel) => panel.querySelector(".comparison-image-holder"));
   let images = [], zoom = 0.4, width = 0, height = 0, ready = false, revision = 0, disposed = false;
   let overlay = null, interactionMode = "normal";
+  let view = "dual", rulers = false;
 
   function layout() {
     if (!ready) return;
     const imageWidth = width * zoom, imageHeight = height * zoom;
     frame.style.setProperty("--comparison-image-width", `${imageWidth}px`);
     frame.style.setProperty("--comparison-panel-gap", `${TRIPTYCH_PANEL_GAP}px`);
-    frame.style.width = `${imageWidth * panels.length + TRIPTYCH_PANEL_GAP * (panels.length - 1)}px`;
+    const count = view === "dual" ? panels.length : 1;
+    frame.style.width = `${imageWidth * count + TRIPTYCH_PANEL_GAP * (count - 1)}px`;
     frame.style.height = `${imageHeight + 44}px`;
-    panels.forEach((panel) => { panel.style.width = `${imageWidth}px`; panel.style.height = `${imageHeight + 44}px`; });
+    frame.style.gridTemplateColumns = `repeat(${count}, var(--comparison-image-width))`;
+    frame.style.setProperty("--comparison-ruler-step", `${100 * zoom}px`);
+    panels.forEach((panel, index) => {
+      panel.hidden = view !== "dual" && index !== (view === "before" ? 0 : 1);
+      panel.style.width = `${imageWidth}px`; panel.style.height = `${imageHeight + 44}px`;
+    });
+    frame.classList.toggle("has-rulers", rulers);
   }
   function clearImages() {
     images.forEach((image) => { image.removeAttribute("src"); image.remove(); });
@@ -61,6 +69,11 @@ export function createSlider(viewport, onState, comparisonMode) {
       }
     },
     zoom(value) { zoom = Math.max(0.2, Math.min(2, value)); layout(); return zoom; },
+    setView(value) {
+      if (!["dual", "before", "after"].includes(value) || panels.length !== 2) return;
+      view = value; layout();
+    },
+    setRulers(value) { rulers = Boolean(value); layout(); },
     getZoom() { return zoom; },
     getImageMetrics() { return { naturalWidth: width, naturalHeight: height, zoom, mode: comparisonMode }; },
     mountAfterOverlay(element) { overlay?.remove(); overlay = element; element.classList.add("comparison-after-overlay"); mountOverlay(); },

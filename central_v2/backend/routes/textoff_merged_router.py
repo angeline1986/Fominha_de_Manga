@@ -9,6 +9,10 @@ from central_v2.backend.routes.textoff_residue_occurrences import (
     residue_occurrences_post_response,
 )
 from central_v2.backend.routes.response import RouteResponse
+from central_v2.backend.routes.special_treatments import (
+    EXECUTE_ROUTE as SPECIAL_TREATMENTS_EXECUTE_ROUTE,
+    execute_special_treatments_response,
+)
 from central_v2.backend.routes.textoff_merged import (
     execute_textoff_merged_level1_response, execute_textoff_merged_level2_response,
     execute_textoff_merged_level3_response, execute_textoff_merged_response,
@@ -40,6 +44,8 @@ def dispatch_textoff_merged_post(path: str, payload: object,
     route = urlparse(path).path
     if route == RESIDUE_OCCURRENCES_ROUTE:
         return residue_occurrences_post_response(payload, output_root)
+    if route == SPECIAL_TREATMENTS_EXECUTE_ROUTE:
+        return execute_special_treatments_response(payload, output_root)
     handlers = {
         "/api/textoff/merged/execute": execute_textoff_merged_response,
         "/api/textoff/merged/level1/execute": execute_textoff_merged_level1_response,

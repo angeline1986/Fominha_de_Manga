@@ -12,7 +12,8 @@ from .catalog import runtime_folder, treatment_for
 from .artifacts import write_json
 
 
-def run_treatment(key: str, source: Path, target: Path, selections: list) -> tuple:
+def run_treatment(key: str, source: Path, target: Path, selections: list,
+                  *, approved_check_rois: bool = False) -> tuple:
     expected_prefix = (runtime_folder(key) / ".venv").resolve()
     if Path(sys.prefix).resolve() != expected_prefix:
         raise RuntimeError("O domínio deve executar exclusivamente na venv do tratamento.")
@@ -47,7 +48,12 @@ def run_treatment(key: str, source: Path, target: Path, selections: list) -> tup
                                 target / "gradiente_suave_report.json")
             _write_smooth_authorization(target, metadata)
         else:
-            result, metadata = function(source, target, selections)
+            if approved_check_rois and key != "degrade":
+                raise ValueError("Aprovação do Check só se aplica ao Degradê.")
+            if approved_check_rois:
+                result, metadata = function(source, target, selections, approved_check_rois=True)
+            else:
+                result, metadata = function(source, target, selections)
             metadata.setdefault("artifacts", {})["authorized_mask"] = "roi_authorized_mask.png"
             if key == "degrade":
                 report = json.loads((target / "balloon_authorization.json").read_text(encoding="utf-8"))

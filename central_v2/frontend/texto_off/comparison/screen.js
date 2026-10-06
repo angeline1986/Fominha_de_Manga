@@ -2,9 +2,11 @@ import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { fetchComparison, comparisonImageUrl } from "/_app/api/comparison.js";
 import { createSlider } from "/texto_off/comparison/slider.js";
-import { comparisonModeConfig, INITIAL_ZOOM, clampZoom } from "/texto_off/comparison/model.js";
+import { comparisonModeConfig, INITIAL_ZOOM, clampZoom, level2StatusText } from "/texto_off/comparison/model.js";
 import { createPageList } from "/texto_off/comparison/page_list.js";
 import { createResidueCatalog } from "/texto_off/comparison/residue_catalog.js";
+import { createDegradeContext } from "/texto_off/comparison/degrade_context.js";
+import { bindDegradeViewTools } from "/texto_off/comparison/degrade_view_tools.js";
 
 export function createComparisonScreen(context, onBack) {
   const mode = comparisonModeConfig(context.comparisonMode);
@@ -57,10 +59,11 @@ export function createComparisonScreen(context, onBack) {
     canvas.setAttribute("aria-busy", String(nextState === "loading"));
     element.querySelectorAll("[data-zoom]").forEach((button) => { button.disabled = nextState !== "ready"; });
     if (nextState === "error") { activeImageIndex = null; pageState = "error"; state.textContent = error; }
-    else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; }
+    else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; catalog.render?.(); }
     drawState();
   }, context.comparisonMode);
-  const catalog = createResidueCatalog({ workspace: query(".comparison-workspace"), slider, context,
+  const createCatalog = context.comparisonMode === "degrade" ? createDegradeContext : createResidueCatalog;
+  const catalog = createCatalog({ workspace: query(".comparison-workspace"), slider, context,
     onPersistedCount: (pageName, count) => {
       const page = pages.find((item) => item.name === pageName);
       if (!page) return;
@@ -83,6 +86,7 @@ export function createComparisonScreen(context, onBack) {
     getDraftOccurrenceCount: (pageName) => catalog.draftOccurrenceCount(pageName),
   });
   const disposeFocus = bindFocusMode(element, { button: focusButton });
+  const disposeViewTools = context.comparisonMode === "degrade" ? bindDegradeViewTools(query(".comparison-canvas-controls"), slider) : () => {};
   document.body.append(preview);
 
   function drawState() {
@@ -172,6 +176,7 @@ export function createComparisonScreen(context, onBack) {
       const result = await fetchComparison({ ...context, layout: mode.layout }, controller.signal);
       if (disposed) return;
       pages = result.pages || [];
+      catalog.setPages?.(pages);
       if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
       showPage();
     } catch (error) {
@@ -185,16 +190,10 @@ export function createComparisonScreen(context, onBack) {
     element.removeEventListener("click", onMove); element.removeEventListener("click", onPanel);
     element.removeEventListener("keydown", onKeyDown);
     catalog.dispose(); slider.dispose(); disposeFocus();
+    disposeViewTools();
   }
   drawState();
   return { element, start: load, dispose };
 }
 
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
-
-function level2StatusText(status) {
-  return ({ changed: "Nível II: com alterações", no_change: "Nível II: analisado sem alterações",
-    not_candidate: "Nível II: página não candidata", pending: "Nível II: aguardando análise",
-    unavailable: "Nível II: pré-requisito indisponível" })[status]
-    || "Nível II: status indisponível";
-}

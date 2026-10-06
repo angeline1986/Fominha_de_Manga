@@ -11,6 +11,8 @@
   background: var(--color-surface); color: var(--color-primary-hover);
   font-size: var(--font-size-small); font-weight: var(--font-weight-bold); letter-spacing: .12em;
 }
+.comparison-back { display: inline-flex; min-height: 28px; align-items: center; gap: var(--space-xs); margin-right: var(--space-md); padding: 3px 7px; letter-spacing: normal; }
+.comparison-back .ui-icon { width: 14px; height: 14px; }
 .comparison-workspace {
   display: grid; grid-template-columns: 260px minmax(0, 1fr) 0fr;
   gap: var(--space-md); min-width: 0; min-height: 0;
@@ -106,6 +108,15 @@
 .comparison-frame[hidden] { display: none; }
 .comparison-triptych { display: grid; grid-template-columns: repeat(3, var(--comparison-image-width)); gap: var(--comparison-panel-gap); }
 .comparison-pair { display: grid; grid-template-columns: repeat(2, var(--comparison-image-width)); gap: var(--comparison-panel-gap); }
+.comparison-image-panel[hidden] { display: none; }
+.comparison-degrade-tools { display: flex; align-items: center; gap: var(--space-xs); }
+.comparison-view-button { display: inline-flex; align-items: center; gap: 4px; min-height: 30px; padding: 4px 7px; font-size: var(--font-size-small); }
+.comparison-view-button[aria-pressed="true"] { border-color: var(--color-primary); background: var(--color-primary-soft); }
+.comparison-view-button .ui-icon { width: 14px; height: 14px; }
+.comparison-frame.has-rulers .comparison-image-holder::before,
+.comparison-frame.has-rulers .comparison-image-holder::after { position: absolute; z-index: 5; pointer-events: none; content: ""; }
+.comparison-frame.has-rulers .comparison-image-holder::before { top: 0; right: 0; left: 0; height: 13px; border-bottom: 1px solid var(--color-primary); background: repeating-linear-gradient(to right, var(--color-primary) 0 1px, transparent 1px var(--comparison-ruler-step)); }
+.comparison-frame.has-rulers .comparison-image-holder::after { top: 0; bottom: 0; left: 0; width: 13px; border-right: 1px solid var(--color-primary); background: repeating-linear-gradient(to bottom, var(--color-primary) 0 1px, transparent 1px var(--comparison-ruler-step)); }
 .comparison-image-panel { display: grid; box-sizing: border-box; grid-template-rows: 44px minmax(0, 1fr); min-width: 0; margin: 0; border: 1px solid var(--color-border-primary); border-radius: 8px; overflow: hidden; background: var(--color-surface); }
 .comparison-image-panel figcaption { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 6px; padding: 0 9px; border-bottom: 1px solid var(--color-border); color: var(--color-primary-hover); font-size: var(--font-size-small); }
 .comparison-image-panel figcaption small { overflow: hidden; color: var(--color-text-muted); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }

@@ -4,6 +4,9 @@ import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { createDegradeExecution } from "/texto_off/especiais/degrade_execution.js";
+import { createJobProgress } from "/_shared/progress/progress.js";
+import { createComparisonLauncher } from "/texto_off/comparison/launcher.js";
 
 const PAGES = {
   degrade: { title: "Pincel & Retoques — Degradê", empty: "Nenhum tratamento em degradê pendente." },
@@ -12,7 +15,7 @@ const PAGES = {
 };
 const FILTERS = [["all", "TODOS"], ["pending", "PENDENTES"], ["completed", "CONCLUÍDOS"]];
 const SIZES = [15, 20, 30, 40, 50];
-const STATUS = { pending: "Pendente", processed: "Processado", no_change: "Sem alteração", failed: "Falha" };
+const STATUS = { pending: "Pendente", processed: "Processado", no_change: "Sem alteração", failed: "Falhou" };
 
 export function matchesSpecialRow(row, term, filter) {
   const search = term.trim().toLocaleLowerCase("pt-BR");
@@ -37,10 +40,15 @@ export function renderSpecialTable(container, treatment) {
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>`;
   container.replaceChildren(root);
+  const progress = treatment === "degrade" ? createJobProgress("Tratamento Degradê") : null;
+  const reviewLauncher = treatment === "degrade"
+    ? createComparisonLauncher(root, "degrade", "degrade", "degrade") : null;
+  if (progress) root.querySelector(".auto-merge-toolbar").after(progress.element);
   const query = root.querySelector("[data-query]");
   const filters = root.querySelector("[data-filters]");
   const results = root.querySelector("[data-results]");
   const status = root.querySelector("[data-status]");
+  const execute = root.querySelector("[data-execute]");
   const sizeLabel = document.createElement("label");
   sizeLabel.className = "sommelier-profile";
   sizeLabel.textContent = "Exibir:";
@@ -56,7 +64,13 @@ export function renderSpecialTable(container, treatment) {
   let pagination = createPagination();
   let rows = [];
   const selectedChapters = new Set();
-  let filter = "all", phase = "idle", error = "", controller, disposed = false;
+  let filter = "all", phase = "idle", error = "", controller, disposed = false, busy = false;
+
+  function updateExecute() {
+    execute.disabled = treatment !== "degrade" || busy || selectedChapters.size === 0;
+    execute.textContent = [...selectedChapters].some((chapter) =>
+      rows.find((row) => row.chapter === chapter)?.status === "failed") ? "Tentar novamente" : "Executar";
+  }
 
   function draw() {
     root.setAttribute("aria-busy", String(phase === "loading"));
@@ -78,11 +92,13 @@ export function renderSpecialTable(container, treatment) {
       { id: "select", label: "", render: (row) => {
         const input = document.createElement("input");
         input.type = "checkbox";
+        input.disabled = row.status !== "pending" && !(treatment === "degrade" && row.status === "failed");
         input.checked = selectedChapters.has(row.chapter);
         input.setAttribute("aria-label", `Selecionar capítulo ${row.chapter}`);
         input.addEventListener("change", () => {
           if (input.checked) selectedChapters.add(row.chapter);
           else selectedChapters.delete(row.chapter);
+          updateExecute();
         });
         return input;
       } },
@@ -91,13 +107,16 @@ export function renderSpecialTable(container, treatment) {
         title: (row) => row.pages.join(", ") },
       { id: "occurrences", label: "OCORRÊNCIAS", render: (row) => row.occurrence_count },
       { id: "status", label: "STATUS", render: (row) => STATUS[row.status] },
-      { id: "review", label: "REVISAR", render: () => {
+      { id: "review", label: "REVISAR", render: (row) => {
         const button = document.createElement("button");
         button.type = "button"; button.className = "btn sommelier-review";
         button.innerHTML = iconMarkup("eye");
-        button.setAttribute("aria-label", "Revisão disponível após integração do tratamento");
-        button.title = "Revisão disponível após integração do tratamento";
-        button.disabled = true;
+        button.disabled = !(reviewLauncher && row.review_available === true
+          && ["processed", "no_change"].includes(row.status));
+        button.title = button.disabled ? "Resultado Degradê indisponível para revisão"
+          : `Revisar Degradê do capítulo ${row.chapter}`;
+        button.setAttribute("aria-label", button.title);
+        if (!button.disabled) button.addEventListener("click", () => reviewLauncher.open(row, button));
         return button;
       } },
     ];
@@ -108,6 +127,7 @@ export function renderSpecialTable(container, treatment) {
     if (phase === "ready") results.append(createPaginationControls(selected, (delta) => {
       pagination.move(delta); draw();
     }, { leading: sizeLabel, hideEmptyActions: true }));
+    updateExecute();
   }
 
   async function load() {
@@ -119,7 +139,14 @@ export function renderSpecialTable(container, treatment) {
     try {
       const data = await fetchSpecialTreatments(provider, manga, treatment, request.signal);
       if (disposed || request !== controller || request.signal.aborted) return;
-      rows = data.chapters; phase = "ready"; draw();
+      rows = data.chapters;
+      selectedChapters.forEach((chapter) => {
+        if (!rows.some((row) => row.chapter === chapter &&
+            (row.status === "pending" || treatment === "degrade" && row.status === "failed"))) {
+          selectedChapters.delete(chapter);
+        }
+      });
+      phase = "ready"; draw();
     } catch (cause) {
       if (disposed || request !== controller || cause.name === "AbortError") return;
       rows = []; phase = "error"; error = cause.message; draw();
@@ -128,8 +155,18 @@ export function renderSpecialTable(container, treatment) {
 
   const onQuery = () => { pagination.reset(); draw(); };
   const onSize = () => { pagination = createPagination(Number(size.value)); draw(); };
+  const runDegrade = treatment === "degrade" ? createDegradeExecution({
+    setBusy(value) { busy = value; updateExecute(); },
+    reload() { selectedChapters.clear(); return load(); },
+    progress,
+  }) : null;
+  const onExecute = () => {
+    if (runDegrade && !execute.disabled) runDegrade([...selectedChapters],
+      [...selectedChapters].some((chapter) => rows.find((row) => row.chapter === chapter)?.status === "failed"));
+  };
   query.addEventListener("input", onQuery);
   size.addEventListener("change", onSize);
+  execute.addEventListener("click", onExecute);
   const unsubscribe = subscribeContext(() => {
     query.value = ""; filter = "all"; selectedChapters.clear(); pagination.reset(); load();
   });
@@ -137,6 +174,8 @@ export function renderSpecialTable(container, treatment) {
   return () => {
     disposed = true; controller?.abort(); unsubscribe();
     query.removeEventListener("input", onQuery); size.removeEventListener("change", onSize);
+    execute.removeEventListener("click", onExecute);
+    reviewLauncher?.dispose();
     root.remove();
   };
 }

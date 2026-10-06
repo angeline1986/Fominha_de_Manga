@@ -1,6 +1,6 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 
-export function renderResidueOccurrences(overlay, layers, occurrences, options) {
+export function renderResidueOccurrences(overlay, layers, occurrences, options, { readOnly = false } = {}) {
   overlay.querySelectorAll("[data-box-id], [data-live-box]").forEach((box) => box.remove());
   const rows = [];
   occurrences.forEach((item, index) => {
@@ -9,10 +9,20 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options) 
     box.className = "comparison-residue-box"; box.dataset.boxId = item.id;
     box.style.left = `${item.box.left * 100}%`; box.style.top = `${item.box.top * 100}%`;
     box.style.width = `${item.box.width * 100}%`; box.style.height = `${item.box.height * 100}%`;
-    box.innerHTML = `<span class="comparison-residue-number">${number}</span><button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${number}">${iconMarkup("close")}</button>`;
+    box.innerHTML = `<span class="comparison-residue-number">${number}</span>${readOnly ? "" : `<button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${number}">${iconMarkup("close")}</button>`}`;
     overlay.append(box);
     const row = document.createElement("div");
     row.className = "comparison-residue-row"; row.dataset.occurrenceId = item.id;
+    if (readOnly) {
+      const numberLabel = document.createElement("span");
+      numberLabel.className = "comparison-residue-number";
+      numberLabel.textContent = String(number);
+      const identity = document.createElement("span");
+      identity.textContent = item.id;
+      row.append(numberLabel, identity);
+      rows.push(row);
+      return;
+    }
     row.innerHTML = `<span class="comparison-residue-number">${number}</span><span class="comparison-residue-origin" data-origin></span><select aria-label="Tipo da área ${number}" data-type="${item.id}">${options}</select><small class="comparison-residue-source-classification" data-source-classification></small><button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${number}">${iconMarkup("close")}</button>`;
     const origins = [...new Set(item.origins || [item.origin || "MANUAL"])];
     row.querySelector("[data-origin]").textContent = origins.map(originLabel).join(" + ");

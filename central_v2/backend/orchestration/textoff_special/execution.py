@@ -11,7 +11,8 @@ from .inputs import assert_unchanged, resolve_input, validate_selections
 from .process import run_worker
 
 
-def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT) -> dict:
+def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
+            approved_check_rois: bool = False) -> dict:
     key = payload.get("treatment")
     treatment_for(key)
     python_for(key)
@@ -28,6 +29,10 @@ def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT) -> dict
     (folder / "logs").mkdir()
     request = {"schema_version": 1, "run_id": run_id, "treatment": key,
                "source": source, "selections": selections}
+    if approved_check_rois:
+        if key != "degrade":
+            raise ValueError("Aprovação do Check só se aplica ao Degradê.")
+        request["approved_check_rois"] = True
     if payload.get("merged_level") in {"IV", "V"}:
         request["merged_level"] = payload["merged_level"]
     mask_inputs = (("authorization_mask_path", "authorization_mask.png", "authorization_mask"),

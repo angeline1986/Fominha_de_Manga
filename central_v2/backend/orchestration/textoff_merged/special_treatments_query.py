@@ -8,6 +8,7 @@ from central_v2.backend.state.sorting import natural_sort_key
 
 from .special_treatments_manifest import MANIFEST_NAME, SCHEMA, STATUSES, TREATMENTS
 from .stages import stage_root
+from .special_degrade_review import review_pairs
 
 
 def query_special_treatments(manga: Path, provider: str, treatment: str) -> dict:
@@ -43,12 +44,20 @@ def query_special_treatments(manga: Path, provider: str, treatment: str) -> dict
                 raise ValueError("Ocorrência inválida no Manifesto Especial.")
             pages = sorted({item["page"] for item in occurrences}, key=natural_sort_key)
             states = {item["status"] for item in occurrences}
-            status = ("pending" if "pending" in states else
+            status = ("failed" if treatment == "degrade" and "failed" in states else
+                      "pending" if "pending" in states else
                       "failed" if "failed" in states else
                       "processed" if "processed" in states else "no_change")
+            review_available = False
+            if treatment == "degrade" and status in {"processed", "no_change"}:
+                try:
+                    review_available = bool(review_pairs(manga, provider, folder.name))
+                except (OSError, ValueError, TypeError, KeyError):
+                    pass
             chapters.append({"chapter": folder.name, "pages": pages,
                              "page_count": len(pages), "occurrence_count": len(occurrences),
-                             "status": status, "statuses": sorted(states)})
+                             "status": status, "statuses": sorted(states),
+                             "review_available": review_available})
     return {"treatment": treatment, "chapters": chapters,
             "summary": {"chapters": len(chapters),
                         "pages": sum(row["page_count"] for row in chapters),

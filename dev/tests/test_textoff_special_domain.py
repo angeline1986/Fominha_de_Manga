@@ -27,7 +27,9 @@ class DomainIsolationTests(unittest.TestCase):
             with patch.object(domain, "runtime_folder", return_value=Path(sys.prefix).parent), \
                  patch.object(domain.sys, "prefix", str(Path(sys.prefix).parent / ".venv")), \
                  patch.object(domain.importlib, "import_module", side_effect=[base, transparent, adapter]), \
-                 patch.object(domain, "write_json"):
+                 patch.object(domain, "write_json"), \
+                 patch.object(domain, "_write_smooth_authorization"), \
+                 patch.object(domain.Path, "read_text", return_value='{"model": {}}'):
                 domain.run_treatment(key, Path("input"), Path("target"), [])
             self.assertEqual(calls[-2:], [sys.executable, sys.executable])
             self.assertEqual(base.CLEANER_PY, Path("old-environment"))
