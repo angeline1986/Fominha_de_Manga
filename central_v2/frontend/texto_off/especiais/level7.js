@@ -1,5 +1,5 @@
-import { renderSpecial } from "/texto_off/especiais/view.js";
+import { renderSpecialTable } from "/texto_off/especiais/table.js";
 
 export function render(container) {
-  return renderSpecial(container, "VII");
+  return renderSpecialTable(container, "estilizado");
 }

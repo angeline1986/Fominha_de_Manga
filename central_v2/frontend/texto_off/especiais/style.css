@@ -91,6 +91,8 @@
   font-weight: var(--font-weight-bold);
 }
 
+.special-treatment-table .sommelier-profile select { width: 78px; }
+
 @media (max-width: 700px) {
   .textoff-special-manual .special-field { flex-basis: 100%; }
   .textoff-special-manual .special-clear { margin-left: 0; }

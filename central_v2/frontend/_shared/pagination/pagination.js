@@ -1,4 +1,4 @@
-export function createPaginationControls(selection, onMove) {
+export function createPaginationControls(selection, onMove, options = {}) {
   const element = document.createElement("nav");
   element.className = "pagination";
   element.setAttribute("aria-label", "Paginação da listagem");
@@ -22,6 +22,7 @@ export function createPaginationControls(selection, onMove) {
     indicator,
     button(">>", 1, selection.page === selection.pages),
   );
-  element.append(range, actions);
+  element.append(options.leading ?? range);
+  if (!options.hideEmptyActions || selection.total) element.append(actions);
   return element;
 }

@@ -33,6 +33,11 @@ export async function fetchManualSpecial(provider, manga, level, signal) {
   return requestJson(`/api/textoff/special/level${level}?${query}`, { signal, cache: "no-store" });
 }
 
+export async function fetchSpecialTreatments(provider, manga, treatment, signal) {
+  const query = new URLSearchParams({ provider, manga, treatment });
+  return requestJson(`/api/textoff/special/treatments?${query}`, { signal, cache: "no-store" });
+}
+
 export function manualSpecialImageUrl(provider, manga, chapter, filename) {
   const query = new URLSearchParams({ provider, manga, chapter, file: filename });
   return `/api/textoff/special/image?${query}`;

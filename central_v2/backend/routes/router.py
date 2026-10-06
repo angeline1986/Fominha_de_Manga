@@ -36,6 +36,9 @@ from central_v2.backend.routes.textoff_special import (
     execute_special_response, special_image_response, special_level_response,
     special_result_response,
 )
+from central_v2.backend.routes.special_treatments import (
+    ROUTE as SPECIAL_TREATMENTS_ROUTE, special_treatments_response,
+)
 
 def dispatch_get(
     path: str,
@@ -79,6 +82,9 @@ def dispatch_get(
     textoff_response = dispatch_textoff_merged_get(request, output_root)
     if textoff_response is not None:
         return textoff_response
+
+    if request.path == SPECIAL_TREATMENTS_ROUTE:
+        return special_treatments_response(parse_qs(request.query), output_root)
 
     for level in ("VI", "VII", "VIII"):
         if request.path == f"/api/textoff/special/level{level}":
