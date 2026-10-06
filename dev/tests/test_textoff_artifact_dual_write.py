@@ -62,7 +62,8 @@ class TextoffArtifactDualWriteTests(unittest.TestCase):
         registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
         self.assertEqual(registry["migration_mode"], "dual_write")
         self.assertIs(registry["legacy_read_enabled"], True)
-        self.assertIs(registry["new_read_enabled"], False)
+        self.assertIs(registry["new_read_enabled"], True)
+        self.assertEqual(registry["read_authority"], "legacy")
         self.assertIs(registry["dual_write_enabled"], True)
         for stage_id in ("auto_cleaner", "mapear", "mapear_input_consolidado",
                          "bubble_sommelier", "auto_cleaner_transparencia_basica"):

@@ -13,6 +13,9 @@ from central_v2.backend.orchestration.bubble_sommelier.artifacts import (
     crop_path, crop_sha256, load_review_report, validate_chapter_id,
     validate_crop_identity,
 )
+from central_v2.backend.orchestration.textoff_merged.artifact_shadow_read import (
+    observe_shadow_read,
+)
 
 
 def response(query_values: dict, output_root: Path) -> RouteResponse:
@@ -60,6 +63,7 @@ def review_response(query_values: dict, output_root: Path) -> RouteResponse:
         manga = resolve_manga(output_root, provider, name)
         chapter = validate_chapter_id(_required(query_values, "chapter"))
         report = load_review_report(manga, chapter)
+        observe_shadow_read(manga, "bubble_sommelier", chapter)
         result = report["checkpoints"]["result"]
         pages = []
         for page in report["pages"]:
@@ -94,6 +98,7 @@ def crop_response(query_values: dict, output_root: Path) -> RouteResponse:
         chapter = validate_chapter_id(_required(query_values, "chapter"))
         identity = validate_crop_identity(_required(query_values, "identity"))
         report = load_review_report(manga, chapter)
+        observe_shadow_read(manga, "bubble_sommelier", chapter)
         bubble = next(
             (bubble for page in report["pages"] for bubble in page["bubbles"]
              if bubble["identity"] == identity),

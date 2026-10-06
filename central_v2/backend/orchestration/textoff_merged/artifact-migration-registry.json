@@ -2,7 +2,8 @@
   "schema": "artifact_migration_registry_v1",
   "migration_mode": "dual_write",
   "legacy_read_enabled": true,
-  "new_read_enabled": false,
+  "new_read_enabled": true,
+  "read_authority": "legacy",
   "dual_write_enabled": true,
   "validation_contract": {
     "comparison_status_values": [

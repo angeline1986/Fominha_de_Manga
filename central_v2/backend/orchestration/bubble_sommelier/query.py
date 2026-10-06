@@ -2,6 +2,9 @@ import json
 from pathlib import Path
 
 from .artifacts import images, merge_dir, report_path, validate_report
+from central_v2.backend.orchestration.textoff_merged.artifact_shadow_read import (
+    observe_shadow_read,
+)
 
 
 def _sort(value: str):
@@ -37,10 +40,12 @@ def query(manga: Path) -> dict:
         )
         for chapter in chapter_names:
             imgs = images(merge_dir(manga, chapter))
+            state = _sommelier_state(report_path(manga, chapter))
+            observe_shadow_read(manga, "bubble_sommelier", chapter)
             chapters.append({
                 "chapter": chapter,
                 "merge_count": len(imgs),
                 "merge_valid": bool(imgs),
-                "sommelier": _sommelier_state(report_path(manga, chapter)),
+                "sommelier": state,
             })
     return {"chapters": chapters}

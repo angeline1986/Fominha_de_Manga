@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 
 from .artifact_paths import artifact_file, artifact_ref, json_file
+from .artifact_shadow_read import observe_shadow_read
 from .artifact_migration import mirror_stage_chapter
 from .execution import validate_selection
 from .manifests import _manifest_matches_merge, _stage_manifest, _stage_manifest_sha256
@@ -39,6 +40,7 @@ def query_level3(manga: Path) -> dict:
             manifest = json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError, TypeError):
             manifest = {}
+        observe_shadow_read(manga, "mapear", chapter)
         current = (ready and consolidated_ready and manifest.get("algorithm") == ALGORITHM
                    and manifest.get("source_consolidated_manifest_sha256") ==
                    _file_sha256(stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
@@ -90,6 +92,7 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
     merge_hash = _file_sha256(merge_manifest)
     if not consolidated_is_current(manga, chapter):
         rebuild_consolidated(manga, chapter)
+    observe_shadow_read(manga, "mapear_input_consolidado", chapter)
     consolidated_dir = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
     consolidated_manifest = json.loads((consolidated_dir / "json/clean-manifest.json").read_text(encoding="utf-8"))
     consolidated_hash = _file_sha256(consolidated_dir / "json/clean-manifest.json")

@@ -20,7 +20,8 @@ class TextoffArtifactMigrationRegistryTests(unittest.TestCase):
         self.assertEqual(self.registry["schema"], "artifact_migration_registry_v1")
         self.assertEqual(self.registry["migration_mode"], "dual_write")
         self.assertIs(self.registry["legacy_read_enabled"], True)
-        self.assertIs(self.registry["new_read_enabled"], False)
+        self.assertIs(self.registry["new_read_enabled"], True)
+        self.assertEqual(self.registry["read_authority"], "legacy")
         self.assertIs(self.registry["dual_write_enabled"], True)
         dual_write_stages = {
             "auto_cleaner", "mapear", "mapear_input_consolidado", "bubble_sommelier",

@@ -6,6 +6,9 @@ from central_v2.backend.orchestration.textoff_merged.artifact_paths import (
     artifact_file, json_file,
 )
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL3, stage_chapter
+from central_v2.backend.orchestration.textoff_merged.artifact_shadow_read import (
+    observe_shadow_read,
+)
 
 
 FEATURE_FIELDS = (
@@ -77,27 +80,30 @@ def _occurrences(report: object) -> list[dict]:
 def load_mapear_results(manga: Path, chapter: str) -> dict:
     """Load and filter the persisted Mapear report without running Mapear."""
     try:
-        path = _report_path(manga, chapter)
-    except (OSError, TypeError, ValueError):
-        return _unavailable("unavailable", "styled_balloon_report_not_found")
-    if path is None:
-        return _unavailable("unavailable", "styled_balloon_report_not_found")
-    try:
-        report = json.loads(path.read_text(encoding="utf-8"))
-        occurrences = _occurrences(report)
-    except FileNotFoundError:
-        return _unavailable("unavailable", "styled_balloon_report_not_found")
-    except json.JSONDecodeError:
-        return _unavailable("invalid", "styled_balloon_report_invalid_json")
-    except (OSError, TypeError, ValueError):
-        return _unavailable("invalid", "styled_balloon_report_invalid_contract")
+        try:
+            path = _report_path(manga, chapter)
+        except (OSError, TypeError, ValueError):
+            return _unavailable("unavailable", "styled_balloon_report_not_found")
+        if path is None:
+            return _unavailable("unavailable", "styled_balloon_report_not_found")
+        try:
+            report = json.loads(path.read_text(encoding="utf-8"))
+            occurrences = _occurrences(report)
+        except FileNotFoundError:
+            return _unavailable("unavailable", "styled_balloon_report_not_found")
+        except json.JSONDecodeError:
+            return _unavailable("invalid", "styled_balloon_report_invalid_json")
+        except (OSError, TypeError, ValueError):
+            return _unavailable("invalid", "styled_balloon_report_invalid_contract")
 
-    return {
-        "source": "styled-balloon-report",
-        "available": True,
-        "status": "available",
-        "soft_gradient": {"count": len(occurrences), "occurrences": occurrences},
-    }
+        return {
+            "source": "styled-balloon-report",
+            "available": True,
+            "status": "available",
+            "soft_gradient": {"count": len(occurrences), "occurrences": occurrences},
+        }
+    finally:
+        observe_shadow_read(manga, "mapear", chapter)
 
 
 def incorporate_mapear_results(report: dict, manga: Path, chapter: str) -> dict:

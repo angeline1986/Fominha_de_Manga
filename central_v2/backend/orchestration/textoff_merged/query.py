@@ -13,6 +13,7 @@ from .manifests import (
 from .consolidated import _valid_level2
 from .artifact_paths import artifact_file
 from .artifact_paths import artifact_file
+from .artifact_shadow_read import observe_shadow_read
 from .level2_vision import ALGORITHM
 from .stages import LEVEL1, LEVEL2, stage_chapter
 
@@ -52,6 +53,7 @@ def query_merged_level1(manga: Path) -> dict:
     for row in result["chapters"]:
         manifest = _stage_manifest(manga, LEVEL1, row["chapter"])
         valid = _manifest_matches_merge(manifest, manga, row["chapter"])
+        observe_shadow_read(manga, "auto_cleaner", row["chapter"])
         level1 = manifest.get("level1") if isinstance(manifest.get("level1"), dict) else {}
         report_name = level1.get("report")
         chapter_dir = stage_chapter(manga, LEVEL1, row["chapter"])
@@ -93,6 +95,9 @@ def query_merged_level2(manga: Path) -> dict:
         elif row["transparent_balloons"] or row["deferred_components"]:
             candidate_pages = row.get("transparent_pages", [])
             previous = _stage_manifest(manga, LEVEL2, row["chapter"])
+            observe_shadow_read(
+                manga, "auto_cleaner_transparencia_basica", row["chapter"]
+            )
             level1 = _stage_manifest(manga, LEVEL1, row["chapter"])
             outputs = previous.get("clean_artifacts")
             expected_pages = len(candidate_pages)

@@ -21,6 +21,9 @@ from central_v2.backend.orchestration.textoff_merged.special_levels import (
 from central_v2.backend.orchestration.textoff_merged.artifact_paths import artifact_file
 from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest
 from central_v2.backend.orchestration.textoff_merged.consolidated_artifacts import consolidated_image
+from central_v2.backend.orchestration.textoff_merged.artifact_shadow_read import (
+    observe_shadow_read,
+)
 
 
 def textoff_merged_response(query: dict, output_root: Path) -> RouteResponse:
@@ -63,6 +66,7 @@ def textoff_merged_level3_image_response(query: dict, output_root: Path) -> Rout
         if not row or not any(page["source"] == filename for page in row["candidate_pages"]):
             raise ValueError("Página não pertence ao relatório Nível III.")
         image = consolidated_image(manga, chapter, filename)
+        observe_shadow_read(manga, "mapear_input_consolidado", chapter)
         if image is None:
             raise ValueError("Imagem consolidada não encontrada.")
         return RouteResponse(200, image.read_bytes(), mimetypes.guess_type(image.name)[0] or "image/png")
