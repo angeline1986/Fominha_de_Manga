@@ -3,6 +3,7 @@ from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .cleaner import run_cleaner_v2
+from .artifact_migration import mirror_stage_chapter
 from .stages import LEVEL1, stage_chapter
 
 def validate_selection(manga: Path, chapters: object) -> list[str]:
@@ -68,6 +69,8 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
                 images, stage_chapter(manga, target_stage, name, read_legacy=False),
                 **runner_args,
             )
+            if target_stage == LEVEL1:
+                mirror_stage_chapter(manga, "auto_cleaner", name)
             results.append({"chapter": name, **result})
         except Exception as exc:
             results.append({"chapter": name, "status": "failed", "error": str(exc)})

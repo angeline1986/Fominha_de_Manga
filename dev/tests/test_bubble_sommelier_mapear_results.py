@@ -109,7 +109,10 @@ class BubbleSommelierMapearResultsTests(unittest.TestCase):
     def test_execution_adds_mapear_without_changing_sommelier_bubbles(self):
         mapear = self.valid_report([candidate("soft_gradient", True, [7, 8, 9, 10])])
         self.write_mapear(mapear)
-        report_path = self.root / "report.json"
+        output_dir = (self.root / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
+                      "BUBBLE_SOMMELIER/1")
+        output_dir.mkdir(parents=True)
+        report_path = output_dir / "report.json"
         original_bubble = {"identity": "page-013-016-bubble-01", "candidate": True,
                            "metrics": {"coverage": 0.8}}
         original = {"status": "completed", "profile_id": "poc_a_v1",
@@ -123,7 +126,7 @@ class BubbleSommelierMapearResultsTests(unittest.TestCase):
 
         with patch.object(execution, "validate_profile_id", return_value="poc_a_v1"), \
              patch.object(execution, "merge_dir", return_value=self.root), \
-             patch.object(execution, "execution_dir", return_value=self.root), \
+             patch.object(execution, "execution_dir", return_value=output_dir), \
              patch.object(execution, "report_path", return_value=report_path), \
              patch.object(execution, "replace_execution_artifacts", return_value=nullcontext()), \
              patch.object(execution, "run", side_effect=fake_run), \
@@ -131,12 +134,18 @@ class BubbleSommelierMapearResultsTests(unittest.TestCase):
             execution.execute(self.root, [self.chapter], lambda *_: None, "poc_a_v1")
 
         saved = json.loads(report_path.read_text(encoding="utf-8"))
+        mirrored_report = (self.root / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
+                           "03_BUBBLE_SOMMELIER/1/report.json")
+        self.assertEqual(json.loads(mirrored_report.read_text(encoding="utf-8")), saved)
         self.assertEqual(saved["mapear"]["soft_gradient"]["count"], 1)
         self.assertEqual(saved["pages"][0]["bubbles"], [original_bubble])
         self.assertEqual(saved["checkpoints"], original["checkpoints"])
 
     def test_execution_completes_when_mapear_report_is_missing(self):
-        report_path = self.root / "report.json"
+        output_dir = (self.root / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
+                      "BUBBLE_SOMMELIER/1")
+        output_dir.mkdir(parents=True)
+        report_path = output_dir / "report.json"
         original = {"status": "completed", "profile_id": "poc_a_v1",
                     "checkpoints": {"result": {"pages": 0, "crops": 0,
                                   "coverageGe075": 0, "candidates": 0}},
@@ -147,7 +156,7 @@ class BubbleSommelierMapearResultsTests(unittest.TestCase):
 
         with patch.object(execution, "validate_profile_id", return_value="poc_a_v1"), \
              patch.object(execution, "merge_dir", return_value=self.root), \
-             patch.object(execution, "execution_dir", return_value=self.root), \
+             patch.object(execution, "execution_dir", return_value=output_dir), \
              patch.object(execution, "report_path", return_value=report_path), \
              patch.object(execution, "replace_execution_artifacts", return_value=nullcontext()), \
              patch.object(execution, "run", side_effect=fake_run), \
@@ -155,6 +164,9 @@ class BubbleSommelierMapearResultsTests(unittest.TestCase):
             result = execution.execute(self.root, [self.chapter], lambda *_: None, "poc_a_v1")
 
         saved = json.loads(report_path.read_text(encoding="utf-8"))
+        mirrored_report = (self.root / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
+                           "03_BUBBLE_SOMMELIER/1/report.json")
+        self.assertEqual(json.loads(mirrored_report.read_text(encoding="utf-8")), saved)
         self.assertEqual(len(result), 1)
         self.assertFalse(saved["mapear"]["available"])
         self.assertEqual(saved["mapear"]["status"], "unavailable")

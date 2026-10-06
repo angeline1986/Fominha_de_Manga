@@ -9,6 +9,7 @@ import tempfile
 import time
 
 from processamento.unificacao_imagens import image_stitcher as v3
+from .artifact_migration import mirror_stage_chapter
 from .artifact_paths import artifact_ref
 from .manifests import _stage_manifest, _stage_manifest_sha256
 from .level2_manual_protection import load_level1_protection
@@ -121,6 +122,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                              transparent_pages, len(pages)))
         for name, target, staged, report, image_count, clean_names, transparent_pages, analyzed_count in prepared:
             _promote_stage(staged, target)
+            mirror_stage_chapter(manga, "auto_cleaner_transparencia_basica", name)
             from .consolidated import rebuild_consolidated
             consolidated = rebuild_consolidated(manga, name)
             outcome = report.get("outcome")

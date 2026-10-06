@@ -1,9 +1,9 @@
 {
   "schema": "artifact_migration_registry_v1",
-  "migration_mode": "registry_only",
+  "migration_mode": "dual_write",
   "legacy_read_enabled": true,
   "new_read_enabled": false,
-  "dual_write_enabled": false,
+  "dual_write_enabled": true,
   "validation_contract": {
     "comparison_status_values": [
       "MATCH",
@@ -44,7 +44,7 @@
         "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special"
       ],
       "read_authority": "legacy",
-      "dual_write": false,
+      "dual_write": true,
       "migration_status": "mapped",
       "validated": false,
       "validation": {
@@ -70,7 +70,7 @@
         "central_v2.backend.routes.textoff_merged.textoff_merged_level3_image_response"
       ],
       "read_authority": "legacy",
-      "dual_write": false,
+      "dual_write": true,
       "migration_status": "mapped",
       "validated": false,
       "validation": {
@@ -96,7 +96,7 @@
         "central_v2.backend.routes.textoff_merged.textoff_merged_level3_image_response"
       ],
       "read_authority": "legacy",
-      "dual_write": false,
+      "dual_write": true,
       "migration_status": "mapped",
       "validated": false,
       "validation": {
@@ -129,7 +129,7 @@
         "central_v2.backend.orchestration.bubble_sommelier.mapear_results.incorporate_mapear_results"
       ],
       "read_authority": "legacy",
-      "dual_write": false,
+      "dual_write": true,
       "migration_status": "mapped",
       "validated": false,
       "validation": {
@@ -175,7 +175,7 @@
         "central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated"
       ],
       "read_authority": "legacy",
-      "dual_write": false,
+      "dual_write": true,
       "migration_status": "mapped",
       "validated": false,
       "validation": {

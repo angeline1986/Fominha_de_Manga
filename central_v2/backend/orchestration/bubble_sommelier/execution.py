@@ -9,6 +9,9 @@ from .artifacts import (
 )
 from .runtime import run, validate_profile_id
 from .mapear_results import incorporate_mapear_results
+from central_v2.backend.orchestration.textoff_merged.artifact_migration import (
+    mirror_stage_chapter,
+)
 
 
 def execute(
@@ -90,6 +93,7 @@ def execute(
             report = validate_report(report, profile_id)
             report = incorporate_mapear_results(report, manga, chapter)
             _write_report_atomic(path, report)
+        mirror_stage_chapter(manga, "bubble_sommelier", chapter)
         counts = report["checkpoints"]["result"]
         results.append({
             "chapter": chapter,

@@ -8,6 +8,7 @@ import subprocess
 import tempfile
 
 from .artifact_paths import artifact_file, artifact_ref, json_file
+from .artifact_migration import mirror_stage_chapter
 from .execution import validate_selection
 from .manifests import _manifest_matches_merge, _stage_manifest, _stage_manifest_sha256
 from .runtime import REPOSITORY_ROOT, python_for
@@ -137,6 +138,7 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
         (staged / "json/clean-manifest.json").write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         promote_stage(staged, target)
+    mirror_stage_chapter(manga, "mapear", chapter)
     return {"pages": len(images), "candidate_count": int(report.get("candidate_count") or 0),
             "candidate_types": report.get("candidate_types", {}),
             "manifest": str(target / "json/clean-manifest.json")}

@@ -9,6 +9,7 @@ import tempfile
 import uuid
 
 from .artifact_paths import artifact_file, artifact_ref, prepare_artifact_dirs
+from .artifact_migration import mirror_stage_chapter
 from .manifests import _manifest_matches_merge, _stage_manifest, _stage_manifest_sha256
 from .level2_vision import ALGORITHM as LEVEL2_ALGORITHM
 from .stages import CONSOLIDATED, LEVEL1, LEVEL2, stage_chapter
@@ -54,6 +55,7 @@ def rebuild_consolidated(manga: Path, chapter: str) -> dict:
         (staged / "json/clean-manifest.json").write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         promote_stage(staged, target)
+    mirror_stage_chapter(manga, "mapear_input_consolidado", chapter)
     return {"chapter": chapter, "outputs": len(source_names),
             "level2_outputs_used": sum(item["selected_from"] == LEVEL2 for item in selections)}
 

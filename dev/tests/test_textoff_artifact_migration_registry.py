@@ -18,12 +18,19 @@ class TextoffArtifactMigrationRegistryTests(unittest.TestCase):
 
     def test_registry_schema_and_read_write_mode(self):
         self.assertEqual(self.registry["schema"], "artifact_migration_registry_v1")
-        self.assertEqual(self.registry["migration_mode"], "registry_only")
+        self.assertEqual(self.registry["migration_mode"], "dual_write")
         self.assertIs(self.registry["legacy_read_enabled"], True)
         self.assertIs(self.registry["new_read_enabled"], False)
-        self.assertIs(self.registry["dual_write_enabled"], False)
-        for stage in self.registry["stages"]:
-            self.assertIs(stage["dual_write"], False)
+        self.assertIs(self.registry["dual_write_enabled"], True)
+        dual_write_stages = {
+            "auto_cleaner", "mapear", "mapear_input_consolidado", "bubble_sommelier",
+            "auto_cleaner_transparencia_basica",
+        }
+        self.assertEqual({stage["stage_id"] for stage in self.registry["stages"]
+                          if stage["dual_write"]}, dual_write_stages)
+        self.assertTrue(all(stage["read_authority"] == "legacy"
+                            for stage in self.registry["stages"]
+                            if stage["stage_id"] in dual_write_stages))
 
     def test_persistent_stages_are_mapped_to_approved_targets(self):
         expected = {

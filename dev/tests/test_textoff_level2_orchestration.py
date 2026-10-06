@@ -80,6 +80,7 @@ class TextoffLevel2OrchestrationTests(unittest.TestCase):
                  patch.object(level2.v3, "merge_output_dir", return_value=source_dir), \
                  patch.object(level2.v3, "merge_artifact_files", return_value=images), \
                  patch.object(level2.subprocess, "Popen", side_effect=SuccessfulWorker), \
+                 patch.object(level2, "mirror_stage_chapter", return_value=False), \
                  patch("central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated",
                        return_value={"outputs": 18, "level2_outputs_used": 8}):
                 result = level2.execute_merged_level2(
