@@ -18,6 +18,11 @@ export const COMPARISON_MODES = Object.freeze({
     sides: ["before", "after"], panels: [["before", "AUTO-CLEANER I"], ["after", "AUTO-CLEANER II"]],
     catalogPanelIndex: 1,
   }),
+  check: Object.freeze({
+    layout: "pair", heading: "AUTO-CLEANER CHECK · REVISÃO", title: "Auto-Cleaner Check",
+    sides: ["before", "after"], panels: [["before", "ORIGINAL"], ["after", "ÁREA PARA REVISÃO"]],
+    catalogPanelIndex: 1,
+  }),
   before_after: Object.freeze({
     layout: "triptych", heading: "AUDITORIA DE QUALIDADE · ANTES & DEPOIS", title: "Antes & Depois",
     sides: ["original", "level1", "level2"],

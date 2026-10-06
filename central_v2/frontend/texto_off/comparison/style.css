@@ -54,6 +54,8 @@
 .comparison-residue-row input { box-sizing: border-box; flex: 0 0 calc(100% - 34px); min-width: 0; margin-left: 28px; padding: 7px; border: 1px solid var(--color-border-primary); border-radius: 6px; font: inherit; font-size: var(--font-size-small); }
 .comparison-residue-row select { flex: 1; min-width: 0; width: auto; min-height: 30px; border: 1px solid var(--color-border-primary); border-radius: 6px; background: var(--color-surface); color: var(--color-text); font: inherit; font-size: var(--font-size-small); }
 .comparison-residue-row .comparison-residue-number { flex: none; }
+.comparison-residue-origin { color: var(--color-text-secondary); font-size: var(--font-size-small); font-weight: var(--font-weight-bold); }
+.comparison-residue-source-classification { flex-basis: 100%; margin-left: 28px; color: var(--color-text-secondary); font-size: var(--font-size-small); }
 .comparison-residue-row.is-highlighted { border-color: var(--color-primary); background: var(--color-primary-soft); }
 .comparison-residue-number { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 4px; background: #337ab7; color: #fff; font-size: var(--font-size-small); font-weight: var(--font-weight-bold); }
 .comparison-residue-delete { display: grid; width: 28px; height: 28px; min-width: 28px; min-height: 28px; flex: none; aspect-ratio: 1; place-items: center; padding: 0; border-radius: 50%; background: #337ab7; color: #fff; line-height: 0; }

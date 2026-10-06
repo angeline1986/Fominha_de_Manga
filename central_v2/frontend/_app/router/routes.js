@@ -43,6 +43,10 @@ export const routes = {
     context: "texto-off",
     module: "/texto_off/sommelier/index.js",
   },
+  "auto-cleaner-check": {
+    context: "texto-off",
+    module: "/texto_off/check/index.js",
+  },
   "texto-off-merged-i": {
     context: "texto-off",
     module: "/texto_off/merged/level1.js",

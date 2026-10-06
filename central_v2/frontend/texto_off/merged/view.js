@@ -13,7 +13,8 @@ const FILTERS = [
 ];
 
 export function createMergedView(onExecute, { title = "Texto Off — Merged", executeLabel, mode,
-  description = "", onInspect, comparisonMode, showExecute = true, selectionEnabled = true } = {}) {
+  description = "", onInspect, comparisonMode, comparisonScope = "",
+  showExecute = true, selectionEnabled = true } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page textoff-merged-page";
   if (mode === "overview") element.classList.add("cleaner-overview");
@@ -34,7 +35,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   const results = element.querySelector(".auto-merge-results");
   const filters = element.querySelector(".auto-merge-filters");
   const comparison = mode === "overview" && comparisonMode
-    ? createComparisonLauncher(element, "1", comparisonMode) : null;
+    ? createComparisonLauncher(element, "1", comparisonMode, comparisonScope) : null;
   const pagination = createPagination();
   const selected = new Set();
   const progress = showExecute ? createJobProgress(title) : null;

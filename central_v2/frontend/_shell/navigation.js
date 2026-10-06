@@ -94,6 +94,8 @@ export const navigation = [
             tooltip: "Localizar balões especiais" },
           { number: "03", id: "bubble-sommelier", label: "Bubble Sommelier", icon: "circle-dot",
             tooltip: "Curadoria de balões" },
+          { number: "04", id: "auto-cleaner-check", label: "Auto-Cleaner Check", icon: "compare",
+            tooltip: "Revisar e aprovar áreas identificadas" },
         ],
         control: {
           type: "timeline-segmented",
@@ -104,7 +106,7 @@ export const navigation = [
           tooltip: "Tratamento de balões translúcidos",
           showBadge: false,
           hideCaption: true,
-          number: "04",
+          number: "05",
           options: [
             { value: "basic", action: "texto-off-merged-ii", label: "Básica",
               tooltip: "Passo 2 — Transparência Básica" },

@@ -10,6 +10,9 @@ from central_v2.backend.orchestration.textoff_merged.residue_occurrences import 
     MANIFEST_NAME, occurrences_for, read_manifest, update_page, update_pages,
     validate_occurrences,
 )
+from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check import (
+    StaleCheckSourcesError, load_check_page, save_check_decision,
+)
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.manga_state import resolve_manga
@@ -20,9 +23,21 @@ ROUTE = "/api/textoff/residue-occurrences"
 def residue_occurrences_get_response(query: dict, output_root: Path = OUTPUT_ROOT) -> RouteResponse:
     try:
         context, manga, pair, page, step = _resolve_context(query, output_root)
+        if (query.get("scope") or [None])[0] == "check":
+            result = load_check_page(
+                manga, _document(context), context["capitulo"], page,
+                comparison_pairs(manga, context["capitulo"], step),
+            )
+            return _json_response(200, result)
         path = _manifest_path(manga, context["capitulo"])
         manifest = read_manifest(path, _document(context))
-        rows = occurrences_for(manifest, page, step)
+        rows = []
+        for row in occurrences_for(manifest, page, step):
+            origin = row.get("origin")
+            if origin not in {"MAPEAR", "SOMMELIER", "MANUAL"}:
+                origin = "MANUAL"
+            rows.append({**row, "origin": origin,
+                         "origins": row.get("origins", [origin])})
         return _json_response(200, {"page": page, "step": step, "occurrences": rows,
                                     "cataloged": bool(rows)})
     except (ValueError, TypeError) as exc:
@@ -35,6 +50,8 @@ def residue_occurrences_post_response(payload: object, output_root: Path = OUTPU
     try:
         if not isinstance(payload, dict):
             raise ValueError("Payload de catalogação inválido.")
+        if payload.get("scope") == "check":
+            return _check_batch_post_response(payload, output_root)
         if "pages" in payload:
             return _batch_post_response(payload, output_root)
         context, manga, pair, page, step = _resolve_context(payload, output_root)
@@ -49,6 +66,44 @@ def residue_occurrences_post_response(payload: object, output_root: Path = OUTPU
         return _json_response(400, {"error": str(exc)})
     except OSError:
         return _json_response(500, {"error": "Não foi possível persistir as ocorrências."})
+
+
+def _check_batch_post_response(payload: dict, output_root: Path) -> RouteResponse:
+    context, manga, pairs, step = _resolve_catalog_context(payload, output_root)
+    if step != "1":
+        raise ValueError("O Auto-Cleaner Check exige a imagem-base do Passo 1.")
+    raw_pages = payload.get("pages")
+    if not isinstance(raw_pages, list) or not raw_pages:
+        raise ValueError("O lote do Check precisa conter ao menos uma página.")
+    pair_by_name = {pair["name"]: pair for pair in pairs}
+    validated, names = [], set()
+    for item in raw_pages:
+        if not isinstance(item, dict):
+            raise ValueError("Página do lote do Check inválida.")
+        page = _required(item, "page")
+        _validate_page_name(page)
+        if page in names or page not in pair_by_name:
+            raise ValueError("Página repetida ou fora da comparação selecionada.")
+        names.add(page)
+        with Image.open(pair_by_name[page]["after"]) as image:
+            occurrences = validate_occurrences(
+                item.get("occurrences"), image.width, image.height,
+                allow_unclassified=True,
+            )
+        validated.append((page, [dict(row, page=page) for row in occurrences]))
+    try:
+        manifest = save_check_decision(
+            manga, _document(context), context["capitulo"], validated, pairs,
+            payload.get("source_snapshot"),
+        )
+    except StaleCheckSourcesError as exc:
+        return _json_response(409, {"error": str(exc), "stale_sources": True})
+    results = [{"page": page, "occurrences": rows, "total_occurrences": len(rows)}
+               for page, rows in validated]
+    return _json_response(200, {
+        "ok": True, "scope": "check", "decision_persisted": True,
+        "pages": results, "updated_at": manifest["updated_at"],
+    })
 
 
 def _batch_post_response(payload: dict, output_root: Path) -> RouteResponse:

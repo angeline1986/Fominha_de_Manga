@@ -36,3 +36,22 @@ test('rendered box and layer numbers follow list order while occurrence IDs stay
   assert.deepEqual(layers.children.map((row) => row.innerHTML.match(/comparison-residue-number">(\d+)/)[1]), ['1', '2']);
   assert.deepEqual(layers.children.map((row) => row.dataset.occurrenceId), ['id-c', 'id-d']);
 });
+
+test('a merged Mapear and Sommelier occurrence renders one ROI with shared X identity', async () => {
+  const document = { createElement: () => new Element() };
+  const load = browserModules({ document }, {
+    '/_shared/icons/icons.js': 'export function iconMarkup() { return ""; }',
+  });
+  const { renderResidueOccurrences } = await load('/texto_off/comparison/residue_catalog_view.js');
+  const overlay = new Element(), layers = new Element();
+  const merged = { id: 'mapear-1', type: 'residuo_gradiente', note: null,
+    box: { left: .2, top: .3, width: .4, height: .2 },
+    origin: 'MAPEAR', origins: ['MAPEAR', 'SOMMELIER'],
+    source_references: [{ origin: 'MAPEAR' }, { origin: 'SOMMELIER' }] };
+
+  renderResidueOccurrences(overlay, layers, [merged], '');
+  assert.equal(overlay.children.length, 1);
+  assert.equal(layers.children.length, 1);
+  assert.equal((layers.children[0].innerHTML.match(/data-remove="mapear-1"/g) || []).length, 1);
+  assert.equal((overlay.children[0].innerHTML.match(/data-remove="mapear-1"/g) || []).length, 1);
+});

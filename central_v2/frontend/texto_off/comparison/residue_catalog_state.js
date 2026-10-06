@@ -6,12 +6,13 @@ const TYPES = new Set(RESIDUE_TYPES.map(([value]) => value));
 
 export function createResidueCatalogState(context, onChange = () => {},
   onPersistedCount = () => {}, onDraftState = () => {}) {
+  const isCheck = context.scope === "check";
   const drafts = createPageDraftStore(), getControllers = new Set();
   let currentPage = "", revision = 0, disposed = false, saveController = null;
   const current = () => drafts.get(currentPage);
   const notify = (page = currentPage) => {
     const draft = drafts.get(page);
-    const validCount = draft.occurrences.filter(isValidOccurrence).length;
+    const validCount = draft.occurrences.filter((item) => isValidOccurrence(item, isCheck)).length;
     onDraftState(page, draft.loaded ? validCount : null, draft.dirty);
     onChange();
   };
@@ -28,7 +29,11 @@ export function createResidueCatalogState(context, onChange = () => {},
       if (disposed || requestRevision !== revision) return;
       draft.confirmedOccurrences = (result.occurrences || []).map(fromManifest);
       draft.occurrences = cloneOccurrences(draft.confirmedOccurrences);
-      draft.persisted = draft.confirmedOccurrences.length > 0;
+      draft.persisted = result.decision_persisted ?? (draft.confirmedOccurrences.length > 0);
+      draft.decisionPersisted = Boolean(result.decision_persisted);
+      draft.sourceSnapshot = result.source_snapshot || null;
+      draft.sourceStatus = result.source_status || null;
+      draft.staleSources = result.stale_sources || [];
       draft.loaded = true; draft.dirty = false; draft.loadState = "ready"; draft.error = null;
       notify(currentPage);
     }).catch((error) => {
@@ -59,19 +64,25 @@ export function createResidueCatalogState(context, onChange = () => {},
   }
   function canSaveChapter() {
     const rows = dirtyPages();
-    return !saveController && rows.length > 0 && rows.every(({ draft }) =>
-      draft.loaded && draft.occurrences.every(isValidOccurrence));
+    const initialCheckSave = isCheck && current().loaded && !current().decisionPersisted;
+    const candidates = rows.length ? rows : initialCheckSave ? [{ page: currentPage, draft: current() }] : [];
+    return !saveController && candidates.length > 0 && candidates.every(({ draft }) =>
+      draft.loaded && draft.occurrences.every((item) => isValidOccurrence(item, isCheck)));
   }
   async function saveChapter() {
     if (!canSaveChapter()) return { ok: false, error: "Não há alterações válidas para catalogar." };
-    const submitted = dirtyPages().map(({ page, draft }) => ({
+    const dirty = dirtyPages();
+    const saveRows = dirty.length ? dirty : [{ page: currentPage, draft: current() }];
+    const submitted = saveRows.map(({ page, draft }) => ({
       page, occurrences: draft.occurrences.map(toPayload), snapshot: cloneOccurrences(draft.occurrences),
+      sourceSnapshot: draft.sourceSnapshot,
     }));
     saveController = new AbortController();
     submitted.forEach(({ page }) => { drafts.get(page).saveState = "saving"; });
     onChange();
     try {
       const result = await saveResidueOccurrences({ ...context,
+        source_snapshot: submitted[0].sourceSnapshot || current().sourceSnapshot,
         pages: submitted.map(({ page, occurrences }) => ({ page, occurrences })),
       }, saveController.signal);
       if (disposed) return { ok: false, cancelled: true };
@@ -108,7 +119,8 @@ export function createResidueCatalogState(context, onChange = () => {},
     rows.forEach(({ page, occurrences }) => {
       const draft = drafts.get(page);
       draft.confirmedOccurrences = cloneOccurrences(occurrences);
-      draft.persisted = occurrences.length > 0;
+      draft.persisted = isCheck ? true : occurrences.length > 0;
+      if (isCheck) draft.decisionPersisted = true;
       draft.dirty = !occurrencesEqual(draft.occurrences, draft.confirmedOccurrences);
       draft.saveState = draft.dirty ? "idle" : "saved"; draft.error = null;
       onPersistedCount(page, occurrences.length); notify(page);
@@ -121,7 +133,7 @@ export function createResidueCatalogState(context, onChange = () => {},
   }
   return { current, setPage, add, remove, setType, setNote, canSaveChapter,
     hasDirtyPages: () => dirtyPages().length > 0, dirtyPageCount: () => dirtyPages().length,
-    draftOccurrenceCount: (page) => countDraftOccurrences(drafts.peek(page)),
+    draftOccurrenceCount: (page) => countDraftOccurrences(drafts.peek(page), isCheck),
     isSaving: () => Boolean(saveController), saveChapter, dispose };
 }
 
@@ -138,27 +150,45 @@ function matchesBatch(result, submitted) {
 }
 function fromPayload(item) {
   return { id: item.id, type: item.type, note: item.note,
-    box: { ...item.box_normalized } };
+    box: { ...item.box_normalized }, origin: item.origin || "MANUAL",
+    origins: [...(item.origins || [item.origin || "MANUAL"])],
+    source_references: (item.source_references || []).map((source) => ({ ...source })),
+    source_classification: item.source_classification || null,
+    source_classifications: (item.source_classifications || []).map((source) => ({ ...source })),
+    candidate: item.candidate ?? null };
 }
 function fromManifest(item) {
-  return { id: item.id, type: item.tipo, note: item.observacao,
-    box: { ...item.box_normalized } };
+  return { id: item.id, type: item.type ?? item.tipo ?? "", note: item.note ?? item.observacao ?? null,
+    box: { ...(item.box || item.box_normalized) }, origin: item.origin || "MANUAL",
+    origins: [...(item.origins || [item.origin || "MANUAL"])],
+    source_references: (item.source_references || []).map((source) => ({ ...source })),
+    source_classification: item.source_classification || null,
+    source_classifications: (item.source_classifications || []).map((source) => ({ ...source })),
+    candidate: item.candidate ?? null };
 }
 function toPayload(item, index) {
   return { id: item.id, number: index + 1, type: item.type, note: item.note,
-    box_normalized: { ...item.box } };
+    box_normalized: { ...item.box }, origin: item.origin || "MANUAL",
+    origins: [...(item.origins || [item.origin || "MANUAL"])],
+    source_references: (item.source_references || []).map((source) => ({ ...source })),
+    source_classification: item.source_classification || null,
+    source_classifications: (item.source_classifications || []).map((source) => ({ ...source })),
+    candidate: item.candidate ?? null };
 }
 function changed(draft) {
   draft.dirty = !occurrencesEqual(draft.occurrences, draft.confirmedOccurrences);
   draft.error = null;
   if (draft.saveState !== "saving") draft.saveState = "idle";
 }
-function countDraftOccurrences(draft) {
-  return !draft?.loaded ? null : draft.occurrences.filter(isValidOccurrence).length;
+function countDraftOccurrences(draft, isCheck) {
+  return !draft?.loaded ? null : draft.occurrences.filter((item) => isValidOccurrence(item, isCheck)).length;
 }
-function isValidOccurrence(item) {
+function isValidOccurrence(item, isCheck = false) {
   const box = item.box || {}, values = [box.left, box.top, box.width, box.height];
-  return TYPES.has(item.type) && values.every(Number.isFinite)
+  const knownType = TYPES.has(item.type);
+  const sourceUnclassified = isCheck && item.type === "" && item.origin !== "MANUAL"
+    && (Boolean(item.source_classification) || typeof item.candidate === "boolean");
+  return (knownType || sourceUnclassified) && values.every(Number.isFinite)
     && box.left >= 0 && box.top >= 0 && box.width > 0 && box.height > 0
     && box.left + box.width <= 1 && box.top + box.height <= 1
     && (item.type !== "outro" || Boolean(item.note?.trim()));

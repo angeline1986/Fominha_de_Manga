@@ -12,6 +12,7 @@ from central_v2.backend.orchestration.textoff_merged.residue_occurrences import 
     MANIFEST_NAME, occurrence_counts_for_step, read_manifest,
 )
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
+from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check import check_occurrence_counts
 
 
 def comparison_response(query: dict, output_root: Path, *, image=False) -> RouteResponse:
@@ -22,10 +23,13 @@ def comparison_response(query: dict, output_root: Path, *, image=False) -> Route
         triptych = _value(query, "layout") == "triptych" and step in {"1", "2"}
         pairs = comparison_triplets(manga, chapter) if triptych else comparison_pairs(manga, chapter, step)
         if not image:
-            manifest_path = stage_chapter(manga, "RESIDUE_OCCURRENCES", chapter,
-                                          read_legacy=False) / MANIFEST_NAME
             document = {"provider": provider, "obra": name, "capitulo": chapter}
-            counts = occurrence_counts_for_step(read_manifest(manifest_path, document), step)
+            if _value(query, "scope") == "check":
+                counts = check_occurrence_counts(manga, document, chapter, pairs)
+            else:
+                manifest_path = stage_chapter(manga, "RESIDUE_OCCURRENCES", chapter,
+                                              read_legacy=False) / MANIFEST_NAME
+                counts = occurrence_counts_for_step(read_manifest(manifest_path, document), step)
             return RouteResponse(200, _json({
                 "pages": [_page_response(index, pair, counts, triptych)
                           for index, pair in enumerate(pairs)],

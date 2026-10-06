@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { browserModules } from './modules.mjs';
 
-test('Limpeza de Balões presents the four-step flow and separate brush group', async () => {
+test('Limpeza de Balões presents the stage flow and separate brush group', async () => {
   const load = browserModules();
   const { navigation } = await load('/_shell/navigation.js');
   const { groupMarkup } = await load('/_shell/drill_navigation_markup.js');
@@ -16,8 +16,9 @@ test('Limpeza de Balões presents the four-step flow and separate brush group', 
     ['01', 'Auto-Cleaner', 'texto-off-merged-i'],
     ['02', 'Mapear', 'texto-off-merged-iii'],
     ['03', 'Bubble Sommelier', 'bubble-sommelier'],
+    ['04', 'Auto-Cleaner Check', 'auto-cleaner-check'],
   ]);
-  assert.equal(timeline.control.number, '04');
+  assert.equal(timeline.control.number, '05');
   assert.equal(timeline.control.label, 'Auto-Cleaner: Transparência');
   assert.deepEqual(JSON.parse(JSON.stringify(timeline.control.options.map((option) => [option.label, option.action]))), [
     ['Básica', 'texto-off-merged-ii'],
@@ -31,7 +32,7 @@ test('Limpeza de Balões presents the four-step flow and separate brush group', 
   assert.match(timelineMarkup, /ui-icon--diamond/);
   assert.match(timelineMarkup, /ui-icon--circle-dot/);
   for (const text of [
-    '01', '02', '03', '04', 'Auto-Cleaner', 'Mapear', 'Bubble Sommelier',
+    '01', '02', '03', '04', '05', 'Auto-Cleaner', 'Mapear', 'Bubble Sommelier', 'Auto-Cleaner Check',
     'Auto-Cleaner: Transparência', 'Básica', 'Normal', 'Legada',
   ]) assert.match(timelineMarkup, new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   for (const tooltip of [

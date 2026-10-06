@@ -18,7 +18,8 @@ TYPE_LABELS = {
 }
 
 
-def validate_occurrences(raw, natural_width: int, natural_height: int) -> list[dict]:
+def validate_occurrences(raw, natural_width: int, natural_height: int,
+                         *, allow_unclassified: bool = False) -> list[dict]:
     if not isinstance(raw, list):
         raise ValueError("A lista de ocorrências é inválida.")
     if natural_width <= 0 or natural_height <= 0:
@@ -32,8 +33,37 @@ def validate_occurrences(raw, natural_width: int, natural_height: int) -> list[d
             raise ValueError("Identificador de ocorrência inválido ou repetido.")
         if type(number) is not int or number <= 0:
             raise ValueError("Número de ocorrência inválido.")
-        if not isinstance(kind, str) or kind not in TYPE_LABELS:
+        origin = item.get("origin", "MANUAL")
+        if origin not in {"MAPEAR", "SOMMELIER", "MANUAL"}:
+            raise ValueError("Origem de ocorrência inválida.")
+        source_classification = item.get("source_classification")
+        if (source_classification is not None
+                and (not isinstance(source_classification, str) or len(source_classification) > 256)):
+            raise ValueError("Classificação de origem inválida.")
+        candidate = item.get("candidate")
+        if candidate is not None and not isinstance(candidate, bool):
+            raise ValueError("Indicador de candidato inválido.")
+        if kind == "" and allow_unclassified:
+            kind = None
+        if kind is None and allow_unclassified:
+            if (origin == "MANUAL"
+                    or not (isinstance(source_classification, str) or isinstance(candidate, bool))):
+                raise ValueError("Classificação de origem ausente para área automática.")
+        elif not isinstance(kind, str) or kind not in TYPE_LABELS:
             raise ValueError("Tipo de ocorrência inválido.")
+        raw_origins = item.get("origins", [origin])
+        if (not isinstance(raw_origins, list) or not raw_origins
+                or any(value not in {"MAPEAR", "SOMMELIER", "MANUAL"} for value in raw_origins)):
+            raise ValueError("Origens de ocorrência inválidas.")
+        origins = list(dict.fromkeys([origin, *raw_origins]))
+        source_references = item.get("source_references", [])
+        if (not isinstance(source_references, list)
+                or any(not isinstance(value, dict) for value in source_references)):
+            raise ValueError("Referências de origem inválidas.")
+        source_classifications = item.get("source_classifications", [])
+        if (not isinstance(source_classifications, list)
+                or any(not isinstance(value, dict) for value in source_classifications)):
+            raise ValueError("Classificações de origem inválidas.")
         box = item.get("box_normalized")
         if not isinstance(box, dict):
             raise ValueError("Coordenadas da ocorrência inválidas.")
@@ -49,13 +79,23 @@ def validate_occurrences(raw, natural_width: int, natural_height: int) -> list[d
             note = note.strip()
         else:
             note = None
-        result.append({
+        normalized = {
             "id": occurrence_id, "numero": number, "tipo": kind,
-            "label": TYPE_LABELS[kind], "observacao": note,
+            "label": TYPE_LABELS[kind] if kind is not None else None, "observacao": note,
             "box_normalized": values,
             "box_pixels": {"x": round(left * natural_width), "y": round(top * natural_height),
                            "width": round(width * natural_width), "height": round(height * natural_height)},
-        })
+            "origin": origin, "origins": origins,
+        }
+        if source_references:
+            normalized["source_references"] = source_references
+        if source_classification is not None:
+            normalized["source_classification"] = source_classification
+        if source_classifications:
+            normalized["source_classifications"] = source_classifications
+        if candidate is not None:
+            normalized["candidate"] = candidate
+        result.append(normalized)
         ids.add(occurrence_id)
     return result
 

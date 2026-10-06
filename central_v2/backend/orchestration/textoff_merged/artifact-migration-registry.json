@@ -144,9 +144,14 @@
       "legacy_path": null,
       "target_path": "04_AUTO_CLEANER_CHECK",
       "classification": "NEW_STAGE",
-      "writers": [],
-      "readers": [],
-      "read_authority": "none",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.auto_cleaner_check.save_check_decision"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.auto_cleaner_check.load_check_page",
+        "central_v2.backend.orchestration.textoff_merged.auto_cleaner_check.check_occurrence_counts"
+      ],
+      "read_authority": "new_stage",
       "dual_write": false,
       "migration_status": "new_stage",
       "validated": false,
@@ -155,7 +160,7 @@
         "artifacts": []
       },
       "relationships": {
-        "may_consume_stage_ids": ["residue_occurrences"]
+        "may_consume_stage_ids": ["mapear", "bubble_sommelier", "residue_occurrences"]
       }
     },
     {

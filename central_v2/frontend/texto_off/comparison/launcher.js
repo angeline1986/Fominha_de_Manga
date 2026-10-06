@@ -4,11 +4,11 @@ import { comparisonModeForStep } from "/texto_off/comparison/model.js";
 import { createComparisonScreen } from "/texto_off/comparison/screen.js";
 
 export function canCompare(row, step, mode = comparisonModeForStep(step)) {
-  if (mode === "level1" || mode === "level2" || mode === "before_after") return row.cleaned === true;
+  if (mode === "level1" || mode === "level2" || mode === "before_after" || mode === "check") return row.cleaned === true;
   return row.comparison_available === true;
 }
 
-export function createComparisonLauncher(origin, step, mode = comparisonModeForStep(step)) {
+export function createComparisonLauncher(origin, step, mode = comparisonModeForStep(step), scope = "") {
   let screen = null, unsubscribe = null, focus = null, scroll = 0;
   function close(restore = true) {
     unsubscribe?.(); unsubscribe = null;
@@ -25,7 +25,7 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
     focus = button;
     scroll = origin.parentElement.scrollTop;
     screen = createComparisonScreen({ provider, manga, chapter: row.chapter, step,
-      comparisonMode: mode }, close);
+      comparisonMode: mode, ...(scope ? { scope } : {}) }, close);
     origin.classList.add("comparison-origin-hidden");
     origin.after(screen.element);
     screen.start();

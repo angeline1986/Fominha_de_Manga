@@ -13,12 +13,34 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options) 
     overlay.append(box);
     const row = document.createElement("div");
     row.className = "comparison-residue-row"; row.dataset.occurrenceId = item.id;
-    row.innerHTML = `<span class="comparison-residue-number">${number}</span><select aria-label="Tipo da área ${number}" data-type="${item.id}">${options}</select><button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${number}">${iconMarkup("close")}</button>`;
+    row.innerHTML = `<span class="comparison-residue-number">${number}</span><span class="comparison-residue-origin" data-origin></span><select aria-label="Tipo da área ${number}" data-type="${item.id}">${options}</select><small class="comparison-residue-source-classification" data-source-classification></small><button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${number}">${iconMarkup("close")}</button>`;
+    const origins = [...new Set(item.origins || [item.origin || "MANUAL"])];
+    row.querySelector("[data-origin]").textContent = origins.map(originLabel).join(" + ");
+    const sourceClasses = (item.source_classifications || [])
+      .filter((source) => typeof source.value === "string")
+      .map((source) => `${originLabel(source.origin)}: ${source.value}`);
+    if (typeof item.source_classification === "string") {
+      sourceClasses.push(`${originLabel(item.origin || "MANUAL")}: ${item.source_classification}`);
+    }
+    const sourceLabel = [...new Set(sourceClasses)].join(" · ");
+    const sourceElement = row.querySelector("[data-source-classification]");
+    sourceElement.textContent = sourceLabel || (item.candidate === true ? "Candidato identificado" : "");
+    sourceElement.hidden = !sourceElement.textContent;
+    if (!item.type) {
+      const pending = document.createElement("option");
+      pending.value = "";
+      pending.textContent = "Classificação não mapeada";
+      row.querySelector("select").append(pending);
+    }
     row.querySelector("select").value = item.type;
     if (item.type === "outro") appendNote(row, item, number);
     rows.push(row);
   });
   layers.replaceChildren(...rows);
+}
+
+function originLabel(origin) {
+  return ({ MAPEAR: "Mapear", SOMMELIER: "Sommelier", MANUAL: "Manual" })[origin] || "Manual";
 }
 
 function appendNote(row, item, number) {

@@ -1,26 +1,29 @@
 import { RESIDUE_TYPES, normalizedBox, normalizedPoint, renderedBoxSize } from "/texto_off/comparison/residue_model.js";
 import { createResidueCatalogState } from "/texto_off/comparison/residue_catalog_state.js";
 import { renderResidueOccurrences } from "/texto_off/comparison/residue_catalog_view.js";
+import { residueCatalogStatus } from "/texto_off/comparison/residue_catalog_status.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { showMessage } from "/_shared/messages/messages.js";
 
 export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {},
   onPersistedCount = () => {}, onDraftState = () => {} }) {
+  const isCheck = context.scope === "check";
   const panel = document.createElement("aside");
   panel.className = "comparison-residue-panel";
-  panel.setAttribute("aria-label", "Catalogação de resíduos");
+  panel.setAttribute("aria-label", isCheck ? "Revisão do Auto-Cleaner Check" : "Catalogação de resíduos");
   panel.setAttribute("aria-hidden", "true");
-  panel.innerHTML = `<header class="comparison-residue-heading"><h2>Catalogação de resíduos</h2>
+  panel.innerHTML = `<header class="comparison-residue-heading"><h2>${isCheck ? "Revisão do Auto-Cleaner Check" : "Catalogação de resíduos"}</h2>
       <button class="btn comparison-residue-close" type="button" data-close aria-label="Fechar painel">${iconMarkup("close")}</button></header>
-    <section class="comparison-residue-step"><h3>Passo 1: identificar resíduo</h3>
-      <button class="btn comparison-residue-action" type="button" data-signal aria-pressed="false">Sinalizar Resíduo</button>
+    <section class="comparison-residue-step"><h3>${isCheck ? "Revisar áreas aprovadas" : "Passo 1: identificar resíduo"}</h3>
+      <button class="btn comparison-residue-action" type="button" data-signal aria-pressed="false">${isCheck ? "Sinalizar área" : "Sinalizar Resíduo"}</button>
       <button class="btn comparison-residue-action" type="button" data-draw aria-pressed="false" disabled>Selecionar área manual</button>
       <p data-hint aria-live="polite">Ative a sinalização para selecionar áreas.</p></section>
     <section class="comparison-residue-layers"><header><h3>Camadas / áreas</h3><output data-count>0</output></header>
       <div data-layers></div></section>
-    <footer class="comparison-residue-step"><h3>Passo 2</h3>
-      <button class="btn comparison-residue-catalog" type="button" data-catalog disabled>Catalogar Resíduo</button>
+    <footer class="comparison-residue-step"><h3>${isCheck ? "Decisão do capítulo" : "Passo 2"}</h3>
+      <button class="btn comparison-residue-catalog" type="button" data-catalog disabled>${isCheck ? "Salvar decisão do Check" : "Catalogar Resíduo"}</button>
       <div class="comparison-residue-feedback"><p data-feedback role="status" aria-live="polite"></p>
+        <p data-source-status role="status" aria-live="polite" hidden></p>
         <button class="btn comparison-residue-retry" type="button" data-retry hidden>Recarregar ocorrências</button></div></footer>`;
   const overlay = document.createElement("div");
   overlay.className = "comparison-residue-overlay";
@@ -48,18 +51,13 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   }
   function syncStatus() {
     const item = draft();
-    const dirtyPages = catalogState.dirtyPageCount();
+    const status = residueCatalogStatus(item, catalogState);
     query("[data-catalog]").disabled = !catalogState.canSaveChapter();
     query("[data-retry]").hidden = item.loadState !== "error";
     query("[data-draw]").disabled = state === "idle" || item.loadState !== "ready";
-    const message = item.loadState === "loading" ? "Carregando ocorrências desta página…"
-      : item.loadState === "error" ? `Falha ao carregar: ${item.error || "tente novamente."}`
-        : catalogState.isSaving() ? "Salvando catálogo do capítulo…"
-          : item.saveState === "error" ? `Falha ao catalogar capítulo: ${item.error || "tente novamente."}`
-            : dirtyPages ? `Há alterações não catalogadas em ${dirtyPages} página(s) do capítulo.`
-              : item.persisted ? "Ocorrências catalogadas."
-                : "Nenhuma ocorrência catalogada nesta página.";
-    query("[data-feedback]").textContent = message;
+    query("[data-feedback]").textContent = status.feedback;
+    query("[data-source-status]").textContent = status.sourceStatus;
+    query("[data-source-status]").hidden = !status.sourceStatus;
   }
   function setOpen(open) {
     workspace.classList.toggle("has-residue-panel", open);
@@ -167,7 +165,9 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   async function catalogOccurrences() {
     const result = await catalogState.saveChapter();
     if (result.ok) await showMessage({ title: "Ocorrências catalogadas",
-      message: `As alterações de ${result.savedPages} página(s) foram salvas no manifesto do capítulo.` });
+      message: isCheck
+        ? "A decisão aprovada foi salva no estágio Auto-Cleaner Check."
+        : `As alterações de ${result.savedPages} página(s) foram salvas no manifesto do capítulo.` });
     else if (result.error) await showMessage({ title: "Falha ao catalogar capítulo", message: result.error });
   }
   function dispose() {

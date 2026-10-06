@@ -72,7 +72,7 @@ class TextoffArtifactMigrationRegistryTests(unittest.TestCase):
         self.assertIsNone(check["legacy_path"])
         self.assertEqual(check["target_path"], "04_AUTO_CLEANER_CHECK")
         self.assertEqual(check["classification"], "NEW_STAGE")
-        self.assertEqual(check["read_authority"], "none")
+        self.assertEqual(check["read_authority"], "new_stage")
         self.assertEqual(check["migration_status"], "new_stage")
 
     def test_residue_catalog_remains_an_independent_auxiliary(self):

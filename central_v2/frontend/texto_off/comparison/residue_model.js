@@ -27,6 +27,7 @@ export function renderedBoxSize(box, rect) {
 
 export function createPageDraft() {
   return { occurrences: [], confirmedOccurrences: [], loaded: false, persisted: false,
+    decisionPersisted: false, sourceSnapshot: null, sourceStatus: null, staleSources: [],
     dirty: false, loadState: "idle", saveState: "idle" };
 }
 
@@ -44,7 +45,8 @@ export function createPageDraftStore() {
 }
 
 export function addOccurrence(draft, box, id) {
-  const occurrence = { id, type: "residuo_transparencia", note: null, box };
+  const occurrence = { id, type: "residuo_transparencia", note: null, box,
+    origin: "MANUAL", origins: ["MANUAL"] };
   draft.occurrences.push(occurrence);
   draft.dirty = true;
   return occurrence;
@@ -68,7 +70,10 @@ export function updateOccurrenceNote(occurrence, note) {
 }
 
 export function cloneOccurrences(occurrences) {
-  return occurrences.map((item) => ({ ...item, box: { ...item.box } }));
+  return occurrences.map((item) => ({ ...item, box: { ...item.box },
+    origins: [...(item.origins || [item.origin || "MANUAL"])],
+    source_references: (item.source_references || []).map((source) => ({ ...source })),
+    source_classifications: (item.source_classifications || []).map((source) => ({ ...source })) }));
 }
 
 export function occurrencesEqual(left, right) {
@@ -78,6 +83,12 @@ export function occurrencesEqual(left, right) {
 function canonicalOccurrences(occurrences) {
   return occurrences.map((item) => ({
     id: String(item.id), type: item.type, note: item.note || null,
+    origin: item.origin || "MANUAL",
+    origins: [...(item.origins || [item.origin || "MANUAL"])].sort(),
+    source_references: item.source_references || [],
+    source_classification: item.source_classification || null,
+    source_classifications: item.source_classifications || [],
+    candidate: item.candidate ?? null,
     box: {
       left: Number(item.box.left), top: Number(item.box.top),
       width: Number(item.box.width), height: Number(item.box.height),
