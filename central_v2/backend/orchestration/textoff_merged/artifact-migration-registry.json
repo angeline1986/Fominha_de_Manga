@@ -1,0 +1,353 @@
+{
+  "schema": "artifact_migration_registry_v1",
+  "migration_mode": "registry_only",
+  "legacy_read_enabled": true,
+  "new_read_enabled": false,
+  "dual_write_enabled": false,
+  "validation_contract": {
+    "comparison_status_values": [
+      "MATCH",
+      "STRUCTURAL_MATCH",
+      "MISMATCH",
+      "MISSING_LEGACY",
+      "MISSING_TARGET",
+      "NOT_APPLICABLE"
+    ],
+    "artifact_record_fields": [
+      "artifact",
+      "size_legacy",
+      "size_target",
+      "sha256_legacy",
+      "sha256_target",
+      "comparison_status"
+    ]
+  },
+  "stages": [
+    {
+      "stage_id": "auto_cleaner",
+      "order": "01",
+      "display_name": "Auto-Cleaner",
+      "legacy_path": "TO_MERGED_NIVEL_I",
+      "target_path": "01_AUTO_CLEANER",
+      "classification": "PERSISTENT_STAGE",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.execution.execute_merged_level1",
+        "central_v2.backend.orchestration.textoff_merged.cleaner.run_cleaner_v2"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.query.query_merged_level1",
+        "central_v2.backend.orchestration.textoff_merged.comparison.comparison_pairs",
+        "central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated",
+        "central_v2.backend.orchestration.textoff_merged.level2.execute_merged_level2",
+        "central_v2.backend.orchestration.textoff_merged.level3_styled.execute_level3",
+        "central_v2.backend.orchestration.textoff_merged.special_levels.execute_special_level",
+        "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special"
+      ],
+      "read_authority": "legacy",
+      "dual_write": false,
+      "migration_status": "mapped",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    },
+    {
+      "stage_id": "mapear",
+      "order": "02",
+      "display_name": "Mapear",
+      "legacy_path": "TO_MERGED_NIVEL_III",
+      "target_path": "02_MAPEAR",
+      "classification": "PERSISTENT_STAGE",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.level3_styled.execute_level3",
+        "central_v2.backend.orchestration.textoff_merged.level3_styled._analyze_chapter",
+        "central_v2.backend.orchestration.textoff_merged.level3_styled_worker.run"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.level3_styled.query_level3",
+        "central_v2.backend.orchestration.bubble_sommelier.mapear_results.load_mapear_results",
+        "central_v2.backend.routes.textoff_merged.textoff_merged_level3_image_response"
+      ],
+      "read_authority": "legacy",
+      "dual_write": false,
+      "migration_status": "mapped",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      },
+      "relationships": {
+        "input_stage_ids": ["mapear_input_consolidado"]
+      }
+    },
+    {
+      "stage_id": "mapear_input_consolidado",
+      "order": "02_INPUT",
+      "display_name": "Input Consolidado do Mapear",
+      "legacy_path": "TO_MERGED_CONSOLIDADO",
+      "target_path": "02_MAPEAR/INPUT_CONSOLIDADO",
+      "classification": "CONSOLIDATED_OUTPUT_INTERMEDIATE",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.level3_styled._analyze_chapter",
+        "central_v2.backend.routes.textoff_merged.textoff_merged_level3_image_response"
+      ],
+      "read_authority": "legacy",
+      "dual_write": false,
+      "migration_status": "mapped",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      },
+      "relationships": {
+        "owned_by_stage_id": "mapear",
+        "relation": "intermediate_input",
+        "not_terminal_output": true,
+        "currentness_check": "central_v2.backend.orchestration.textoff_merged.consolidated.consolidated_is_current"
+      }
+    },
+    {
+      "stage_id": "bubble_sommelier",
+      "order": "03",
+      "display_name": "Bubble Sommelier",
+      "legacy_path": "BUBBLE_SOMMELIER",
+      "target_path": "03_BUBBLE_SOMMELIER",
+      "classification": "PERSISTENT_STAGE",
+      "writers": [
+        "central_v2.backend.orchestration.bubble_sommelier.execution.execute",
+        "central_v2.runtime.bubble_sommelier.report.persistCrop",
+        "central_v2.runtime.bubble_sommelier.report.writeReportAtomic"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.bubble_sommelier.query.query",
+        "central_v2.backend.orchestration.bubble_sommelier.artifacts.load_review_report",
+        "central_v2.backend.orchestration.bubble_sommelier.artifacts.crop_path",
+        "central_v2.backend.orchestration.bubble_sommelier.mapear_results.incorporate_mapear_results"
+      ],
+      "read_authority": "legacy",
+      "dual_write": false,
+      "migration_status": "mapped",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    },
+    {
+      "stage_id": "auto_cleaner_check",
+      "order": "04",
+      "display_name": "Auto-Cleaner Check",
+      "legacy_path": null,
+      "target_path": "04_AUTO_CLEANER_CHECK",
+      "classification": "NEW_STAGE",
+      "writers": [],
+      "readers": [],
+      "read_authority": "none",
+      "dual_write": false,
+      "migration_status": "new_stage",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      },
+      "relationships": {
+        "may_consume_stage_ids": ["residue_occurrences"]
+      }
+    },
+    {
+      "stage_id": "auto_cleaner_transparencia_basica",
+      "order": "05",
+      "display_name": "Auto-Cleaner: Transparência Básica",
+      "legacy_path": "TO_MERGED_NIVEL_II",
+      "target_path": "05_AUTO_CLEANER_TRANSPARENCIA/BASICA",
+      "classification": "PERSISTENT_STAGE",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.level2.execute_merged_level2",
+        "central_v2.backend.orchestration.textoff_merged.level2_process.process"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.query.query_merged_level2",
+        "central_v2.backend.orchestration.textoff_merged.comparison.comparison_pairs",
+        "central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated"
+      ],
+      "read_authority": "legacy",
+      "dual_write": false,
+      "migration_status": "mapped",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    },
+    {
+      "stage_id": "residue_occurrences",
+      "order": "AUXILIARY",
+      "display_name": "Ocorrências de resíduos",
+      "legacy_path": "RESIDUE_OCCURRENCES",
+      "target_path": "RESIDUE_OCCURRENCES",
+      "storage_path": "RESIDUE_OCCURRENCES",
+      "classification": "AUXILIARY_MANIFEST",
+      "writers": [
+        "central_v2.backend.routes.textoff_residue_occurrences.residue_occurrences_post_response",
+        "central_v2.backend.routes.textoff_residue_occurrences._batch_post_response",
+        "central_v2.backend.orchestration.textoff_merged.residue_occurrences.update_page",
+        "central_v2.backend.orchestration.textoff_merged.residue_occurrences.update_pages"
+      ],
+      "readers": [
+        "central_v2.backend.routes.textoff_residue_occurrences.residue_occurrences_get_response",
+        "central_v2.backend.orchestration.textoff_merged.level2_manual_protection.load_level1_protection"
+      ],
+      "read_authority": "legacy",
+      "dual_write": false,
+      "migration_status": "retained",
+      "validated": true,
+      "validation": {
+        "comparison_status": "NOT_APPLICABLE",
+        "artifacts": []
+      },
+      "relationships": {
+        "ownership": "independent_auxiliary",
+        "current_consumer_stage_ids": ["auto_cleaner_transparencia_basica"],
+        "future_consumer_stage_ids": ["auto_cleaner_check"],
+        "future_consumption_is_declarative_only": true
+      }
+    },
+    {
+      "stage_id": "transparencia_normal",
+      "order": "PREVIEW",
+      "display_name": "Transparência Normal",
+      "legacy_path": null,
+      "target_path": null,
+      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "classification": "TRANSIENT_PREVIEW",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.special_levels.execute_special_level",
+        "central_v2.backend.orchestration.textoff_special.execution.preview",
+        "central_v2.backend.orchestration.textoff_special.domain.run_pre_authorized_treatment"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.overview.current_preview_records",
+        "central_v2.backend.orchestration.textoff_merged.comparison.comparison_pairs"
+      ],
+      "read_authority": "staging",
+      "dual_write": false,
+      "migration_status": "retained_in_staging",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    },
+    {
+      "stage_id": "transparencia_legada",
+      "order": "PREVIEW",
+      "display_name": "Transparência Legada",
+      "legacy_path": null,
+      "target_path": null,
+      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "classification": "TRANSIENT_PREVIEW",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.special_levels.execute_special_level",
+        "central_v2.backend.orchestration.textoff_special.execution.preview",
+        "central_v2.backend.orchestration.textoff_special.domain.run_pre_authorized_treatment"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.overview.current_preview_records",
+        "central_v2.backend.orchestration.textoff_merged.comparison.comparison_pairs"
+      ],
+      "read_authority": "staging",
+      "dual_write": false,
+      "migration_status": "retained_in_staging",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    },
+    {
+      "stage_id": "pincel_degrade",
+      "order": "PREVIEW",
+      "display_name": "Pincel — Degradê",
+      "legacy_path": null,
+      "target_path": null,
+      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "classification": "TRANSIENT_PREVIEW",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special",
+        "central_v2.backend.orchestration.textoff_special.execution.preview",
+        "central_v2.backend.orchestration.textoff_special.domain.run_treatment"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.overview.current_preview_records",
+        "central_v2.backend.orchestration.textoff_merged.comparison.comparison_pairs",
+        "central_v2.backend.routes.textoff_special.special_result_response"
+      ],
+      "read_authority": "staging",
+      "dual_write": false,
+      "migration_status": "retained_in_staging",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    },
+    {
+      "stage_id": "pincel_artistico",
+      "order": "PREVIEW",
+      "display_name": "Pincel — Artístico",
+      "legacy_path": null,
+      "target_path": null,
+      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "classification": "TRANSIENT_PREVIEW",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special",
+        "central_v2.backend.orchestration.textoff_special.execution.preview",
+        "central_v2.backend.orchestration.textoff_special.domain.run_treatment"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.overview.current_preview_records",
+        "central_v2.backend.orchestration.textoff_merged.comparison.comparison_pairs",
+        "central_v2.backend.routes.textoff_special.special_result_response"
+      ],
+      "read_authority": "staging",
+      "dual_write": false,
+      "migration_status": "retained_in_staging",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    },
+    {
+      "stage_id": "pincel_suave",
+      "order": "PREVIEW",
+      "display_name": "Pincel — Suave",
+      "legacy_path": null,
+      "target_path": null,
+      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "classification": "TRANSIENT_PREVIEW",
+      "writers": [
+        "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special",
+        "central_v2.backend.orchestration.textoff_special.execution.preview",
+        "central_v2.backend.orchestration.textoff_special.domain.run_treatment"
+      ],
+      "readers": [
+        "central_v2.backend.orchestration.textoff_merged.overview.current_preview_records",
+        "central_v2.backend.orchestration.textoff_merged.comparison.comparison_pairs",
+        "central_v2.backend.routes.textoff_special.special_result_response"
+      ],
+      "read_authority": "staging",
+      "dual_write": false,
+      "migration_status": "retained_in_staging",
+      "validated": false,
+      "validation": {
+        "comparison_status": null,
+        "artifacts": []
+      }
+    }
+  ]
+}
