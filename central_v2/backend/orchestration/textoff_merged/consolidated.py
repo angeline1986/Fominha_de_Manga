@@ -61,7 +61,7 @@ def rebuild_consolidated(manga: Path, chapter: str) -> dict:
 
 
 def consolidated_is_current(manga: Path, chapter: str) -> bool:
-    folder = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
+    folder = stage_chapter(manga, CONSOLIDATED, chapter)
     try:
         manifest = json.loads((folder / "json/clean-manifest.json").read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):

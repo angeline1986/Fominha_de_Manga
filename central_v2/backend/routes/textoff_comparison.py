@@ -21,7 +21,9 @@ def comparison_response(query: dict, output_root: Path, *, image=False) -> Route
         manga = resolve_manga(output_root, provider, name)
         chapter, step = _value(query, "chapter"), _value(query, "step")
         triptych = _value(query, "layout") == "triptych" and step in {"1", "2"}
-        pairs = comparison_triplets(manga, chapter) if triptych else comparison_pairs(manga, chapter, step)
+        check_mode = step == "1" and _value(query, "comparisonMode") == "check"
+        pairs = (comparison_triplets(manga, chapter) if triptych else
+                 comparison_pairs(manga, chapter, step, check=check_mode))
         if not image:
             document = {"provider": provider, "obra": name, "capitulo": chapter}
             if _value(query, "scope") == "check":

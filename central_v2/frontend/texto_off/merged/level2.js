@@ -18,7 +18,8 @@ function checkbox(label, checked, onChange) {
   return input;
 }
 
-function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
+function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage,
+  onReprocess, executionBusy }) {
   const eligible = pageChapters.filter((chapter) => rows.find((row) => row.chapter === chapter)?.selectable);
   return [
     {
@@ -37,11 +38,21 @@ function makeColumns({ rows, selected, pageChapters, onSelect, onSelectPage }) {
       },
     },
     { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
+    { id: "reprocess", label: "Ação", render: (row) => {
+      if (!["processed", "no_change"].includes(row.level2_status)) return "";
+      const button = document.createElement("button");
+      button.className = "btn";
+      button.type = "button";
+      button.textContent = "Reprocessar";
+      button.disabled = executionBusy;
+      button.addEventListener("click", () => onReprocess(row.chapter));
+      return button;
+    } },
     ...createOutcomeColumns(),
   ];
 }
 
-export function createMergedLevel2View(onRun) {
+export function createMergedLevel2View(onRun, onReprocess) {
   const element = document.createElement("section");
   element.className = "auto-merge-page auto-merge-level2 textoff-merged-page textoff-merged-level2-page cleaner-outcomes";
   element.innerHTML = `
@@ -95,7 +106,7 @@ export function createMergedLevel2View(onRun) {
         eligibleRows().filter((row) => pageChapters.includes(row.chapter))
           .forEach((row) => checked ? selected.add(row.chapter) : selected.delete(row.chapter));
         draw();
-      },
+      }, onReprocess, executionBusy,
     });
     columns.push(comparison.column);
     results.replaceChildren(createTable(columns, page.rows, "Casos para Texto Off Merged Nível II", {
@@ -139,7 +150,8 @@ export function render(container) {
   let controller;
   let disposed = false;
   let execution;
-  const view = createMergedLevel2View((chapters) => execution.execute(chapters));
+  const view = createMergedLevel2View((chapters) => execution.execute(chapters),
+    (chapter) => execution.reprocess(chapter));
   container.replaceChildren(view.element);
   execution = createMergedExecution({
     level: "2",

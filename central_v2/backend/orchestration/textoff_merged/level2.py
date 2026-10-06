@@ -24,9 +24,10 @@ from .level2_validation import (
 )
 
 def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=None,
-                          *, provider: str, manga_name: str) -> list[dict]:
+                          *, provider: str, manga_name: str,
+                          reprocess: bool = False) -> list[dict]:
     """Detect/inpaint text only within transparent-balloon masks preserved by Level I."""
-    validate_level2_selection(manga, chapters)
+    validate_level2_selection(manga, chapters, reprocess=reprocess)
     runner = Path(__file__).resolve().parent / "level2_transparent.py"
     level2_python = python_for("merged_nivel_ii")
     if not runner.is_file():

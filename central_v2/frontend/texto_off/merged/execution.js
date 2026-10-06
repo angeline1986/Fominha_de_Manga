@@ -61,16 +61,17 @@ export function createMergedExecution({ onStatus, onComplete, onReview, level = 
   let active = false;
   let disposed = false;
 
-  async function execute(chapters) {
+  async function execute(chapters, reprocess = false) {
     if (active || disposed) return;
     if (!chapters.length) return showMessage({ title: "Nenhum capítulo selecionado", message: "Selecione ao menos um MERGE oficial válido." });
     const context = getContext();
     const confirmed = await confirmMessage({
-      title: `Executar Texto Off — ${flowLabel}`,
-      message: level === "3"
+      title: reprocess ? `Reprocessar capítulo ${chapters[0]}?` : `Executar Texto Off — ${flowLabel}`,
+      message: reprocess ? "A execução anterior do Auto-Cleaner II será substituída."
+        : level === "3"
         ? `O Nível III analisará ${chapters.length} capítulo(s) a partir dos MERGES originais em recortes sobrepostos, sem alterar as imagens.`
         : `O Cleaner V2 processará ${chapters.length} capítulo(s) usando os MERGEs oficiais.`,
-      confirmText: "Executar",
+      confirmText: reprocess ? "Reprocessar" : "Executar",
     });
     const current = getContext();
     if (!confirmed || disposed || active) return;
@@ -80,7 +81,7 @@ export function createMergedExecution({ onStatus, onComplete, onReview, level = 
     active = true;
     onStatus({ busy: true, title: `Texto Off — ${flowLabel}`, message: "Enviando execução…" });
     try {
-      const { job } = await startMergedTextoff(context.provider, context.manga, chapters, level);
+      const { job } = await startMergedTextoff(context.provider, context.manga, chapters, level, reprocess);
       const result = await waitForTextoffJob(job, report);
       if (disposed) return;
       await onComplete();
@@ -103,5 +104,6 @@ export function createMergedExecution({ onStatus, onComplete, onReview, level = 
       completed: progress.completed, total: progress.total });
   }
 
-  return { execute, dispose() { disposed = true; } };
+  return { execute, reprocess(chapter) { return execute([chapter], true); },
+    dispose() { disposed = true; } };
 }

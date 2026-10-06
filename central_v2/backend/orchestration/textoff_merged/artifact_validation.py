@@ -55,7 +55,7 @@ def validate_stage_chapter(
             "comparison_status": "NOT_APPLICABLE",
             "artifacts": [],
         }
-    if entry.get("read_authority") != "legacy":
+    if entry.get("read_authority") not in {"legacy", "target"} or registry.get("read_authority") != entry.get("read_authority"):
         raise ValueError(f"Autoridade de leitura inesperada para {stage_id}")
     _validate_chapter(chapter)
     legacy_stage = _safe_relative_stage_path(entry.get("legacy_path"), stage_id)

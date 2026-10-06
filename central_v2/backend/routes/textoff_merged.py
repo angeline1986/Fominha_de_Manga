@@ -87,7 +87,7 @@ def execute_textoff_merged_level1_response(payload: object, output_root: Path) -
 
 def execute_textoff_merged_level2_response(payload: object, output_root: Path) -> RouteResponse:
     return _execute_response(payload, output_root, execute_merged_level2, validate_level2_selection,
-                             include_catalog_context=True)
+                             include_catalog_context=True, reprocess_supported=True)
 
 
 def execute_textoff_merged_level3_response(payload: object, output_root: Path) -> RouteResponse:
@@ -132,13 +132,19 @@ def execute_textoff_merged_special_response(level: str, payload: object,
 def _execute_response(payload: object, output_root: Path, runner, validator=None,
                       component: str | None = None,
                       include_catalog_context: bool = False,
-                      include_level1_diagnostics: bool = False) -> RouteResponse:
+                      include_level1_diagnostics: bool = False,
+                      reprocess_supported: bool = False) -> RouteResponse:
     try:
         if not isinstance(payload, dict):
             raise ValueError("Corpo da solicitação inválido.")
         provider, name = _context(payload, output_root)
         manga = resolve_manga(output_root, provider, name)
-        chapters = (validator or validate_selection)(manga, payload.get("chapters"))
+        reprocess = payload.get("reprocess", False)
+        if reprocess_supported and type(reprocess) is not bool:
+            raise ValueError("Reprocessamento do Nível II inválido.")
+        chapters = (validator or validate_selection)(manga, payload.get("chapters"),
+                    reprocess=reprocess) if reprocess_supported else (
+                    validator or validate_selection)(manga, payload.get("chapters"))
         if legacy_server_active():
             raise ValueError("Feche a Central V1 antes de executar TextOff na V2.")
 
@@ -148,6 +154,8 @@ def _execute_response(payload: object, output_root: Path, runner, validator=None
             runner_args = {"preflight": lambda: _ensure_v2_session()}
             if include_catalog_context:
                 runner_args.update(provider=provider, manga_name=name)
+            if reprocess_supported:
+                runner_args["reprocess"] = reprocess
             if include_level1_diagnostics:
                 runner_args.update(
                     diagnostics=payload.get("diagnostics") is True,

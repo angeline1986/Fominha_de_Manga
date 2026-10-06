@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 from pathlib import Path
 import shutil
@@ -11,6 +12,11 @@ import uuid
 
 REGISTRY_PATH = Path(__file__).with_name("artifact-migration-registry.json")
 TEXT_OFF_ROOT = Path("FLUXO_SECUNDARIO") / "04_TEXTO_OFF"
+logger = logging.getLogger(__name__)
+
+
+class ArtifactAuthorityUnavailable(FileNotFoundError):
+    """The registry-selected artifact tree cannot serve this chapter."""
 
 
 class ArtifactMirrorError(RuntimeError):
@@ -42,7 +48,7 @@ def mirror_stage_chapter(manga: Path, stage_id: str, chapter: str) -> bool:
         if entry.get("dual_write") is not True:
             return False
         if (entry.get("classification") not in {"PERSISTENT_STAGE", "CONSOLIDATED_OUTPUT_INTERMEDIATE"}
-                or entry.get("read_authority") != "legacy"):
+                or entry.get("read_authority") not in {"legacy", "target"}):
             raise ValueError(f"Contrato inválido para dual-write: {stage_id}")
         if (not isinstance(chapter, str) or chapter in {"", ".", ".."}
                 or Path(chapter).name != chapter or "/" in chapter or "\\" in chapter):
@@ -66,6 +72,40 @@ def _read_registry(path: Path) -> dict:
     if not isinstance(payload, dict) or not isinstance(payload.get("stages"), list):
         raise ValueError("Registry de migração inválido.")
     return payload
+
+
+def resolve_authoritative_stage_chapter(
+    manga: Path, stage_id: str, chapter: str, *, registry_path: Path | None = None,
+) -> Path:
+    """Resolve only the registry-selected side; never substitute the other side."""
+    registry_path = Path(registry_path) if registry_path is not None else REGISTRY_PATH
+    if (not isinstance(chapter, str) or chapter in {"", ".", ".."}
+            or Path(chapter).name != chapter or "/" in chapter or "\\" in chapter):
+        raise ValueError("Identificador de capítulo inválido.")
+    registry = _read_registry(registry_path)
+    entry = next((item for item in registry["stages"]
+                  if item.get("stage_id") == stage_id), None)
+    if entry is None or entry.get("dual_write") is not True:
+        raise ValueError(f"Stage sem mapping persistente: {stage_id}")
+    authority = registry.get("read_authority")
+    if (authority not in {"legacy", "target"}
+            or entry.get("read_authority") != authority
+            or registry.get("legacy_read_enabled") is not True
+            or registry.get("new_read_enabled") is not True
+            or registry.get("dual_write_enabled") is not True):
+        raise ValueError(f"Contrato de autoridade inválido para {stage_id}")
+    relative = entry.get(f"{authority}_path")
+    if not isinstance(relative, str):
+        raise ValueError(f"Caminho {authority} inválido para {stage_id}")
+    _chapter_path(manga, relative, chapter)  # validate containment before preserving caller path form
+    path = Path(manga) / TEXT_OFF_ROOT / relative / chapter
+    if authority == "target" and (path.is_symlink() or not path.is_dir()):
+        status = "MISSING_TARGET" if not path.exists() else "INVALID_TARGET"
+        message = (f"AUTHORITY_UNAVAILABLE authority=target stage={stage_id} "
+                   f"chapter={chapter} status={status} target={path}")
+        logger.error(message)
+        raise ArtifactAuthorityUnavailable(message)
+    return path
 
 
 def _chapter_path(manga: Path, relative_stage: str, chapter: str) -> Path:

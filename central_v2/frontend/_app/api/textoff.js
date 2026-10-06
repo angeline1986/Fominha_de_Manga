@@ -11,12 +11,12 @@ export async function fetchMergedTextoff(provider, manga, signal, level = "") {
   return requestJson(`/api/textoff/merged${suffix}?${query}`, { signal, cache: "no-store" });
 }
 
-export async function startMergedTextoff(provider, manga, chapters, level = "") {
+export async function startMergedTextoff(provider, manga, chapters, level = "", reprocess = false) {
   const suffix = level ? `/level${level}` : "";
   return requestJson(`/api/textoff/merged${suffix}/execute`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ provider, manga, chapters }),
+    body: JSON.stringify({ provider, manga, chapters, ...(reprocess ? { reprocess: true } : {}) }),
   });
 }
 

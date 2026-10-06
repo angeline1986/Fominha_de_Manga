@@ -112,6 +112,66 @@ A Curadoria usa a barra compartilhada na posição padrão, sem variante inline;
 - **Pré-condição:** ao retomar, conferir primeiro as rotas e nomenclaturas oficiais existentes. Os exemplos são conceituais, não uma decisão fechada de hierarquia.
 - **Não fazer nesta pendência:** não implementar breadcrumb nem alterar navegação nesta etapa documental.
 
+## Backlog de UX — refinamentos da Central V2
+
+**Status geral:** REGISTRADO / NÃO IMPLEMENTADO. Os itens abaixo são pendências para priorização futura; este registro não altera a interface, o domínio nem contratos de API.
+
+### BL-01 — Mapear Balões: filtro inicial
+
+- **Estado atual:** `Pincel & Retoques — Mapear Balões` abre com o filtro `Mapear` selecionado.
+- **Desejado:** abrir e recarregar com `ALL` selecionado, sem selecionar `Mapear` automaticamente.
+- **Critério futuro:** conferir o estado inicial e o estado após recarga da página.
+
+### BL-02 — Mapear Balões: acesso ao comparador
+
+- **Desejado:** oferecer, a partir de uma página do Mapear, acesso a `Comparar página` para inspecionar as marcações existentes sobre a imagem.
+- **Escopo:** somente visualização; não criar edição nem iniciar processamento por esse acesso.
+- **Critério futuro:** abrir o comparador da página escolhida e ver suas marcações correspondentes.
+
+### BL-03 — Filtros da Curadoria e nomenclatura visual
+
+- **Desejado na Curadoria de Balões:** `Todos | ⏳ Do | ✓ Done | ◉ Aptos`, com contadores `Todos (N) | ⏳ Do (N) | ✓ Done (N) | ◉ Aptos (N)`.
+- **Regra visual global:** quando `Candidatos` representar esse mesmo conceito/status na Central V2, apresentar `Aptos` em filtros, contadores, cabeçalhos, labels e textos de status relacionados.
+- **Limite:** preservar nomes técnicos internos, schemas, chaves JSON e contratos de API; a mudança futura é somente da apresentação ao usuário.
+
+### BL-04 — Curadoria: seletor de perfil
+
+- **Estado atual:** o label externo `Perfil` repete o placeholder `Selecione o perfil`.
+- **Desejado:** remover o label redundante e mostrar `Perfil` no próprio select enquanto não houver opção selecionada, conforme o protótipo/print de referência.
+
+### BL-05 — Curadoria: espaçamento antes da tabela
+
+- **Desejado:** aumentar o espaço vertical entre busca/filtros/ações e a tabela, reutilizando exatamente o espaçamento adotado nas páginas equivalentes da Central V2; não criar valor arbitrário.
+- **Relação com registro existente:** detalha a pendência `P3 — Inconsistência visual da Curadoria / Espaçamento entre toolbar e tabela` acima; não é uma segunda implementação.
+
+### BL-06 — Paginação padronizada
+
+- **Desejado:** nas páginas envolvidas, adicionar seletor `Exibir:` com opções `15`, `20`, `30`, `40`, `50` e default `15`.
+- **Preservar:** página atual, total de páginas e controles anterior/próximo.
+- **Implementação futura:** reutilizar o componente/padrão existente; evitar paginadores independentes para Mapear e Curadoria.
+
+### BL-07 — Auto-Cleaner Check: quantidade de marcações por página
+
+- **Estado atual:** a lista `Páginas` usa uma bolinha para indicar ocorrências, sem quantidade.
+- **Desejado:** exibir indicador e contagem juntos, preferencialmente como badge compacto; por exemplo, `page-013-016.png    ● 3`. Página sem marcações não mostra indicador.
+- **Fonte da contagem:** marcações efetivamente disponíveis para revisão naquela página. Não alterar a lógica das ROIs para compor o badge.
+
+### BL-08 — Auto-Cleaner Check: feedback ao salvar decisão
+
+- **Estado atual:** `Salvar decisão do Check` não apresenta confirmação visual suficientemente clara após o salvamento.
+- **Desejado:** depois que o backend confirmar a persistência, mostrar uma mensagem de sucesso clara e temporária, como `Decisão do Check salva com sucesso.`
+- **Padrão visual:** reutilizar o componente de feedback de sucesso já adotado nas demais páginas da Central V2, sem criar variante exclusiva para o Check.
+- **Falhas:** continuar apresentando erros como erros; nunca mostrar sucesso sem confirmação real do backend.
+- **Escopo:** somente feedback visual. Preservar a lógica de persistência, as decisões, as ROIs e o manifesto do Auto-Cleaner Check.
+
+### Diretrizes para a implementação futura de BL-01 a BL-08
+
+- Preservar o visual minimalista, reutilizar componentes existentes e evitar CSS/JS duplicado.
+- Separar ajustes visuais de mudanças de domínio; não alterar contratos funcionais sem necessidade.
+- Usar `Aptos` na apresentação quando corresponder ao conceito hoje exibido como `Candidatos`, preservando identificadores técnicos.
+- Respeitar o limite de 200 linhas para arquivos novos de código/teste e não ampliar violações preexistentes.
+- Validar visualmente cada item antes de marcá-lo como concluído.
+
 ## P4 — Sanitização arquitetural
 
 **Status:** ADIADA DELIBERADAMENTE. O detalhe e a evidência permanecem em [`sanitizacao_pendente_central_v2.md`](sanitizacao_pendente_central_v2.md); este índice não os duplica.

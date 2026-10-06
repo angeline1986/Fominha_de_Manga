@@ -54,12 +54,12 @@ def validate_crop_identity(identity: object) -> str:
     return identity
 
 
-def load_review_report(manga: Path, chapter: str) -> dict:
+def load_review_report(manga: Path, chapter: str, *, stage_dir: Path | None = None) -> dict:
     chapter = validate_chapter_id(chapter)
     if not merge_dir(manga, chapter).is_dir():
         raise FileNotFoundError(f"Capítulo não encontrado: {chapter}")
 
-    path = report_path(manga, chapter)
+    path = Path(stage_dir) / "report.json" if stage_dir is not None else report_path(manga, chapter)
     if not path.is_file():
         raise FileNotFoundError(f"Report não encontrado para o capítulo {chapter}")
     try:
@@ -99,19 +99,19 @@ def load_review_report(manga: Path, chapter: str) -> dict:
     return report
 
 
-def crop_path(manga: Path, chapter: str, identity: str) -> Path:
+def crop_path(manga: Path, chapter: str, identity: str, *, stage_dir: Path | None = None) -> Path:
     chapter = validate_chapter_id(chapter)
     identity = validate_crop_identity(identity)
 
     manga_root = manga.resolve(strict=True)
-    stage_root = (manga / STAGE).resolve(strict=True)
-    if not stage_root.is_relative_to(manga_root):
+    stage_root = (manga / STAGE).resolve(strict=True) if stage_dir is None else None
+    if stage_root is not None and not stage_root.is_relative_to(manga_root):
         raise ValueError("Diretório de crops fora da obra.")
-    chapter_root = execution_dir(manga, chapter).resolve(strict=True)
-    if not chapter_root.is_relative_to(stage_root):
+    chapter_root = (Path(stage_dir) if stage_dir is not None else execution_dir(manga, chapter)).resolve(strict=True)
+    if not chapter_root.is_relative_to(stage_root if stage_root is not None else manga_root):
         raise ValueError("Diretório do capítulo fora da curadoria.")
 
-    crops_entry = execution_dir(manga, chapter) / "crops"
+    crops_entry = (Path(stage_dir) if stage_dir is not None else execution_dir(manga, chapter)) / "crops"
     if crops_entry.is_symlink():
         raise ValueError("Diretório de crops inválido.")
     crops_root = crops_entry.resolve(strict=True)

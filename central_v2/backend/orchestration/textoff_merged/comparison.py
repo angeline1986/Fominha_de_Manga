@@ -8,20 +8,23 @@ from .manifests import (
     _stage_manifest_sha256,
 )
 from .stages import LEVEL1, LEVEL2, stage_chapter
-from .consolidated import _changed_source_set, _valid_level2
+from .consolidated import _changed_source_set, _valid_level2, consolidated_is_current
+from .consolidated_artifacts import consolidated_image
 from .overview import current_preview_records
 from .query import query_merged_level2
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
 
 
-def comparison_pairs(manga: Path, chapter: str, step: str) -> list[dict]:
+def comparison_pairs(manga: Path, chapter: str, step: str, *, check: bool = False) -> list[dict]:
     if step not in {"1", "2", "3", "4"}:
         raise ValueError("Passo inválido.")
     if not chapter or chapter in {".", ".."} or Path(chapter).name != chapter:
         raise ValueError("Capítulo inválido.")
     level1 = _stage_manifest(manga, LEVEL1, chapter)
     if not _manifest_matches_merge(level1, manga, chapter):
+        return []
+    if check and (step != "1" or not consolidated_is_current(manga, chapter)):
         return []
     folder = stage_chapter(manga, LEVEL1, chapter)
     originals = _listing_merge_artifacts(manga / "IMG" / chapter)
@@ -39,6 +42,10 @@ def comparison_pairs(manga: Path, chapter: str, step: str) -> list[dict]:
         if clean is None:
             continue
         before, after = original, clean
+        if check:
+            after = consolidated_image(manga, chapter, name)
+            if after is None:
+                raise OSError(f"Imagem consolidada indisponível: {original.name}.")
         if step == "2":
             if original.name not in level2.get("candidate_source_artifacts", []):
                 continue

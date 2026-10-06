@@ -16,6 +16,7 @@ from central_v2.backend.orchestration.bubble_sommelier.artifacts import (
 from central_v2.backend.orchestration.textoff_merged.artifact_shadow_read import (
     observe_shadow_read,
 )
+from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 
 
 def response(query_values: dict, output_root: Path) -> RouteResponse:
@@ -62,7 +63,8 @@ def review_response(query_values: dict, output_root: Path) -> RouteResponse:
         provider, name = _context(query_values, output_root)
         manga = resolve_manga(output_root, provider, name)
         chapter = validate_chapter_id(_required(query_values, "chapter"))
-        report = load_review_report(manga, chapter)
+        stage_dir = stage_chapter(manga, "BUBBLE_SOMMELIER", chapter)
+        report = load_review_report(manga, chapter, stage_dir=stage_dir)
         observe_shadow_read(manga, "bubble_sommelier", chapter)
         result = report["checkpoints"]["result"]
         pages = []
@@ -97,7 +99,8 @@ def crop_response(query_values: dict, output_root: Path) -> RouteResponse:
         manga = resolve_manga(output_root, provider, name)
         chapter = validate_chapter_id(_required(query_values, "chapter"))
         identity = validate_crop_identity(_required(query_values, "identity"))
-        report = load_review_report(manga, chapter)
+        stage_dir = stage_chapter(manga, "BUBBLE_SOMMELIER", chapter)
+        report = load_review_report(manga, chapter, stage_dir=stage_dir)
         observe_shadow_read(manga, "bubble_sommelier", chapter)
         bubble = next(
             (bubble for page in report["pages"] for bubble in page["bubbles"]
@@ -107,7 +110,7 @@ def crop_response(query_values: dict, output_root: Path) -> RouteResponse:
         if bubble is None:
             raise FileNotFoundError(f"Identity não pertence ao capítulo {chapter}: {identity}")
 
-        path = crop_path(manga, chapter, identity)
+        path = crop_path(manga, chapter, identity, stage_dir=stage_dir)
         if crop_sha256(path) != bubble["crop"]["sha256"]:
             return RouteResponse(409, _json({"error": "SHA-256 do crop diverge do report."}))
         return RouteResponse(200, path.read_bytes(), "image/png")

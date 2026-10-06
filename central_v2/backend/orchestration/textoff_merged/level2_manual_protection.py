@@ -4,6 +4,7 @@ import math
 import cv2
 import numpy as np
 
+from .auto_cleaner_check_manifest import _read_check_manifest, manifest_path
 from .residue_occurrences import MANIFEST_NAME, occurrences_for, read_manifest
 from .stages import stage_chapter
 
@@ -39,12 +40,23 @@ def protected_occurrences_by_page(manifest: dict) -> dict[str, list[dict]]:
 
 def load_level1_protection(manga, provider: str, manga_name: str,
                            chapter: str) -> dict[str, list[dict]]:
-    """Read the official chapter catalog and select only its step 1 regions."""
+    """Use saved Check decisions, or the legacy catalog if Check is absent."""
+    document = {"provider": provider, "obra": manga_name, "capitulo": chapter}
+    check_path = manifest_path(manga, chapter)
+    if check_path.is_file():
+        approved = _read_check_manifest(check_path, document)["approved_occurrences"]
+        result = {}
+        for item in approved:
+            if item.get("tipo") not in PROTECTED_FROM_LEVEL2:
+                continue
+            page = item.get("page")
+            if not isinstance(page, str) or not page or not isinstance(item.get("box_normalized"), dict):
+                raise ValueError("Ocorrência protegida inválida no manifesto do Check.")
+            result.setdefault(page, []).append(item)
+        return result
     path = stage_chapter(manga, "RESIDUE_OCCURRENCES", chapter,
                          read_legacy=False) / MANIFEST_NAME
-    manifest = read_manifest(path, {
-        "provider": provider, "obra": manga_name, "capitulo": chapter,
-    })
+    manifest = read_manifest(path, document)
     return protected_occurrences_by_page(manifest)
 
 

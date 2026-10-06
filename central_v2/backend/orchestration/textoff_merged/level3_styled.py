@@ -43,7 +43,7 @@ def query_level3(manga: Path) -> dict:
         observe_shadow_read(manga, "mapear", chapter)
         current = (ready and consolidated_ready and manifest.get("algorithm") == ALGORITHM
                    and manifest.get("source_consolidated_manifest_sha256") ==
-                   _file_sha256(stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
+                   _file_sha256(stage_chapter(manga, CONSOLIDATED, chapter)
                                 / "json/clean-manifest.json")
                    and manifest.get("integrity_ok") is True
                    and manifest.get("source_merge_manifest_sha256") ==
@@ -93,7 +93,7 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
     if not consolidated_is_current(manga, chapter):
         rebuild_consolidated(manga, chapter)
     observe_shadow_read(manga, "mapear_input_consolidado", chapter)
-    consolidated_dir = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
+    consolidated_dir = stage_chapter(manga, CONSOLIDATED, chapter)
     consolidated_manifest = json.loads((consolidated_dir / "json/clean-manifest.json").read_text(encoding="utf-8"))
     consolidated_hash = _file_sha256(consolidated_dir / "json/clean-manifest.json")
     images = [consolidated_image(manga, chapter, Path(name).name)
@@ -148,7 +148,7 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
 
 
 def _manifest_path(manga: Path, chapter: str) -> Path:
-    return stage_chapter(manga, STAGE, chapter, read_legacy=False) / "json/clean-manifest.json"
+    return stage_chapter(manga, STAGE, chapter) / "json/clean-manifest.json"
 
 
 def _candidate_pages(chapter_dir: Path) -> list[dict]:

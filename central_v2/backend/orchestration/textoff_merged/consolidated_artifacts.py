@@ -10,7 +10,7 @@ from .stages import LEVEL1, LEVEL2, stage_chapter
 
 
 def consolidated_image(manga: Path, chapter: str, filename: str) -> Path | None:
-    folder = stage_chapter(manga, "TO_MERGED_CONSOLIDADO", chapter, read_legacy=False)
+    folder = stage_chapter(manga, "TO_MERGED_CONSOLIDADO", chapter)
     try:
         manifest = json.loads((folder / "json/clean-manifest.json").read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):

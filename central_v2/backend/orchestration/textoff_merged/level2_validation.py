@@ -11,12 +11,17 @@ from .query import query_merged_level2
 from .stages import LEVEL1
 
 
-def validate_level2_selection(manga: Path, chapters: object) -> list[str]:
+def validate_level2_selection(manga: Path, chapters: object,
+                              *, reprocess: bool = False) -> list[str]:
+    if type(reprocess) is not bool:
+        raise ValueError("Reprocessamento do Nível II inválido.")
     selected = validate_selection(manga, chapters)
     rows = {row["chapter"]: row for row in query_merged_level2(manga)["chapters"]}
+    allowed = {"pending", "processed", "no_change"} if reprocess else {"pending"}
     for name in selected:
         row = rows.get(name)
-        if not row or row["level2_status"] != "pending" or not row["selectable"]:
+        if (not row or row["level2_status"] not in allowed
+                or (row["level2_status"] == "pending" and not row["selectable"])):
             raise ValueError(f"Capítulo {name} não possui balões transparentes pendentes do Nível I.")
     return selected
 
