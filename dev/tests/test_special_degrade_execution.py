@@ -83,9 +83,11 @@ class DegradeExecutionTests(unittest.TestCase):
         result.parent.mkdir(parents=True, exist_ok=True)
         result.write_bytes(b"processed-image")
         calls = []
-        def fake_preview(_manga, payload, *, approved_check_rois=False):
+        def fake_preview(_manga, payload, *, approved_check_rois=False, on_progress=None):
             self.assertTrue(approved_check_rois)
             calls.append(payload)
+            if on_progress:
+                on_progress({"stage": "ocr", "percent": 37, "message": "processando OCR"})
             if fail:
                 return {"execution_status": "failed", "error": "worker failed"}
             return {"execution_status": "succeeded", "run_id": "run123",
@@ -104,6 +106,23 @@ class DegradeExecutionTests(unittest.TestCase):
         self.assertEqual((sha256(image), sha256(consolidated), sha256(self.check)), original_hashes)
         self.assertEqual(calls[0]["expected_sha256"], sha256(image))
         return outcome, json.loads(self.special.read_text(encoding="utf-8"))
+
+    def test_worker_progress_is_mapped_to_job_progress(self):
+        image, _ = self.select()
+        progress = []
+        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_input.consolidated_is_current", return_value=True), \
+             patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview",
+                   side_effect=lambda *args, **kwargs: (
+                       kwargs["on_progress"]({"stage": "ocr", "percent": 37,
+                                              "message": "processando OCR"}) or {
+                           "execution_status": "failed", "error": "stop after progress"})), \
+             patch("central_v2.backend.orchestration.textoff_merged.special_degrade_output.STAGING_ROOT",
+                   self.output / "staging"):
+            execute_degrade(self.manga, "comix", ["1"], lambda chapter, event:
+                            progress.append((chapter, event)))
+        self.assertTrue(any(event.get("percent") == 37 and event.get("stage") == "ocr"
+                            and "processando OCR" in event.get("message", "")
+                            for _, event in progress))
 
     def test_two_rois_one_preview_and_atomic_persistent_output(self):
         outcome, special = self.run_mocked()

@@ -12,7 +12,7 @@ from .process import run_worker
 
 
 def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
-            approved_check_rois: bool = False) -> dict:
+            approved_check_rois: bool = False, on_progress=None) -> dict:
     key = payload.get("treatment")
     treatment_for(key)
     python_for(key)
@@ -66,7 +66,11 @@ def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
         assert_unchanged(source)
         _assert_masks_unchanged(mask_sources)
         write_json(folder / "request.json", request)
-        run_worker(key, folder / "request.json", folder / "logs/worker.log")
+        worker_args = (key, folder / "request.json", folder / "logs/worker.log")
+        if on_progress is None:
+            run_worker(*worker_args)
+        else:
+            run_worker(*worker_args, on_progress=on_progress)
         result = read_json(folder / "worker-result.json")
         output = contained_file(folder, result["result_file"])
         if sha256(output) != result["validation"]["result_sha256"]:

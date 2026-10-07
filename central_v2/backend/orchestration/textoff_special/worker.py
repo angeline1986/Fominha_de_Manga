@@ -31,7 +31,8 @@ def run(request: dict, folder: Path) -> dict:
     else:
         result, treatment, timings = run_treatment(
             key, source, target, request["selections"],
-            approved_check_rois=request.get("approved_check_rois") is True)
+            approved_check_rois=request.get("approved_check_rois") is True,
+            progress_file=(target / "cleaner-progress.json" if key == "degrade" else None))
     expected_algorithm = (
         f"textoff_merged_level{request['merged_level']}_from_level1_mask_v1"
         if request.get("preauthorized_mask") else

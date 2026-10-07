@@ -52,7 +52,7 @@ def _parse(raw,total):
     if not out:raise ValueError("Nenhuma página selecionada.")
     return out
 
-def _run_cleaner(page,target):
+def _run_cleaner(page,target,progress_file=None):
     input_dir=target/"cleaner_input"; output_dir=target/"cleaner"
     if input_dir.exists():shutil.rmtree(input_dir)
     if output_dir.exists():shutil.rmtree(output_dir)
@@ -60,6 +60,8 @@ def _run_cleaner(page,target):
     shutil.copy2(page,input_dir/page.name)
     cmd=[str(CLEANER_PY),str(CLEANER_MAIN),"-i",str(input_dir),"-o",str(output_dir),
          "--profile",str(PROFILE),"--timeout","900"]
+    if progress_file is not None:
+        cmd.extend(["--progress-file",str(progress_file)])
     print("1/4 Cleaner: gerando clean + mask...")
     proc=subprocess.run(cmd,cwd=str(CLEANER_DIR),check=False)
     if proc.returncode:raise RuntimeError(f"Cleaner encerrou com código {proc.returncode}")

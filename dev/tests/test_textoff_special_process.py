@@ -1,5 +1,6 @@
 """Timeout and offline process contracts for the isolated preview worker."""
 import subprocess
+import json
 import tempfile
 import unittest
 from pathlib import Path
@@ -44,6 +45,31 @@ class WorkerProcessTests(unittest.TestCase):
                  patch.object(process.subprocess, "Popen", return_value=child):
                 with self.assertRaisesRegex(RuntimeError, "falhou"):
                     process.run_worker("transparente", root / "request.json", root / "worker.log")
+
+    def test_callback_receives_real_cleaner_progress_and_log_is_teed(self):
+        child = MagicMock()
+        child.wait.side_effect = [subprocess.TimeoutExpired("worker", 0.25), 0]
+        events = []
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            progress = root / "treatment/cleaner-progress.json"
+            progress.parent.mkdir()
+            progress.write_text(json.dumps({"overall": 0.42, "stage": "ocr",
+                                            "detail": "processando OCR"}), encoding="utf-8")
+
+            def launch(_command, **kwargs):
+                kwargs["stdout"].write("worker output\n")
+                return child
+
+            with patch.object(process, "python_for", return_value=Path("isolated-python")), \
+                 patch.object(process.subprocess, "Popen", side_effect=launch):
+                process.run_worker("degrade", root / "request.json", root / "worker.log",
+                                   on_progress=events.append)
+            self.assertEqual(events, [{"percent": 37, "stage": "ocr",
+                                       "message": "processando OCR"}])
+            self.assertEqual((root / "worker.log").read_text(encoding="utf-8"),
+                             "worker output\n")
+            self.assertEqual(child.wait.call_count, 2)
 
 
 if __name__ == "__main__":

@@ -13,7 +13,8 @@ from .artifacts import write_json
 
 
 def run_treatment(key: str, source: Path, target: Path, selections: list,
-                  *, approved_check_rois: bool = False) -> tuple:
+                  *, approved_check_rois: bool = False,
+                  progress_file: Path | None = None) -> tuple:
     expected_prefix = (runtime_folder(key) / ".venv").resolve()
     if Path(sys.prefix).resolve() != expected_prefix:
         raise RuntimeError("O domínio deve executar exclusivamente na venv do tratamento.")
@@ -37,7 +38,12 @@ def run_treatment(key: str, source: Path, target: Path, selections: list,
     try:
         # Both nested executors read this binding. No V1 runtime is launched.
         base.CLEANER_PY = Path(sys.executable)
-        base._run_cleaner = measured("cleaner_seconds", old_cleaner)
+        def run_cleaner(page, cleaner_target):
+            if key == "degrade" and progress_file is not None:
+                return old_cleaner(page, cleaner_target, progress_file=progress_file)
+            return old_cleaner(page, cleaner_target)
+
+        base._run_cleaner = measured("cleaner_seconds", run_cleaner)
         transparent._run_lama_worker = measured("lama_seconds", old_lama)
         function = getattr(adapter, treatment.function)
         if key == "gradiente_suave":

@@ -60,10 +60,18 @@ def execute_degrade(manga: Path, provider: str, chapters: list[str], progress,
                 progress(chapter, {"stage": "degrade", "percent": 0,
                                    "completed": index - 1, "total": len(chapters),
                                    "message": f"Tratando {page} com {len(rois)} ROI(s)."})
+
+                def report_worker(event):
+                    progress(chapter, {
+                        "stage": event["stage"], "percent": event["percent"],
+                        "completed": index - 1, "total": len(chapters),
+                        "message": f"{page}: {event['message']}",
+                    })
+
                 run = preview(manga, {"treatment": "degrade", "level": source["level"],
                                       "chapter": chapter, "filename": source["filename"],
                                       "expected_sha256": source["sha256"], "selections": rois},
-                              approved_check_rois=True)
+                              approved_check_rois=True, on_progress=report_worker)
                 if run.get("execution_status") != "succeeded":
                     raise RuntimeError(str(run.get("error") or "Prévia Degradê falhou."))
                 page_runs.append({"source": source, "run": run,

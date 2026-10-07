@@ -28,7 +28,7 @@ class PreviewExecutionTests(unittest.TestCase):
                         "selections": [{"x": 1, "y": 1, "width": 3, "height": 4}]}
         self.staging = self.root / "staging"
 
-    def fake_worker(self, key, request, log):
+    def fake_worker(self, key, request, log, *, on_progress=None):
         folder = request.parent
         result = folder / "treatment/result.png"
         result.parent.mkdir()
@@ -92,6 +92,20 @@ class PreviewExecutionTests(unittest.TestCase):
                                          approved_check_rois=True)
         approved_request = read_json(self.staging / approved["run_id"] / "request.json")
         self.assertIs(approved_request["approved_check_rois"], True)
+
+    def test_preview_forwards_optional_progress_callback(self):
+        events = []
+
+        def worker(_key, _request, _log, *, on_progress=None):
+            on_progress({"percent": 37, "stage": "ocr", "message": "processando OCR"})
+            self.fake_worker(_key, _request, _log)
+
+        with patch.object(execution, "python_for", return_value=Path("worker-python")), \
+             patch.object(execution, "run_worker", side_effect=worker):
+            result = execution.preview(self.manga, self.payload, staging=self.staging,
+                                       on_progress=events.append)
+        self.assertEqual(result["execution_status"], "succeeded")
+        self.assertEqual(events[0]["percent"], 37)
 
 
 if __name__ == "__main__":
