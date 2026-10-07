@@ -3,8 +3,8 @@ import { fetchSpecialTreatments } from "/_app/api/textoff.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
-import { iconMarkup } from "/_shared/icons/icons.js";
-import { createDegradeExecution } from "/texto_off/especiais/degrade_execution.js";
+import { createSpecialTreatmentExecution } from "/texto_off/especiais/special_treatment_execution.js";
+import { specialReviewColumn } from "/texto_off/especiais/special_review_column.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createComparisonLauncher } from "/texto_off/comparison/launcher.js";
 
@@ -40,9 +40,12 @@ export function renderSpecialTable(container, treatment) {
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>`;
   container.replaceChildren(root);
-  const progress = treatment === "degrade" ? createJobProgress("Tratamento Degradê") : null;
+  const runnable = treatment === "degrade" || treatment === "gradiente_suave";
+  const title = treatment === "degrade" ? "Tratamento Degradê" : "Tratamento Suave";
+  const progress = runnable ? createJobProgress(title) : null;
   const reviewLauncher = treatment === "degrade"
-    ? createComparisonLauncher(root, "degrade", "degrade", "degrade") : null;
+    ? createComparisonLauncher(root, "degrade", "degrade", "degrade")
+    : treatment === "gradiente_suave" ? createComparisonLauncher(root, "suave", "suave", "suave") : null;
   if (progress) root.querySelector(".auto-merge-toolbar").after(progress.element);
   const query = root.querySelector("[data-query]");
   const filters = root.querySelector("[data-filters]");
@@ -67,7 +70,7 @@ export function renderSpecialTable(container, treatment) {
   let filter = "all", phase = "idle", error = "", controller, disposed = false, busy = false;
 
   function updateExecute() {
-    execute.disabled = treatment !== "degrade" || busy || selectedChapters.size === 0;
+    execute.disabled = !runnable || busy || selectedChapters.size === 0;
     execute.textContent = [...selectedChapters].some((chapter) =>
       rows.find((row) => row.chapter === chapter)?.status === "failed") ? "Tentar novamente" : "Executar";
   }
@@ -92,7 +95,7 @@ export function renderSpecialTable(container, treatment) {
       { id: "select", label: "", render: (row) => {
         const input = document.createElement("input");
         input.type = "checkbox";
-        input.disabled = row.status !== "pending" && !(treatment === "degrade" && row.status === "failed");
+        input.disabled = row.status !== "pending" && !(runnable && row.status === "failed");
         input.checked = selectedChapters.has(row.chapter);
         input.setAttribute("aria-label", `Selecionar capítulo ${row.chapter}`);
         input.addEventListener("change", () => {
@@ -107,19 +110,23 @@ export function renderSpecialTable(container, treatment) {
         title: (row) => row.pages.join(", ") },
       { id: "occurrences", label: "OCORRÊNCIAS", render: (row) => row.occurrence_count },
       { id: "status", label: "STATUS", render: (row) => STATUS[row.status] },
-      { id: "review", label: "REVISAR", render: (row) => {
-        const button = document.createElement("button");
-        button.type = "button"; button.className = "btn sommelier-review";
-        button.innerHTML = iconMarkup("eye");
-        button.disabled = !(reviewLauncher && row.review_available === true
-          && ["processed", "no_change"].includes(row.status));
-        button.title = button.disabled ? "Resultado Degradê indisponível para revisão"
-          : `Revisar Degradê do capítulo ${row.chapter}`;
-        button.setAttribute("aria-label", button.title);
-        if (!button.disabled) button.addEventListener("click", () => reviewLauncher.open(row, button));
-        return button;
-      } },
     ];
+    if (runnable) {
+      columns.push({ id: "reexecute", label: "AÇÃO", render: (row) => {
+        const button = document.createElement("button");
+        button.type = "button"; button.className = "btn sommelier-reexecute";
+        button.textContent = "Reexecutar";
+        const completed = ["processed", "no_change"].includes(row.status)
+          || (row.statuses || []).some((value) => ["processed", "no_change"].includes(value));
+        button.disabled = busy || !completed;
+        button.setAttribute("aria-label", `Reexecutar ${title} no capítulo ${row.chapter}`);
+        if (completed) button.addEventListener("click", () => runTreatment?.([row.chapter], false, true));
+        return button;
+      } });
+    }
+    if (reviewLauncher) {
+      columns.push(specialReviewColumn(treatment, reviewLauncher));
+    }
     results.replaceChildren(createTable(columns, selected.rows, `Capítulos para ${page.title}`, {
       emptyMessage: phase === "ready" && !rows.length ? page.empty
         : phase === "ready" ? "Nenhum capítulo corresponde à busca ou ao filtro." : "",
@@ -142,7 +149,7 @@ export function renderSpecialTable(container, treatment) {
       rows = data.chapters;
       selectedChapters.forEach((chapter) => {
         if (!rows.some((row) => row.chapter === chapter &&
-            (row.status === "pending" || treatment === "degrade" && row.status === "failed"))) {
+            (row.status === "pending" || runnable && row.status === "failed"))) {
           selectedChapters.delete(chapter);
         }
       });
@@ -155,13 +162,14 @@ export function renderSpecialTable(container, treatment) {
 
   const onQuery = () => { pagination.reset(); draw(); };
   const onSize = () => { pagination = createPagination(Number(size.value)); draw(); };
-  const runDegrade = treatment === "degrade" ? createDegradeExecution({
+  const runTreatment = runnable ? createSpecialTreatmentExecution({
     setBusy(value) { busy = value; updateExecute(); },
     reload() { selectedChapters.clear(); return load(); },
-    progress,
+    progress, treatment, title: treatment === "degrade" ? "tratamento Degradê" : "tratamento Suave",
+    retryTitle: treatment === "degrade" ? "o tratamento Degradê" : "o tratamento Suave",
   }) : null;
   const onExecute = () => {
-    if (runDegrade && !execute.disabled) runDegrade([...selectedChapters],
+    if (runTreatment && !execute.disabled) runTreatment([...selectedChapters],
       [...selectedChapters].some((chapter) => rows.find((row) => row.chapter === chapter)?.status === "failed"));
   };
   query.addEventListener("input", onQuery);

@@ -1,5 +1,6 @@
 """Canonical TextOff Merged output names and legacy read compatibility."""
 from pathlib import Path
+import os
 
 LEVEL1 = "TO_MERGED_NIVEL_I"
 LEVEL2 = "TO_MERGED_NIVEL_II"
@@ -12,10 +13,18 @@ LEGACY_NAMES = {
     LEVEL3: "MERGED_NIVEL_III",
 }
 ALIASES = {legacy: canonical for canonical, legacy in LEGACY_NAMES.items()}
+PINCEIS = {
+    "PINCEL_DEGRADE": "06_PINCEL/DEGRADE",
+    "PINCEL_ARTISTICO": "06_PINCEL/ARTISTICO",
+    "PINCEL_SUAVE": "06_PINCEL/SUAVE",
+    "CONSOLIDADO_FINAL": "07_CONSOLIDADO_FINAL",
+}
 
 
 def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
+    if canonical in PINCEIS:
+        return manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / PINCEIS[canonical]
     current = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / canonical
     legacy_name = LEGACY_NAMES.get(canonical)
     legacy = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / legacy_name if legacy_name else None
@@ -26,6 +35,13 @@ def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
 
 def stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
+    if canonical in PINCEIS:
+        target = stage_root(manga, canonical, read_legacy=False) / chapter
+        legacy = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / canonical / chapter
+        if not target.exists() and legacy.is_dir() and not legacy.is_symlink():
+            target.parent.mkdir(parents=True, exist_ok=True)
+            os.replace(legacy, target)
+        return target
     if read_legacy:
         from .artifact_migration import resolve_authoritative_stage_chapter
         from .artifact_migration import _read_registry

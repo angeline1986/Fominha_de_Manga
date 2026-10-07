@@ -8,7 +8,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 
 from .artifact_paths import artifact_ref
 from .special_degrade_output import MANIFEST, SCHEMA, STAGE
-from .stages import LEVEL1, LEVEL2, stage_chapter
+from .stages import stage_chapter
 
 
 def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
@@ -35,7 +35,7 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
             raise ValueError("Página persistida de Degradê inválida.")
         if row.get("status") not in {"processed", "no_change"}:
             continue
-        if row.get("selected_from") not in {LEVEL1, LEVEL2}:
+        if not isinstance(row.get("selected_from"), str):
             raise ValueError("Fonte persistida de Degradê inválida.")
         ids, rois = row.get("occurrence_ids"), row.get("rois")
         if (not isinstance(ids, list) or not ids or not all(isinstance(item, str) and item for item in ids)
@@ -46,7 +46,7 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
         source, output = row.get("input"), row.get("output")
         if not isinstance(source, dict) or not isinstance(output, dict):
             raise ValueError("Artefatos Degradê ausentes.")
-        before = Path(source.get("path", "")).resolve()
+        before = _input_snapshot(folder, row, source)
         expected_output = artifact_ref("clean", Path(page).stem + "_degrade.png")
         if (not before.is_relative_to(manga) or not before.is_file()
                 or before.suffix.lower() != ".png" or output.get("artifact") != expected_output):
@@ -63,6 +63,21 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
     if sha256(manifest) != manifest_hash:
         raise ValueError("Manifesto Degradê mudou durante a leitura.")
     return pairs
+
+
+def _input_snapshot(folder, row, source):
+    reference = row.get("input_artifact") or {}
+    artifact = reference.get("artifact")
+    if isinstance(artifact, str):
+        relative = Path(artifact)
+        candidate = (folder / relative).resolve()
+        if (relative.is_absolute() or ".." in relative.parts
+                or len(relative.parts) != 3 or relative.parts[0] != "input"
+                or not candidate.is_relative_to(folder) or not candidate.is_file()
+                or reference.get("sha256") != source.get("sha256")):
+            raise ValueError("Snapshot de entrada Degradê inválido.")
+        return candidate
+    return Path(source.get("path", "")).resolve()
 
 
 def _valid_roi(box: object) -> bool:

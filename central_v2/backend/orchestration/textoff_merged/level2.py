@@ -126,6 +126,8 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             mirror_stage_chapter(manga, "auto_cleaner_transparencia_basica", name)
             from .consolidated import rebuild_consolidated
             consolidated = rebuild_consolidated(manga, name)
+            from .final_consolidated import rebuild_final_baseline
+            consolidated_final = rebuild_final_baseline(manga, name)
             outcome = report.get("outcome")
             results.append({"chapter": name, "status": "ok" if outcome == "visual_changes" else "no_change",
                             "outcome": outcome, "pages": image_count,
@@ -136,7 +138,8 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                             "transparent_pages": transparent_pages,
                             "text_pages": report.get("pages_with_text", 0),
                             "changed_pixels": report.get("changed_pixels", 0),
-                            "consolidated": consolidated})
+                            "consolidated": consolidated,
+                            "consolidated_final": consolidated_final})
     except Exception as exc:
         if process.poll() is None:
             process.kill()

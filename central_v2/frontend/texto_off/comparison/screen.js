@@ -62,7 +62,8 @@ export function createComparisonScreen(context, onBack) {
     else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; catalog.render?.(); }
     drawState();
   }, context.comparisonMode);
-  const createCatalog = context.comparisonMode === "degrade" ? createDegradeContext : createResidueCatalog;
+  const createCatalog = ["degrade", "suave"].includes(context.comparisonMode)
+    ? createDegradeContext : createResidueCatalog;
   const catalog = createCatalog({ workspace: query(".comparison-workspace"), slider, context,
     onPersistedCount: (pageName, count) => {
       const page = pages.find((item) => item.name === pageName);

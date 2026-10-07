@@ -69,6 +69,12 @@ def persist_degrade(manga: Path, provider: str, chapter: str,
             source, run = item["source"], item["run"]
             result = _validated_preview(run, source)
             page = source["page"]
+            input_ref = f"input/{run['run_id']}/{Path(page).name}"
+            saved_input = staged / input_ref
+            saved_input.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(source["path"], saved_input)
+            if sha256(saved_input) != source["sha256"]:
+                raise ValueError("Snapshot persistido da entrada Degradê divergente.")
             output_ref = artifact_ref("clean", Path(page).stem + "_degrade.png")
             output = staged / output_ref
             output.parent.mkdir(parents=True, exist_ok=True)
@@ -83,6 +89,7 @@ def persist_degrade(manga: Path, provider: str, chapter: str,
                 "occurrence_ids": item["ids"], "rois": item["rois"],
                 "selected_from": source["selected_from"],
                 "input": {"path": source["path"], "sha256": source["sha256"]},
+                "input_artifact": {"artifact": input_ref, "sha256": source["sha256"]},
                 "consolidated_manifest": {
                     "path": source["consolidated_manifest"],
                     "sha256": source["consolidated_manifest_sha256"]},

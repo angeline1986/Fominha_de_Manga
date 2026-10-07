@@ -38,10 +38,11 @@ export async function fetchSpecialTreatments(provider, manga, treatment, signal)
   return requestJson(`/api/textoff/special/treatments?${query}`, { signal, cache: "no-store" });
 }
 
-export async function startSpecialTreatments(provider, manga, treatment, chapters, retry = false) {
+export async function startSpecialTreatments(provider, manga, treatment, chapters, retry = false, reexecute = false) {
   return requestJson("/api/textoff/special/treatments/execute", {
     method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify({ provider, manga, treatment, chapters, ...(retry ? { retry: true } : {}) }),
+    body: JSON.stringify({ provider, manga, treatment, chapters,
+      ...(retry ? { retry: true } : {}), ...(reexecute ? { reexecute: true } : {}) }),
   });
 }
 

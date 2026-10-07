@@ -84,7 +84,9 @@ class TextoffLevel2OrchestrationTests(unittest.TestCase):
                  patch.object(level2.subprocess, "Popen", side_effect=SuccessfulWorker), \
                  patch.object(level2, "mirror_stage_chapter", return_value=False) as mirror, \
                  patch("central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated",
-                       return_value={"outputs": 18, "level2_outputs_used": 8}) as rebuild:
+                       return_value={"outputs": 18, "level2_outputs_used": 8}) as rebuild, \
+                 patch("central_v2.backend.orchestration.textoff_merged.final_consolidated.rebuild_final_baseline",
+                       return_value={"pages": 18}):
                 result = level2.execute_merged_level2(
                     manga, ["1"], lambda *_args: None, provider="comix", manga_name="title",
                     reprocess=True)

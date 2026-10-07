@@ -9,6 +9,8 @@ from central_v2.backend.orchestration.textoff_special.execution import preview
 from .auto_cleaner_check_manifest import _write_atomic, manifest_path as check_manifest_path
 from .special_degrade_input import pending_pages, selected_input
 from .special_degrade_output import persist_degrade
+from .final_consolidated import promote_treatment_pages
+from .special_reexecution import prepare_reexecution, validate_reexecution
 
 
 def validate_degrade_chapters(manga: Path, provider: str, chapters: object,
@@ -46,12 +48,14 @@ def _save_status(path: Path, expected_hash: str, payload: dict,
 
 
 def execute_degrade(manga: Path, provider: str, chapters: list[str], progress,
-                    *, retry: bool = False) -> list[dict]:
+                    *, retry: bool = False, reexecute: bool = False) -> list[dict]:
     results = []
     for index, chapter in enumerate(chapters, 1):
         groups = None
         persisted = False
         try:
+            if reexecute:
+                prepare_reexecution(manga, provider, chapter, "degrade")
             path, digest, payload, groups = pending_pages(manga, provider, chapter, retry=retry)
             page_runs = []
             for page, rows in groups.items():
@@ -80,6 +84,7 @@ def execute_degrade(manga: Path, provider: str, chapters: list[str], progress,
             if sha256(check_manifest_path(manga, chapter)) != check_hash:
                 raise ValueError("Check mudou durante o processamento Degradê.")
             records = persist_degrade(manga, provider, chapter, path, digest, page_runs)
+            promote_treatment_pages(manga, chapter, "degrade", records, page_runs)
             persisted = True
             _save_status(path, digest, payload, groups, records, retry=retry)
             outcome = "processed" if any(item["status"] == "processed" for item in records.values()) else "no_change"
@@ -97,3 +102,7 @@ def execute_degrade(manga: Path, provider: str, chapters: list[str], progress,
                            "completed": index, "total": len(chapters),
                            "message": f"Capítulo {chapter}: {results[-1]['status']}."})
     return results
+
+
+def validate_degrade_reexecution(manga: Path, provider: str, chapters: object) -> list[str]:
+    return validate_reexecution(manga, provider, chapters, "degrade")

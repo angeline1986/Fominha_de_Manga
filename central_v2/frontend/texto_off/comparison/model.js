@@ -39,6 +39,11 @@ export const COMPARISON_MODES = Object.freeze({
     sides: ["before", "after"], panels: [["before", "ANTES"], ["after", "DEPOIS"]],
     catalogPanelIndex: 1,
   }),
+  suave: Object.freeze({
+    layout: "pair", heading: "PINCEL & RETOQUES · SUAVE", title: "Revisão Suave",
+    sides: ["before", "after"], panels: [["before", "ANTES"], ["after", "DEPOIS"]],
+    catalogPanelIndex: 1,
+  }),
 });
 
 export function level2StatusText(status) {

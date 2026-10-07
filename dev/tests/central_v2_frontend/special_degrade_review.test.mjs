@@ -87,3 +87,31 @@ test('eye opens the shared comparator and Back restores Degradê', async () => {
   assert.equal(screens[0].disposed, true);
   dispose();
 });
+
+test('Suave enables only valid completed results and opens the shared page comparator', async () => {
+  const { load, tables, screens, data } = setup();
+  data.treatment = 'gradiente_suave';
+  const { render } = await load('/texto_off/especiais/level8.js');
+  for (const [status, available, disabled] of [
+    ['processed', true, false], ['no_change', true, false],
+    ['pending', false, true], ['failed', false, true],
+  ]) {
+    data.chapters[0].status = status; data.chapters[0].review_available = available;
+    const dispose = render(new Element());
+    await new Promise((resolve) => setImmediate(resolve));
+    const column = tables.at(-1).columns.find((item) => item.id === 'review');
+    assert.equal(column.render(tables.at(-1).rows[0]).disabled, disabled, status);
+    dispose();
+  }
+  data.chapters[0].status = 'processed'; data.chapters[0].review_available = true;
+  const container = new Element();
+  const dispose = render(container);
+  await new Promise((resolve) => setImmediate(resolve));
+  const eye = tables.at(-1).columns.find((item) => item.id === 'review').render(data.chapters[0]);
+  eye.events.click();
+  assert.equal(screens.at(-1).context.step, 'suave');
+  assert.equal(screens.at(-1).context.comparisonMode, 'suave');
+  assert.equal(screens.at(-1).context.scope, 'suave');
+  assert.equal(screens.at(-1).started, true);
+  dispose();
+});

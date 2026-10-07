@@ -97,8 +97,10 @@ def execute_merged_level1(manga: Path, chapters: list[str], progress, preflight=
             continue
         try:
             result["consolidated"] = rebuild_consolidated(manga, result["chapter"])
+            from .final_consolidated import rebuild_final_baseline
+            result["consolidated_final"] = rebuild_final_baseline(manga, result["chapter"])
         except Exception as exc:
-            result.update(status="failed", error=f"Nível I foi gerado, mas o consolidado falhou: {exc}")
+            result.update(status="failed", error=f"Nível I foi gerado, mas a consolidação falhou: {exc}")
     return results
 
 

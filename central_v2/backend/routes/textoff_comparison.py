@@ -14,12 +14,18 @@ from central_v2.backend.orchestration.textoff_merged.residue_occurrences import 
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check import check_occurrence_counts
 from .special_degrade_review import degrade_comparison_response
+from central_v2.backend.orchestration.textoff_merged.special_smooth_review import (
+    suave_comparison_response,
+)
 
 
 def comparison_response(query: dict, output_root: Path, *, image=False) -> RouteResponse:
     if (_value(query, "comparisonMode") == "degrade" and _value(query, "scope") == "degrade"
             and _value(query, "step") == "degrade"):
         return degrade_comparison_response(query, output_root, image=image)
+    if (_value(query, "comparisonMode") == "suave" and _value(query, "scope") == "suave"
+            and _value(query, "step") == "suave"):
+        return suave_comparison_response(query, output_root, image=image)
     try:
         provider, name = _context(query, output_root)
         manga = resolve_manga(output_root, provider, name)

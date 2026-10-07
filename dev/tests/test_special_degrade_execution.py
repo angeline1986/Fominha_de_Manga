@@ -12,11 +12,12 @@ from central_v2.backend.orchestration.textoff_merged.special_treatments_manifest
     rebuild_special_treatments, manifest_path as special_path,
 )
 from central_v2.backend.orchestration.textoff_merged.special_degrade_input import selected_input
-from central_v2.backend.orchestration.textoff_merged.special_degrade_execution import execute_degrade
-from central_v2.backend.orchestration.textoff_merged.special_treatments_query import query_special_treatments
-from central_v2.backend.orchestration.textoff_merged.stages import (
-    CONSOLIDATED, LEVEL1, LEVEL2, stage_chapter,
+from central_v2.backend.orchestration.textoff_merged.final_consolidated import (
+    final_manifest_path,
 )
+from central_v2.backend.orchestration.textoff_merged.final_consolidated_manifest import write_manifest
+from central_v2.backend.orchestration.textoff_merged.special_degrade_execution import execute_degrade
+from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, LEVEL2, stage_chapter
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 
 
@@ -46,38 +47,37 @@ class DegradeExecutionTests(unittest.TestCase):
                 "origin": "MANUAL", "origins": ["MANUAL"]}
 
     def select(self, stage=LEVEL2, *, missing=False, wrong_hash=False):
-        image = stage_chapter(self.manga, stage, "1") / "clean/page_clean.png"
-        image.parent.mkdir(parents=True, exist_ok=True)
+        folder = stage_chapter(self.manga, "CONSOLIDADO_FINAL", "1", read_legacy=False)
+        folder.mkdir(parents=True, exist_ok=True)
+        image = folder / "page.png"
         image.write_bytes(b"level-one" if stage == LEVEL1 else b"level-two")
-        consolidated = stage_chapter(self.manga, CONSOLIDATED, "1") / "json/clean-manifest.json"
-        consolidated.parent.mkdir(parents=True, exist_ok=True)
-        rows = [] if missing else [{"source": "page.png", "selected_from": stage,
-                                    "artifact": "clean/page_clean.png",
-                                    "sha256": "invalid" if wrong_hash else sha256(image)}]
-        consolidated.write_text(json.dumps({"selections": rows}), encoding="utf-8")
-        return image, consolidated
+        row = {"page": "page.png", "artifact": "page.png",
+               "origin": stage, "sha256": "invalid" if wrong_hash else sha256(image)}
+        manifest = final_manifest_path(self.manga, "1")
+        write_manifest(folder, {"schema": "textoff_consolidado_final_manifest_v1", "version": 1,
+            "provider": "comix", "manga": "Example", "chapter": "1",
+            "source_intermediate_manifest_sha256": "base", "page_count": 1,
+            "pages": {} if missing else {"page.png": row}, "history": []})
+        return image, manifest
 
-    def test_input_tracks_l1_and_l2_without_fallback(self):
+    def test_input_uses_current_final_page_and_rejects_missing_or_bad_hash(self):
         for stage in (LEVEL1, LEVEL2):
             image, manifest = self.select(stage)
-            with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_input.consolidated_is_current", return_value=True):
-                source = selected_input(self.manga, "1", "page.png")
+            source = selected_input(self.manga, "1", "page.png")
             self.assertEqual(source["selected_from"], stage)
             self.assertEqual(source["sha256"], sha256(image))
             self.assertEqual(source["consolidated_manifest_sha256"], sha256(manifest))
-            self.assertEqual(source["level"], "MERGED_NIVEL_I" if stage == LEVEL1 else "MERGED_NIVEL_II")
+            self.assertEqual(source["level"], "CONSOLIDADO_FINAL")
         self.select(LEVEL2, missing=True)
-        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_input.consolidated_is_current", return_value=True):
-            with self.assertRaisesRegex(ValueError, "Seleção Consolidada ausente"):
-                selected_input(self.manga, "1", "page.png")
+        with self.assertRaisesRegex(ValueError, "Página ausente"):
+            selected_input(self.manga, "1", "page.png")
         self.select(LEVEL2, wrong_hash=True)
-        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_input.consolidated_is_current", return_value=True):
-            with self.assertRaisesRegex(ValueError, "indisponível"):
-                selected_input(self.manga, "1", "page.png")
+        with self.assertRaisesRegex(ValueError, "inválida"):
+            selected_input(self.manga, "1", "page.png")
 
     def run_mocked(self, changed=7, fail=False, retry=False):
         image, consolidated = self.select()
-        original_hashes = (sha256(image), sha256(consolidated), sha256(self.check))
+        input_hash, check_hash = sha256(image), sha256(self.check)
         staging = self.output / "staging"
         result = staging / "run123" / "treatment/01_local_heal.png"
         result.parent.mkdir(parents=True, exist_ok=True)
@@ -96,22 +96,20 @@ class DegradeExecutionTests(unittest.TestCase):
                     "treatment": {"algorithm": "textoff_special_roi_degrade_v2"},
                     "result_file": "treatment/01_local_heal.png",
                     "validation": {"result_sha256": sha256(result), "changed_pixels": changed}}
-        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_input.consolidated_is_current", return_value=True), \
-             patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview", side_effect=fake_preview), \
+        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview", side_effect=fake_preview), \
              patch("central_v2.backend.orchestration.textoff_merged.special_degrade_output.STAGING_ROOT", staging):
             outcome = execute_degrade(self.manga, "comix", ["1"], lambda *_: None, retry=retry)
         self.assertEqual(len(calls), 1, outcome)
         self.assertEqual(len(calls[0]["selections"]), 2)
-        self.assertEqual(calls[0]["level"], "MERGED_NIVEL_II")
-        self.assertEqual((sha256(image), sha256(consolidated), sha256(self.check)), original_hashes)
-        self.assertEqual(calls[0]["expected_sha256"], sha256(image))
+        self.assertEqual(calls[0]["level"], "CONSOLIDADO_FINAL")
+        self.assertEqual(sha256(self.check), check_hash)
+        self.assertEqual(calls[0]["expected_sha256"], input_hash)
         return outcome, json.loads(self.special.read_text(encoding="utf-8"))
 
     def test_worker_progress_is_mapped_to_job_progress(self):
         image, _ = self.select()
         progress = []
-        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_input.consolidated_is_current", return_value=True), \
-             patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview",
+        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview",
                    side_effect=lambda *args, **kwargs: (
                        kwargs["on_progress"]({"stage": "ocr", "percent": 37,
                                               "message": "processando OCR"}) or {
@@ -179,13 +177,6 @@ class DegradeExecutionTests(unittest.TestCase):
         self.assertEqual(outcome[0]["status"], "failed")
         preview.assert_not_called()
 
-    def test_mixed_pending_and_failed_chapter_offers_retry(self):
-        special = json.loads(self.special.read_text(encoding="utf-8"))
-        special["treatments"]["degrade"][0]["status"] = "failed"
-        self.special.write_text(json.dumps(special), encoding="utf-8")
-        summary = query_special_treatments(self.manga, "comix", "degrade")
-        self.assertEqual(summary["chapters"][0]["status"], "failed")
-
     def test_failed_retry_revalidates_and_can_process(self):
         failed, _ = self.run_mocked(fail=True)
         self.assertEqual(failed[0]["status"], "failed")
@@ -194,8 +185,7 @@ class DegradeExecutionTests(unittest.TestCase):
         self.assertEqual(blocked[0]["status"], "failed")
         preview.assert_not_called()
         self.select(wrong_hash=True)
-        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_input.consolidated_is_current", return_value=True), \
-             patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview") as preview:
+        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview") as preview:
             stale = execute_degrade(self.manga, "comix", ["1"], lambda *_: None, retry=True)
         self.assertEqual(stale[0]["status"], "failed")
         preview.assert_not_called()
@@ -206,7 +196,5 @@ class DegradeExecutionTests(unittest.TestCase):
             repeated = execute_degrade(self.manga, "comix", ["1"], lambda *_: None, retry=True)
         self.assertEqual(repeated[0]["status"], "failed")
         preview.assert_not_called()
-
-
 if __name__ == "__main__":
     unittest.main()

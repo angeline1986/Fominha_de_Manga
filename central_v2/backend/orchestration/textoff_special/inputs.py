@@ -19,6 +19,9 @@ def basename(value: object) -> str:
 def resolve_input(manga: Path, level: str, chapter: str, filename: str,
                   expected_sha256: str) -> dict:
     manga = manga.resolve()
+    if level == "CONSOLIDADO_FINAL":
+        from central_v2.backend.orchestration.textoff_merged.final_consolidated import resolve_final_input
+        return resolve_final_input(manga, basename(chapter), basename(filename), expected_sha256)
     if not isinstance(level, str) or level not in LEVELS:
         raise ValueError("Nível Merged inválido.")
     folder = stage_chapter(manga, level, basename(chapter))

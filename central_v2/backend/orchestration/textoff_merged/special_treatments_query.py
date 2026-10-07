@@ -9,6 +9,7 @@ from central_v2.backend.state.sorting import natural_sort_key
 from .special_treatments_manifest import MANIFEST_NAME, SCHEMA, STATUSES, TREATMENTS
 from .stages import stage_root
 from .special_degrade_review import review_pairs
+from .special_smooth_review import review_pairs as smooth_review_pairs
 
 
 def query_special_treatments(manga: Path, provider: str, treatment: str) -> dict:
@@ -44,14 +45,17 @@ def query_special_treatments(manga: Path, provider: str, treatment: str) -> dict
                 raise ValueError("Ocorrência inválida no Manifesto Especial.")
             pages = sorted({item["page"] for item in occurrences}, key=natural_sort_key)
             states = {item["status"] for item in occurrences}
-            status = ("failed" if treatment == "degrade" and "failed" in states else
+            status = ("failed" if treatment in {"degrade", "gradiente_suave"} and "failed" in states else
                       "pending" if "pending" in states else
                       "failed" if "failed" in states else
                       "processed" if "processed" in states else "no_change")
             review_available = False
-            if treatment == "degrade" and status in {"processed", "no_change"}:
+            reviewable = (status in {"processed", "no_change"} if treatment == "degrade"
+                          else bool(states & {"processed", "no_change"}))
+            if treatment in {"degrade", "gradiente_suave"} and reviewable:
                 try:
-                    review_available = bool(review_pairs(manga, provider, folder.name))
+                    resolver = review_pairs if treatment == "degrade" else smooth_review_pairs
+                    review_available = bool(resolver(manga, provider, folder.name))
                 except (OSError, ValueError, TypeError, KeyError):
                     pass
             chapters.append({"chapter": folder.name, "pages": pages,

@@ -4,8 +4,12 @@ from pathlib import Path
 
 from central_v2.backend.jobs.manager import submit
 from central_v2.backend.orchestration.textoff_merged.special_degrade_execution import (
-    execute_degrade, validate_degrade_chapters,
+    execute_degrade, validate_degrade_chapters, validate_degrade_reexecution,
 )
+from central_v2.backend.orchestration.textoff_merged.special_smooth_execution import (
+    execute_smooth, validate_smooth_reexecution,
+)
+from central_v2.backend.orchestration.textoff_merged.special_smooth_input import validate_chapters as validate_smooth_chapters
 from central_v2.backend.orchestration.textoff_merged.special_treatments_query import query_special_treatments
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.catalog import build_catalog
@@ -36,18 +40,33 @@ def special_treatments_response(query: dict, output_root: Path) -> RouteResponse
 def execute_special_treatments_response(payload: object, output_root: Path) -> RouteResponse:
     try:
         if (not isinstance(payload, dict) or set(payload) -
-                {"provider", "manga", "treatment", "chapters", "retry"}):
+                {"provider", "manga", "treatment", "chapters", "retry", "reexecute"}):
             raise ValueError("Solicitação de tratamento especial inválida.")
-        if payload.get("treatment") != "degrade":
-            raise ValueError("Somente Degradê está disponível para execução.")
+        treatment = payload.get("treatment")
+        if treatment not in {"degrade", "gradiente_suave"}:
+            raise ValueError("Tratamento especial indisponível para execução.")
         retry = payload.get("retry", False)
+        reexecute = payload.get("reexecute", False)
         if type(retry) is not bool:
             raise ValueError("Solicitação de nova tentativa inválida.")
+        if type(reexecute) is not bool or (retry and reexecute):
+            raise ValueError("Solicitação de reexecução inválida.")
         provider, name = payload.get("provider"), payload.get("manga")
         manga = _manga(provider, name, output_root)
-        chapters = validate_degrade_chapters(manga, provider, payload.get("chapters"), retry=retry)
+        if treatment == "degrade":
+            if reexecute:
+                chapters = validate_degrade_reexecution(manga, provider, payload.get("chapters"))
+            else:
+                chapters = validate_degrade_chapters(manga, provider, payload.get("chapters"), retry=retry)
+            runner = execute_degrade
+        else:
+            if reexecute:
+                chapters = validate_smooth_reexecution(manga, provider, payload.get("chapters"))
+            else:
+                chapters = validate_smooth_chapters(manga, provider, payload.get("chapters"), retry=retry)
+            runner = execute_smooth
         def operation(progress, _job_id):
-            return execute_degrade(manga, provider, chapters, progress, retry=retry)
+            return runner(manga, provider, chapters, progress, retry=retry, reexecute=reexecute)
         job = submit(operation, total=len(chapters))
         return RouteResponse(202, json.dumps({"job": job}, ensure_ascii=False).encode("utf-8"))
     except (ValueError, OSError, json.JSONDecodeError) as exc:
