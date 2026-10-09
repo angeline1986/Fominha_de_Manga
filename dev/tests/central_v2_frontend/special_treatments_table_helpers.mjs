@@ -3,16 +3,23 @@ import { browserModules } from './modules.mjs';
 export class Element {
   constructor(tag = 'div') {
     this.tag = tag; this.children = []; this.events = {}; this.value = '';
+    this.style = {}; this.dataset = {};
     this.classList = { toggle() {}, remove() {}, add() {} };
     if (tag === 'section') this.nodes = Object.fromEntries([
-      'query', 'filters', 'results', 'status', 'execute',
+      'query', 'filters', 'results', 'status', 'execute', 'count', 'footer',
     ].map((name) => [`[data-${name}]`, new Element()]));
     if (tag === 'section') this.nodes['.auto-merge-toolbar'] = new Element();
+    if (tag === 'section') this.nodes['.artistico-toolbar'] = new Element();
   }
   set innerHTML(value) { this.markup = value; }
   querySelector(selector) { return this.nodes?.[selector]; }
   replaceChildren(...children) { this.children = children; }
   append(...children) { this.children.push(...children); }
+  insertAdjacentHTML(_position, markup) { this.markup = (this.markup || '') + markup; }
+  getBoundingClientRect() { return { left: 50, right: 100, top: 50 }; }
+  getContext() { return { clearRect() {}, drawImage: (...args) => {
+    this.draws ??= []; this.draws.push(args);
+  } }; }
   after(element) { this.afterElement = element; }
   setAttribute(name, value) { this[name] = value; }
   addEventListener(name, callback) { this.events[name] = callback; }
@@ -22,25 +29,44 @@ export class Element {
   close(value) { this.returnValue = value; this.events.close?.(); }
 }
 
-export function setup() {
+export function setup({ mockReview = false } = {}) {
   const calls = [], tables = [], requests = [], progressStates = [], confirmations = [], restoreCalls = [];
+  const reviewOpens = [], images = [];
   const body = new Element('body');
   const data = {
     degrade: { treatment: 'degrade', chapters: [{ chapter: '1', pages: ['a.png'], page_count: 1,
-      occurrence_count: 2, status: 'pending' }], summary: { chapters: 1, pages: 1, occurrences: 2 } },
+      occurrence_count: 2, status: 'pending', occurrences: ['deg-1', 'deg-2'].map((id) => ({
+        id, page: 'a.png', status: 'pending', roi: { x: 1, y: 2, width: 3, height: 4 },
+        preview: { width: 100, height: 100, sha256: 'page-sha' } })) }],
+      summary: { chapters: 1, pages: 1, occurrences: 2 } },
     estilizado: { treatment: 'estilizado', chapters: [{ chapter: '2', pages: ['art.png'],
-      page_count: 1, occurrence_count: 1, status: 'pending' }],
+      page_count: 1, occurrence_count: 1, status: 'pending', occurrences: [{ id: 'art-1',
+        page: 'art.png', status: 'pending', roi: { x: 1, y: 2, width: 3, height: 4 },
+        preview: { width: 100, height: 100, sha256: 'page-sha' } }] }],
       summary: { chapters: 1, pages: 1, occurrences: 1 } },
     gradiente_suave: { treatment: 'gradiente_suave', chapters: [{ chapter: '1', pages: ['b.png', 'c.png'],
-      page_count: 2, occurrence_count: 11, status: 'processed', review_available: true }],
-    summary: { chapters: 1, pages: 2, occurrences: 11 } },
+      page_count: 2, occurrence_count: 2, status: 'processed', review_available: true,
+      occurrences: ['b.png', 'c.png'].map((page, index) => ({ id: `smooth-${index}`,
+        page, status: 'processed', roi: { x: 1, y: 2, width: 3, height: 4 },
+        preview: { width: 100, height: 100, sha256: 'page-sha' } })) }],
+    summary: { chapters: 1, pages: 2, occurrences: 2 } },
   };
-  const load = browserModules({ document: { createElement: (tag) => new Element(tag), body },
-    AbortController, calls, tables, data, requests, progressStates, confirmations, restoreCalls }, {
+  class ImageMock {
+    constructor() { this.naturalWidth = 100; this.naturalHeight = 100; images.push(this); }
+    set src(value) { this.url = value; }
+  }
+  const load = browserModules({ document: { createElement: (tag) => new Element(tag),
+      createTextNode: (text) => Object.assign(new Element('text'), { textContent: text }), body },
+    window: { addEventListener() {}, removeEventListener() {} },
+    innerWidth: 1200, innerHeight: 800, Image: ImageMock,
+    Option: class extends Element { constructor(text, value) { super('option'); this.textContent = text; this.value = value; } },
+    AbortController, calls, tables, data, requests, progressStates, confirmations, restoreCalls, reviewOpens }, {
     '/_app/state/context.js': `export function getContext() { return {provider:'comix',manga:'Example'}; }
       export function subscribeContext() { return () => {}; }`,
     '/_app/api/textoff.js': `export async function fetchSpecialTreatments(provider,manga,treatment) {
       globalThis.calls.push(treatment); return globalThis.data[treatment]; }
+      export function styledPreviewImageUrl(provider,manga,chapter,page,id,sha) {
+        return '/preview/' + chapter + '/' + page + '?id=' + id + '&sha=' + sha; }
       export async function startSpecialTreatments(...args) {
         globalThis.requests.push(args); return {job:{id:'job'}}; }
       export async function previewSpecialPageRestore(provider,manga,chapter,page) {
@@ -62,6 +88,10 @@ export function setup() {
       return {element:{},update(state) { globalThis.progressStates.push(state); }}; }`,
     '/_shared/table/table.js': `export function createTable(columns, rows, label, options) {
       globalThis.tables.push({columns,rows,label,options}); return {tag:'table'}; }`,
+    ...(mockReview ? { '/texto_off/comparison/launcher.js': `export function createComparisonLauncher() {
+      return { open(row, button, target) { globalThis.reviewOpens.push({row,button,target}); },
+        dispose() {} }; }` } : {}),
   });
-  return { load, calls, tables, requests, progressStates, confirmations, data, restoreCalls, body };
+  return { load, calls, tables, requests, progressStates, confirmations, data, restoreCalls,
+    reviewOpens, images, body };
 }

@@ -12,17 +12,19 @@ from .special_styled_output import MANIFEST as ART_MANIFEST, SCHEMA as ART_SCHEM
 from .artifact_paths import artifact_ref
 from .stages import stage_chapter
 from .special_styled_transaction import transaction_lock
+from .special_page_restore_check import require_restored_compatibility
 
 
 def pending_pages(manga: Path, provider: str, chapter: str, *, retry=False,
-                  payload_override=None):
+                  payload_override=None, selections=None):
     manga = Path(manga).resolve()
     with transaction_lock(manga):
         return _pending_pages(manga, provider, chapter, retry=retry,
-                              payload_override=payload_override)
+                              payload_override=payload_override, selections=selections)
 
 
-def _pending_pages(manga, provider, chapter, *, retry=False, payload_override=None):
+def _pending_pages(manga, provider, chapter, *, retry=False, payload_override=None,
+                   selections=None):
     manga = Path(manga).resolve()
     path = special_path(manga, chapter)
     digest = sha256(path)
@@ -44,6 +46,8 @@ def _pending_pages(manga, provider, chapter, *, retry=False, payload_override=No
     if not isinstance(rows, list):
         raise ValueError("Tratamento Artístico ausente do Manifesto Especial.")
     groups, seen = {}, set()
+    if selections is not None and (not isinstance(selections, set) or not selections):
+        raise ValueError("Selecione ocorrências Artístico válidas.")
     allowed = {"pending", "failed"} if retry else {"pending"}
     for row in rows:
         if (not isinstance(row, dict) or row.get("treatment") != "estilizado"
@@ -61,7 +65,16 @@ def _pending_pages(manga, provider, chapter, *, retry=False, payload_override=No
             raise ValueError("Página ou identidade inválida no Manifesto Especial.")
         seen.add((page, identity))
         validate_selections([row.get("box_pixels")])
-        groups.setdefault(page, []).append(row)
+        if selections is None or (page, identity) in selections:
+            groups.setdefault(page, []).append(row)
+    if selections is not None and selections - seen:
+        raise ValueError("Ocorrência Artístico não elegível ou desatualizada.")
+    completed_pages = {row["page"] for row in rows
+                       if row.get("status") in {"processed", "no_change"}}
+    if payload_override is None and set(groups) & completed_pages:
+        raise ValueError("A página já contém Artístico processado; autoria incremental indisponível.")
+    for page in groups:
+        require_restored_compatibility(manga, provider, chapter, page)
     if sha256(path) != digest:
         raise ValueError("Manifesto Especial mudou durante a leitura.")
     if not groups:
@@ -157,14 +170,19 @@ def _archive_output(folder, archived, reference, expected):
     raise ValueError("Resultado Artístico anterior ausente ou com hash divergente.")
 
 
-def validate_chapters(manga: Path, provider: str, chapters: object, *, retry=False):
+def validate_chapters(manga: Path, provider: str, chapters: object, *, retry=False,
+                      selections=None):
     if (not isinstance(chapters, list) or not chapters
             or any(not isinstance(name, str) or not name or Path(name).name != name
                    or name in {".", ".."} or "\\" in name for name in chapters)
             or len(set(chapters)) != len(chapters)):
         raise ValueError("Selecione capítulos válidos sem repetição.")
+    if selections is not None and (not isinstance(selections, dict)
+                                   or set(selections) != set(chapters)):
+        raise ValueError("Seleção Artístico incompleta para os capítulos solicitados.")
     for chapter in chapters:
-        pending_pages(manga, provider, chapter, retry=retry)
+        pending_pages(manga, provider, chapter, retry=retry,
+                      selections=selections.get(chapter) if selections is not None else None)
     return chapters
 
 

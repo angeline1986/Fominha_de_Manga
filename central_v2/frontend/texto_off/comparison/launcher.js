@@ -20,13 +20,15 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
       if (focus?.isConnected) focus.focus({ preventScroll: true });
     }
   }
-  function open(row, button) {
+  function open(row, button, target = {}) {
     close(false);
     const { provider, manga } = getContext();
     focus = button;
     scroll = origin.parentElement.scrollTop;
     screen = createComparisonScreen({ provider, manga, chapter: row.chapter, step,
-      comparisonMode: mode, ...(scope ? { scope } : {}) }, close);
+      comparisonMode: mode, ...(scope ? { scope } : {}),
+      ...(target.page ? { initialPage: target.page } : {}),
+      ...(target.occurrence ? { initialOccurrence: target.occurrence } : {}) }, close);
     if (["degrade", "suave", "artistico"].includes(mode)) {
       const back = document.createElement("button");
       back.type = "button"; back.className = "btn comparison-back";

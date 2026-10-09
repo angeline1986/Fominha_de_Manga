@@ -1,4 +1,4 @@
-export function createTable(columns, rows, label, { emptyMessage } = {}) {
+export function createTable(columns, rows, label, { emptyMessage, rowClass } = {}) {
   const table = document.createElement("table");
   table.className = "data-table";
   table.dataset.columnCount = String(columns.length);
@@ -15,6 +15,7 @@ export function createTable(columns, rows, label, { emptyMessage } = {}) {
   const body = table.createTBody();
   for (const row of rows) {
     const tr = body.insertRow();
+    if (rowClass) tr.className = rowClass(row);
     for (const column of columns) {
       const cell = tr.insertCell();
       if (column.id) cell.dataset.column = column.id;

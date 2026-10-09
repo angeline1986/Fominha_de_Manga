@@ -51,6 +51,33 @@ class StyledRouteTests(TestCase):
         response = dispatch_post("/api/textoff/special/treatments/execute", payload, self.root)
         self.assertEqual(response.status, 400)
 
+    def test_new_execution_passes_only_selected_occurrences(self):
+        payload = {"provider": "comix", "manga": "Example", "treatment": "estilizado",
+                   "chapters": ["1"], "selections": [{"chapter": "1", "page": "page.png",
+                                                  "id": "styled-1"}]}
+        with patch("central_v2.backend.routes.special_treatments.submit",
+                   return_value={"id": "job"}) as submit, \
+             patch("central_v2.backend.routes.special_treatments.execute_styled",
+                   return_value=[]) as execute:
+            response = dispatch_post("/api/textoff/special/treatments/execute", payload, self.root)
+            self.assertEqual(response.status, 202)
+            submit.call_args.args[0](lambda *_: None, "job")
+            self.assertEqual(execute.call_args.kwargs["selections"],
+                             {"1": {("page.png", "styled-1")}})
+
+    def test_new_execution_rejects_unapproved_occurrence(self):
+        payload = {"provider": "comix", "manga": "Example", "treatment": "estilizado",
+                   "chapters": ["1"], "selections": [{"chapter": "1", "page": "page.png",
+                                                  "id": "other"}]}
+        response = dispatch_post("/api/textoff/special/treatments/execute", payload, self.root)
+        self.assertEqual(response.status, 400)
+
+    def test_new_execution_rejects_empty_selection_instead_of_running_chapter(self):
+        payload = {"provider": "comix", "manga": "Example", "treatment": "estilizado",
+                   "chapters": ["1"], "selections": None}
+        response = dispatch_post("/api/textoff/special/treatments/execute", payload, self.root)
+        self.assertEqual(response.status, 400)
+
     def test_reexecution_passes_exact_validated_occurrence(self):
         selection = {"chapter": "1", "page": "page.png", "id": "styled-1",
                      "expected_sha256": "f" * 64}

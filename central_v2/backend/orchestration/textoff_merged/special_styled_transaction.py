@@ -53,7 +53,7 @@ def begin(manga: Path, chapter: str) -> tuple[str, Path]:
 
 def discard_staging(folder: Path) -> None:
     folder = Path(folder).resolve()
-    if not folder.parent.is_dir() or folder.parent.name != ROOT_NAME:
+    if not folder.exists() or not folder.parent.is_dir() or folder.parent.name != ROOT_NAME:
         return
     journal = folder / "journal.json"
     if not journal.exists():

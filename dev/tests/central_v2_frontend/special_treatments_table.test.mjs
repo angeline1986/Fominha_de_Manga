@@ -2,187 +2,142 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Element, setup } from './special_treatments_table_helpers.mjs';
 
-test('three routes reuse one table; executable treatments enable pending selection', async () => {
-  const { load, calls, tables } = setup();
-  for (const [level, treatment, count, pages] of [
-    ['6', 'degrade', 2, 1], ['7', 'estilizado', 1, 1], ['8', 'gradiente_suave', 11, 2],
-  ]) {
+const tick = () => new Promise((resolve) => setImmediate(resolve));
+const shown = (tables, type) => tables.at(-1).rows.filter((row) => row.type === type);
+const check = (tables, row) => tables.at(-1).columns[0].render(row);
+
+test('Degradê and Suave share the approved three-level worklist and pagination', async () => {
+  const { load, tables, calls } = setup({ mockReview: true });
+  for (const [level, treatment] of [['6', 'degrade'], ['8', 'gradiente_suave']]) {
     const { render } = await load(`/texto_off/especiais/level${level}.js`);
-    const container = new Element();
-    const dispose = render(container);
-    await new Promise((resolve) => setImmediate(resolve));
-    const root = container.children[0];
-    const table = tables.at(-1);
+    const container = new Element(), dispose = render(container); await tick();
+    const root = container.children[0], table = tables.at(-1);
     assert.equal(calls.at(-1), treatment);
-    assert.match(root.className, /cleaner-overview sommelier-page/);
-    assert.equal(table.rows.length, count ? 1 : 0);
-    if (count) {
-      assert.equal(table.rows[0].page_count, pages);
-      assert.equal(table.rows[0].occurrence_count, count);
-    }
-    assert.match(root.markup, /data-execute disabled/);
-    assert.doesNotMatch(root.markup, /data-summary/);
-    const footer = root.nodes['[data-results]'].children.at(-1);
-    const sizeLabel = footer.children[0];
-    const size = sizeLabel.children[0];
-    assert.equal(footer.className, 'pagination');
-    assert.equal(sizeLabel.textContent, 'Exibir:');
-    assert.deepEqual(size.children.map((item) => item.value),
-      ['15', '20', '30', '40', '50']);
-    assert.equal(size.value, '15');
-    if (count) {
-      assert.equal(footer.children[1].children[0].textContent, '<<');
-      assert.equal(footer.children[1].children[1].textContent, '1 / 1');
-      assert.equal(footer.children[1].children[2].textContent, '>>');
-      assert.equal(footer.children[1].children[0].disabled, true);
-      assert.equal(footer.children[1].children[2].disabled, true);
-    } else assert.equal(footer.children.length, 1);
-    assert.equal(table.columns.map((column) => column.label).join('|'),
-      `|Capítulo|PÁGINAS|OCORRÊNCIAS|STATUS|${treatment === 'estilizado' ? 'OCORRÊNCIA|RESTAURAR PÁGINA|' : ''}AÇÃO|REVISAR`);
-    if (count) {
-      if (treatment === 'degrade' || treatment === 'estilizado') {
-        const review = table.columns.at(-1).render(table.rows[0]);
-        assert.equal(review.disabled, true);
-        assert.match(review.markup, /ui-icon--eye/);
-        if (treatment === 'degrade') assert.equal(review.events.click, undefined);
-      }
-      const checkbox = table.columns[0].render(table.rows[0]);
-      if (treatment === 'degrade' || treatment === 'estilizado') {
-        checkbox.checked = true; checkbox.events.change();
-        assert.equal(root.nodes['[data-execute]'].disabled, false);
-      } else if (treatment === 'gradiente_suave') assert.equal(checkbox.disabled, true);
-      root.nodes['[data-query]'].value = table.rows[0].chapter;
-      root.nodes['[data-query]'].events.input();
-      assert.equal(tables.at(-1).columns[0].render(tables.at(-1).rows[0]).checked,
-        treatment !== 'gradiente_suave');
-    } else assert.equal(table.options.emptyMessage, 'Nenhum tratamento artístico pendente.');
+    assert.match(root.className, /artistico-page/);
+    assert.equal(table.columns[1].label, 'CAP.');
+    assert.equal(JSON.stringify(table.rows.map((row) => row.type)), JSON.stringify(
+      treatment === 'degrade' ? ['chapter', 'page', 'occurrence', 'occurrence']
+        : ['chapter', 'page', 'occurrence', 'page']));
+    const page = shown(tables, 'page')[0];
+    table.columns[1].render(page).children[0].events.click();
+    assert.equal(shown(tables, 'occurrence').length, 0);
+    const chapter = shown(tables, 'chapter')[0];
+    tables.at(-1).columns[1].render(chapter).children[0].events.click();
+    assert.equal(JSON.stringify(tables.at(-1).rows.map((row) => row.type)), '["chapter"]');
+    const footer = root.nodes['[data-footer]'].children[0];
+    assert.equal(JSON.stringify(footer.children[0].children[0].children.map((item) => item.value)),
+      JSON.stringify(['15', '20', '30', '40', '50']));
+    assert.equal(footer.children[1].children[1].textContent, '1 / 1');
     dispose();
   }
 });
 
-test('Degradê submits chapter intent once and reloads after completion', async () => {
-  const { load, tables, requests, calls } = setup();
+test('Degradê counts independent selections and refuses a partial chapter', async () => {
+  const { load, tables, requests, confirmations } = setup({ mockReview: true });
   const { render } = await load('/texto_off/especiais/level6.js');
-  const container = new Element();
-  const dispose = render(container);
-  await new Promise((resolve) => setImmediate(resolve));
-  const root = container.children[0];
-  const checkbox = tables.at(-1).columns[0].render(tables.at(-1).rows[0]);
-  checkbox.checked = true; checkbox.events.change();
-  const execute = root.nodes['[data-execute]'];
-  execute.events.click(); execute.events.click();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(requests.length, 1);
+  const container = new Element(), dispose = render(container); await tick();
+  const root = container.children[0], [first, second] = shown(tables, 'occurrence');
+  const choice = tables.at(-1).columns[4].render(first);
+  choice.value = 'none'; choice.events.change();
+  assert.equal(tables.at(-1).columns[4].render(first).value, 'none');
+  assert.equal(tables.at(-1).columns[4].render(second).value, 'degrade');
+  const selected = check(tables, second); selected.checked = true; selected.events.change();
+  assert.equal(root.nodes['[data-count]'].textContent, '1');
+  assert.equal(root.nodes['[data-execute]'].disabled, true);
+  assert.match(root.nodes['[data-status]'].textContent, /por capítulo/);
+  root.nodes['[data-execute]'].events.click(); await tick();
+  assert.equal(requests.length, 0);
+  const enable = tables.at(-1).columns[4].render(first);
+  enable.value = 'degrade'; enable.events.change();
+  const other = check(tables, first); other.checked = true; other.events.change();
+  assert.equal(root.nodes['[data-count]'].textContent, '2');
+  assert.equal(root.nodes['[data-execute]'].disabled, false);
+  root.nodes['[data-execute]'].events.click(); await tick();
   assert.equal(JSON.stringify(requests[0]), JSON.stringify(['comix', 'Example', 'degrade', ['1'], false, false]));
-  assert.equal(calls.length, 2);
-  assert.ok(root.nodes['.auto-merge-toolbar'].afterElement);
-  assert.ok(requests.length && requests[0][4] === false);
-  assert.equal(execute.disabled, true);
+  assert.match(confirmations[0].message, /capítulo/);
   dispose();
 });
 
-test('failed Degradê is selectable and sends explicit retry with progress', async () => {
-  const { load, data, tables, requests, progressStates, confirmations } = setup();
-  data.degrade.chapters[0].status = 'failed';
+test('Suave retry selects only failed occurrences and keeps the chapter contract', async () => {
+  const { load, tables, data, requests } = setup({ mockReview: true });
+  const chapter = data.gradiente_suave.chapters[0];
+  chapter.status = 'failed';
+  chapter.occurrences[0].status = 'failed';
+  chapter.occurrences[1].status = 'pending';
+  const { render } = await load('/texto_off/especiais/level8.js');
+  const container = new Element(), dispose = render(container); await tick();
+  const failed = shown(tables, 'occurrence')[0];
+  assert.equal(check(tables, failed).disabled, false);
+  const pending = chapter.occurrences[1];
+  assert.equal(tables.at(-1).columns[4].render({ type: 'occurrence',
+    chapter: '1', page: pending.page, item: pending }).value, 'gradiente_suave');
+  const box = check(tables, failed); box.checked = true; box.events.change();
+  assert.equal(container.children[0].nodes['[data-count]'].textContent, '1');
+  assert.equal(container.children[0].nodes['[data-execute]'].disabled, false);
+  container.children[0].nodes['[data-execute]'].events.click(); await tick();
+  assert.equal(JSON.stringify(requests[0]), JSON.stringify(['comix', 'Example', 'gradiente_suave', ['1'], true, false]));
+  dispose();
+});
+
+test('chapter reexecution and occurrence review target supported scopes', async () => {
+  const { load, tables, requests, reviewOpens, confirmations, data } = setup({ mockReview: true });
+  data.gradiente_suave.chapters[0].review_available = true;
+  const { render } = await load('/texto_off/especiais/level8.js');
+  const dispose = render(new Element()); await tick();
+  const chapter = shown(tables, 'chapter')[0];
+  const chapterActions = tables.at(-1).columns[5].render(chapter).children;
+  chapterActions[0].events.click({ currentTarget: chapterActions[0] });
+  assert.equal(reviewOpens[0].row.chapter, '1');
+  chapterActions[1].events.click(); await tick();
+  assert.equal(JSON.stringify(requests[0]), JSON.stringify(['comix', 'Example', 'gradiente_suave', ['1'], false, true]));
+  assert.match(confirmations[0].message, /imagem vigente do Consolidado Final/);
+  const occurrence = shown(tables, 'occurrence')[0];
+  const actions = tables.at(-1).columns[5].render(occurrence).children;
+  assert.equal(actions[0].disabled, true);
+  assert.match(actions[0].title, /indisponível/);
+  actions[1].events.click({ currentTarget: actions[1] });
+  assert.equal(JSON.stringify(reviewOpens.at(-1).target),
+    JSON.stringify({ page: occurrence.page, occurrence: occurrence.item.id }));
+  dispose();
+});
+
+test('Suave preview crops the real page by ROI and search finds occurrences', async () => {
+  const { load, tables, images, body, data } = setup({ mockReview: true });
+  const { render } = await load('/texto_off/especiais/level8.js');
+  const container = new Element(), dispose = render(container); await tick();
+  const occurrence = shown(tables, 'occurrence')[0];
+  const trigger = tables.at(-1).columns[1].render(occurrence).children[0];
+  trigger.events.pointerenter(); images[0].onload();
+  assert.equal(images[0].url, '/preview/1/b.png?id=smooth-0&sha=page-sha');
+  assert.equal(body.children.at(-1).children[1].draws.length, 1);
+  assert.match(body.children.at(-1).children[2].textContent, /ROI 1,2 · 3×4/);
+  const query = container.children[0].nodes['[data-query]'];
+  query.value = data.gradiente_suave.chapters[0].occurrences[1].id;
+  query.events.input();
+  assert.equal(shown(tables, 'occurrence')[0].item.id, query.value);
+  dispose();
+});
+
+test('Degradê paginates chapters and retains occurrence selection across redraws', async () => {
+  const { load, tables, data } = setup({ mockReview: true });
+  const template = data.degrade.chapters[0];
+  data.degrade.chapters = Array.from({ length: 16 }, (_, index) => ({
+    ...template, chapter: String(index + 1), occurrences: template.occurrences.map((item) => ({
+      ...item, id: `${item.id}-${index + 1}` })),
+  }));
   const { render } = await load('/texto_off/especiais/level6.js');
-  const container = new Element();
-  const dispose = render(container);
-  await new Promise((resolve) => setImmediate(resolve));
-  const root = container.children[0];
-  const checkbox = tables.at(-1).columns[0].render(tables.at(-1).rows[0]);
-  assert.equal(checkbox.disabled, false);
-  checkbox.checked = true; checkbox.events.change();
-  const execute = root.nodes['[data-execute]'];
-  assert.equal(execute.textContent, 'Tentar novamente');
-  execute.events.click();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(requests[0][4], true);
-  assert.match(confirmations[0].message, /Tentar novamente/);
-  assert.ok(progressStates.some((state) => state.busy && state.percent === 50));
-  assert.equal(progressStates.at(-1).busy, false);
-  dispose();
-});
-
-test('pending Suave is selectable and submits through shared job progress', async () => {
-  const { load, data, tables, requests, progressStates } = setup();
-  data.gradiente_suave.chapters[0].status = 'pending';
-  const { render } = await load('/texto_off/especiais/level8.js');
-  const container = new Element();
-  const dispose = render(container);
-  await new Promise((resolve) => setImmediate(resolve));
-  const root = container.children[0];
-  const checkbox = tables.at(-1).columns[0].render(tables.at(-1).rows[0]);
-  assert.equal(checkbox.disabled, false);
-  checkbox.checked = true; checkbox.events.change();
-  const execute = root.nodes['[data-execute]'];
-  assert.equal(execute.disabled, false);
-  execute.events.click();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(requests[0][2], 'gradiente_suave');
-  assert.equal(requests[0][4], false);
-  assert.ok(progressStates.some((state) => state.busy && state.percent === 50));
-  dispose();
-});
-
-test('failed Suave is selectable for explicit retry', async () => {
-  const { load, data, tables, requests, confirmations } = setup();
-  data.gradiente_suave.chapters[0].status = 'failed';
-  const { render } = await load('/texto_off/especiais/level8.js');
-  const container = new Element();
-  const dispose = render(container);
-  await new Promise((resolve) => setImmediate(resolve));
-  const root = container.children[0];
-  const checkbox = tables.at(-1).columns[0].render(tables.at(-1).rows[0]);
-  assert.equal(checkbox.disabled, false);
-  checkbox.checked = true; checkbox.events.change();
-  root.nodes['[data-execute]'].events.click();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(requests[0][2], 'gradiente_suave');
-  assert.equal(requests[0][4], true);
-  assert.match(confirmations[0].message, /Tentar novamente/);
-  dispose();
-});
-
-test('completed Suave offers deliberate reexecution with prior-results confirmation', async () => {
-  const { load, tables, requests, confirmations } = setup();
-  const { render } = await load('/texto_off/especiais/level8.js');
-  const container = new Element();
-  const dispose = render(container);
-  await new Promise((resolve) => setImmediate(resolve));
-  const button = tables.at(-1).columns.find((column) => column.id === 'reexecute')
-    .render(tables.at(-1).rows[0]);
-  assert.equal(button.disabled, false);
-  button.events.click();
-  await new Promise((resolve) => setImmediate(resolve));
-  assert.equal(requests[0][4], false);
-  assert.equal(requests[0][5], true);
-  assert.match(confirmations[0].message, /Existem resultados anteriores/);
-  assert.match(confirmations[0].message, /Check atual/);
-  assert.match(confirmations[0].message, /ROIs aprovadas agora/);
-  dispose();
-});
-
-test('search by page and status filters restrict chapter rows', async () => {
-  const { load, tables } = setup();
-  const { renderSpecialTable, matchesSpecialRow } = await load('/texto_off/especiais/table.js');
-  assert.equal(matchesSpecialRow({ chapter: '1', pages: ['a.png'], status: 'pending' }, 'a.png', 'pending'), true);
-  assert.equal(matchesSpecialRow({ chapter: '1', pages: ['a.png'], status: 'failed' }, '', 'completed'), false);
-  const container = new Element();
-  const dispose = renderSpecialTable(container, 'gradiente_suave');
-  await new Promise((resolve) => setImmediate(resolve));
-  const root = container.children[0];
-  const query = root.nodes['[data-query]'];
-  query.value = 'missing.png'; query.events.input();
-  assert.equal(tables.at(-1).rows.length, 0);
-  query.value = 'b.png'; query.events.input();
-  assert.equal(tables.at(-1).rows.length, 1);
-  const buttons = root.nodes['[data-filters]'].children;
-  buttons[1].events.click();
-  assert.equal(tables.at(-1).rows.length, 0);
-  root.nodes['[data-filters]'].children[2].events.click();
-  assert.equal(tables.at(-1).rows.length, 1);
-  const size = root.nodes['[data-results]'].children.at(-1).children[0].children[0];
-  size.value = '20'; size.events.change();
-  assert.equal(size.value, '20');
+  const container = new Element(), dispose = render(container); await tick();
+  const root = container.children[0], first = shown(tables, 'occurrence')[0];
+  const selected = check(tables, first); selected.checked = true; selected.events.change();
+  assert.equal(root.nodes['[data-count]'].textContent, '1');
+  let footer = root.nodes['[data-footer]'].children[0];
+  assert.equal(footer.children[1].children[1].textContent, '1 / 2');
+  footer.children[1].children[2].events.click();
+  assert.equal(shown(tables, 'chapter').length, 1);
+  assert.equal(root.nodes['[data-count]'].textContent, '1');
+  footer = root.nodes['[data-footer]'].children[0];
+  footer.children[1].children[0].events.click();
+  assert.equal(check(tables, first).checked, true);
+  assert.equal(shown(tables, 'chapter').length, 15);
   dispose();
 });

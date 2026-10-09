@@ -1,26 +1,27 @@
 """Inspect and transactionally reset one page to its verified automatic input."""
-from datetime import datetime, timezone
 from hashlib import sha256 as hash_bytes
 import json
 from pathlib import Path
-import shutil
 
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 
 from .auto_cleaner_check_manifest import _validate_chapter, manifest_path as check_path
-from .final_consolidated import final_manifest_path, read_final_page
-from .final_consolidated_manifest import read_manifest, write_manifest
-from .special_styled_recovery import _resolve_source
+from .final_consolidated import final_manifest_path
+from .final_consolidated_manifest import read_manifest
+from .special_page_restore_check import compare_check
+from .special_page_restore_prepare import prepare as _prepare
+from .special_page_restore_source import restoration_source
 from .special_styled_transaction import begin, discard_staging, publish
 from .special_treatments_manifest import SCHEMA, manifest_path as special_path
-from .special_page_restore_backup import prepare as prepare_backup, verify as verify_backup
+from .special_page_restore_backup import verify as verify_backup
 
 AUTOMATIC = {"AUTO_CLEANER", "AUTO_CLEANER_TRANSPARENCIA"}
 SPECIAL = {"PINCEL_ARTISTICO", "PINCEL_DEGRADE", "PINCEL_SUAVE"}
 BACKUPS = "SPECIAL_PAGE_RESTORE_BACKUPS"
 PROPOSAL_FIELDS = ("chapter", "page", "current_sha256", "restored_sha256",
                    "final_manifest_sha256", "special_manifest_sha256", "check_sha256",
-                   "source_manifest_sha256", "source_origin", "affected_occurrences")
+                   "source_manifest_sha256", "source_origin", "affected_occurrences",
+                   "invalidated_runs", "check_compatibility")
 
 
 def _context(manga: Path, provider: str, chapter: str, page: str) -> dict:
@@ -53,7 +54,7 @@ def _context(manga: Path, provider: str, chapter: str, page: str) -> dict:
             raise ValueError("Linhagem dos tratamentos especiais não é verificável.")
         previous = row
     first = chain[baseline + 1]
-    source, source_manifest, source_hash = _resolve_source(manga, chapter, page, first)
+    source, source_manifest, source_hash = restoration_source(manga, chapter, page, first)
     if not Path(source).resolve().is_relative_to(manga) or not Path(source_manifest).resolve().is_relative_to(manga):
         raise ValueError("Entrada automática fora da obra.")
     if sha256(source) != chain[baseline]["sha256"]:
@@ -73,16 +74,26 @@ def _context(manga: Path, provider: str, chapter: str, page: str) -> dict:
                 for row in rows if isinstance(row, dict) and row.get("page") == page]
     if not affected or any(not isinstance(item["id"], str) for item in affected):
         raise ValueError("Página sem ocorrências especiais identificáveis.")
+    invalidated = [{"origin": row["origin"], "run_id": row.get("run_id"),
+                    "input_sha256": row["input_sha256"], "output_sha256": row["sha256"],
+                    "status": "invalidated_by_page_restoration"}
+                   for row in chain[baseline + 1:]]
+    if any(not isinstance(item["run_id"], str) or not item["run_id"] for item in invalidated):
+        raise ValueError("Run especial histórico sem identidade verificável.")
+    compatibility = compare_check(manga, provider, chapter, page, source, special)
     proposal = {"chapter": chapter, "page": page, "current_sha256": current["sha256"],
         "restored_sha256": sha256(source), "final_manifest_sha256": final_hash,
         "special_manifest_sha256": special_hash, "check_sha256": check_hash,
         "source_manifest_sha256": source_hash, "source_origin": chain[baseline]["origin"],
-        "affected_occurrences": len(affected)}
-    if sha256(final_path) != final_hash or sha256(special_pathname) != special_hash:
-        raise ValueError("Manifesto mudou durante a inspeção da restauração.")
+        "affected_occurrences": len(affected), "invalidated_runs": len(invalidated),
+        "check_compatibility": compatibility}
+    if (sha256(final_path) != final_hash or sha256(special_pathname) != special_hash
+            or sha256(check) != check_hash or sha256(source) != chain[baseline]["sha256"]):
+        raise ValueError("Imagem ou manifesto mudou durante a inspeção da restauração.")
     return {"proposal": proposal, "manga": manga, "final": final, "final_path": final_path,
             "current_path": current_path, "special": special, "special_path": special_pathname,
-            "source": source, "source_manifest": source_manifest, "affected": affected}
+            "source": source, "source_manifest": source_manifest, "affected": affected,
+            "invalidated_runs": invalidated}
 
 
 def inspect(manga: Path, provider: str, chapter: str, page: str) -> dict:
@@ -145,43 +156,9 @@ def restore(manga: Path, provider: str, chapter: str, page: str,
         return {"chapter": chapter, "page": page, "status": "restored",
                 "backup": str(backup_target.relative_to(context["manga"])),
                 "restored_sha256": proposal["restored_sha256"],
-                "affected_occurrences": proposal["affected_occurrences"]}
+                "affected_occurrences": proposal["affected_occurrences"],
+                "invalidated_runs": proposal["invalidated_runs"],
+                "check_compatibility": proposal["check_compatibility"]}
     finally:
         if folder.exists():
             discard_staging(folder)
-
-
-def _prepare(context, folder, backup_target, identity):
-    proposal, page = context["proposal"], context["proposal"]["page"]
-    prepare_backup(context, folder)
-    final_stage = folder / "stages/final"
-    shutil.copytree(context["final_path"].parent.parent, final_stage)
-    shutil.copyfile(context["source"], final_stage / page)
-    final = context["final"]
-    final["history"].append({"page": page, "superseded": final["pages"][page],
-        "superseded_at": datetime.now(timezone.utc).isoformat(),
-        "reason": "page_restoration", "backup": str(backup_target.relative_to(context["manga"]))})
-    final["pages"][page] = {"page": page, "artifact": page,
-        "sha256": proposal["restored_sha256"], "origin": proposal["source_origin"],
-        "treatment": None, "input_sha256": None, "restoration_id": identity}
-    write_manifest(final_stage, final)
-    read_manifest(final_stage / "json/final-manifest.json", context["manga"], proposal["chapter"])
-    special_stage = folder / "stages/special"
-    shutil.copytree(context["special_path"].parent, special_stage)
-    special = context["special"]
-    for rows in special["treatments"].values():
-        for row in rows:
-            if row.get("page") == page:
-                row["status"] = "pending"
-                row.pop("result", None)
-                row.pop("error", None)
-    special.setdefault("page_restoration_history", []).append({"id": identity,
-        "page": page, "backup": str(backup_target.relative_to(context["manga"])),
-        "previous_sha256": proposal["current_sha256"],
-        "final_manifest_sha256": proposal["final_manifest_sha256"],
-        "special_manifest_sha256": proposal["special_manifest_sha256"],
-        "restored_sha256": proposal["restored_sha256"],
-        "occurrences": context["affected"]})
-    staged_manifest = special_stage / context["special_path"].name
-    staged_manifest.write_text(json.dumps(special, indent=2, ensure_ascii=False) + "\n")
-    context["staged_special_sha256"] = sha256(staged_manifest)

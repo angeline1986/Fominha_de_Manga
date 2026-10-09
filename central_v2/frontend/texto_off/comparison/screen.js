@@ -49,7 +49,6 @@ export function createComparisonScreen(context, onBack) {
     </div>
     <aside class="comparison-hover-preview" data-preview role="tooltip" hidden>
       <img alt="Prévia da imagem original"><span data-preview-name></span></aside>`;
-
   const query = (selector) => element.querySelector(selector);
   const canvas = query("[data-viewport]");
   const state = query("[data-state]"), preview = query("[data-preview]");
@@ -170,7 +169,6 @@ export function createComparisonScreen(context, onBack) {
   element.addEventListener("click", onMove);
   element.addEventListener("click", onPanel);
   element.addEventListener("keydown", onKeyDown);
-
   async function load() {
     pageState = "loading"; drawState();
     try {
@@ -179,6 +177,9 @@ export function createComparisonScreen(context, onBack) {
       pages = result.pages || [];
       catalog.setPages?.(pages);
       if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
+      if (context.initialPage) index = Math.max(0, pages.findIndex((page) =>
+        page.name === context.initialPage && (!context.initialOccurrence ||
+          page.occurrence_ids?.includes(context.initialOccurrence))));
       showPage();
     } catch (error) {
       if (!disposed && error.name !== "AbortError") { pageState = "error"; state.textContent = error.message; drawState(); }
@@ -196,5 +197,4 @@ export function createComparisonScreen(context, onBack) {
   drawState();
   return { element, start: load, dispose };
 }
-
 function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }

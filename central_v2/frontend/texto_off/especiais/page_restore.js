@@ -11,7 +11,10 @@ function previewDialog(provider, manga, proposal) {
     const heading = document.createElement("h2");
     heading.textContent = `Restaurar ${proposal.page}`;
     const detail = document.createElement("p");
-    detail.textContent = `${proposal.affected_occurrences} ocorrência(s) especial(is) voltarão a pendente. Todos os efeitos Artístico, Degradê e Suave posteriores serão descartados nesta página.`;
+    const check = proposal.check_compatibility || {};
+    const differences = check.status === "blocked"
+      ? ` Diferenças: ${check.roi_different_pixels} pixel(s) na ROI e ${check.outside_roi_different_pixels} fora dela.` : "";
+    detail.textContent = `${proposal.affected_occurrences} ocorrência(s) ativa(s) voltarão a pendente. ${proposal.invalidated_runs || 0} execução(ões) histórica(s) terão seus efeitos invalidados na página. ${check.execution_compatible === false ? `Nova execução Artístico bloqueada: ${check.reason}${differences}` : ""}`;
     const images = document.createElement("div");
     images.className = "special-page-restore-images";
     const ready = new Set();
@@ -58,6 +61,14 @@ export function pageRestoreColumn({ busy, setBusy, reload }) {
       const option = document.createElement("option");
       option.value = page; option.textContent = page; select.append(option);
     }
+    const button = createPageRestoreButton(row.chapter, () => select.value,
+      { busy, setBusy, reload });
+    wrapper.append(select, button);
+    return wrapper;
+  } };
+}
+
+export function createPageRestoreButton(chapter, page, { busy, setBusy, reload }) {
     const button = document.createElement("button");
     button.type = "button"; button.className = "btn"; button.textContent = "Restaurar página";
     button.disabled = busy();
@@ -66,10 +77,10 @@ export function pageRestoreColumn({ busy, setBusy, reload }) {
       setBusy(true);
       try {
         const { provider, manga } = getContext();
-        const { proposal } = await previewSpecialPageRestore(provider, manga, row.chapter, select.value);
+        const { proposal } = await previewSpecialPageRestore(provider, manga, chapter, page());
         if (!await previewDialog(provider, manga, proposal)) return;
         const confirmed = await confirmMessage({ title: "Confirmar restauração da página",
-          message: `Restaurar ${proposal.page} ao SHA ${proposal.restored_sha256}? Todos os efeitos especiais posteriores desta página serão descartados. As ROIs aprovadas serão mantidas para nova execução.`,
+          message: `Restaurar ${proposal.page} ao SHA ${proposal.restored_sha256}? Os efeitos especiais posteriores serão invalidados. As ROIs aprovadas serão mantidas. ${proposal.check_compatibility?.execution_compatible === false ? "Nova execução Artístico ficará bloqueada até revisão da origem." : ""}`,
           confirmText: "Restaurar página" });
         if (!confirmed) return;
         const { job } = await startSpecialPageRestore(provider, manga, proposal);
@@ -81,7 +92,5 @@ export function pageRestoreColumn({ busy, setBusy, reload }) {
         await showMessage({ title: "Restauração bloqueada", message: error.message });
       } finally { setBusy(false); }
     });
-    wrapper.append(select, button);
-    return wrapper;
-  } };
+    return button;
 }

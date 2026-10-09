@@ -38,6 +38,11 @@ export async function fetchSpecialTreatments(provider, manga, treatment, signal)
   return requestJson(`/api/textoff/special/treatments?${query}`, { signal, cache: "no-store" });
 }
 
+export function styledPreviewImageUrl(provider, manga, chapter, page, id, sha256) {
+  const query = new URLSearchParams({ provider, manga, chapter, page, id, sha256 });
+  return `/api/textoff/special/treatments/image?${query}`;
+}
+
 export async function startSpecialTreatments(provider, manga, treatment, chapters, retry = false, reexecute = false, selections = undefined) {
   return requestJson("/api/textoff/special/treatments/execute", {
     method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },

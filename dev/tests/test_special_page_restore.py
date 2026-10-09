@@ -98,6 +98,7 @@ class PageRestoreTests(unittest.TestCase):
         result = restore(self.manga, "comix", self.chapter, self.page, proposal,
                          confirmed=True)
         self.assertEqual(result["status"], "restored")
+        self.assertEqual(result["invalidated_runs"], 2)
         record, image, _ = read_final_page(self.manga, self.chapter, self.page)
         self.assertEqual(record["origin"], "AUTO_CLEANER_TRANSPARENCIA")
         self.assertEqual(sha256(image), sha256(self.source))
@@ -111,6 +112,10 @@ class PageRestoreTests(unittest.TestCase):
         self.assertTrue(all(row["status"] == "pending" and "result" not in row
             for rows in updated["treatments"].values()
             for row in rows if row["page"] == self.page))
+        invalidated = updated["page_restoration_history"][0]["invalidated_runs"]
+        self.assertEqual({row["run_id"] for row in invalidated}, {"art-old", "deg-old"})
+        self.assertTrue(all(row["status"] == "invalidated_by_page_restoration"
+                            for row in invalidated))
         backup = self.manga / result["backup"]
         evidence = json.loads((backup / "backup.json").read_text())
         self.assertEqual(sha256(backup / "consolidado_final" / self.page), evidence["page_sha256"])
@@ -121,7 +126,8 @@ class PageRestoreTests(unittest.TestCase):
         self.assertEqual(rebuilt["page_restoration_history"][0]["backup"], result["backup"])
         self.assertTrue(all(row["status"] == "pending" for rows in rebuilt["treatments"].values()
                             for row in rows if row["page"] == self.page))
-        self.assertEqual(len(styled_pending(self.manga, "comix", self.chapter)[3][self.page]), 4)
+        with self.assertRaisesRegex(ValueError, "Check indisponível"):
+            styled_pending(self.manga, "comix", self.chapter)
         self.assertEqual(len(degrade_pending(self.manga, "comix", self.chapter)[3][self.page]), 2)
 
     def test_stale_sha_and_broken_lineage_block_without_publication(self):

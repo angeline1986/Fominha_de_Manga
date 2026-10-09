@@ -22,9 +22,10 @@ export function createSpecialTreatmentExecution({ setBusy, reload, progress, tre
         : retry ? `Tentar novamente ${retryTitle || title}` : `Executar ${title}`,
       message: reexecute
         ? selections?.length ? `Substituir somente ${selections[0].id} em ${selections[0].page} (ROI ${JSON.stringify(selections[0].roi)}). Filtro atual: ${selections[0].current_filter}; solicitado: ${selections[0].requested_filter}. A entrada histórica será restaurada nessa ocorrência. Confira Antes e Depois em Revisar. Continuar?`
-          : `Existem resultados anteriores. A reexecução sincroniza o Manifesto Especial com o Check atual, usa as ROIs aprovadas agora e arquiva os resultados substituídos. Continuar?`
+          : `Existem resultados anteriores. A reexecução sincroniza o Manifesto Especial com o Check atual, usa as ROIs aprovadas agora e arquiva os resultados substituídos. A entrada será a imagem vigente do Consolidado Final e poderá conter o tratamento anterior. Continuar?`
         : retry ? `Tentar novamente ${retryTitle || title} no capítulo selecionado?`
-          : `Executar ${title} em ${chapters.length} capítulo(s) selecionado(s)?`,
+          : selections?.length ? `Executar ${title} em ${selections.length} ocorrência(s) selecionada(s)?`
+            : `Executar ${title} em ${chapters.length} capítulo(s) selecionado(s)?`,
       confirmText: reexecute ? "Reexecutar" : retry ? "Tentar novamente" : "Executar",
     });
     if (!confirmed || busy) return;
@@ -34,7 +35,7 @@ export function createSpecialTreatmentExecution({ setBusy, reload, progress, tre
     try {
       const { provider, manga } = getContext();
       const selected = selections?.map(({ chapter, page, id, expected_sha256 }) =>
-        ({ chapter, page, id, expected_sha256 }));
+        reexecute ? { chapter, page, id, expected_sha256 } : { chapter, page, id });
       const { job } = await startSpecialTreatments(provider, manga, treatment, chapters, retry,
         reexecute, ...(selected ? [selected] : []));
       const results = await waitForTextoffJob(job, (current) => {

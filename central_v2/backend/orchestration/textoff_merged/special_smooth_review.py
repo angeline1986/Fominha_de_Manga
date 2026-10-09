@@ -12,6 +12,7 @@ from central_v2.backend.orchestration.textoff_special.catalog import treatment_f
 from .artifact_paths import artifact_file, artifact_ref
 from .comparison import pair_version
 from .stages import LEVEL1, LEVEL2, stage_chapter
+from .special_treatments_manifest import manifest_path as special_manifest_path
 
 STAGE = "PINCEL_SUAVE"
 MANIFEST = "suave-manifest.json"
@@ -28,6 +29,7 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
         raise ValueError("Manifesto Suave fora do estágio.")
     manifest_hash = sha256(manifest)
     payload = json.loads(manifest.read_text(encoding="utf-8"))
+    invalidated = _invalidated_runs(manga, chapter)
     if (payload.get("schema") != SCHEMA or payload.get("version") != 1
             or payload.get("provider") != provider or payload.get("manga") != manga.name
             or payload.get("chapter") != chapter or payload.get("treatment") != "gradiente_suave"
@@ -54,10 +56,26 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
         pairs.append({"name": page, "before": before, "after": after,
                       "input_sha256": input_hash, "output_sha256": output_row["sha256"],
                       "occurrence_ids": row.get("occurrence_ids", []), "rois": row.get("rois", []),
-                      "selected_from": row.get("selected_from"), "run_id": row.get("run_id")})
+                      "selected_from": row.get("selected_from"), "run_id": row.get("run_id"),
+                      "effect_active": row.get("run_id") not in invalidated,
+                      "invalidated_by_restoration": invalidated.get(row.get("run_id"))})
     if sha256(manifest) != manifest_hash:
         raise ValueError("Manifesto Suave mudou durante a leitura.")
     return pairs
+
+
+def _invalidated_runs(manga: Path, chapter: str) -> dict:
+    path = special_manifest_path(manga, chapter)
+    if not path.is_file():
+        return {}
+    manifest_hash = sha256(path)
+    payload = json.loads(path.read_text(encoding="utf-8"))
+    if sha256(path) != manifest_hash:
+        raise ValueError("Manifesto Especial mudou durante a consulta de autoria Suave.")
+    return {row.get("run_id"): event.get("id")
+            for event in payload.get("page_restoration_history", [])
+            if isinstance(event, dict) for row in event.get("invalidated_runs", [])
+            if isinstance(row, dict) and isinstance(row.get("run_id"), str)}
 
 
 def _identity(row, provider, manga, chapter):
@@ -122,7 +140,9 @@ def suave_comparison_response(query, output_root, *, image=False):
         if not image:
             pages = [{"id": str(index), "name": pair["name"], "version": pair_version(pair),
                       "occurrence_ids": pair["occurrence_ids"], "rois": pair["rois"],
-                      "input_sha256": pair["input_sha256"], "output_sha256": pair["output_sha256"]}
+                      "input_sha256": pair["input_sha256"], "output_sha256": pair["output_sha256"],
+                      "effect_active": pair["effect_active"],
+                      "invalidated_by_restoration": pair["invalidated_by_restoration"]}
                      for index, pair in enumerate(pairs)]
             return RouteResponse(200, _json({"pages": pages, "experimental": False}))
         side, index, version = (_value(query, key) for key in ("side", "page", "version"))

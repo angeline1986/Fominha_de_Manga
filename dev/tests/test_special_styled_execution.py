@@ -2,6 +2,7 @@
 import json
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from urllib.parse import urlencode
 from unittest import TestCase
 from unittest.mock import patch
 import cv2
@@ -24,6 +25,7 @@ from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from central_v2.backend.orchestration.textoff_special.catalog import treatment_for
 from central_v2.backend.routes.textoff_comparison import comparison_response
+from central_v2.backend.routes.router import dispatch_get
 
 
 class StyledExecutionTests(TestCase):
@@ -55,6 +57,20 @@ class StyledExecutionTests(TestCase):
             "pages": {self.page: {"page": self.page, "artifact": self.page,
                 "sha256": sha256(image), "origin": "AUTO_CLEANER", "treatment": None,
                 "input_sha256": None}}, "history": []})
+        self.enterContext(patch(
+            "central_v2.backend.orchestration.textoff_merged.special_styled_execution.detection_input",
+            side_effect=self._detection))
+        self.enterContext(patch(
+            "central_v2.backend.orchestration.textoff_merged.special_styled_execution.STAGING_ROOT",
+            self.root / "staging"))
+        self.enterContext(patch(
+            "central_v2.backend.orchestration.textoff_merged.special_treatments_query.detection_input",
+            side_effect=self._detection))
+
+    def _detection(self, manga, provider, chapter, page, identity, roi):
+        from central_v2.backend.orchestration.textoff_merged.special_degrade_input import selected_input
+        source = selected_input(manga, chapter, page)
+        return {**source, "artifact_filename": page, "width": 64, "height": 64}
 
     def _preview(self, _manga, payload):
         self.assertEqual(payload["treatment"], "estilizado")
@@ -98,6 +114,75 @@ class StyledExecutionTests(TestCase):
         self.assertEqual(pair["before"].read_bytes(), before)
         self.assertEqual(tuple(cv2.imread(str(pair["after"]))[25, 25]), (70, 80, 90))
         self.assertEqual(sha256(self.check), check_hash)
+
+    def test_occurrence_selection_only_processes_the_requested_balloon(self):
+        check = json.loads(self.check.read_text())
+        check["approved_occurrences"].append({**check["approved_occurrences"][0],
+            "id": "styled-2", "box_pixels": {"x": 40, "y": 20, "width": 20, "height": 30}})
+        self.check.write_text(json.dumps(check))
+        rebuild_special_treatments(self.manga,
+            {"provider": "comix", "obra": self.manga.name, "capitulo": "1"}, "1")
+        seen = []
+        def selected_preview(manga, payload):
+            seen.append(payload["selections"])
+            return self._preview(manga, payload)
+        with patch("central_v2.backend.orchestration.textoff_merged.special_styled_execution.preview",
+                   side_effect=selected_preview), \
+             patch("central_v2.backend.orchestration.textoff_merged.special_styled_output.STAGING_ROOT",
+                   self.root / "staging"):
+            result = execute_styled(self.manga, "comix", ["1"], lambda *_: None,
+                selections={"1": {(self.page, "styled-1")}})
+        self.assertEqual(result[0]["occurrences"], 1, result)
+        self.assertEqual(seen, [[{"x": 20, "y": 20, "width": 30, "height": 30}]])
+        rows = json.loads(self.special.read_text())["treatments"]["estilizado"]
+        self.assertEqual({row["id"]: row["status"] for row in rows},
+                         {"styled-1": "processed", "styled-2": "pending"})
+        listed = query_special_treatments(self.manga, "comix", "estilizado")["chapters"][0]["occurrences"]
+        self.assertEqual(listed[0]["preview"]["width"], 64)
+        self.assertEqual(listed[0]["preview"]["height"], 64)
+        self.assertTrue(listed[1]["execution_blocked"])
+        final_before, special_before = (self.final / self.page).read_bytes(), self.special.read_bytes()
+        with patch("central_v2.backend.orchestration.textoff_merged.special_styled_execution.preview",
+                   side_effect=AssertionError("não deveria processar")):
+            blocked = execute_styled(self.manga, "comix", ["1"], lambda *_: None,
+                selections={"1": {(self.page, "styled-2")}})
+        self.assertEqual(blocked[0]["status"], "failed")
+        self.assertIn("autoria incremental", blocked[0]["error"])
+        self.assertEqual((self.final / self.page).read_bytes(), final_before)
+        self.assertEqual(self.special.read_bytes(), special_before)
+
+    def test_artistic_preview_is_bound_to_the_current_sha(self):
+        with patch("central_v2.backend.orchestration.textoff_merged.special_styled_execution.preview",
+                   side_effect=self._preview), \
+             patch("central_v2.backend.orchestration.textoff_merged.special_styled_output.STAGING_ROOT",
+                   self.root / "staging"):
+            self.assertEqual(execute_styled(self.manga, "comix", ["1"],
+                lambda *_: None)[0]["status"], "processed")
+        query = urlencode({"provider": "comix", "manga": self.manga.name,
+            "chapter": "1", "page": self.page, "id": "styled-1",
+            "sha256": sha256(self.final / self.page)})
+        response = dispatch_get(f"/api/textoff/special/treatments/image?{query}", self.root)
+        self.assertEqual(response.status, 200)
+        self.assertEqual(response.body, (self.final / self.page).read_bytes())
+        stale = dispatch_get("/api/textoff/special/treatments/image?" + query.replace(
+            sha256(self.final / self.page), "0" * 64), self.root)
+        self.assertEqual(stale.status, 404)
+
+    def test_initial_conflict_keeps_final_and_artistic_stage_unpublished(self):
+        final_before = (self.final / self.page).read_bytes()
+        manifest_before = final_manifest_path(self.manga, "1").read_bytes()
+        with patch("central_v2.backend.orchestration.textoff_merged.special_styled_execution.preview",
+                   side_effect=self._preview), \
+             patch("central_v2.backend.orchestration.textoff_merged.special_styled_execution.compose_initial",
+                   side_effect=ValueError("Composição Artístico bloqueada: 1 pixels em conflito.")):
+            result = execute_styled(self.manga, "comix", ["1"], lambda *_: None)
+        self.assertEqual(result[0]["status"], "failed")
+        self.assertEqual((self.final / self.page).read_bytes(), final_before)
+        self.assertEqual(final_manifest_path(self.manga, "1").read_bytes(), manifest_before)
+        self.assertFalse(stage_chapter(self.manga, "PINCEL_ARTISTICO", "1").exists())
+        row = json.loads(self.special.read_text())["treatments"]["estilizado"][0]
+        self.assertEqual(row["status"], "failed")
+        self.assertNotIn("result", row)
 
     def test_reexecution_failure_preserves_all_operational_state(self):
         with patch("central_v2.backend.orchestration.textoff_merged.special_styled_execution.preview",

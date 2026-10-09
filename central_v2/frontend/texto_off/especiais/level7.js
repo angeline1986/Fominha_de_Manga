@@ -1,5 +1,5 @@
-import { renderSpecialTable } from "/texto_off/especiais/table.js";
+import { renderArtisticTable } from "/texto_off/especiais/artistico_table.js";
 
 export function render(container) {
-  return renderSpecialTable(container, "estilizado");
+  return renderArtisticTable(container);
 }

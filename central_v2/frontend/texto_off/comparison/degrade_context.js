@@ -3,7 +3,7 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { renderResidueOccurrences } from "/texto_off/comparison/residue_catalog_view.js";
 
-export function createDegradeContext({ workspace, slider, onOpenChange = () => {} }) {
+export function createDegradeContext({ workspace, slider, context, onOpenChange = () => {} }) {
   const panel = document.createElement("aside");
   panel.className = "comparison-residue-panel";
   panel.setAttribute("aria-label", "Áreas tratadas em Degradê");
@@ -27,7 +27,8 @@ export function createDegradeContext({ workspace, slider, onOpenChange = () => {
       id: page.occurrence_ids[index],
       box: { left: roi.x / width, top: roi.y / height,
         width: roi.width / width, height: roi.height / height },
-    }));
+    })).filter((item) => !context?.initialOccurrence || page.name !== context.initialPage ||
+      item.id === context.initialOccurrence);
     renderResidueOccurrences(overlay, panel.querySelector("[data-layers]"),
       occurrences, [], { readOnly: true });
     panel.querySelector("[data-count]").value = String(occurrences.length);

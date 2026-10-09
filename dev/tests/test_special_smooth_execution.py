@@ -60,6 +60,11 @@ class SmoothExecutionTests(unittest.TestCase):
             "page-013-016.png": 1, "page-033-037.png": 5, "page-037-042.png": 1,
             "page-078-082.png": 3, "page-082-086.png": 1,
         })
+        listed = query_special_treatments(self.manga, "comix", "gradiente_suave")["chapters"][0]
+        self.assertEqual(len(listed["occurrences"]), 11)
+        self.assertEqual(listed["occurrences"][0]["id"], "smooth-0")
+        self.assertEqual(listed["occurrences"][0]["roi"],
+                         {"x": 275, "y": 395, "width": 453, "height": 151})
 
     def test_retry_selects_failed_only(self):
         payload = json.loads(self.special.read_text(encoding="utf-8"))

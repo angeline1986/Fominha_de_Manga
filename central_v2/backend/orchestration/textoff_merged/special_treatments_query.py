@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from PIL import Image
 
 from central_v2.backend.state.sorting import natural_sort_key
 
@@ -12,8 +13,36 @@ from .special_degrade_review import review_pairs
 from .special_smooth_review import review_pairs as smooth_review_pairs
 from .special_styled_review import review_pairs as styled_review_pairs
 from .special_styled_occurrence_input import occurrence_input
+from .special_styled_source import detection_input
+from .special_page_restore_check import restored_block_reason
 from .final_consolidated import read_final_page
 from .special_styled_transaction import transaction_lock
+
+
+def _page_preview(manga: Path, chapter: str, page: str, cache: dict) -> dict | None:
+    if page not in cache:
+        try:
+            _record, image, _digest = read_final_page(manga, chapter, page)
+            with Image.open(image) as opened:
+                width, height = opened.size
+            from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+            cache[page] = {"width": width, "height": height, "sha256": sha256(image)}
+        except (OSError, ValueError, TypeError, KeyError):
+            cache[page] = None
+    return cache[page]
+
+
+def _styled_preview(manga, provider, chapter, item, cache):
+    if item["status"] in {"pending", "failed"}:
+        try:
+            source = detection_input(manga, provider, chapter, item["page"],
+                                     item["id"], item["box_pixels"])
+            return {"width": source["width"], "height": source["height"],
+                    "sha256": source["sha256"], "source": "check"}
+        except (OSError, ValueError, TypeError, KeyError):
+            return None
+    current = _page_preview(manga, chapter, item["page"], cache)
+    return {**current, "source": "final"} if current else None
 
 
 def query_special_treatments(manga: Path, provider: str, treatment: str) -> dict:
@@ -63,11 +92,30 @@ def _query_special_treatments(manga: Path, provider: str, treatment: str) -> dic
             reexecution_blocked, reexecution_block_reason = False, None
             available_occurrences = []
             if treatment == "estilizado":
+                previews, restored_blocks = {}, {}
+                completed_pages = {item["page"] for item in occurrences
+                                   if item["status"] in {"processed", "no_change"}}
                 for item in occurrences:
                     detail = {"id": item.get("id"), "page": item["page"],
                               "roi": item.get("box_pixels"),
                               "current_filter": "Artístico", "requested_filter": "Artístico",
                               "status": item["status"]}
+                    if item["status"] in {"pending", "failed"} and item["page"] in completed_pages:
+                        detail["execution_blocked"] = True
+                        detail["execution_block_reason"] = "Página já contém Artístico processado; autoria incremental indisponível."
+                    if item["status"] in {"pending", "failed"} and item["page"] not in completed_pages:
+                        if item["page"] not in restored_blocks:
+                            try:
+                                restored_blocks[item["page"]] = restored_block_reason(
+                                    manga, provider, folder.name, item["page"])
+                            except (OSError, ValueError, TypeError, KeyError) as exc:
+                                restored_blocks[item["page"]] = str(exc)
+                        if restored_blocks[item["page"]]:
+                            detail["execution_blocked"] = True
+                            detail["execution_block_reason"] = restored_blocks[item["page"]]
+                    preview = _styled_preview(manga, provider, folder.name, item, previews)
+                    if preview:
+                        detail["preview"] = preview
                     if item["status"] in {"processed", "no_change"}:
                         try:
                             history = occurrence_input(manga, folder.name, item["page"],
@@ -92,6 +140,16 @@ def _query_special_treatments(manga: Path, provider: str, treatment: str) -> dic
                     for item in eligible if item.get("reexecution_blocked")), None)
                 if not eligible:
                     reexecution_block_reason = "Nenhuma ocorrência Artístico processada com autoria verificável."
+            else:
+                previews = {}
+                for item in occurrences:
+                    page = item["page"]
+                    detail = {"id": item.get("id"), "page": page,
+                              "roi": item.get("box_pixels"), "status": item["status"]}
+                    preview = _page_preview(manga, folder.name, page, previews)
+                    if preview:
+                        detail["preview"] = preview
+                    available_occurrences.append(detail)
             reviewable = (status in {"processed", "no_change"} if treatment == "degrade"
                           else bool(states & {"processed", "no_change"}))
             if treatment in {"degrade", "gradiente_suave", "estilizado"} and reviewable:
@@ -107,8 +165,7 @@ def _query_special_treatments(manga: Path, provider: str, treatment: str) -> dic
                              "review_available": review_available,
                              "reexecution_blocked": reexecution_blocked,
                              "reexecution_block_reason": reexecution_block_reason,
-                             **({"occurrences": available_occurrences}
-                                if treatment == "estilizado" else {})})
+                             "occurrences": available_occurrences})
     return {"treatment": treatment, "chapters": chapters,
             "summary": {"chapters": len(chapters),
                         "pages": sum(row["page_count"] for row in chapters),
