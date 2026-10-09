@@ -42,3 +42,6 @@ central_v2/runtime/**/.venv/
 # Central V2 - BubbleSommelier runtime local
 central_v2/runtime/bubble_sommelier/node_modules/
 central_v2/runtime/bubble_sommelier/models/detector.onnx
+
+# Ambiente virtual temporario de testes
+.venv-test/
