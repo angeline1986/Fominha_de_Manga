@@ -16,9 +16,11 @@ from .auto_cleaner_check_manifest import manifest_path as check_manifest_path
 from .level2_validation import promote_stage
 from .special_treatments_manifest import manifest_path, rebuild_special_treatments
 from .stages import stage_chapter
+from .special_styled_transaction import transaction_lock
 
 STAGES = {
     "degrade": ("PINCEL_DEGRADE", "degrade-manifest.json"),
+    "estilizado": ("PINCEL_ARTISTICO", "artistico-manifest.json"),
     "gradiente_suave": ("PINCEL_SUAVE", "suave-manifest.json"),
 }
 
@@ -45,6 +47,12 @@ def validate_reexecution(manga: Path, provider: str, chapters: object,
 
 def prepare_reexecution(manga: Path, provider: str, chapter: str,
                         treatment: str) -> dict:
+    with transaction_lock(Path(manga)):
+        return _prepare_reexecution(manga, provider, chapter, treatment)
+
+
+def _prepare_reexecution(manga: Path, provider: str, chapter: str,
+                         treatment: str) -> dict:
     special_path = manifest_path(manga, chapter)
     previous_bytes = special_path.read_bytes()
     previous = json.loads(previous_bytes.decode("utf-8"))

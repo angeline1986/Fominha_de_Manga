@@ -7,6 +7,8 @@ import { createSpecialTreatmentExecution } from "/texto_off/especiais/special_tr
 import { specialReviewColumn } from "/texto_off/especiais/special_review_column.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createComparisonLauncher } from "/texto_off/comparison/launcher.js";
+import { reexecutionColumn, styledOccurrenceColumn } from "/texto_off/especiais/reexecution_column.js";
+import { pageRestoreColumn } from "/texto_off/especiais/page_restore.js";
 
 const PAGES = {
   degrade: { title: "Pincel & Retoques — Degradê", empty: "Nenhum tratamento em degradê pendente." },
@@ -40,12 +42,14 @@ export function renderSpecialTable(container, treatment) {
     <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
     <div class="auto-merge-results" data-results></div>`;
   container.replaceChildren(root);
-  const runnable = treatment === "degrade" || treatment === "gradiente_suave";
-  const title = treatment === "degrade" ? "Tratamento Degradê" : "Tratamento Suave";
+  const runnable = ["degrade", "estilizado", "gradiente_suave"].includes(treatment);
+  const title = { degrade: "Tratamento Degradê", estilizado: "Tratamento Artístico",
+    gradiente_suave: "Tratamento Suave" }[treatment];
   const progress = runnable ? createJobProgress(title) : null;
   const reviewLauncher = treatment === "degrade"
     ? createComparisonLauncher(root, "degrade", "degrade", "degrade")
-    : treatment === "gradiente_suave" ? createComparisonLauncher(root, "suave", "suave", "suave") : null;
+    : treatment === "gradiente_suave" ? createComparisonLauncher(root, "suave", "suave", "suave")
+      : treatment === "estilizado" ? createComparisonLauncher(root, "artistico", "artistico", "artistico") : null;
   if (progress) root.querySelector(".auto-merge-toolbar").after(progress.element);
   const query = root.querySelector("[data-query]");
   const filters = root.querySelector("[data-filters]");
@@ -67,6 +71,7 @@ export function renderSpecialTable(container, treatment) {
   let pagination = createPagination();
   let rows = [];
   const selectedChapters = new Set();
+  const selectedOccurrences = new Map();
   let filter = "all", phase = "idle", error = "", controller, disposed = false, busy = false;
 
   function updateExecute() {
@@ -111,18 +116,12 @@ export function renderSpecialTable(container, treatment) {
       { id: "occurrences", label: "OCORRÊNCIAS", render: (row) => row.occurrence_count },
       { id: "status", label: "STATUS", render: (row) => STATUS[row.status] },
     ];
+    if (treatment === "estilizado") columns.push(styledOccurrenceColumn(selectedOccurrences));
+    if (treatment === "estilizado") columns.push(pageRestoreColumn({
+      busy: () => busy, setBusy(value) { busy = value; updateExecute(); }, reload: load }));
     if (runnable) {
-      columns.push({ id: "reexecute", label: "AÇÃO", render: (row) => {
-        const button = document.createElement("button");
-        button.type = "button"; button.className = "btn sommelier-reexecute";
-        button.textContent = "Reexecutar";
-        const completed = ["processed", "no_change"].includes(row.status)
-          || (row.statuses || []).some((value) => ["processed", "no_change"].includes(value));
-        button.disabled = busy || !completed;
-        button.setAttribute("aria-label", `Reexecutar ${title} no capítulo ${row.chapter}`);
-        if (completed) button.addEventListener("click", () => runTreatment?.([row.chapter], false, true));
-        return button;
-      } });
+      columns.push(reexecutionColumn({ treatment, title, busy: () => busy,
+        selected: selectedOccurrences, run: (...args) => runTreatment?.(...args) }));
     }
     if (reviewLauncher) {
       columns.push(specialReviewColumn(treatment, reviewLauncher));
@@ -164,9 +163,9 @@ export function renderSpecialTable(container, treatment) {
   const onSize = () => { pagination = createPagination(Number(size.value)); draw(); };
   const runTreatment = runnable ? createSpecialTreatmentExecution({
     setBusy(value) { busy = value; updateExecute(); },
-    reload() { selectedChapters.clear(); return load(); },
-    progress, treatment, title: treatment === "degrade" ? "tratamento Degradê" : "tratamento Suave",
-    retryTitle: treatment === "degrade" ? "o tratamento Degradê" : "o tratamento Suave",
+    reload() { selectedChapters.clear(); selectedOccurrences.clear(); return load(); },
+    progress, treatment, title: `tratamento ${title.replace("Tratamento ", "")}`,
+    retryTitle: `o tratamento ${title.replace("Tratamento ", "")}`,
   }) : null;
   const onExecute = () => {
     if (runTreatment && !execute.disabled) runTreatment([...selectedChapters],
@@ -176,7 +175,7 @@ export function renderSpecialTable(container, treatment) {
   size.addEventListener("change", onSize);
   execute.addEventListener("click", onExecute);
   const unsubscribe = subscribeContext(() => {
-    query.value = ""; filter = "all"; selectedChapters.clear(); pagination.reset(); load();
+    query.value = ""; filter = "all"; selectedChapters.clear(); selectedOccurrences.clear(); pagination.reset(); load();
   });
   load();
   return () => {

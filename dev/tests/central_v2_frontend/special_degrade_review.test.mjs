@@ -36,7 +36,10 @@ function setup() {
       export function subscribeContext() { return () => {}; }`,
     '/_app/api/textoff.js': `export async function fetchSpecialTreatments() { return globalThis.data; }
       export async function startSpecialTreatments() { throw new Error('no processing'); }
-      export async function waitForTextoffJob() { throw new Error('no processing'); }`,
+      export async function waitForTextoffJob() { throw new Error('no processing'); }
+      export async function previewSpecialPageRestore() { throw new Error('no restore'); }
+      export function specialPageRestoreImageUrl() { return ''; }
+      export async function startSpecialPageRestore() { throw new Error('no restore'); }`,
     '/_shared/table/table.js': `export function createTable(columns,rows) {
       globalThis.tables.push({columns,rows}); return {tag:'table'}; }`,
     '/_shared/progress/progress.js': `export function createJobProgress() {

@@ -10,9 +10,19 @@ from .special_treatments_manifest import MANIFEST_NAME, SCHEMA, STATUSES, TREATM
 from .stages import stage_root
 from .special_degrade_review import review_pairs
 from .special_smooth_review import review_pairs as smooth_review_pairs
+from .special_styled_review import review_pairs as styled_review_pairs
+from .special_styled_occurrence_input import occurrence_input
+from .final_consolidated import read_final_page
+from .special_styled_transaction import transaction_lock
 
 
 def query_special_treatments(manga: Path, provider: str, treatment: str) -> dict:
+    manga = Path(manga).resolve()
+    with transaction_lock(manga):
+        return _query_special_treatments(manga, provider, treatment)
+
+
+def _query_special_treatments(manga: Path, provider: str, treatment: str) -> dict:
     if treatment not in TREATMENTS:
         raise ValueError("Tratamento especial inválido.")
     manga = Path(manga).resolve()
@@ -50,18 +60,55 @@ def query_special_treatments(manga: Path, provider: str, treatment: str) -> dict
                       "failed" if "failed" in states else
                       "processed" if "processed" in states else "no_change")
             review_available = False
+            reexecution_blocked, reexecution_block_reason = False, None
+            available_occurrences = []
+            if treatment == "estilizado":
+                for item in occurrences:
+                    detail = {"id": item.get("id"), "page": item["page"],
+                              "roi": item.get("box_pixels"),
+                              "current_filter": "Artístico", "requested_filter": "Artístico",
+                              "status": item["status"]}
+                    if item["status"] in {"processed", "no_change"}:
+                        try:
+                            history = occurrence_input(manga, folder.name, item["page"],
+                                                       item["id"], item["box_pixels"])
+                            filt = (history["occurrence"].get("filter") or {}).get("algorithm")
+                            if isinstance(filt, str):
+                                detail["current_filter"] = filt
+                                detail["requested_filter"] = filt
+                            _record, current, _digest = read_final_page(
+                                manga, folder.name, item["page"])
+                            from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+                            detail["expected_sha256"] = sha256(current)
+                        except (OSError, ValueError, TypeError, KeyError) as exc:
+                            detail["reexecution_blocked"] = True
+                            detail["reexecution_block_reason"] = str(exc)
+                    available_occurrences.append(detail)
+                eligible = [item for item in available_occurrences
+                            if item["status"] in {"processed", "no_change"}]
+                reexecution_blocked = not any(not item.get("reexecution_blocked")
+                                              for item in eligible)
+                reexecution_block_reason = next((item.get("reexecution_block_reason")
+                    for item in eligible if item.get("reexecution_blocked")), None)
+                if not eligible:
+                    reexecution_block_reason = "Nenhuma ocorrência Artístico processada com autoria verificável."
             reviewable = (status in {"processed", "no_change"} if treatment == "degrade"
                           else bool(states & {"processed", "no_change"}))
-            if treatment in {"degrade", "gradiente_suave"} and reviewable:
+            if treatment in {"degrade", "gradiente_suave", "estilizado"} and reviewable:
                 try:
-                    resolver = review_pairs if treatment == "degrade" else smooth_review_pairs
+                    resolver = {"degrade": review_pairs, "gradiente_suave": smooth_review_pairs,
+                                "estilizado": styled_review_pairs}[treatment]
                     review_available = bool(resolver(manga, provider, folder.name))
                 except (OSError, ValueError, TypeError, KeyError):
                     pass
             chapters.append({"chapter": folder.name, "pages": pages,
                              "page_count": len(pages), "occurrence_count": len(occurrences),
                              "status": status, "statuses": sorted(states),
-                             "review_available": review_available})
+                             "review_available": review_available,
+                             "reexecution_blocked": reexecution_blocked,
+                             "reexecution_block_reason": reexecution_block_reason,
+                             **({"occurrences": available_occurrences}
+                                if treatment == "estilizado" else {})})
     return {"treatment": treatment, "chapters": chapters,
             "summary": {"chapters": len(chapters),
                         "pages": sum(row["page_count"] for row in chapters),

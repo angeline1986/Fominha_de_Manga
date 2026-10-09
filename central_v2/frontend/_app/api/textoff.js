@@ -38,11 +38,31 @@ export async function fetchSpecialTreatments(provider, manga, treatment, signal)
   return requestJson(`/api/textoff/special/treatments?${query}`, { signal, cache: "no-store" });
 }
 
-export async function startSpecialTreatments(provider, manga, treatment, chapters, retry = false, reexecute = false) {
+export async function startSpecialTreatments(provider, manga, treatment, chapters, retry = false, reexecute = false, selections = undefined) {
   return requestJson("/api/textoff/special/treatments/execute", {
     method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({ provider, manga, treatment, chapters,
-      ...(retry ? { retry: true } : {}), ...(reexecute ? { reexecute: true } : {}) }),
+      ...(retry ? { retry: true } : {}), ...(reexecute ? { reexecute: true } : {}),
+      ...(selections ? { selections } : {}) }),
+  });
+}
+
+export async function previewSpecialPageRestore(provider, manga, chapter, page) {
+  const query = new URLSearchParams({ provider, manga, chapter, page });
+  return requestJson(`/api/textoff/special/restore-page?${query}`, { cache: "no-store" });
+}
+
+export function specialPageRestoreImageUrl(provider, manga, proposal, side) {
+  const { chapter, page, version } = proposal;
+  const query = new URLSearchParams({ provider, manga, chapter, page, version, side });
+  return `/api/textoff/special/restore-page/image?${query}`;
+}
+
+export async function startSpecialPageRestore(provider, manga, proposal) {
+  return requestJson("/api/textoff/special/restore-page", {
+    method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
+    body: JSON.stringify({ provider, manga, chapter: proposal.chapter, page: proposal.page,
+      proposal, confirmed: true }),
   });
 }
 

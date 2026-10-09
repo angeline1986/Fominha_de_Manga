@@ -68,6 +68,23 @@ class SpecialTreatmentsManifestTests(unittest.TestCase):
         self.assertNotIn("other", target.read_text(encoding="utf-8"))
         self.assertEqual(STATUSES, {"pending", "processed", "no_change", "failed"})
 
+    def test_styled_balloon_routes_only_to_existing_artistic_bucket(self):
+        styled = self.row("art", "balao_estilizado")
+        self.write_check([styled, self.row("deg", "residuo_degrade"),
+                          self.row("soft", "residuo_gradiente"),
+                          self.row("ignore", "texto_residual")])
+        _, payload, _ = rebuild_special_treatments(self.manga, self.document, "1")
+        artistic = payload["treatments"]["estilizado"][0]
+        self.assertEqual((artistic["id"], artistic["page"], artistic["tipo"]),
+                         ("art", "page.png", "balao_estilizado"))
+        self.assertEqual(artistic["status"], "pending")
+        self.assertEqual(artistic["box_pixels"], styled["box_pixels"])
+        self.assertEqual(artistic["source_references"], styled["source_references"])
+        self.assertEqual([row["id"] for row in payload["treatments"]["degrade"]], ["deg"])
+        self.assertEqual([row["id"] for row in payload["treatments"]["gradiente_suave"]], ["soft"])
+        self.assertEqual(payload["unclassified"], [])
+        self.assertNotIn("ignore", json.dumps(payload["treatments"]))
+
     def test_repeat_is_idempotent_and_preserves_processing_state(self):
         self.write_check([self.row("one", "residuo_degrade"),
                           self.row("one", "residuo_degrade")])

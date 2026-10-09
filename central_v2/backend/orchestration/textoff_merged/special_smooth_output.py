@@ -12,6 +12,7 @@ from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROO
 from .artifact_paths import artifact_ref, prepare_artifact_dirs
 from .level2_validation import promote_stage
 from .stages import stage_chapter
+from .special_write_proof import persist_write_mask
 
 STAGE = "PINCEL_SUAVE"
 MANIFEST = "suave-manifest.json"
@@ -76,6 +77,9 @@ def persist_smooth(manga: Path, provider: str, chapter: str, special_path: Path,
             status = "processed" if changed else "no_change"
             records[page] = _record(item, status, output_ref, sha256(output),
                                     report_ref, sha256(saved_report), changed, input_ref)
+            write_mask = persist_write_mask(staged, run, page)
+            if write_mask:
+                records[page]["write_mask"] = write_mask
             payload["pages"][page] = records[page]
         manifest_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n",
                                  encoding="utf-8")

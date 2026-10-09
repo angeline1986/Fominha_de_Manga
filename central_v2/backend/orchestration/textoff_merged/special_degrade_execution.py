@@ -11,6 +11,7 @@ from .special_degrade_input import pending_pages, selected_input
 from .special_degrade_output import persist_degrade
 from .final_consolidated import promote_treatment_pages
 from .special_reexecution import prepare_reexecution, validate_reexecution
+from .special_styled_transaction import transaction_lock
 
 
 def validate_degrade_chapters(manga: Path, provider: str, chapters: object,
@@ -49,6 +50,12 @@ def _save_status(path: Path, expected_hash: str, payload: dict,
 
 def execute_degrade(manga: Path, provider: str, chapters: list[str], progress,
                     *, retry: bool = False, reexecute: bool = False) -> list[dict]:
+    with transaction_lock(Path(manga)):
+        return _execute_degrade(manga, provider, chapters, progress,
+                                retry=retry, reexecute=reexecute)
+
+
+def _execute_degrade(manga, provider, chapters, progress, *, retry, reexecute):
     results = []
     for index, chapter in enumerate(chapters, 1):
         groups = None

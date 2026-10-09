@@ -16,6 +16,7 @@ from .level2_manual_protection import load_level1_protection
 from .query import query_merged_level2
 from .runtime import REPOSITORY_ROOT, python_for
 from .stages import LEVEL1, LEVEL2, stage_chapter
+from .special_styled_transaction import transaction_lock
 from .level2_validation import (
     build_output_manifest,
     promote_stage as _promote_stage,
@@ -127,7 +128,8 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             from .consolidated import rebuild_consolidated
             consolidated = rebuild_consolidated(manga, name)
             from .final_consolidated import rebuild_final_baseline
-            consolidated_final = rebuild_final_baseline(manga, name)
+            with transaction_lock(manga):
+                consolidated_final = rebuild_final_baseline(manga, name)
             outcome = report.get("outcome")
             results.append({"chapter": name, "status": "ok" if outcome == "visual_changes" else "no_change",
                             "outcome": outcome, "pages": image_count,

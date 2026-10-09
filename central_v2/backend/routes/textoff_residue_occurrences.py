@@ -14,6 +14,7 @@ from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check import (
     StaleCheckSourcesError, load_check_page, save_check_decision,
 )
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
+from central_v2.backend.routes.auto_cleaner_check_special_treatments import rebuild_after_check
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.manga_state import resolve_manga
 
@@ -98,10 +99,14 @@ def _check_batch_post_response(payload: dict, output_root: Path) -> RouteRespons
         )
     except StaleCheckSourcesError as exc:
         return _json_response(409, {"error": str(exc), "stale_sources": True})
+    failure = rebuild_after_check(manga, _document(context), context["capitulo"])
+    if failure:
+        return failure
     results = [{"page": page, "occurrences": rows, "total_occurrences": len(rows)}
                for page, rows in validated]
     return _json_response(200, {
         "ok": True, "scope": "check", "decision_persisted": True,
+        "special_treatments_updated": True,
         "pages": results, "updated_at": manifest["updated_at"],
     })
 

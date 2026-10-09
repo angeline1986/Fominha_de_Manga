@@ -5,7 +5,7 @@ import { Element, setup } from './special_treatments_table_helpers.mjs';
 test('three routes reuse one table; executable treatments enable pending selection', async () => {
   const { load, calls, tables } = setup();
   for (const [level, treatment, count, pages] of [
-    ['6', 'degrade', 2, 1], ['7', 'estilizado', 0, 0], ['8', 'gradiente_suave', 11, 2],
+    ['6', 'degrade', 2, 1], ['7', 'estilizado', 1, 1], ['8', 'gradiente_suave', 11, 2],
   ]) {
     const { render } = await load(`/texto_off/especiais/level${level}.js`);
     const container = new Element();
@@ -38,25 +38,23 @@ test('three routes reuse one table; executable treatments enable pending selecti
       assert.equal(footer.children[1].children[2].disabled, true);
     } else assert.equal(footer.children.length, 1);
     assert.equal(table.columns.map((column) => column.label).join('|'),
-      treatment === 'degrade' ? '|Capítulo|PÁGINAS|OCORRÊNCIAS|STATUS|AÇÃO|REVISAR'
-        : treatment === 'gradiente_suave' ? '|Capítulo|PÁGINAS|OCORRÊNCIAS|STATUS|AÇÃO|REVISAR'
-          : '|Capítulo|PÁGINAS|OCORRÊNCIAS|STATUS');
+      `|Capítulo|PÁGINAS|OCORRÊNCIAS|STATUS|${treatment === 'estilizado' ? 'OCORRÊNCIA|RESTAURAR PÁGINA|' : ''}AÇÃO|REVISAR`);
     if (count) {
-      if (treatment === 'degrade') {
+      if (treatment === 'degrade' || treatment === 'estilizado') {
         const review = table.columns.at(-1).render(table.rows[0]);
         assert.equal(review.disabled, true);
         assert.match(review.markup, /ui-icon--eye/);
-        assert.equal(review.events.click, undefined);
+        if (treatment === 'degrade') assert.equal(review.events.click, undefined);
       }
       const checkbox = table.columns[0].render(table.rows[0]);
-      if (treatment === 'degrade') {
+      if (treatment === 'degrade' || treatment === 'estilizado') {
         checkbox.checked = true; checkbox.events.change();
         assert.equal(root.nodes['[data-execute]'].disabled, false);
       } else if (treatment === 'gradiente_suave') assert.equal(checkbox.disabled, true);
       root.nodes['[data-query]'].value = table.rows[0].chapter;
       root.nodes['[data-query]'].events.input();
       assert.equal(tables.at(-1).columns[0].render(tables.at(-1).rows[0]).checked,
-        treatment === 'degrade');
+        treatment !== 'gradiente_suave');
     } else assert.equal(table.options.emptyMessage, 'Nenhum tratamento artístico pendente.');
     dispose();
   }

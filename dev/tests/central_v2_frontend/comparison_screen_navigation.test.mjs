@@ -48,6 +48,9 @@ test('comparison initially loads, loads another page, and ignores selecting the 
     '/texto_off/comparison/model.js': `
       export const INITIAL_ZOOM = 40;
       export function clampZoom(value) { return value; }
+      export function level2StatusText(status) {
+        return status === 'no_change' ? 'Nível II: analisado sem alterações' : status;
+      }
       export function comparisonModeConfig(mode) { return ({
         level1: { layout: 'pair', title: 'Auto-Cleaner — Passo 1', heading: 'AUTO-CLEANER · PASSO 1', sides: ['before', 'after'] },
         level2: { layout: 'pair', title: 'Auto-Cleaner — Passo 2', heading: 'AUTO-CLEANER · PASSO 2', sides: ['before', 'after'] },

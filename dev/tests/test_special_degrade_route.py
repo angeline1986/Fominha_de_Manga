@@ -59,14 +59,14 @@ class DegradeRouteTests(unittest.TestCase):
 
     def test_other_treatments_paths_and_empty_selection_rejected(self):
         with patch("central_v2.backend.routes.special_treatments.submit") as submit:
-            for payload in ({"treatment": "estilizado"},
-                            {"chapters": []}, {"chapters": ["../1"]},
+            for payload in ({"chapters": []}, {"chapters": ["../1"]},
                             {"chapters": ["1", "1"]}, {"rois": [{"x": 0}]},
                             {"path": "/tmp/arbitrary.png"},
                             {"approved_check_rois": True}):
                 response = self.request(**payload)
                 self.assertEqual(response.status, 400, payload)
             submit.assert_not_called()
+
 
     def test_suave_dispatches_its_own_executor(self):
         with patch("central_v2.backend.routes.special_treatments.submit",

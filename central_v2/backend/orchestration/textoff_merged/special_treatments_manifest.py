@@ -11,12 +11,14 @@ from .auto_cleaner_check_manifest import (
     manifest_path as check_manifest_path,
 )
 from .stages import stage_chapter
+from .special_styled_transaction import transaction_lock
 
 SCHEMA = "textoff_special_treatments_manifest_v1"
 MANIFEST_NAME = "special-treatments-manifest.json"
 STAGE = "SPECIAL_TREATMENTS"
 STATUSES = frozenset({"pending", "processed", "no_change", "failed"})
 TREATMENTS = ("degrade", "estilizado", "gradiente_suave")
+_RUNTIME_FIELDS = ("status", "result", "error")
 
 
 def manifest_path(manga: Path, chapter: str) -> Path:
@@ -35,6 +37,8 @@ def _destination(row: dict) -> tuple[str | None, str | None]:
         return "degrade", None
     if kind == "residuo_gradiente":
         return "gradiente_suave", None
+    if kind == "balao_estilizado":
+        return "estilizado", None
     return None, None
 
 
@@ -98,6 +102,12 @@ def _build(manga: Path, document: dict, chapter: str,
 
 def rebuild_special_treatments(manga: Path, document: dict,
                                chapter: str) -> tuple[Path, dict, bool]:
+    with transaction_lock(Path(manga)):
+        return _rebuild_special_treatments(manga, document, chapter)
+
+
+def _rebuild_special_treatments(manga: Path, document: dict,
+                                chapter: str) -> tuple[Path, dict, bool]:
     """Refresh changed routing; identical projections retain processing status."""
     manga = Path(manga).resolve()
     check_path = check_manifest_path(manga, chapter)
@@ -110,15 +120,37 @@ def rebuild_special_treatments(manga: Path, document: dict,
     if target.is_file():
         existing = json.loads(target.read_text(encoding="utf-8"))
         if (isinstance(existing, dict) and existing.get("schema") == SCHEMA
-                and existing.get("source_check") == payload["source_check"]):
-            current = json.loads(json.dumps(existing))
-            for rows in [*current.get("treatments", {}).values(),
-                         current.get("unclassified", [])]:
-                if isinstance(rows, list):
-                    for row in rows:
-                        if isinstance(row, dict):
-                            row["status"] = "pending"
-            if current == payload:
+                and all(existing.get(key) == payload[key]
+                        for key in ("provider", "manga", "chapter"))):
+            _preserve_runtime_state(payload, existing)
+            for name in ("reexecution_history", "page_restoration_history"):
+                if name in existing:
+                    payload[name] = existing[name]
+            if existing == payload:
                 return target, existing, False
     _write_atomic(target, payload)
     return target, payload, True
+
+
+def _preserve_runtime_state(fresh: dict, existing: dict) -> None:
+    old_buckets = existing.get("treatments")
+    new_buckets = fresh.get("treatments")
+    if not isinstance(old_buckets, dict) or not isinstance(new_buckets, dict):
+        return
+    for treatment, rows in new_buckets.items():
+        old_rows = old_buckets.get(treatment)
+        if not isinstance(rows, list) or not isinstance(old_rows, list):
+            continue
+        previous = {(row.get("page"), row.get("id")): row for row in old_rows
+                    if isinstance(row, dict)}
+        for row in rows:
+            old = previous.get((row.get("page"), row.get("id")))
+            if not isinstance(old, dict) or _decision_fields(row) != _decision_fields(old):
+                continue
+            for field in _RUNTIME_FIELDS:
+                if field in old:
+                    row[field] = old[field]
+
+
+def _decision_fields(row: dict) -> dict:
+    return {key: value for key, value in row.items() if key not in _RUNTIME_FIELDS}

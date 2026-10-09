@@ -5,6 +5,7 @@ from processamento.unificacao_imagens import image_stitcher as v3
 from .cleaner import run_cleaner_v2
 from .artifact_migration import mirror_stage_chapter
 from .stages import LEVEL1, stage_chapter
+from .special_styled_transaction import transaction_lock
 
 def validate_selection(manga: Path, chapters: object) -> list[str]:
     if not isinstance(chapters, list) or not chapters or len(chapters) > 100:
@@ -98,7 +99,8 @@ def execute_merged_level1(manga: Path, chapters: list[str], progress, preflight=
         try:
             result["consolidated"] = rebuild_consolidated(manga, result["chapter"])
             from .final_consolidated import rebuild_final_baseline
-            result["consolidated_final"] = rebuild_final_baseline(manga, result["chapter"])
+            with transaction_lock(manga):
+                result["consolidated_final"] = rebuild_final_baseline(manga, result["chapter"])
         except Exception as exc:
             result.update(status="failed", error=f"Nível I foi gerado, mas a consolidação falhou: {exc}")
     return results

@@ -9,10 +9,17 @@ from .special_smooth_input import pending_pages, selected_input
 from .special_smooth_output import persist_smooth
 from .final_consolidated import promote_treatment_pages
 from .special_reexecution import prepare_reexecution, validate_reexecution
+from .special_styled_transaction import transaction_lock
 
 
 def execute_smooth(manga: Path, provider: str, chapters: list[str], progress,
                    *, retry: bool = False, reexecute: bool = False) -> list[dict]:
+    with transaction_lock(Path(manga)):
+        return _execute_smooth(manga, provider, chapters, progress,
+                               retry=retry, reexecute=reexecute)
+
+
+def _execute_smooth(manga, provider, chapters, progress, *, retry, reexecute):
     results = []
     for chapter_index, chapter in enumerate(chapters, 1):
         groups, persisted = None, False

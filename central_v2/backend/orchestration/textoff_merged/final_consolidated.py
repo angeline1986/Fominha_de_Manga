@@ -8,28 +8,31 @@ import shutil
 import tempfile
 
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
-
 from .artifact_paths import artifact_ref, prepare_artifact_dirs
 from .consolidated import consolidated_is_current
 from .consolidated_artifacts import consolidated_image
 from .final_consolidated_manifest import read_manifest, write_manifest
 from .level2_validation import promote_stage
 from .stages import LEVEL1, LEVEL2, stage_chapter
+from .special_styled_transaction import transaction_lock
 
 STAGE = "CONSOLIDADO_FINAL"
 SCHEMA = "textoff_consolidado_final_manifest_v1"
 MANIFEST = "final-manifest.json"
 PINCEL_STAGES = {"degrade": ("PINCEL_DEGRADE", "PINCEL_DEGRADE"),
+                 "estilizado": ("PINCEL_ARTISTICO", "PINCEL_ARTISTICO"),
                  "gradiente_suave": ("PINCEL_SUAVE", "PINCEL_SUAVE")}
 AUTOMATIC_ORIGINS = {LEVEL1: "AUTO_CLEANER", LEVEL2: "AUTO_CLEANER_TRANSPARENCIA"}
-TREATMENT_ORIGINS = {"degrade": "PINCEL_DEGRADE", "gradiente_suave": "PINCEL_SUAVE"}
+TREATMENT_ORIGINS = {key: value[1] for key, value in PINCEL_STAGES.items()}
 
 
 def final_manifest_path(manga: Path, chapter: str) -> Path:
     return stage_chapter(manga, STAGE, chapter, read_legacy=False) / "json" / MANIFEST
 
-
 def read_final_page(manga: Path, chapter: str, page: str) -> tuple[dict, Path, str]:
+    with transaction_lock(Path(manga)): return _read_final_page(manga, chapter, page)
+
+def _read_final_page(manga: Path, chapter: str, page: str) -> tuple[dict, Path, str]:
     folder = stage_chapter(manga, STAGE, chapter, read_legacy=False).resolve()
     manifest_path = final_manifest_path(manga, chapter).resolve()
     if not manifest_path.is_relative_to(folder) or not manifest_path.is_file():
@@ -45,7 +48,6 @@ def read_final_page(manga: Path, chapter: str, page: str) -> tuple[dict, Path, s
         raise ValueError("Imagem ou hash divergente no Consolidado Final.")
     return row, image, digest
 
-
 def resolve_final_input(manga: Path, chapter: str, page: str, expected_hash: str) -> dict:
     _row, image, manifest_hash = read_final_page(manga, chapter, page)
     digest = sha256(image)
@@ -55,7 +57,6 @@ def resolve_final_input(manga: Path, chapter: str, page: str, expected_hash: str
     return {"path": str(image), "sha256": digest, "level": "CONSOLIDADO_FINAL",
             "chapter": chapter, "filename": page, "manga": str(Path(manga).resolve()),
             "predecessors": [{"path": str(manifest), "sha256": manifest_hash}]}
-
 
 def rebuild_final_baseline(manga: Path, chapter: str) -> dict:
     if not consolidated_is_current(manga, chapter):
@@ -113,9 +114,14 @@ def rebuild_final_baseline(manga: Path, chapter: str) -> dict:
         promote_stage(staged, target)
     return {"chapter": chapter, "pages": len(pages), "manifest": str(final_manifest_path(manga, chapter))}
 
-
 def promote_treatment_pages(manga: Path, chapter: str, treatment: str,
                             records: dict, page_runs: list[dict]) -> dict:
+    with transaction_lock(Path(manga)): return _promote_treatment_pages(
+        manga, chapter, treatment, records, page_runs)
+
+
+def _promote_treatment_pages(manga: Path, chapter: str, treatment: str,
+                             records: dict, page_runs: list[dict]) -> dict:
     if treatment not in PINCEL_STAGES:
         raise ValueError("Tratamento sem promoção para o Consolidado Final.")
     target = stage_chapter(manga, STAGE, chapter, read_legacy=False).resolve()
@@ -168,7 +174,6 @@ def promote_treatment_pages(manga: Path, chapter: str, treatment: str,
             promote_stage(staged, target)
     return {"chapter": chapter, "pages_promoted": promoted}
 
-
 def _assert_input_unchanged(manga, chapter, source, manifest_path, manifest_hash):
     path = Path(source["path"]).resolve()
     if (not path.is_relative_to(Path(manga).resolve()) or not path.is_file()
@@ -186,7 +191,6 @@ def _load_existing(target, manga, chapter):
     if not manifest.is_file():
         raise ValueError("Consolidado Final existente sem manifesto.")
     return read_manifest(manifest, manga, chapter)
-
 
 def _payload(manga, chapter, pages, history, intermediate_hash):
     return {"schema": SCHEMA, "version": 1, "provider": Path(manga).parent.name,

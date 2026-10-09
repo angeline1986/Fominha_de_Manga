@@ -44,6 +44,11 @@ export const COMPARISON_MODES = Object.freeze({
     sides: ["before", "after"], panels: [["before", "ANTES"], ["after", "DEPOIS"]],
     catalogPanelIndex: 1,
   }),
+  artistico: Object.freeze({
+    layout: "pair", heading: "PINCEL & RETOQUES · ARTÍSTICO", title: "Revisão Artístico",
+    sides: ["before", "after"], panels: [["before", "ANTES"], ["after", "DEPOIS"]],
+    catalogPanelIndex: 1,
+  }),
 });
 
 export function level2StatusText(status) {

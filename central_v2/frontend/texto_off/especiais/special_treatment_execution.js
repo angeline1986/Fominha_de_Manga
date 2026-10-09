@@ -4,22 +4,25 @@ import { confirmMessage, showMessage, showOperationSummary } from "/_shared/mess
 
 function friendlyError(error, treatment) {
   const message = String(error?.message || "");
-  if (treatment === "degrade" && (message.includes("Nenhum componente autorizado intersecta")
+  if (["degrade", "estilizado"].includes(treatment) && (message.includes("Nenhum componente autorizado intersecta")
       || message.includes("{'type':"))) {
     return "Nenhum componente elegível pôde ser tratado nas áreas selecionadas.";
   }
-  return message || `Não foi possível concluir o tratamento ${treatment === "degrade" ? "Degradê" : "Suave"}.`;
+  const label = { degrade: "Degradê", estilizado: "Artístico",
+    gradiente_suave: "Suave" }[treatment] || treatment;
+  return message || `Não foi possível concluir o tratamento ${label}.`;
 }
 
 export function createSpecialTreatmentExecution({ setBusy, reload, progress, treatment, title, retryTitle }) {
   let busy = false;
-  return async (chapters, retry = false, reexecute = false) => {
+  return async (chapters, retry = false, reexecute = false, selections = undefined) => {
     if (busy || !chapters.length) return;
     const confirmed = await confirmMessage({
       title: reexecute ? `Reexecutar ${retryTitle || title}`
         : retry ? `Tentar novamente ${retryTitle || title}` : `Executar ${title}`,
       message: reexecute
-        ? `Existem resultados anteriores. A reexecução sincroniza o Manifesto Especial com o Check atual, usa as ROIs aprovadas agora e arquiva os resultados substituídos. Continuar?`
+        ? selections?.length ? `Substituir somente ${selections[0].id} em ${selections[0].page} (ROI ${JSON.stringify(selections[0].roi)}). Filtro atual: ${selections[0].current_filter}; solicitado: ${selections[0].requested_filter}. A entrada histórica será restaurada nessa ocorrência. Confira Antes e Depois em Revisar. Continuar?`
+          : `Existem resultados anteriores. A reexecução sincroniza o Manifesto Especial com o Check atual, usa as ROIs aprovadas agora e arquiva os resultados substituídos. Continuar?`
         : retry ? `Tentar novamente ${retryTitle || title} no capítulo selecionado?`
           : `Executar ${title} em ${chapters.length} capítulo(s) selecionado(s)?`,
       confirmText: reexecute ? "Reexecutar" : retry ? "Tentar novamente" : "Executar",
@@ -30,7 +33,10 @@ export function createSpecialTreatmentExecution({ setBusy, reload, progress, tre
       percent: 0, completed: 0, total: chapters.length });
     try {
       const { provider, manga } = getContext();
-      const { job } = await startSpecialTreatments(provider, manga, treatment, chapters, retry, reexecute);
+      const selected = selections?.map(({ chapter, page, id, expected_sha256 }) =>
+        ({ chapter, page, id, expected_sha256 }));
+      const { job } = await startSpecialTreatments(provider, manga, treatment, chapters, retry,
+        reexecute, ...(selected ? [selected] : []));
       const results = await waitForTextoffJob(job, (current) => {
         progress.update({ busy: true, ...(current.progress || {}) });
       });

@@ -16,6 +16,7 @@ from .auto_cleaner_check_sources import (
     SOURCE_NAMES, _initial_occurrences, _stale_sources, _with_source_health,
     source_snapshot,
 )
+from .special_styled_transaction import transaction_lock
 
 
 class StaleCheckSourcesError(ValueError):
@@ -83,6 +84,14 @@ def save_check_decision(manga: Path, document: dict, chapter: str,
                         pages: list[tuple[str, list[dict]]],
                         pairs: list[dict], source_snapshot_value: object) -> dict:
     """Persist page edits while retaining the chapter-wide initial suggestions."""
+    with transaction_lock(Path(manga)):
+        return _save_check_decision(manga, document, chapter, pages, pairs,
+                                    source_snapshot_value)
+
+
+def _save_check_decision(manga: Path, document: dict, chapter: str,
+                         pages: list[tuple[str, list[dict]]],
+                         pairs: list[dict], source_snapshot_value: object) -> dict:
     from .auto_cleaner_check_manifest import _validate_page
     if not pages:
         raise ValueError("O lote do Check não contém páginas.")

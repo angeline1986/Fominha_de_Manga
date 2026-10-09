@@ -5,7 +5,7 @@ import { createComparisonScreen } from "/texto_off/comparison/screen.js";
 
 export function canCompare(row, step, mode = comparisonModeForStep(step)) {
   if (mode === "level1" || mode === "level2" || mode === "before_after" || mode === "check") return row.cleaned === true;
-  if (mode === "degrade" || mode === "suave") return row.review_available === true;
+  if (["degrade", "suave", "artistico"].includes(mode)) return row.review_available === true;
   return row.comparison_available === true;
 }
 
@@ -27,10 +27,11 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
     scroll = origin.parentElement.scrollTop;
     screen = createComparisonScreen({ provider, manga, chapter: row.chapter, step,
       comparisonMode: mode, ...(scope ? { scope } : {}) }, close);
-    if (mode === "degrade" || mode === "suave") {
+    if (["degrade", "suave", "artistico"].includes(mode)) {
       const back = document.createElement("button");
       back.type = "button"; back.className = "btn comparison-back";
-      back.innerHTML = `${iconMarkup("back")} Voltar ao ${mode === "degrade" ? "Degradê" : "Suave"}`;
+      const label = { degrade: "Degradê", suave: "Suave", artistico: "Artístico" }[mode];
+      back.innerHTML = `${iconMarkup("back")} Voltar ao ${label}`;
       back.addEventListener("click", () => close());
       screen.element.querySelector(".comparison-page-heading").prepend(back);
     }

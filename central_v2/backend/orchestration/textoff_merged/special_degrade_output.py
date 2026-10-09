@@ -13,6 +13,7 @@ from central_v2.backend.orchestration.textoff_special.catalog import treatment_f
 from .artifact_paths import artifact_ref, prepare_artifact_dirs
 from .level2_validation import promote_stage
 from .stages import stage_chapter
+from .special_write_proof import persist_write_mask
 
 STAGE = "PINCEL_DEGRADE"
 MANIFEST = "degrade-manifest.json"
@@ -97,6 +98,9 @@ def persist_degrade(manga: Path, provider: str, chapter: str,
                 "output": {"artifact": output_ref, "sha256": output_hash},
                 "run_id": run["run_id"], "changed_pixels": run["validation"]["changed_pixels"],
             }
+            write_mask = persist_write_mask(staged, run, page)
+            if write_mask:
+                records[page]["write_mask"] = write_mask
             payload["pages"][page] = records[page]
         manifest_path.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         if sha256(special_path) != special_hash:

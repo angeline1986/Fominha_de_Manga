@@ -12,13 +12,16 @@ from .process import run_worker
 
 
 def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
-            approved_check_rois: bool = False, on_progress=None) -> dict:
+            approved_check_rois: bool = False, on_progress=None,
+            resolved_source: dict | None = None) -> dict:
     key = payload.get("treatment")
     treatment_for(key)
     python_for(key)
     selections = validate_selections(payload.get("selections"))
-    source = resolve_input(manga, payload.get("level"), payload.get("chapter"),
-                           payload.get("filename"), payload.get("expected_sha256"))
+    source = (resolve_input(manga, payload.get("level"), payload.get("chapter"),
+                            payload.get("filename"), payload.get("expected_sha256"))
+              if resolved_source is None else _validate_resolved_source(
+                  manga, payload, resolved_source))
     mask_sources = {}
     staging = staging.resolve()
     if staging.is_relative_to(manga.resolve()):
@@ -98,3 +101,18 @@ def _assert_masks_unchanged(sources: dict) -> None:
     for path, expected in sources.values():
         if sha256(path) != expected:
             raise ValueError("PROPOSTA_OBSOLETA: uma máscara de entrada mudou durante a execução.")
+
+
+def _validate_resolved_source(manga, payload, source):
+    path = Path(source.get("path", "")).resolve()
+    if (not path.is_relative_to(Path(manga).resolve()) or not path.is_file()
+            or source.get("sha256") != payload.get("expected_sha256")
+            or source.get("level") != payload.get("level")
+            or source.get("chapter") != payload.get("chapter")
+            or source.get("filename") != payload.get("filename")
+            or source.get("manga") != str(Path(manga).resolve())):
+        raise ValueError("Snapshot Artístico não pertence ao contexto autorizado.")
+    if sha256(path) != source["sha256"]:
+        raise ValueError("Snapshot Artístico ausente ou com hash divergente.")
+    assert_unchanged(source)
+    return source
