@@ -17,6 +17,7 @@ from .auto_cleaner_check_sources import (
     source_snapshot,
 )
 from .special_styled_transaction import transaction_lock
+from .auto_cleaner_check_images import freeze_check_images
 
 
 class StaleCheckSourcesError(ValueError):
@@ -104,6 +105,7 @@ def _save_check_decision(manga: Path, document: dict, chapter: str,
         existing = _read_check_manifest(path, document)
         approved = [dict(item) for item in existing["approved_occurrences"]]
         saved_snapshot = existing.get("source_snapshot", {})
+        saved_images = existing.get("image_snapshot")
     else:
         current_snapshot = source_snapshot(manga, document, chapter)
         if source_snapshot_value != current_snapshot:
@@ -112,6 +114,7 @@ def _save_check_decision(manga: Path, document: dict, chapter: str,
             )
         approved, _ = _initial_occurrences(manga, document, chapter, pairs, current_snapshot)
         saved_snapshot = current_snapshot
+        saved_images = freeze_check_images(manga, chapter, pairs)
     replacements = {page: [dict(row, page=page) for row in rows] for page, rows in pages}
     updated = [item for item in approved if item.get("page") not in replacements]
     for page in sorted(replacements):
@@ -122,6 +125,7 @@ def _save_check_decision(manga: Path, document: dict, chapter: str,
         "manga": document["obra"], "chapter": chapter,
         "updated_at": datetime.now(timezone.utc).isoformat(),
         "source_snapshot": saved_snapshot, "approved_occurrences": updated,
+        **({"image_snapshot": saved_images} if saved_images is not None else {}),
     }
     _write_atomic(path, payload)
     return payload

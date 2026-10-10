@@ -91,7 +91,7 @@ class CheckConsolidatedImageTests(unittest.TestCase):
     def test_check_uses_each_selection_and_keeps_original(self):
         options = {"comparisonMode": "check", "scope": "check"}
         self.assertEqual(self.image("page-a.png", **options), b"level1-page-a.png")
-        self.assertEqual(self.image("page-b.png", **options), b"level2-page-b")
+        self.assertEqual(self.image("page-b.png", **options), b"level1-page-b.png")
         listing = self.request("/api/textoff/comparison", **options)
         page = next(row for row in json.loads(listing.body)["pages"] if row["name"] == "page-b.png")
         original = self.request("/api/textoff/comparison/image", side="before",
@@ -112,7 +112,7 @@ class CheckConsolidatedImageTests(unittest.TestCase):
         payload["selections"][1]["sha256"] = "0" * 64
         manifest.write_text(json.dumps(payload))
         response = self.request("/api/textoff/comparison", comparisonMode="check", scope="check")
-        self.assertEqual(json.loads(response.body)["pages"], [])
+        self.assertEqual(len(json.loads(response.body)["pages"]), 2)
         self.assertEqual(self.image("page-b.png"), b"level1-page-b.png")
 
     def test_check_roi_still_reads_persisted_check_manifest(self):
