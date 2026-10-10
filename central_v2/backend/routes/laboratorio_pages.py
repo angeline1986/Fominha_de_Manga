@@ -54,7 +54,9 @@ def _images(folder):
 def response(query, output_root, *, image=False):
     try:
         provider, name = _arg(query, "provider"), _arg(query, "manga")
-        if _arg(query, "browse") == "1":
+        if _arg(query, "browse_image") == "1" and image:
+            return _browse_image(output_root, provider, name, _arg(query, "path"))
+        if _arg(query, "browse") == "1" and not image:
             return _browse(output_root, provider, name, _arg(query, "path"))
         image_root = _directory(output_root, provider, name, _arg(query, "source") or "img")
         if not image_root.is_dir():
@@ -114,3 +116,20 @@ def _browse(output_root, provider, name, relative_path):
         entries.append({"name": child.name, "type": kind,
                         "path": "/".join([*fragments, child.name])})
     return _json({"directory": str(folder), "path": "/".join(fragments), "entries": entries})
+
+
+def _browse_image(output_root, provider, name, relative_path):
+    """Serve imagens do explorador sem aceitar caminhos fora da obra."""
+    if name not in build_catalog(output_root).get(provider, []):
+        raise ValueError("Obra fora do catálogo.")
+    manga = resolve_manga(output_root, provider, name).resolve()
+    fragments = relative_path.split("/")
+    if (not fragments or any(part in {"", ".", ".."} for part in fragments)
+            or "\\" in relative_path):
+        raise ValueError("Caminho inválido.")
+    target = manga.joinpath(*fragments).resolve()
+    if (not target.is_relative_to(manga) or not target.is_file()
+            or target.suffix.lower() not in IMAGE_EXTENSIONS):
+        raise ValueError("Imagem indisponível.")
+    return RouteResponse(200, target.read_bytes(),
+                         mimetypes.guess_type(target.name)[0] or "image/png")

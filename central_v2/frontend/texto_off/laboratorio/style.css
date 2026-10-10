@@ -30,3 +30,23 @@
 .lab-explorer-path {padding:10px 16px;background:#f3fafe;font-size:11px;overflow-wrap:anywhere}
 .lab-explorer-list {display:grid;gap:5px;max-height:50vh;overflow:auto;padding:12px}
 .lab-page .lab-explorer-list button {text-align:left;white-space:normal;overflow-wrap:anywhere;background:white}
+
+/* Laboratório: toolbar, painel recolhível e preview, sem afetar a Central. */
+.lab-page .lab-actions[hidden], .lab-explorer-hover-preview[hidden] { display:none !important; }
+.lab-page:not(.lab-panel-open) .lab-columns { grid-template-columns:255px minmax(0,1fr) !important; }
+.lab-page.lab-panel-open .lab-columns { grid-template-columns:255px minmax(0,1fr) 295px !important; }
+.lab-page .lab-tool-group { flex:0 0 auto; }
+.lab-page .lab-toolbar > div:first-child { min-width:0; }
+.lab-page .lab-toolbar .lab-muted { white-space:nowrap;overflow:hidden;text-overflow:ellipsis; }
+.lab-page .lab-panel-toggle { background:#fff;white-space:nowrap; }
+.lab-page .lab-close-panel {padding:2px 8px;background:#fff; }
+.lab-page .lab-cards { transform:scale(var(--lab-view-zoom,1));transform-origin:top center; }
+.lab-page.lab-focus-mode .lab-columns { grid-template-columns:minmax(0,1fr) !important; }
+.lab-page.lab-focus-mode .lab-pages, .lab-page.lab-focus-mode .lab-actions { display:none !important; }
+.lab-explorer-hover-preview { position:fixed;z-index:2147483600;width:220px;max-height:320px;padding:7px;background:white;border:1px solid #b7dcef;border-radius:8px;box-shadow:0 12px 25px #002d4930;pointer-events:none; }
+.lab-explorer-hover-preview img {display:block;width:100%;max-height:300px;object-fit:contain;}
+@media(max-width:900px){.lab-page:not(.lab-panel-open) .lab-columns{grid-template-columns:210px minmax(0,1fr) !important}.lab-page.lab-panel-open .lab-columns{grid-template-columns:210px minmax(0,1fr) 260px !important}}
+
+/* laboratorio-selectores-compactos-v2 */
+.lab-page-selectors { grid-template-columns: 78px minmax(0, 1fr) 34px; align-items: center; gap: 6px; }
+.lab-page-selectors > select { min-width: 0; width: 100%; }

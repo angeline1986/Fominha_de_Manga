@@ -16,8 +16,8 @@ export function render(container) {
         <div class="lab-panel-head"><strong>Páginas</strong><div class="lab-source-toggle" role="group" aria-label="Origem das imagens"><button type="button" data-lab-source="img" class="is-active" aria-pressed="true">IMG</button><button type="button" data-lab-source="merge" aria-pressed="false">MERGE</button></div></div>
         <div class="lab-pages-body">
           <div class="lab-page-selectors">
-            <label class="lab-select-chapter"><span>Cap.</span><select data-lab-chapter aria-label="Selecionar capítulo"><option value="">—</option></select></label>
-            <label class="lab-select-page"><span>Página</span><select data-lab-page aria-label="Selecionar página" disabled><option value="">Página</option></select></label>
+            <select class="lab-select-chapter" data-lab-chapter aria-label="Selecionar capítulo"><option value="">Cap.</option></select>
+            <select class="lab-select-page" data-lab-page aria-label="Selecionar página" disabled><option value="">Pág.</option></select>
             <button type="button" data-lab-explore class="lab-explore-button" title="Explorar arquivos da obra" aria-label="Explorar arquivos da obra">📂</button>
           </div>
           <div class="lab-page-list" data-lab-list aria-label="Páginas do capítulo"></div>
@@ -32,7 +32,7 @@ export function render(container) {
       </aside>
       <main class="lab-workspace">
         <div class="lab-toolbar"><div><strong>Laboratório</strong><div class="lab-muted">Uma imagem original · três tratamentos independentes</div></div>
-          <div class="lab-tool-group"><button disabled type="button">−</button><span>40%</span><button disabled type="button">+</button><button disabled type="button">1:1</button><button disabled type="button">Foco</button></div>
+          <div class="lab-tool-group"><button disabled type="button">−</button><span>40%</span><button disabled type="button">+</button><button disabled type="button">1:1</button><button disabled type="button" aria-label="Foco" title="Foco"><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button></div>
         </div>
         <div class="lab-stage">
           <div class="lab-cards">
@@ -51,6 +51,65 @@ export function render(container) {
       </aside>
     </div>`;
   container.replaceChildren(root);
+
+  // Ferramentas isoladas da tela: não interferem em outros visualizadores.
+  const toolbar = root.querySelector(".lab-tool-group");
+  const panel = root.querySelector(".lab-actions");
+  const panelToggle = document.createElement("button");
+  panelToggle.type = "button";
+  panelToggle.textContent = "Painel";
+  panelToggle.className = "lab-panel-toggle";
+  panelToggle.setAttribute("aria-expanded", "false");
+  panelToggle.setAttribute("aria-pressed", "false");
+  toolbar.append(panelToggle);
+  root.classList.remove("lab-panel-open");
+  panel.hidden = true;
+  const closePanel = document.createElement("button");
+  closePanel.type = "button";
+  closePanel.className = "lab-close-panel";
+  closePanel.textContent = "×";
+  closePanel.title = "Fechar painel";
+  closePanel.setAttribute("aria-label", "Fechar painel");
+  panel.querySelector(".lab-panel-head").append(closePanel);
+  function setPanel(open) {
+    root.classList.toggle("lab-panel-open", open);
+    panel.hidden = !open;
+    panelToggle.setAttribute("aria-expanded", String(open));
+    panelToggle.setAttribute("aria-pressed", String(open));
+  }
+  panelToggle.addEventListener("click", () => setPanel(!root.classList.contains("lab-panel-open")));
+  closePanel.addEventListener("click", () => setPanel(false));
+
+  const focusButton = toolbar.querySelector("button[title='Foco'], button[aria-label='Foco']")
+    || [...toolbar.querySelectorAll("button")].find((button) => button.textContent.trim() === "Foco");
+  if (focusButton) {
+    focusButton.disabled = false;
+    focusButton.setAttribute("aria-label", "Modo Foco");
+    focusButton.setAttribute("aria-pressed", "false");
+    focusButton.title = "Modo Foco";
+    focusButton.addEventListener("click", () => {
+      const active = root.classList.toggle("lab-focus-mode");
+      focusButton.setAttribute("aria-pressed", String(active));
+    });
+  }
+  // Os botões de zoom passam a controlar a escala do espaço de visualização.
+  const zoomButtons = [...toolbar.querySelectorAll("button")].filter((button) =>
+    ["−", "+", "1:1"].includes(button.textContent.trim()));
+  const zoomOutput = toolbar.querySelector("span");
+  let zoom = 40;
+  const updateZoom = () => {
+    if (zoomOutput) zoomOutput.textContent = `${zoom}%`;
+    root.style.setProperty("--lab-view-zoom", String(zoom / 40));
+  };
+  for (const button of zoomButtons) {
+    button.disabled = false;
+    button.addEventListener("click", () => {
+      const action = button.textContent.trim();
+      zoom = action === "1:1" ? 100 : Math.max(30, Math.min(200, zoom + (action === "+" ? 10 : -10)));
+      updateZoom();
+    });
+  }
+  updateZoom();
 
   const pageSize = 13;
   const chapterSelect = root.querySelector("[data-lab-chapter]");
@@ -92,7 +151,7 @@ export function render(container) {
     next.disabled = currentPage >= count - 1;
     counter.textContent = `${currentPage + 1} / ${count}`;
 
-    pageSelect.replaceChildren(new Option("Página", ""));
+    pageSelect.replaceChildren(new Option("Pág.", ""));
     all.forEach((page) => pageSelect.add(new Option(page.name, page.name)));
     pageSelect.disabled = all.length === 0;
     pageSelect.value = all.some((page) => page.name === selectedName) ? selectedName : "";
@@ -145,9 +204,8 @@ export function render(container) {
         previewUrl: typeof p.previewUrl === "string" ? p.previewUrl : "",
       }));
     });
-    chapterSelect.replaceChildren();
+    chapterSelect.replaceChildren(new Option("Cap.", ""));
     Object.keys(pagesByChapter).forEach((chapter) => chapterSelect.add(new Option(chapter, chapter)));
-    if (!chapterSelect.options.length) chapterSelect.add(new Option("—", ""));
     currentPage = 0;
     selectedName = "";
     draw();
@@ -184,7 +242,19 @@ export function render(container) {
   let browserController;
   let browserSerial = 0;
   let browserPath = "";
+  const explorerPreview = document.createElement("aside");
+  explorerPreview.className = "lab-explorer-hover-preview";
+  explorerPreview.hidden = true;
+  const explorerPreviewImage = document.createElement("img");
+  explorerPreviewImage.alt = "Prévia do arquivo";
+  explorerPreview.append(explorerPreviewImage);
+  document.body.append(explorerPreview);
+  function hideExplorerPreview() {
+    explorerPreview.hidden = true;
+    explorerPreviewImage.removeAttribute("src");
+  }
   async function browse(path = "") {
+    hideExplorerPreview();
     const { provider, manga } = getContext();
     if (!provider || !manga) { explorerList.textContent = "Selecione uma obra."; return; }
     browserController?.abort();
@@ -200,7 +270,8 @@ export function render(container) {
       if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
       if (id !== browserSerial || !dialog.open) return;
       browserPath = payload.path;
-      explorerPath.textContent = payload.directory;
+      // O caminho absoluto não é exibido.
+      explorerPath.textContent = `${provider}/${manga}${browserPath ? `/${browserPath}` : ""}`;
       explorerList.replaceChildren();
       if (browserPath) {
         const up = document.createElement("button");
@@ -242,6 +313,21 @@ export function render(container) {
             root.dispatchEvent(new CustomEvent("laboratorio:source", { detail: { source } }));
           }
         });
+        if (item.type === "file") {
+          const showExplorerPreview = () => {
+            const args = new URLSearchParams({ provider, manga, browse_image: "1", path: item.path });
+            explorerPreviewImage.src = `/api/textoff/laboratorio/pages/image?${args}`;
+            explorerPreview.hidden = false;
+            const rect = button.getBoundingClientRect();
+            const left = Math.min(window.innerWidth - 250, rect.right + 12);
+            explorerPreview.style.left = `${Math.max(8, left)}px`;
+            explorerPreview.style.top = `${Math.max(8, Math.min(rect.top, window.innerHeight - 340))}px`;
+          };
+          button.addEventListener("mouseenter", showExplorerPreview);
+          button.addEventListener("focus", showExplorerPreview);
+          button.addEventListener("mouseleave", hideExplorerPreview);
+          button.addEventListener("blur", hideExplorerPreview);
+        }
         explorerList.append(button);
       }
     } catch (error) {
@@ -250,7 +336,7 @@ export function render(container) {
   }
   explorerButton.addEventListener("click", () => { dialog.showModal(); browse(""); });
   root.querySelector("[data-lab-explorer-close]").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("close", () => { browserController?.abort(); });
+  dialog.addEventListener("close", () => { browserController?.abort(); hideExplorerPreview(); });
   draw();
   const disconnect = connectLaboratorio(root);
 
@@ -258,6 +344,8 @@ export function render(container) {
     disposed = true;
     disconnect();
     browserController?.abort();
+    hideExplorerPreview();
+    explorerPreview.remove();
     dialog.close();
     root.removeEventListener("laboratorio:pages", loadPages);
     if (root.parentNode === container) root.remove();
