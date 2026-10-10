@@ -140,4 +140,9 @@
 }
 
 /* BubbleSommelier sidebar width v2 */
-.app-body { --sidebar-width: 305px; }
+.app-body { --sidebar-width: 310px; }
+
+/* Largura total da coluna de navegacao (nao altera o modo recolhido). */
+.app-body:not(:has(.app-sidebar.is-collapsed)) {
+  grid-template-columns: 310px minmax(0, 1fr);
+}

@@ -1,3 +1,16 @@
+/* Laboratorio: botao compacto, sem seta e sem sombra. */
+.drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"],
+.drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"]:hover,
+.drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"]:focus-visible {
+  min-height: 38px;
+  padding: 7px 12px;
+  border-radius: 7px;
+  box-shadow: none;
+}
+.drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"] .drill-action-arrow {
+  display: none;
+}
+
 .drill-navigation.is-limpeza-baloes .drill-action-sommelier {
   min-height: 62px;
   padding: 10px 12px;

@@ -47,6 +47,10 @@ export const routes = {
     context: "texto-off",
     module: "/texto_off/check/index.js",
   },
+  "laboratorio": {
+    context: "texto-off",
+    module: "/texto_off/laboratorio/index.js",
+  },
   "texto-off-merged-i": {
     context: "texto-off",
     module: "/texto_off/merged/level1.js",

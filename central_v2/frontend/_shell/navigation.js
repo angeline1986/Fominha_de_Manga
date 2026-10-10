@@ -100,7 +100,7 @@ export const navigation = [
         control: {
           type: "timeline-segmented",
           id: "textoff-transparency",
-          label: "Auto-Cleaner: Transparência",
+          label: "Auto-Cleaner: Glass",
           defaultValue: "normal",
           icon: "sparkles",
           tooltip: "Tratamento de balões translúcidos",
@@ -116,6 +116,12 @@ export const navigation = [
               tooltip: "Passo 4 — Transparência Legada" },
           ],
         },
+      },
+      {
+        label: "",
+        items: [
+          { id: "laboratorio", label: "Laboratório", icon: "highlighter", variant: "primary" },
+        ],
       },
       {
         label: "PINCEL & RETOQUES DE ARTE",
