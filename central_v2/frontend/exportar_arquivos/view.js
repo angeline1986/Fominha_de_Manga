@@ -1,0 +1,143 @@
+import { getContext, subscribeContext } from "/_app/state/context.js";
+import { KINDS, mb, invalidate, api, post } from "/exportar_arquivos/state.js";
+import { confirmMessage, showMessage } from "/_shared/messages/messages.js";
+import { createDirectoryBrowser } from "/exportar_arquivos/browser.js";
+
+export function createExportView(container) {
+  const style = document.createElement("link");
+  style.rel = "stylesheet";
+  style.href = "/exportar_arquivos/style.css";
+  document.head.append(style);
+  const root = document.createElement("section");
+  root.className = "export-v2";
+  root.innerHTML = `
+    <div class="export-heading"><h1>Exportar arquivos</h1><span tabindex="0" role="note" title="Simule e revise os arquivos antes de exportar. Conflitos impedem a cópia.">ⓘ</span></div>
+    <div class="export-split">
+      <section class="export-config" aria-label="Configuração de exportação">
+        <header class="export-title-row"><strong>Configuração</strong><span data-manga class="export-manga">Selecione uma obra</span></header>
+        <div class="export-field"><label for="export-dest">Diretório pai de destino</label>
+          <div class="export-path-row"><input id="export-dest" data-dest readonly placeholder="Escolha uma pasta de destino" title="Caminho do destino" />
+          <button type="button" data-browse class="export-secondary export-icon-button" aria-label="Explorar pastas" title="Explorar pastas"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg></button></div>
+          <small>A pasta da obra será criada automaticamente dentro do destino escolhido.</small>
+        </div>
+        <fieldset class="export-contents"><legend>Conteúdo para exportar</legend>
+          ${KINDS.map(k => `<label class="export-content"><input type="checkbox" data-kind="${k.key}" checked />
+            <span class="export-content-body"><strong>${k.label}</strong><small>Destino: <code>${k.dest}/</code></small></span>
+            <span class="export-item-count" data-count="${k.key}">—</span></label>`).join("")}
+        </fieldset>
+        <div class="export-exclusions"><strong>Exclusões automáticas</strong><div><code>*_mask.png</code><code>*.json</code><code>.DS_Store</code></div></div>
+        <footer class="export-actions"><span data-available>2 origens disponíveis para seleção</span>
+          <button type="button" class="export-primary" data-simulate>Simular exportação</button></footer>
+      </section>
+      <aside class="export-inspector" aria-label="Inspeção da exportação">
+        <header><strong>Inspeção da exportação</strong><span data-total>Sem simulação</span></header>
+        <div class="export-tree" data-tree></div>
+        <div class="export-summary" data-summary></div>
+        <div class="export-state" data-state role="status" aria-live="polite">Escolha um destino e simule para conferir arquivos e conflitos.</div>
+        <button type="button" class="export-primary export-execute" data-execute disabled>Exportar arquivos</button>
+      </aside>
+    </div>
+  `;
+  container.replaceChildren(root);
+  const browser = createDirectoryBrowser(root, path => { state.destination = path; changed(); });
+  const $ = q => root.querySelector(q);
+  const state = { destination: "", plan: null, result: null, busy: false, disposed: false };
+  const kinds = () => [...root.querySelectorAll("[data-kind]:checked")].map(el => el.dataset.kind);
+  const status = message => { $("[data-state]").textContent = message; };
+  function displayDestination(path) {
+    if (!path) return { name: "", description: "Escolha uma pasta de destino" };
+    const parts = path.replace(/\\/g, "/").split("/").filter(Boolean);
+    const name = parts.at(-1) || "";
+    const isDefault = parts.slice(-3).join("/") === "03_Novel/01_MANGA/Staff_Berry" &&
+      parts.some(part => part === "Meu Drive" || part === "My Drive" || part.startsWith("GoogleDrive-"));
+    const description = isDefault ? "Meu Drive/03_Novel/01_MANGA/Staff_Berry" : parts.slice(-3).join("/");
+    return { name, description };
+  }
+  function render() {
+    const ctx = getContext();
+    $("[data-manga]").textContent = ctx.manga || "Selecione uma obra";
+    const destination = displayDestination(state.destination);
+    $("[data-dest]").value = destination.name ? `📁  ${destination.name}` : "";
+    $("[data-dest]").title = destination.description;
+    $("[data-dest]").setAttribute("aria-label", `Destino: ${destination.description}`);
+    const selected = kinds();
+    const plan = state.plan;
+    const summary = plan?.summary || {};
+    for (const kind of KINDS) {
+      const s = summary[kind.key];
+      $(`[data-count="${kind.key}"]`).textContent = s ? `${s.files} arq · ${mb(s.bytes)}` : "—";
+    }
+    const tree = $("[data-tree]"); tree.replaceChildren();
+    const rootNode = document.createElement("strong"); rootNode.textContent = `${ctx.manga || "Obra"}/`; tree.append(rootNode);
+    for (const k of KINDS.filter(k => selected.includes(k.key))) {
+      const row = document.createElement("div"); row.className = "export-tree-row";
+      const name = document.createElement("span"); name.textContent = `└── ${k.dest}/`;
+      const count = document.createElement("span"); count.textContent = summary[k.key] ? `${summary[k.key].files} arquivos` : "Aguardando simulação";
+      row.append(name, count); tree.append(row);
+    }
+    if (!selected.length) { const blank = document.createElement("small"); blank.textContent = "Nenhum conteúdo selecionado."; tree.append(blank); }
+    $("[data-total]").textContent = plan ? `${plan.total_files} arq · ${mb(plan.total_bytes)}` : "Sem simulação";
+    const metrics = $("[data-summary]"); metrics.replaceChildren();
+    if (plan) for (const [title, count] of [["Novos", plan.new_files], ["Idênticos", plan.identical_files], ["Conflitos", plan.conflicts]]) {
+      const cell = document.createElement("div"); const value = document.createElement("strong");
+      value.textContent = String(count); const label = document.createElement("span"); label.textContent = title;
+      cell.append(value, label); metrics.append(cell);
+    }
+    $("[data-simulate]").disabled = state.busy || !ctx.manga || !state.destination || !selected.length;
+    $("[data-browse]").disabled = state.busy;
+    root.querySelectorAll("[data-kind]").forEach(box => { box.disabled = state.busy; });
+    $("[data-execute]").disabled = state.busy || !plan?.can_export || !plan.plan_id;
+    $("[data-available]").textContent = `${selected.length} conteúdo(s) selecionado(s)`;
+  }
+  function changed() { invalidate(state); status("Configuração alterada. Simule novamente antes de exportar."); render(); }
+  root.querySelectorAll("[data-kind]").forEach(box => box.addEventListener("change", changed));
+  const unsubscribe = subscribeContext(() => { changed(); });
+  $("[data-browse]").addEventListener("click", () => browser.open(state.destination));
+  $("[data-simulate]").addEventListener("click", async () => {
+    const { provider, manga } = getContext(); const selected = kinds();
+    state.busy = true; invalidate(state); status("Simulando exportação e conferindo os arquivos…"); render();
+    try {
+      state.plan = await post("/api/export/simulate", { provider, manga, destination: state.destination, contents: selected });
+      status(state.plan.conflicts ? `${state.plan.conflicts} conflito(s). A exportação está bloqueada.` :
+        state.plan.can_export ? `${state.plan.new_files} arquivo(s) novo(s). Pronto para exportar.` : "Arquivos já exportados. Nenhuma cópia necessária.");
+    } catch (e) { status(`Falha na simulação: ${e.message}`); }
+    finally { state.busy = false; render(); }
+  });
+  async function confirmExport() {
+    return confirmMessage({ title: "Confirmar exportação",
+      message: `Copiar ${state.plan?.new_files || 0} arquivo(s) para a pasta da obra? Arquivos existentes serão preservados.`,
+      confirmText: "Exportar arquivos" });
+  }
+  $("[data-execute]").addEventListener("click", async () => {
+    if (!state.plan?.can_export || state.busy || !await confirmExport()) return;
+    const { provider, manga } = getContext(); const plan_id = state.plan.plan_id;
+    state.busy = true; status("Exportando arquivos…"); render();
+    try { const r = await post("/api/export/execute", { provider, manga, plan_id });
+      invalidate(state); status(`Exportação concluída: ${r.copied} arquivo(s) copiado(s), ${r.unchanged} preservado(s).`);
+      await showMessage({ title: "Exportação concluída", message: `${r.copied} arquivo(s) copiado(s), ${r.unchanged} preservado(s).` });
+    } catch (e) { invalidate(state); status(`Falha na exportação: ${e.message}. Simule novamente.`); }
+    finally { state.busy = false; render(); }
+  });
+  // Resolves the mounted Google Drive path; never submit the display alias to the exporter.
+  const defaultRequest = new AbortController();
+  async function loadDefaultDestination() {
+    try {
+      const result = await api("/api/export/default-destination", { signal: defaultRequest.signal });
+      if (state.disposed || state.destination) return;
+      if (result.available && result.path) {
+        state.destination = result.path;
+        status("Destino padrão selecionado. Simule antes de exportar.");
+      } else {
+        status(result.warning || "Destino padrão indisponível. Escolha outra pasta.");
+      }
+      render();
+    } catch (error) {
+      if (!state.disposed && error.name !== "AbortError") {
+        status(`Destino padrão indisponível: ${error.message}. Escolha uma pasta.`);
+      }
+    }
+  }
+  loadDefaultDestination();
+  render();
+  return () => { defaultRequest.abort(); state.disposed = true; unsubscribe(); browser.dispose(); style.remove(); root.remove(); };
+}

@@ -10,6 +10,9 @@ from central_v2.backend.routes.auto_merge.level4 import execute_level4_response,
 from central_v2.backend.routes.auto_merge.level5 import execute_level5_response, level5_response
 from central_v2.backend.routes.auto_merge.folder import open_auto_merge_folder_response
 from central_v2.backend.routes.catalog import catalog_response
+from central_v2.backend.routes.export_files import directory_response, export_response
+from central_v2.backend.routes.export_browser import response as export_browser_response
+from central_v2.backend.routes.export_browser import default_destination_response
 from central_v2.backend.routes.pdf_execute import execute_pdf_response
 from central_v2.backend.routes.pdf_catalog import response as pdf_catalog_response
 from central_v2.backend.routes.health import health_response
@@ -55,6 +58,15 @@ def dispatch_get(
             status=200,
             body=health_response(),
         )
+
+    if request.path == "/api/export/default-destination":
+        return default_destination_response()
+
+    if request.path == "/api/export/browse":
+        return export_browser_response(parse_qs(request.query))
+
+    if request.path == "/api/export/select-directory":
+        return directory_response()
 
     if request.path == "/api/pdf":
         return pdf_catalog_response(parse_qs(request.query), output_root)
@@ -177,6 +189,8 @@ def dispatch_get(
 
 
 def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
+    if urlparse(path).path in {"/api/export/simulate", "/api/export/execute"}:
+        return export_response(urlparse(path).path.rsplit("/", 1)[-1], payload, output_root)
     if urlparse(path).path == "/api/pdf/execute":
         return execute_pdf_response(payload, output_root)
     if path == "/api/shutdown":

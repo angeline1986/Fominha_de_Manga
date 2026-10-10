@@ -1,0 +1,55 @@
+.export-v2{max-width:1160px;margin:0 auto;color:var(--color-text);font-family:var(--font-family)}
+.export-heading{display:flex;align-items:center;gap:8px;margin:0 0 14px}
+.export-heading h1{margin:0!important;font-size:var(--font-size-title)}
+.export-heading span{color:var(--color-text-secondary);cursor:help}
+.export-split{display:grid;grid-template-columns:minmax(0,42fr) minmax(0,58fr);border:1px solid var(--color-border);border-radius:14px;overflow:hidden;background:var(--color-surface);box-shadow:0 12px 36px rgba(12,69,90,.06)}
+.export-config,.export-inspector{min-width:0;padding:24px;display:flex;flex-direction:column;gap:22px}
+.export-inspector{background:var(--color-background);border-left:1px solid var(--color-border);gap:18px}
+.export-title-row,.export-inspector header{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.export-title-row>strong,.export-inspector header>strong{font-size:14px;color:var(--color-text)}
+.export-manga{max-width:55%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:5px 9px;border-radius:7px;border:1px solid var(--color-border-primary);background:var(--color-primary-soft);color:var(--color-primary-hover);font-size:12px}
+.export-field{display:grid;gap:8px}.export-field>label,.export-contents legend,.export-exclusions>strong{font-size:11px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--color-text-muted)}
+.export-path-row{display:flex;gap:8px;min-width:0}.export-path-row input{flex:1;min-width:0;padding:0 12px;height:var(--control-height);border:1px solid var(--color-border-primary);background:var(--color-background);color:var(--color-text);border-radius:var(--radius-control);font:var(--font-size-control) var(--font-family);font-weight:var(--font-weight-semibold);text-overflow:ellipsis;cursor:default}
+.export-field small{font-size:11px;color:var(--color-text-muted)}
+.export-v2 button{font-family:inherit;font-size:12px;border-radius:var(--radius-control);padding:9px 12px;cursor:pointer;white-space:nowrap;transition:background .15s,border-color .15s}
+.export-v2 button:disabled{opacity:.45;cursor:not-allowed}.export-v2 button:focus-visible,.export-v2 input:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px}
+.export-secondary{border:1px solid var(--color-border-primary);color:var(--color-primary-hover);background:var(--color-surface)}
+.export-secondary:not(:disabled):hover{background:var(--color-primary-soft)}
+.export-primary{border:1px solid var(--color-primary);background:var(--color-primary);color:var(--color-surface);font-weight:600}
+.export-primary:not(:disabled):hover{background:var(--color-primary-hover)}
+.export-contents{min-width:0;border:0;margin:0;padding:0;display:grid;gap:9px}.export-contents legend{margin-bottom:10px}
+.export-content{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1px solid var(--color-border);border-radius:10px;cursor:pointer;min-width:0;background:var(--color-surface)}
+.export-content:hover{background:var(--color-primary-soft)}.export-content input{accent-color:var(--color-primary);width:16px;height:16px;margin-top:2px}
+.export-content-body{display:grid;gap:5px;flex:1;min-width:0}.export-content-body strong{font-size:12px;color:var(--color-text)}
+.export-content-body small{font-size:11px;color:var(--color-text-muted)}.export-content-body code,.export-exclusions code{font:11px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--color-primary-soft);padding:3px 5px;border-radius:5px;color:var(--color-primary-hover)}
+.export-item-count{color:var(--color-text-muted);font-size:11px;text-align:right;white-space:nowrap}
+.export-exclusions{display:grid;gap:10px}.export-exclusions>div{display:flex;flex-wrap:wrap;gap:7px}
+.export-actions{margin-top:auto;padding-top:16px;border-top:1px solid var(--color-border);display:flex;align-items:center;justify-content:space-between;gap:10px}
+.export-actions>span,.export-inspector header>span{font-size:11px;color:var(--color-text-muted)}
+.export-tree{border:1px solid var(--color-border);border-radius:10px;background:var(--color-surface);padding:17px;display:grid;gap:12px;font:12px ui-monospace,SFMono-Regular,Menlo,monospace;min-height:142px}
+.export-tree>strong{font-size:13px;overflow-wrap:anywhere}.export-tree-row{display:flex;justify-content:space-between;gap:10px;border-left:1px solid var(--color-border-primary);padding-left:12px;margin-left:7px;overflow-wrap:anywhere}.export-tree-row>span:last-child{white-space:nowrap;color:var(--color-text-muted);font-size:11px}
+.export-summary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.export-summary:empty{display:none}.export-summary>div{border:1px solid var(--color-border);background:var(--color-surface);padding:12px 8px;border-radius:9px;display:grid;gap:4px;text-align:center}
+.export-summary strong{font-size:20px;color:var(--color-primary-hover)}.export-summary span{font-size:11px;color:var(--color-text-muted)}
+.export-state{border:1px solid var(--color-border-primary);border-radius:10px;background:var(--color-primary-soft);color:var(--color-primary-hover);font-size:12px;line-height:1.6;padding:12px;overflow-wrap:anywhere}
+.export-execute{margin-top:auto;align-self:flex-end}
+@media(max-width:850px){.export-split{grid-template-columns:1fr}.export-inspector{border-left:0;border-top:1px solid var(--color-border)}.export-config,.export-inspector{padding:16px}.export-actions{flex-wrap:wrap}}
+
+/* Navegador de pastas — tokens oficiais da Central V2 */
+.export-icon-button{flex:0 0 36px;width:36px;height:36px;display:grid;place-items:center;padding:0!important}
+.export-icon-button span{font-size:23px;line-height:1;transform:rotate(0deg)}
+.export-browser{width:min(690px,calc(100vw - 32px));max-height:min(650px,calc(100dvh - 32px));padding:0;border:1px solid var(--color-border-primary);border-radius:14px;background:var(--color-surface);color:var(--color-text);box-shadow:var(--shadow-progress)}
+.export-browser::backdrop{background:rgba(12,69,90,.28)}
+.export-browser-head{display:flex;justify-content:space-between;align-items:center;padding:17px 18px;border-bottom:1px solid var(--color-border)}
+.export-browser-head h2{margin:0;font-size:var(--font-size-dialog-title)}
+.export-browser-body{padding:14px 18px;display:grid;gap:12px}
+.export-browser-breadcrumb{font:12px ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--color-text-muted);overflow-wrap:anywhere}
+.export-browser-list{display:grid;align-content:start;gap:3px;min-height:170px;max-height:320px;overflow:auto;border:1px solid var(--color-border);border-radius:9px;padding:7px}
+.export-browser-list button{width:100%;text-align:left;display:flex;align-items:center;gap:9px;background:transparent;border:0;padding:9px;color:var(--color-text);border-radius:7px;cursor:pointer}
+.export-browser-list button:hover,.export-browser-list button:focus-visible{background:var(--color-primary-soft)}
+.export-browser-list button:disabled{opacity:.5;cursor:default}
+.export-browser-foot{display:flex;align-items:center;justify-content:flex-end;gap:8px;padding:12px 18px;border-top:1px solid var(--color-border)}
+.export-browser button{font:inherit;font-size:12px;border-radius:var(--radius-control);cursor:pointer}
+.export-browser-close,.export-browser-up{border:1px solid var(--color-border-primary);background:var(--color-surface);color:var(--color-primary-hover);padding:8px 12px}
+.export-browser-confirm{border:1px solid var(--color-primary);background:var(--color-primary);color:var(--color-surface);padding:8px 12px}
+.export-browser-info{color:var(--color-text-muted);font-size:12px;min-height:18px}
+@media(max-width:850px){.export-split{grid-template-columns:1fr}}

@@ -10,7 +10,7 @@ CONTENT={
 }
 
 def _excluded(p):
-    return p.name==".DS_Store" or p.suffix.lower()==".json" or p.name.lower().endswith("_mask.png")
+    return p.name.lower()==".ds_store" or p.name.startswith("._") or p.suffix.lower()==".json" or p.name.lower().endswith("_mask.png")
 
 def _sha256(p):
     h=hashlib.sha256()
@@ -84,7 +84,7 @@ def simulate_export(manga,destination,selected):
             "new_files":new,"identical_files":identical,"conflicts":conflicts,
             "already_exported":new==0 and conflicts==0 and identical>0,
             "can_export":new>0 and conflicts==0,
-            "exclusions":["*_mask.png","*.json",".DS_Store"]}
+            "exclusions":["*_mask.png","*.json",".DS_Store","._*"]}
 
 def _copy_atomic(src,target):
     target.parent.mkdir(parents=True,exist_ok=True)
