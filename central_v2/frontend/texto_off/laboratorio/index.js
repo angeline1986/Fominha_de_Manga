@@ -128,6 +128,24 @@ export function render(container) {
   let selectedName = "";
   let disposed = false;
 
+  // O preview segue o ponteiro e muda de lado ao encontrar bordas.
+  function positionPreview(element, clientX, clientY) {
+    const gap = 16, edge = 8;
+    const width = element.offsetWidth || 234;
+    const height = element.offsetHeight || 334;
+    let left = clientX + gap;
+    let top = clientY + gap;
+    if (left + width + edge > window.innerWidth) left = clientX - width - gap;
+    if (top + height + edge > window.innerHeight) top = clientY - height - gap;
+    element.style.left = `${Math.max(edge, Math.min(left, Math.max(edge, window.innerWidth - width - edge)))}px`;
+    element.style.top = `${Math.max(edge, Math.min(top, Math.max(edge, window.innerHeight - height - edge)))}px`;
+  }
+
+  function previewNearElement(element, target) {
+    const rect = target.getBoundingClientRect();
+    positionPreview(element, rect.right, rect.top + Math.min(rect.height / 2, 20));
+  }
+
   function hidePreview() {
     preview.hidden = true;
     previewImage.removeAttribute("src");
@@ -176,16 +194,23 @@ export function render(container) {
       button.textContent = page.name;
       button.classList.toggle("is-selected", page.name === selectedName);
       button.addEventListener("click", () => { selectedName = page.name; draw(); });
-      button.addEventListener("mouseenter", () => {
-        if (!page.previewUrl) return;
+      button.addEventListener("pointerenter", (event) => {
+        if (!page.previewUrl || event.pointerType === "touch") return;
         previewImage.src = page.previewUrl;
         preview.hidden = false;
+        positionPreview(preview, event.clientX, event.clientY);
       });
-      button.addEventListener("mouseleave", hidePreview);
+      button.addEventListener("pointermove", (event) => {
+        if (!preview.hidden && event.pointerType !== "touch") {
+          positionPreview(preview, event.clientX, event.clientY);
+        }
+      });
+      button.addEventListener("pointerleave", hidePreview);
       button.addEventListener("focus", () => {
         if (!page.previewUrl) return;
         previewImage.src = page.previewUrl;
         preview.hidden = false;
+        previewNearElement(preview, button);
       });
       button.addEventListener("blur", hidePreview);
       list.append(button);
@@ -248,7 +273,8 @@ export function render(container) {
   const explorerPreviewImage = document.createElement("img");
   explorerPreviewImage.alt = "Prévia do arquivo";
   explorerPreview.append(explorerPreviewImage);
-  document.body.append(explorerPreview);
+  // O preview deve pertencer ao dialog para ficar na top layer, acima do backdrop.
+  dialog.append(explorerPreview);
   function hideExplorerPreview() {
     explorerPreview.hidden = true;
     explorerPreviewImage.removeAttribute("src");
@@ -314,18 +340,25 @@ export function render(container) {
           }
         });
         if (item.type === "file") {
-          const showExplorerPreview = () => {
+          const showExplorerPreview = (event) => {
+            if (event?.pointerType === "touch") return;
             const args = new URLSearchParams({ provider, manga, browse_image: "1", path: item.path });
             explorerPreviewImage.src = `/api/textoff/laboratorio/pages/image?${args}`;
             explorerPreview.hidden = false;
-            const rect = button.getBoundingClientRect();
-            const left = Math.min(window.innerWidth - 250, rect.right + 12);
-            explorerPreview.style.left = `${Math.max(8, left)}px`;
-            explorerPreview.style.top = `${Math.max(8, Math.min(rect.top, window.innerHeight - 340))}px`;
+            if (event?.clientX !== undefined) {
+              positionPreview(explorerPreview, event.clientX, event.clientY);
+            } else {
+              previewNearElement(explorerPreview, button);
+            }
           };
-          button.addEventListener("mouseenter", showExplorerPreview);
+          button.addEventListener("pointerenter", showExplorerPreview);
+          button.addEventListener("pointermove", (event) => {
+            if (!explorerPreview.hidden && event.pointerType !== "touch") {
+              positionPreview(explorerPreview, event.clientX, event.clientY);
+            }
+          });
           button.addEventListener("focus", showExplorerPreview);
-          button.addEventListener("mouseleave", hideExplorerPreview);
+          button.addEventListener("pointerleave", hideExplorerPreview);
           button.addEventListener("blur", hideExplorerPreview);
         }
         explorerList.append(button);

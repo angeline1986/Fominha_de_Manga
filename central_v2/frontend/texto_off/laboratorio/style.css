@@ -12,7 +12,7 @@
 .lab-page-empty { margin: 2px 0; }
 .lab-pager { flex: none; margin-top: 8px; padding-top: 8px; display: flex; align-items: center; justify-content: flex-end; gap: 9px; border-top: 1px solid #d7e8f1; font-size: 12px; color: #175976; }
 .lab-pager button { padding: 5px 9px !important; min-width: 30px; min-height: 29px; }
-.lab-preview { position: fixed; z-index: 10000; left: min(36vw, 360px); top: 150px; width: 220px; max-height: 320px; padding: 7px; border: 1px solid #b7dcef; border-radius: 8px; background: white; box-shadow: 0 12px 25px #002d4930; pointer-events: none; }
+.lab-preview { position: fixed; z-index: 10000; left: 0; top: 0; width: 220px; max-height: 320px; padding: 7px; border: 1px solid #b7dcef; border-radius: 8px; background: white; box-shadow: 0 12px 25px #002d4930; pointer-events: none; }
 .lab-preview[hidden] { display: none; }
 .lab-preview img { display: block; width: 100%; max-height: 300px; object-fit: contain; }
 
@@ -43,7 +43,7 @@
 .lab-page .lab-cards { transform:scale(var(--lab-view-zoom,1));transform-origin:top center; }
 .lab-page.lab-focus-mode .lab-columns { grid-template-columns:minmax(0,1fr) !important; }
 .lab-page.lab-focus-mode .lab-pages, .lab-page.lab-focus-mode .lab-actions { display:none !important; }
-.lab-explorer-hover-preview { position:fixed;z-index:2147483600;width:220px;max-height:320px;padding:7px;background:white;border:1px solid #b7dcef;border-radius:8px;box-shadow:0 12px 25px #002d4930;pointer-events:none; }
+.lab-explorer-hover-preview { position:fixed;z-index:10;left:0;top:0;width:220px;max-height:320px;padding:7px;background:white;border:1px solid #b7dcef;border-radius:8px;box-shadow:0 12px 25px #002d4930;pointer-events:none; }
 .lab-explorer-hover-preview img {display:block;width:100%;max-height:300px;object-fit:contain;}
 @media(max-width:900px){.lab-page:not(.lab-panel-open) .lab-columns{grid-template-columns:210px minmax(0,1fr) !important}.lab-page.lab-panel-open .lab-columns{grid-template-columns:210px minmax(0,1fr) 260px !important}}
 
