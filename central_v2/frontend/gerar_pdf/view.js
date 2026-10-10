@@ -1,10 +1,15 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
+import { createJobProgress } from "/_shared/progress/progress.js";
 
 export function createPdfView(container, source) {
   const css = document.createElement("link");
   css.rel = "stylesheet";
   css.href = "/gerar_pdf/style.css";
   document.head.append(css);
+  const progressCss = document.createElement("link");
+  progressCss.rel = "stylesheet";
+  progressCss.href = "/_shared/progress/progress.css";
+  document.head.append(progressCss);
   const root = document.createElement("section");
   root.className = "pdf-v2";
   root.innerHTML = `
@@ -38,7 +43,6 @@ export function createPdfView(container, source) {
       </footer>
     </section>
     <p class="pdf-v2-disclaimer">A contagem de imagens não certifica a validade do MERGE oficial. PDFs existentes serão preservados.</p>
-    <div class="pdf-v2-generation-status" data-generation-report role="status" aria-live="polite" hidden></div>
     <div class="pdf-v2-toast" data-toast role="status" aria-live="polite" hidden></div>
     <dialog class="pdf-v2-confirm" data-confirm aria-labelledby="pdf-v2-confirm-title">
       <form method="dialog">
@@ -60,7 +64,22 @@ export function createPdfView(container, source) {
     selectedQuality = Number(button.dataset.qualityOption);
     qualityButtons.forEach(option => option.setAttribute("aria-pressed", String(option === button)));
   }));
-  const generationReport = $("[data-generation-report]");
+  const progressView = createJobProgress("Gerando PDFs");
+  root.querySelector(".pdf-v2-card").after(progressView.element);
+  const showProgress = (job, fallbackTotal) => {
+    const progress = job?.progress || {};
+    const completed = Number(progress.completed) || 0;
+    const total = Number(progress.total) || fallbackTotal;
+    const percent = Number.isFinite(Number(progress.percent))
+      ? Number(progress.percent)
+      : (total > 0 ? 100 * completed / total : 0);
+    progressView.update({
+      busy: true, title: "Gerando PDFs",
+      message: progress.message || "Preparando geração…",
+      completed, total, percent,
+      countUnit: "capítulo(s)",
+    });
+  };
   const toast = $("[data-toast]");
   const confirmation = $("[data-confirm]");
   function notify(message, kind = "success") {
@@ -166,8 +185,7 @@ export function createPdfView(container, source) {
     if (!await confirmGeneration(selection.length, quality)) return;
     generating = true;
     updateGenerate();
-    generationReport.hidden = false;
-    generationReport.textContent = "Iniciando geração…";
+    showProgress({ progress: { message: "Iniciando geração…", completed: 0, total: selection.length, percent: 0 } }, selection.length);
     try {
       const response = await fetch("/api/pdf/execute", {
         method: "POST", headers: { "Content-Type": "application/json", Accept: "application/json" },
@@ -177,6 +195,7 @@ export function createPdfView(container, source) {
       if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
       let job = payload.job;
       if (!job?.id) throw new Error("O servidor não confirmou o job.");
+      showProgress(job, selection.length);
       while (!disposed && !["completed", "failed"].includes(job.status)) {
         await new Promise(resolve => setTimeout(resolve, 700));
         if (disposed) return;
@@ -185,19 +204,18 @@ export function createPdfView(container, source) {
         if (!statusResponse.ok) throw new Error(statusPayload.error || `HTTP ${statusResponse.status}`);
         job = statusPayload.job;
         if (!job) throw new Error("Resposta do job inválida.");
-        const progress = job.progress || {};
-        generationReport.textContent = `${progress.message || "Gerando PDF…"} · ${progress.completed || 0}/${progress.total || selection.length}`;
+        showProgress(job, selection.length);
       }
       if (disposed) return;
       const results = job.results || [];
       const created = results.filter(item => item.status === "generated").length;
       const skipped = results.filter(item => item.status === "skipped").length;
       const failures = results.filter(item => item.status === "failed").length;
-      generationReport.textContent = `Finalizado: ${created} gerado(s), ${skipped} preservado(s), ${failures} falha(s). ${job.error || ""}`;
+      progressView.update({ busy: false });
       notify(job.status === "completed" ? `✓ ${created} PDF(s) gerado(s) com sucesso${skipped ? ` · ${skipped} existente(s) preservado(s)` : ""}.` : `A geração terminou com ${failures} falha(s). ${job.error || ""}`, job.status === "completed" ? "success" : "error");
       await load();
     } catch (error) {
-      if (!disposed) { generationReport.textContent = `Falha na geração: ${error.message}`; notify(`Falha na geração: ${error.message}`, "error"); }
+      if (!disposed) { progressView.update({ busy: false }); notify(`Falha na geração: ${error.message}`, "error"); }
     } finally {
       generating = false;
       if (!disposed) updateGenerate();
@@ -225,5 +243,5 @@ export function createPdfView(container, source) {
   }
   const unsubscribe = subscribeContext(load);
   load();
-  return () => { disposed = true; revision++; request?.abort(); unsubscribe(); confirmation.open && confirmation.close(); css.remove(); root.remove(); };
+  return () => { disposed = true; revision++; request?.abort(); unsubscribe(); confirmation.open && confirmation.close(); progressCss.remove(); css.remove(); root.remove(); };
 }
