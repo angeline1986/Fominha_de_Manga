@@ -23,6 +23,8 @@ PINCEIS = {
 
 def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
+    if canonical == LEVEL1 and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") == "1":
+        return manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "01_AUTO_CLEANER"
     if canonical in PINCEIS:
         return manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / PINCEIS[canonical]
     current = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / canonical
@@ -35,6 +37,8 @@ def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
 
 def stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
+    if canonical == LEVEL1 and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") == "1":
+        return stage_root(manga, LEVEL1, read_legacy=False) / chapter
     if canonical in PINCEIS:
         target = stage_root(manga, canonical, read_legacy=False) / chapter
         legacy = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / canonical / chapter

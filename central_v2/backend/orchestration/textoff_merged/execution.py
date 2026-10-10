@@ -71,7 +71,9 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
                 **runner_args,
             )
             if target_stage == LEVEL1:
-                mirror_stage_chapter(manga, "auto_cleaner", name)
+                import os
+                if os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") != "1":
+                    mirror_stage_chapter(manga, "auto_cleaner", name)
             results.append({"chapter": name, **result})
         except Exception as exc:
             results.append({"chapter": name, "status": "failed", "error": str(exc)})
