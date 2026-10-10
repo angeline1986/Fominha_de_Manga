@@ -1,0 +1,89 @@
+.pdf-v2{color:var(--color-text,#153c51);max-width:1300px;margin:auto}
+.pdf-v2 h1{margin:0 0 5px;font-size:24px}
+.pdf-v2-subtitle,.pdf-v2-disclaimer{font-size:12px;color:var(--color-text-secondary,#758899)}
+.pdf-v2-subtitle{margin:0 0 22px!important}
+.pdf-v2-card{background:#fff;border:1px solid #dce5ed;border-radius:12px;overflow:hidden}
+.pdf-v2-toolbar{display:flex;gap:12px;align-items:center;padding:18px;border-bottom:1px solid #e8eef4}
+.pdf-v2-toolbar input{height:38px;border:1px solid #d4e2ec;border-radius:8px;padding:0 12px;flex:1;max-width:430px;min-width:120px;font:inherit}
+.pdf-v2-filters{display:flex;gap:3px;background:#f3f6f9;padding:3px;border-radius:8px}
+.pdf-v2 button{font:inherit;color:#526a81;border:1px solid transparent;background:transparent;border-radius:7px;padding:8px 12px;cursor:pointer}
+.pdf-v2-filters button[aria-pressed=true]{background:#fff;border-color:#d7e4ed;color:#1d587b;box-shadow:0 1px 3px #0001;font-weight:650}
+.pdf-v2 .pdf-v2-run{margin-left:auto;color:#fff;background:#89a7ca;cursor:not-allowed}
+.pdf-v2-table-scroll{overflow-x:auto}.pdf-v2-table{width:100%;border-collapse:collapse;text-align:left;font-size:13px}
+.pdf-v2-table th{padding:13px 15px;background:#f6f8fb;color:#78879b;font-size:10px;letter-spacing:.7px}
+.pdf-v2-table td{padding:13px 15px;border-top:1px solid #e7eff4}.pdf-v2-table th:first-child,.pdf-v2-table td:first-child{width:45px}
+.pdf-v2-table tr:hover td{background:#f9fbfd}.pdf-v2-empty{text-align:center;padding:28px!important;color:#8999a5}
+.pdf-v2-footer{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 18px;border-top:1px solid #e8eef4;font-size:12px;color:#687e94}
+.pdf-v2-footer>div{display:flex;align-items:center;gap:8px}.pdf-v2-footer select{border:1px solid #d8e3ec;background:#fff;padding:6px;border-radius:6px}
+.pdf-v2-footer button{border-color:#dce5ed}.pdf-v2-footer button:disabled{opacity:.35;cursor:default}
+.pdf-v2-disclaimer{margin:12px 0 0!important}
+@media(max-width:850px){.pdf-v2-toolbar{flex-wrap:wrap}.pdf-v2-toolbar input{max-width:none}.pdf-v2 .pdf-v2-run{margin-left:0}}
+
+/* PDF V2 - rodapé padrão de paginação */
+.pdf-v2-footer{display:flex;align-items:center;justify-content:space-between;gap:14px;position:relative}
+.pdf-v2-page-size,.pdf-v2-page-controls{display:flex;align-items:center;gap:8px}
+.pdf-v2-page-controls{margin-left:auto}
+.pdf-v2-page-controls button{min-width:38px;height:34px;padding:5px 8px}
+.pdf-v2-page-controls [data-counter]{min-width:42px;text-align:center}
+.pdf-v2-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+
+/* pdf-v2-tooltip-title-v1 */
+.pdf-v2 .pdf-v2-heading{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.pdf-v2 .pdf-v2-heading h1{margin:0!important;line-height:1.25}
+.pdf-v2 .pdf-v2-title-help{display:inline-flex;align-items:center;justify-content:center;cursor:help;font-size:16px;color:#647e93;line-height:1;outline-offset:3px}
+.pdf-v2 .pdf-v2-title-help:hover,.pdf-v2 .pdf-v2-title-help:focus{color:#1b709a}
+
+/* PDF V2: controles de geração. */
+.pdf-v2-profile{display:inline-flex;align-items:center;gap:6px;white-space:nowrap;font-size:12px;color:#4b6b80}
+.pdf-v2-profile select{height:36px;max-width:190px;border:1px solid #d6e1ea;border-radius:7px;background:#fff;color:#285c76;padding:0 7px;font:inherit}
+.pdf-v2-generation-status{margin-top:10px;border:1px solid #cae3f1;background:#f3faff;border-radius:8px;padding:12px 14px;color:#285c76;font-size:12px}
+.pdf-v2-generation-status[hidden]{display:none!important}
+.pdf-v2 .pdf-v2-run:disabled{opacity:.55;cursor:not-allowed}
+@media(max-width:850px){.pdf-v2-profile{margin-left:0}}
+
+
+/* PDF V2 — refinamentos visuais da geração. */
+.pdf-v2 .pdf-v2-run:not(:disabled){background:var(--color-danger,#93445a)!important;color:#fff!important;opacity:1!important;cursor:pointer!important;border-color:transparent!important;font-weight:650}
+.pdf-v2 .pdf-v2-run:not(:disabled):hover{filter:brightness(.93)}
+.pdf-v2 .pdf-v2-run:disabled{cursor:not-allowed;opacity:.48}
+.pdf-v2 .pdf-v2-profile{gap:0;margin-left:auto}
+.pdf-v2 .pdf-v2-profile select{width:134px;height:36px;border:1px solid #d6e1ea;border-radius:7px;background:#fff;color:#35556c;padding:0 8px;font:inherit;font-size:12px}
+.pdf-v2 .pdf-v2-run{margin-left:0!important}
+.pdf-v2 .pdf-v2-pdf-ok{color:#21834e;font-weight:800;font-size:16px;margin-right:3px}
+.pdf-v2-confirm{position:fixed;inset:0;margin:auto;padding:22px 24px;border:1px solid #d9e3eb;border-radius:12px;width:min(410px,calc(100vw - 36px));max-width:calc(100vw - 36px);background:#fff;color:#193c50;box-shadow:0 18px 48px #142b3b35;z-index:10001}
+.pdf-v2-confirm::backdrop{background:rgba(15,32,45,.38)}
+.pdf-v2-confirm h2{margin:0 0 10px;font-size:17px;color:#193c50}
+.pdf-v2-confirm p{margin:0 0 20px;font-size:13px;line-height:1.55;color:#526b7d}
+.pdf-v2-confirm-actions{display:flex;justify-content:flex-end;gap:8px}
+.pdf-v2-confirm .pdf-v2-cancel{border:1px solid #d8e1e8;background:#fff;color:#4e6372}
+.pdf-v2-confirm .pdf-v2-confirm-button{background:var(--color-danger,#93445a);color:white;border:1px solid transparent}
+.pdf-v2-toast{position:fixed;right:24px;bottom:22px;max-width:min(440px,calc(100vw - 48px));padding:13px 18px;border-radius:9px;background:#fff;border:1px solid #cce2d5;box-shadow:0 6px 26px #193c502a;color:#236543;font-size:13px;font-weight:600;z-index:10000}
+.pdf-v2-toast[data-kind=error]{color:#a3323c;border-color:#edd0d2}
+.pdf-v2-toast[hidden],.pdf-v2-confirm[hidden]{display:none!important}
+
+
+/* PDF V2 — controle segmentado Q93/Q88: usa apenas tokens existentes. */
+.pdf-v2 .pdf-v2-quality-switch{display:inline-flex;align-items:center;margin-left:auto;padding:3px;gap:2px;border:1px solid var(--color-border);border-radius:8px;background:var(--color-background)}
+.pdf-v2 .pdf-v2-quality-switch button{min-width:42px;height:29px;padding:0 10px;border:1px solid transparent;border-radius:6px;background:transparent;color:var(--color-text-secondary);font:inherit;font-size:12px;font-weight:600;cursor:pointer}
+.pdf-v2 .pdf-v2-quality-switch button[aria-pressed="true"]{background:var(--color-surface);color:var(--color-primary);border-color:var(--color-border-primary);box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.pdf-v2 .pdf-v2-quality-switch button:focus-visible{outline:2px solid var(--color-primary);outline-offset:2px}
+
+/* PDF V2 — cor oficial dos botoes gerar */
+/* Corrige somente a cor vinho introduzida no refinamento; sem hexadecimais novos. */
+.pdf-v2 .pdf-v2-run:not(:disabled) {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+.pdf-v2 .pdf-v2-run:not(:disabled):hover { filter: brightness(.94); }
+.pdf-v2-confirm .pdf-v2-confirm-button {
+  background: var(--color-primary) !important;
+  border-color: var(--color-primary) !important;
+  color: var(--color-surface) !important;
+}
+.pdf-v2-confirm .pdf-v2-confirm-button:hover { filter: brightness(.94); }
+.pdf-v2 .pdf-v2-run:not(:disabled):focus-visible,
+.pdf-v2-confirm .pdf-v2-confirm-button:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}

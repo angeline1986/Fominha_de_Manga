@@ -10,6 +10,8 @@ from central_v2.backend.routes.auto_merge.level4 import execute_level4_response,
 from central_v2.backend.routes.auto_merge.level5 import execute_level5_response, level5_response
 from central_v2.backend.routes.auto_merge.folder import open_auto_merge_folder_response
 from central_v2.backend.routes.catalog import catalog_response
+from central_v2.backend.routes.pdf_execute import execute_pdf_response
+from central_v2.backend.routes.pdf_catalog import response as pdf_catalog_response
 from central_v2.backend.routes.health import health_response
 from central_v2.backend.routes.jobs import job_response
 from central_v2.backend.routes.bubble_sommelier import (
@@ -53,6 +55,9 @@ def dispatch_get(
             status=200,
             body=health_response(),
         )
+
+    if request.path == "/api/pdf":
+        return pdf_catalog_response(parse_qs(request.query), output_root)
 
     if request.path == "/api/catalog":
         return RouteResponse(
@@ -172,6 +177,8 @@ def dispatch_get(
 
 
 def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
+    if urlparse(path).path == "/api/pdf/execute":
+        return execute_pdf_response(payload, output_root)
     if path == "/api/shutdown":
         return shutdown_response(path)
     if urlparse(path).path == "/api/auto-merge/level1/execute":

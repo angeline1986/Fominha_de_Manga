@@ -91,6 +91,14 @@ export const routes = {
     context: "texto-off",
     module: "/texto_off/especiais/level8.js",
   },
+  "pdf-originais": {
+    context: "gerar-pdf",
+    module: "/gerar_pdf/originais.js",
+  },
+  "pdf-mescladas": {
+    context: "gerar-pdf",
+    module: "/gerar_pdf/mescladas.js",
+  },
   "resumo-operacao": {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",
