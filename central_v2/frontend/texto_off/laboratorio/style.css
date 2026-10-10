@@ -15,3 +15,18 @@
 .lab-preview { position: fixed; z-index: 10000; left: min(36vw, 360px); top: 150px; width: 220px; max-height: 320px; padding: 7px; border: 1px solid #b7dcef; border-radius: 8px; background: white; box-shadow: 0 12px 25px #002d4930; pointer-events: none; }
 .lab-preview[hidden] { display: none; }
 .lab-preview img { display: block; width: 100%; max-height: 300px; object-fit: contain; }
+
+/* Laboratório: origem e seleção compacta de arquivos. */
+.lab-source-toggle {display:flex;gap:2px;padding:2px;border:1px solid #c3e0ef;border-radius:7px;background:#f3fafe}
+.lab-page .lab-source-toggle button {padding:4px 7px;border:0;background:transparent;color:#386d89;font-size:10px;font-weight:700;border-radius:5px;cursor:pointer}
+.lab-page .lab-source-toggle button.is-active {background:#d8edf9;color:#075474}
+.lab-page-selectors {grid-template-columns:minmax(54px,.65fr) minmax(0,1.8fr) 34px;align-items:end;gap:6px}
+.lab-page-selectors label {min-width:0;display:grid;gap:4px;color:#386d89;font-size:10px;font-weight:700}
+.lab-page-selectors select {width:100%;min-width:0}
+.lab-page .lab-explore-button {height:34px;width:34px;min-width:34px;padding:0;font-size:15px;background:#fff;border:1px solid #c3e0ef;display:grid;place-items:center}
+.lab-explorer {width:min(580px,90vw);max-height:75vh;padding:0;border:1px solid #abd2e8;border-radius:11px;background:white;color:#174f6e;box-shadow:0 15px 60px #113b5d39}
+.lab-explorer::backdrop {background:rgba(11,40,60,.30)}
+.lab-explorer header {display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #c3e0ef}
+.lab-explorer-path {padding:10px 16px;background:#f3fafe;font-size:11px;overflow-wrap:anywhere}
+.lab-explorer-list {display:grid;gap:5px;max-height:50vh;overflow:auto;padding:12px}
+.lab-page .lab-explorer-list button {text-align:left;white-space:normal;overflow-wrap:anywhere;background:white}

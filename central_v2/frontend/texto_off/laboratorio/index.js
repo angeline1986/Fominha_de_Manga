@@ -1,4 +1,6 @@
 /** Laboratório: painel de navegação independente, sem execução de filtros. */
+import { getContext } from "/_app/state/context.js";
+import { connectLaboratorio } from "/texto_off/laboratorio/data_loader.js";
 export function render(container) {
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
@@ -11,13 +13,13 @@ export function render(container) {
     <div class="lab-title">LABORATÓRIO</div>
     <div class="lab-columns">
       <aside class="lab-panel lab-pages">
-        <div class="lab-panel-head"><strong>Páginas</strong><span class="lab-pill">−</span></div>
+        <div class="lab-panel-head"><strong>Páginas</strong><div class="lab-source-toggle" role="group" aria-label="Origem das imagens"><button type="button" data-lab-source="img" class="is-active" aria-pressed="true">IMG</button><button type="button" data-lab-source="merge" aria-pressed="false">MERGE</button></div></div>
         <div class="lab-pages-body">
           <div class="lab-page-selectors">
-            <select data-lab-chapter aria-label="Selecionar capítulo"><option value="1">Cap. 1</option></select>
-            <select data-lab-page aria-label="Selecionar página" disabled><option value="">Página</option></select>
+            <label class="lab-select-chapter"><span>Cap.</span><select data-lab-chapter aria-label="Selecionar capítulo"><option value="">—</option></select></label>
+            <label class="lab-select-page"><span>Página</span><select data-lab-page aria-label="Selecionar página" disabled><option value="">Página</option></select></label>
+            <button type="button" data-lab-explore class="lab-explore-button" title="Explorar arquivos da obra" aria-label="Explorar arquivos da obra">📂</button>
           </div>
-          <input type="search" data-lab-search placeholder="Buscar página..." aria-label="Buscar página" />
           <div class="lab-page-list" data-lab-list aria-label="Páginas do capítulo"></div>
           <nav class="lab-pager" aria-label="Paginação das páginas">
             <button type="button" data-lab-prev aria-label="Página anterior" disabled>‹</button>
@@ -25,6 +27,7 @@ export function render(container) {
             <button type="button" data-lab-next aria-label="Próxima página" disabled>›</button>
           </nav>
           <div class="lab-preview" data-lab-preview hidden><img alt="Prévia da página" /></div>
+          <dialog class="lab-explorer" data-lab-explorer aria-label="Explorador de arquivos"><header><strong>Arquivos da obra</strong><button type="button" data-lab-explorer-close aria-label="Fechar explorador">×</button></header><div class="lab-explorer-path" data-lab-explorer-path></div><div class="lab-explorer-list" data-lab-explorer-list></div></dialog>
         </div>
       </aside>
       <main class="lab-workspace">
@@ -52,7 +55,6 @@ export function render(container) {
   const pageSize = 13;
   const chapterSelect = root.querySelector("[data-lab-chapter]");
   const pageSelect = root.querySelector("[data-lab-page]");
-  const search = root.querySelector("[data-lab-search]");
   const list = root.querySelector("[data-lab-list]");
   const prev = root.querySelector("[data-lab-prev]");
   const next = root.querySelector("[data-lab-next]");
@@ -77,8 +79,7 @@ export function render(container) {
   }
 
   function filtered() {
-    const needle = search.value.trim().toLocaleLowerCase("pt-BR");
-    return chapterPages().filter((page) => page.name.toLocaleLowerCase("pt-BR").includes(needle));
+    return chapterPages();
   }
 
   function draw() {
@@ -145,29 +146,119 @@ export function render(container) {
       }));
     });
     chapterSelect.replaceChildren();
-    Object.keys(pagesByChapter).forEach((chapter) => chapterSelect.add(new Option(`Cap. ${chapter}`, chapter)));
-    if (!chapterSelect.options.length) chapterSelect.add(new Option("Capítulo", ""));
+    Object.keys(pagesByChapter).forEach((chapter) => chapterSelect.add(new Option(chapter, chapter)));
+    if (!chapterSelect.options.length) chapterSelect.add(new Option("—", ""));
     currentPage = 0;
     selectedName = "";
-    search.value = "";
     draw();
   }
 
-  chapterSelect.addEventListener("change", () => { currentPage = 0; selectedName = ""; search.value = ""; draw(); });
+  chapterSelect.addEventListener("change", () => { currentPage = 0; selectedName = ""; draw(); });
   pageSelect.addEventListener("change", () => {
     selectedName = pageSelect.value;
     const index = filtered().findIndex((p) => p.name === selectedName);
     if (index >= 0) currentPage = Math.floor(index / pageSize);
     draw();
   });
-  search.addEventListener("input", () => { currentPage = 0; draw(); });
   prev.addEventListener("click", () => { if (currentPage > 0) { currentPage--; draw(); } });
   next.addEventListener("click", () => { if (currentPage < Math.ceil(filtered().length / pageSize) - 1) { currentPage++; draw(); } });
   root.addEventListener("laboratorio:pages", loadPages);
+  const sourceButtons = [...root.querySelectorAll("[data-lab-source]")];
+  let currentSource = "img";
+  sourceButtons.forEach((button) => button.addEventListener("click", () => {
+    const source = button.dataset.labSource;
+    if (source === currentSource) return;
+    currentSource = source;
+    sourceButtons.forEach((item) => {
+      const active = item.dataset.labSource === source;
+      item.classList.toggle("is-active", active);
+      item.setAttribute("aria-pressed", String(active));
+    });
+    root.dispatchEvent(new CustomEvent("laboratorio:source", { detail: { source } }));
+  }));
+
+  const dialog = root.querySelector("[data-lab-explorer]");
+  const explorerPath = root.querySelector("[data-lab-explorer-path]");
+  const explorerList = root.querySelector("[data-lab-explorer-list]");
+  const explorerButton = root.querySelector("[data-lab-explore]");
+  let browserController;
+  let browserSerial = 0;
+  let browserPath = "";
+  async function browse(path = "") {
+    const { provider, manga } = getContext();
+    if (!provider || !manga) { explorerList.textContent = "Selecione uma obra."; return; }
+    browserController?.abort();
+    browserController = new AbortController();
+    const id = ++browserSerial;
+    explorerList.textContent = "Carregando arquivos...";
+    const params = new URLSearchParams({ provider, manga, browse: "1", path });
+    try {
+      const response = await fetch(`/api/textoff/laboratorio/pages?${params}`, {
+        signal: browserController.signal, cache: "no-store",
+      });
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || `HTTP ${response.status}`);
+      if (id !== browserSerial || !dialog.open) return;
+      browserPath = payload.path;
+      explorerPath.textContent = payload.directory;
+      explorerList.replaceChildren();
+      if (browserPath) {
+        const up = document.createElement("button");
+        up.type = "button";
+        up.textContent = "← Pasta anterior";
+        up.addEventListener("click", () => browse(browserPath.split("/").slice(0, -1).join("/")));
+        explorerList.append(up);
+      }
+      for (const item of payload.entries) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = `${item.type === "directory" ? "📁" : "🖼"} ${item.name}`;
+        button.addEventListener("click", () => {
+          if (item.type === "directory") { browse(item.path); return; }
+          // Seleciona apenas arquivos presentes em IMG/<cap> ou 02_MERGE/<cap>.
+          const segments = item.path.split("/");
+          const isImg = segments.length === 3 && segments[0] === "IMG";
+          const isMerge = segments.length === 4 && segments[0] === "FLUXO_SECUNDARIO" && segments[1] === "02_MERGE";
+          if (!isImg && !isMerge) return;
+          const source = isImg ? "img" : "merge";
+          const chapter = segments.at(-2);
+          const page = segments.at(-1);
+          const choose = () => {
+            if (!pagesByChapter[chapter]?.some((p) => p.name === page)) return;
+            chapterSelect.value = chapter;
+            selectedName = page;
+            currentPage = Math.floor(chapterPages().findIndex((p) => p.name === page) / pageSize);
+            draw();
+            dialog.close();
+          };
+          if (source === currentSource) choose();
+          else {
+            currentSource = source;
+            sourceButtons.forEach((b) => {
+              b.classList.toggle("is-active", b.dataset.labSource === source);
+              b.setAttribute("aria-pressed", String(b.dataset.labSource === source));
+            });
+            root.addEventListener("laboratorio:pages", choose, { once: true });
+            root.dispatchEvent(new CustomEvent("laboratorio:source", { detail: { source } }));
+          }
+        });
+        explorerList.append(button);
+      }
+    } catch (error) {
+      if (error.name !== "AbortError") explorerList.textContent = error.message;
+    }
+  }
+  explorerButton.addEventListener("click", () => { dialog.showModal(); browse(""); });
+  root.querySelector("[data-lab-explorer-close]").addEventListener("click", () => dialog.close());
+  dialog.addEventListener("close", () => { browserController?.abort(); });
   draw();
+  const disconnect = connectLaboratorio(root);
 
   return () => {
     disposed = true;
+    disconnect();
+    browserController?.abort();
+    dialog.close();
     root.removeEventListener("laboratorio:pages", loadPages);
     if (root.parentNode === container) root.remove();
     stylesheet.remove();

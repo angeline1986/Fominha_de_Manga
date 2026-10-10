@@ -20,7 +20,8 @@ function createField({ id, label, items, value, disabled, onChange }) {
   const selected = document.createElement("span");
   selected.className = "context-combobox-value";
   selected.textContent = current?.label ?? "";
-  trigger.append(caption, selected);
+  if (!current) trigger.append(caption);
+  trigger.append(selected);
 
   const list = document.createElement("div");
   list.id = `${id}-options`;

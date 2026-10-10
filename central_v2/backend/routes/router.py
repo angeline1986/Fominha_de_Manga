@@ -26,6 +26,7 @@ from central_v2.backend.routes.merge_manual import (
     merge_manual_response,
 )
 from central_v2.backend.routes.static import static_response
+from central_v2.backend.routes.laboratorio_pages import response as laboratorio_pages_response
 from central_v2.backend.routes.textoff_merged_router import (
     dispatch_textoff_merged_get, dispatch_textoff_merged_post,
 )
@@ -58,6 +59,10 @@ def dispatch_get(
             status=200,
             body=catalog_response(output_root),
         )
+
+    if request.path in {"/api/textoff/laboratorio/pages", "/api/textoff/laboratorio/pages/image"}:
+        return laboratorio_pages_response(parse_qs(request.query), output_root,
+                                         image=request.path.endswith("/image"))
 
     if request.path == "/api/merge-manual":
         return merge_manual_response(parse_qs(request.query), output_root)
