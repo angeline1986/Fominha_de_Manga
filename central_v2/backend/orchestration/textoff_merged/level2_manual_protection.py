@@ -5,11 +5,12 @@ import cv2
 import numpy as np
 
 from .auto_cleaner_check_manifest import _read_check_manifest, manifest_path
+from .occurrence_policy import protected_types_for_transparency_basic
 from .residue_occurrences import MANIFEST_NAME, occurrences_for, read_manifest
 from .stages import stage_chapter
 
 LEVEL1_REVIEW_STEP = "1"
-PROTECTED_FROM_LEVEL2 = frozenset({"residuo_degrade", "residuo_gradiente"})
+PROTECTED_FROM_LEVEL2 = protected_types_for_transparency_basic()
 
 
 def protected_occurrences_by_page(manifest: dict) -> dict[str, list[dict]]:

@@ -40,9 +40,11 @@ class ManualProtectionTests(unittest.TestCase):
             manifest.write_text(json.dumps(payload), encoding="utf-8")
             selected = load_level1_protection(manga, "ridi", "work", "1")
             self.assertEqual(LEVEL1_REVIEW_STEP, "1")
-            self.assertEqual(PROTECTED_FROM_LEVEL2, {"residuo_degrade", "residuo_gradiente"})
+            self.assertEqual(PROTECTED_FROM_LEVEL2, {"residuo_degrade", "residuo_gradiente",
+                "balao_estilizado", "fragmento_balao", "outro"})
             self.assertEqual([item["tipo"] for item in selected["page.png"]],
-                             ["residuo_degrade", "residuo_gradiente"])
+                             ["residuo_degrade", "residuo_gradiente",
+                              "fragmento_balao", "outro"])
             self.assertNotIn("other-page.png", selected)
             self.assertEqual(load_level1_protection(manga, "ridi", "work", "2"), {})
             with self.assertRaisesRegex(ValueError, "estrutura incompatível"):
@@ -54,7 +56,7 @@ class ManualProtectionTests(unittest.TestCase):
         np.testing.assert_array_equal(unchanged[0], automatic)
         self.assertEqual(summary["mask_pixels_before_protection"], 16)
         self.assertEqual(summary["mask_pixels_after_protection"], 16)
-        for kind in ("texto_residual", "residuo_transparencia", "fragmento_balao", "outro"):
+        for kind in ("texto_residual", "residuo_transparencia"):
             unchanged, summary = protect_level2_masks([automatic], [occurrence(kind)], automatic.shape)
             np.testing.assert_array_equal(unchanged[0], automatic)
             self.assertEqual(summary["protected_occurrences"], 0)
