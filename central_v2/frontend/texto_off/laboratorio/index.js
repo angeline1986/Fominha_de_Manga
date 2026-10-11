@@ -82,16 +82,54 @@ export function render(container) {
 
   const focusButton = toolbar.querySelector("button[title='Foco'], button[aria-label='Foco']")
     || [...toolbar.querySelectorAll("button")].find((button) => button.textContent.trim() === "Foco");
+  // O Foco usa o mesmo espaço de visualização, sem duplicar imagens.
+  const focusFooter = document.createElement("footer");
+  focusFooter.className = "lab-focus-footer";
+  focusFooter.innerHTML = `
+    <span>Comparação horizontal · quatro tratamentos</span>
+    <div class="lab-focus-nav">
+      <button type="button" data-focus-prev aria-label="Página anterior">‹</button>
+      <span data-focus-counter>1 / 1</span>
+      <button type="button" data-focus-next aria-label="Próxima página">›</button>
+    </div>
+    <span>F ou Esc para sair</span>`;
+  root.querySelector(".lab-workspace").append(focusFooter);
+  function setFocus(active) {
+    root.classList.toggle("lab-focus-mode", active);
+    focusButton?.setAttribute("aria-pressed", String(active));
+    document.body.classList.toggle("lab-focus-lock", active);
+  }
   if (focusButton) {
     focusButton.disabled = false;
     focusButton.setAttribute("aria-label", "Modo Foco");
     focusButton.setAttribute("aria-pressed", "false");
     focusButton.title = "Modo Foco";
-    focusButton.addEventListener("click", () => {
-      const active = root.classList.toggle("lab-focus-mode");
-      focusButton.setAttribute("aria-pressed", String(active));
-    });
+    focusButton.addEventListener("click", () => setFocus(!root.classList.contains("lab-focus-mode")));
   }
+  const focusPrev = focusFooter.querySelector("[data-focus-prev]");
+  const focusNext = focusFooter.querySelector("[data-focus-next]");
+  const focusCounter = focusFooter.querySelector("[data-focus-counter]");
+  function syncFocusNavigation() {
+    focusPrev.disabled = prev.disabled;
+    focusNext.disabled = next.disabled;
+    focusCounter.textContent = counter.textContent;
+  }
+  focusPrev.addEventListener("click", () => prev.click());
+  focusNext.addEventListener("click", () => next.click());
+  function onFocusKey(event) {
+    if (disposed || !root.isConnected) return;
+    const element = event.target;
+    if (element instanceof HTMLElement && (
+      element.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(element.tagName)
+    )) return;
+    if (event.key === "Escape" && root.classList.contains("lab-focus-mode")) {
+      setFocus(false);
+    } else if (event.key.toLowerCase() === "f" && !event.altKey && !event.ctrlKey && !event.metaKey) {
+      event.preventDefault();
+      setFocus(!root.classList.contains("lab-focus-mode"));
+    }
+  }
+  document.addEventListener("keydown", onFocusKey);
   // Os botões de zoom passam a controlar a escala do espaço de visualização.
   const zoomButtons = [...toolbar.querySelectorAll("button")].filter((button) =>
     ["−", "+", "1:1"].includes(button.textContent.trim()));
@@ -168,6 +206,7 @@ export function render(container) {
     prev.disabled = currentPage === 0;
     next.disabled = currentPage >= count - 1;
     counter.textContent = `${currentPage + 1} / ${count}`;
+    syncFocusNavigation();
 
     pageSelect.replaceChildren(new Option("Pág.", ""));
     all.forEach((page) => pageSelect.add(new Option(page.name, page.name)));
@@ -375,6 +414,8 @@ export function render(container) {
 
   return () => {
     disposed = true;
+    if (root.classList.contains("lab-focus-mode")) setFocus(false);
+    document.removeEventListener("keydown", onFocusKey);
     disconnect();
     browserController?.abort();
     hideExplorerPreview();
