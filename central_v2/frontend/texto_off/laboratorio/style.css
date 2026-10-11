@@ -2,6 +2,7 @@
   --lab-image-width: 240px;
   --lab-image-height: 260px;
   --lab-panel-width: 242px;
+  container: lab / inline-size;
   height: 100%; min-height: 0; display: flex; flex-direction: column;
   padding: 16px; gap: 12px; color: #144f6c; font: inherit; box-sizing: border-box;
 }
@@ -24,8 +25,8 @@
 .lab-page button:disabled { opacity: .58; cursor: not-allowed; }
 .lab-page .lab-panel-toggle, .lab-page .lab-close-panel { background: #fff; white-space: nowrap; }
 .lab-page .lab-close-panel { padding: 2px 8px; }
-.lab-stage { flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 18px; background-color: #f8fdff; background-image: radial-gradient(#c6dfee .8px, transparent .8px); background-size: 18px 18px; }
-.lab-cards { display: grid; grid-template-columns: repeat(4, var(--lab-panel-width)); align-items: start; gap: 12px; width: max-content; margin: 0 auto; }
+.lab-stage { width: 100%; max-width: 100%; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 18px; background-color: #f8fdff; background-image: radial-gradient(#c6dfee .8px, transparent .8px); background-size: 18px 18px; }
+.lab-cards { display: grid; grid-template-columns: repeat(4, var(--lab-panel-width)); align-items: start; gap: 12px; width: max-content; margin: 0; }
 .lab-image { display: flex; width: var(--lab-panel-width); min-width: 0; flex-direction: column; overflow: hidden; align-self: start; border: 1px solid #c0e0f1; border-radius: 9px; background: #fff; }
 .lab-image header { flex: none; padding: 12px; border-bottom: 1px solid #d8eaf3; font-size: 12px; font-weight: 750; }
 .lab-placeholder { display: grid; width: var(--lab-image-width); height: var(--lab-image-height); flex: none; place-items: center; padding: 16px; color: #85a6b7; font-size: 13px; text-align: center; }
@@ -66,18 +67,19 @@
 .lab-image:first-child > .lab-placeholder:not([hidden]) { width: var(--lab-image-width); height: 200px; }
 .lab-roi-overlay { position: absolute; inset: 0; touch-action: none; pointer-events: none; }
 .lab-roi-frame.is-selecting .lab-roi-overlay { pointer-events: auto; cursor: crosshair; }
-.lab-roi-box { position: absolute; border: 2px solid #188ab4; background: rgb(24 138 180 / 16%); pointer-events: none; }
+.lab-roi-box { position: absolute; border: 2px solid #2c72b4; background: rgb(44 114 180 / 10%); pointer-events: none; }
+.lab-roi-number { position: absolute; top: -2px; left: -2px; min-width: 20px; height: 20px; display: grid; place-items: center; padding: 0 4px; color: #fff; background: #2c72b4; font-size: 12px; font-weight: 700; line-height: 1; }
 .lab-roi-box.is-drawing { border-style: dashed; }
 .lab-roi-list { display: grid; gap: 6px; margin-top: 10px; }
 .lab-roi-item { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 11px; }
 .lab-roi-item button { padding: 4px 8px; }
-.lab-roi-close { position: absolute; z-index: 2; top: 0; right: 0; display: grid; width: 22px; min-width: 22px; height: 22px; place-items: center; padding: 0; border: 1px solid #188ab4; border-radius: 50%; background: #fff; color: #0c455a; font-size: 17px; line-height: 1; cursor: pointer; pointer-events: auto; }
+.lab-page .lab-roi-close { position: absolute; z-index: 2; top: -12px; right: -12px; display: grid; width: 24px; min-width: 24px; height: 24px; place-items: center; padding: 0; border: 1px solid #2c72b4; border-radius: 50%; background: #2c72b4; color: #fff; font-size: 17px; line-height: 1; cursor: pointer; pointer-events: auto; }
 
 /* Foco preserva o mesmo zoom e limita a rolagem ao visualizador central. */
 body.lab-focus-lock { overflow: hidden; }
 .lab-page.lab-focus-mode { position: fixed; z-index: 9000; inset: 0; width: 100vw; height: 100dvh; margin: 0; padding: 0; gap: 0; background: #f8fdff; }
 .lab-focus-mode > .lab-title, .lab-focus-mode .lab-pages { display: none; }
-.lab-focus-mode .lab-columns { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; min-height: 0; overflow: hidden; gap: 0; }
+.lab-focus-mode .lab-columns { display: grid; grid-template-columns: minmax(0, 1fr); width: 100%; min-width: 0; min-height: 0; overflow: hidden; gap: 12px; }
 .lab-focus-mode.lab-panel-open .lab-columns { grid-template-columns: minmax(0, 1fr) 295px; }
 .lab-focus-mode .lab-workspace { grid-column: 1; width: 100%; min-width: 0; min-height: 0; overflow: hidden; border: 0; border-radius: 0; }
 .lab-focus-mode .lab-toolbar { min-height: 58px; padding: 8px 16px; }
@@ -86,17 +88,24 @@ body.lab-focus-lock { overflow: hidden; }
 .lab-focus-mode:not(.lab-panel-open) .lab-actions, .lab-actions[hidden] { display: none; }
 .lab-focus-footer { display: none; }
 
-@media (max-width: 1150px) {
-  .lab-columns, .lab-page:not(.lab-focus-mode).lab-panel-open .lab-columns { grid-template-columns: 210px minmax(0, 1fr); }
+@container lab (max-width: 900px) {
+  .lab-page:not(.lab-focus-mode) .lab-columns { grid-template-columns: 210px minmax(0, 1fr); }
   .lab-page:not(.lab-focus-mode).lab-panel-open .lab-actions { grid-column: 1 / -1; }
 }
-@media (max-width: 900px) {
-  .lab-page:not(.lab-focus-mode).lab-panel-open .lab-columns { grid-template-columns: 210px minmax(0, 1fr) 260px; }
-}
-@media (max-width: 700px) {
-  .lab-columns, .lab-page.lab-panel-open .lab-columns { display: flex; flex-direction: column; }
+@container lab (max-width: 560px) {
+  .lab-page:not(.lab-focus-mode) .lab-columns { display: flex; flex-direction: column; }
   .lab-pages { min-height: 130px; }
   .lab-workspace { min-height: 550px; }
   .lab-toolbar { flex-wrap: wrap; }
-  .lab-focus-mode.lab-panel-open .lab-columns { display: grid; grid-template-columns: minmax(0, 1fr) min(260px, 40vw); }
 }
+@container lab (max-width: 700px) {
+  .lab-page.lab-focus-mode.lab-panel-open .lab-columns { grid-template-columns: minmax(0, 1fr) min(260px, 40vw); }
+}
+
+/* Uma imagem em zoom pode exceder a largura central, nunca a coluna da sidebar. */
+.lab-page .lab-workspace { min-width: 0; }
+.lab-page .lab-stage { box-sizing: border-box; overflow: auto; }
+.lab-page .lab-roi-frame .lab-original-image[hidden], .lab-page .lab-image > img[hidden] { display: none; }
+.lab-page .lab-placeholder[hidden] { display: none; }
+.lab-degrade-progress { display: block; width: 100%; margin: 10px 0 4px; }
+.lab-degrade-progress[hidden] { display: none; }

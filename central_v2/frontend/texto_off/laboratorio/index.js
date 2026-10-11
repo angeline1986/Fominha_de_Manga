@@ -3,6 +3,7 @@ import { getContext } from "/_app/state/context.js";
 import { connectLaboratorio } from "/texto_off/laboratorio/data_loader.js";
 import { connectRoiSelection } from "/texto_off/laboratorio/roi_selection.js";
 import { zoomDimensions } from "/texto_off/laboratorio/zoom.js";
+import { connectDegrade } from "/texto_off/laboratorio/degrade.js";
 export function render(container) {
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
@@ -48,7 +49,7 @@ export function render(container) {
       <aside class="lab-panel lab-actions"><div class="lab-panel-head"><strong>Laboratório</strong></div>
         <div class="lab-panel-body"><strong class="lab-subtitle">Seleção de áreas</strong><button disabled class="lab-wide">Selecionar área</button>
           <p class="lab-muted">Nenhuma área selecionada.</p><hr/><strong class="lab-subtitle">Tratamentos</strong>
-          <button disabled class="lab-wide">Gerar as 3 versões</button><p class="lab-muted">Filtros ainda não conectados.</p>
+          <button type="button" class="lab-wide" data-lab-degrade>Executar Degradê</button><p class="lab-muted" data-lab-degrade-status>Selecione uma página e pelo menos uma área.</p><p class="lab-muted">Artístico e Suave ainda não conectados.</p>
         </div>
       </aside>
     </div>`;
@@ -138,6 +139,12 @@ export function render(container) {
     ["−", "+", "1:1"].includes(button.textContent.trim()));
   const zoomOutput = toolbar.querySelector("span");
   let zoom = 40;
+  const setZoomEnabled = (enabled) => zoomButtons.forEach((button) => { button.disabled = !enabled; });
+  const resetZoomDimensions = () => {
+    root.style.removeProperty("--lab-image-width");
+    root.style.removeProperty("--lab-image-height");
+    root.style.removeProperty("--lab-panel-width");
+  };
   const updateZoom = () => {
     if (zoomOutput) zoomOutput.textContent = `${zoom}%`;
     if (!originalImage?.naturalWidth || !originalImage.naturalHeight) return;
@@ -147,7 +154,6 @@ export function render(container) {
     root.style.setProperty("--lab-panel-width", `${size.width + 2}px`);
   };
   for (const button of zoomButtons) {
-    button.disabled = false;
     button.addEventListener("click", () => {
       const action = button.textContent.trim();
       zoom = action === "1:1" ? 100 : Math.max(30, Math.min(200, zoom + (action === "+" ? 10 : -10)));
@@ -212,14 +218,32 @@ export function render(container) {
   originalImage.hidden = true;
   originalPanel.append(originalImage);
   const roi = connectRoiSelection({ image: originalImage, button: panel.querySelector(".lab-wide"), panel: panel.querySelector(".lab-panel-body") });
+  const degrade = connectDegrade({
+    root,
+    button: panel.querySelector('[data-lab-degrade]'),
+    getRequest() {
+      if (originalImage.hidden || !originalImage.naturalWidth || !selectedName) return null;
+      const selections = roi.getBoxesPixels();
+      if (!selections.length) return null;
+      const { provider, manga } = getContext();
+      if (!provider || !manga || !chapterSelect.value) return null;
+      return {provider, manga, source: currentSource, chapter: chapterSelect.value,
+              page: selectedName, selections};
+    },
+  });
   let originalLoadSerial = 0;
 
   function displayOriginal() {
+    const context = getContext();
+    degrade.reset(`${context.provider}|${context.manga}|${currentSource}|${chapterSelect.value}|${selectedName}`);
     const page = chapterPages().find((item) => item.name === selectedName);
     const src = page?.previewUrl || "";
     const id = ++originalLoadSerial;
+    setZoomEnabled(false);
     originalImage.hidden = true;
     originalImage.removeAttribute("src");
+    resetZoomDimensions();
+    if (zoomOutput) zoomOutput.textContent = `${zoom}%`;
     roi.setSource(`${getContext().provider}|${getContext().manga}|${currentSource}|${chapterSelect.value}|${selectedName}|${src}`, false);
     originalPlaceholder.hidden = false;
     if (!page) {
@@ -233,9 +257,17 @@ export function render(container) {
     originalPlaceholder.textContent = "Carregando imagem original...";
     originalImage.onload = () => {
       if (disposed || id !== originalLoadSerial) return;
+      if (!originalImage.naturalWidth || !originalImage.naturalHeight) {
+        originalImage.hidden = true;
+        originalPlaceholder.hidden = false;
+        originalPlaceholder.textContent = "Não foi possível carregar a imagem original";
+        resetZoomDimensions();
+        return;
+      }
       originalImage.hidden = false;
       originalPlaceholder.hidden = true;
       updateZoom();
+      setZoomEnabled(true);
       roi.setSource(`${getContext().provider}|${getContext().manga}|${currentSource}|${chapterSelect.value}|${selectedName}|${src}`, true);
     };
     originalImage.onerror = () => {
@@ -468,6 +500,7 @@ export function render(container) {
     if (root.classList.contains("lab-focus-mode")) setFocus(false);
     document.removeEventListener("keydown", onFocusKey);
     disconnect();
+    degrade.dispose();
     roi.dispose();
     browserController?.abort();
     hideExplorerPreview();

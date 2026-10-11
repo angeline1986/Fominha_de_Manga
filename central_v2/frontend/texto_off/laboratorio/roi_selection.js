@@ -61,7 +61,10 @@ export function connectRoiSelection({ image, button, panel }) {
         boxes.splice(i, 1);
         paint();
       });
-      el.append(close);
+      const number = document.createElement("span");
+      number.className = "lab-roi-number";
+      number.textContent = String(i + 1);
+      el.append(number, close);
       overlay.append(el);
       const item = document.createElement("div");
       item.className = "lab-roi-item";
