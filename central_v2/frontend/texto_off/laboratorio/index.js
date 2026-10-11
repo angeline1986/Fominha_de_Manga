@@ -1,6 +1,8 @@
 /** Laboratório: painel de navegação independente, sem execução de filtros. */
 import { getContext } from "/_app/state/context.js";
 import { connectLaboratorio } from "/texto_off/laboratorio/data_loader.js";
+import { connectRoiSelection } from "/texto_off/laboratorio/roi_selection.js";
+import { zoomDimensions } from "/texto_off/laboratorio/zoom.js";
 export function render(container) {
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
@@ -53,6 +55,7 @@ export function render(container) {
   container.replaceChildren(root);
 
   // Ferramentas isoladas da tela: não interferem em outros visualizadores.
+  let originalImage = null;
   const toolbar = root.querySelector(".lab-tool-group");
   const panel = root.querySelector(".lab-actions");
   const panelToggle = document.createElement("button");
@@ -137,7 +140,11 @@ export function render(container) {
   let zoom = 40;
   const updateZoom = () => {
     if (zoomOutput) zoomOutput.textContent = `${zoom}%`;
-    root.style.setProperty("--lab-view-zoom", String(zoom / 40));
+    if (!originalImage?.naturalWidth || !originalImage.naturalHeight) return;
+    const size = zoomDimensions(originalImage.naturalWidth, originalImage.naturalHeight, zoom);
+    root.style.setProperty("--lab-image-width", `${size.width}px`);
+    root.style.setProperty("--lab-image-height", `${size.height}px`);
+    root.style.setProperty("--lab-panel-width", `${size.width + 2}px`);
   };
   for (const button of zoomButtons) {
     button.disabled = false;
@@ -199,11 +206,12 @@ export function render(container) {
 
   const originalPanel = root.querySelector(".lab-cards > .lab-image:first-child");
   const originalPlaceholder = originalPanel.querySelector(".lab-placeholder");
-  const originalImage = document.createElement("img");
+  originalImage = document.createElement("img");
   originalImage.className = "lab-original-image";
   originalImage.alt = "Imagem original selecionada";
   originalImage.hidden = true;
   originalPanel.append(originalImage);
+  const roi = connectRoiSelection({ image: originalImage, button: panel.querySelector(".lab-wide"), panel: panel.querySelector(".lab-panel-body") });
   let originalLoadSerial = 0;
 
   function displayOriginal() {
@@ -212,6 +220,7 @@ export function render(container) {
     const id = ++originalLoadSerial;
     originalImage.hidden = true;
     originalImage.removeAttribute("src");
+    roi.setSource(`${getContext().provider}|${getContext().manga}|${currentSource}|${chapterSelect.value}|${selectedName}|${src}`, false);
     originalPlaceholder.hidden = false;
     if (!page) {
       originalPlaceholder.textContent = "Aguardando seleção da página";
@@ -226,6 +235,8 @@ export function render(container) {
       if (disposed || id !== originalLoadSerial) return;
       originalImage.hidden = false;
       originalPlaceholder.hidden = true;
+      updateZoom();
+      roi.setSource(`${getContext().provider}|${getContext().manga}|${currentSource}|${chapterSelect.value}|${selectedName}|${src}`, true);
     };
     originalImage.onerror = () => {
       if (disposed || id !== originalLoadSerial) return;
@@ -457,6 +468,7 @@ export function render(container) {
     if (root.classList.contains("lab-focus-mode")) setFocus(false);
     document.removeEventListener("keydown", onFocusKey);
     disconnect();
+    roi.dispose();
     browserController?.abort();
     hideExplorerPreview();
     explorerPreview.remove();
