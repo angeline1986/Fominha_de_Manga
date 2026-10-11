@@ -32,6 +32,12 @@ from central_v2.backend.routes.merge_manual import (
 )
 from central_v2.backend.routes.static import static_response
 from central_v2.backend.routes.laboratorio_pages import response as laboratorio_pages_response
+from central_v2.backend.routes.laboratorio_degrade import execute as lab_degrade_execute, result_image as lab_degrade_image
+from central_v2.backend.routes.laboratorio_tratamentos import (
+    execute_smooth as lab_smooth_execute,
+    execute_stylized as lab_stylized_execute,
+    result_image as lab_stylized_image,
+)
 from central_v2.backend.routes.textoff_merged_router import (
     dispatch_textoff_merged_get, dispatch_textoff_merged_post,
 )
@@ -80,6 +86,13 @@ def dispatch_get(
     if request.path in {"/api/textoff/laboratorio/pages", "/api/textoff/laboratorio/pages/image"}:
         return laboratorio_pages_response(parse_qs(request.query), output_root,
                                          image=request.path.endswith("/image"))
+
+    if request.path == "/api/textoff/laboratorio/degrade/image":
+        return lab_degrade_image(parse_qs(request.query))
+    if request.path == "/api/textoff/laboratorio/estilizado/image":
+        return lab_stylized_image(parse_qs(request.query))
+    if request.path == "/api/textoff/laboratorio/gradiente_suave/image":
+        return lab_stylized_image(parse_qs(request.query), "gradiente_suave")
 
     if request.path == "/api/merge-manual":
         return merge_manual_response(parse_qs(request.query), output_root)
@@ -189,6 +202,12 @@ def dispatch_get(
 
 
 def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
+    if urlparse(path).path == "/api/textoff/laboratorio/degrade/execute":
+        return lab_degrade_execute(payload, output_root)
+    if urlparse(path).path == "/api/textoff/laboratorio/estilizado/execute":
+        return lab_stylized_execute(payload, output_root)
+    if urlparse(path).path == "/api/textoff/laboratorio/gradiente_suave/execute":
+        return lab_smooth_execute(payload, output_root)
     if urlparse(path).path in {"/api/export/simulate", "/api/export/execute"}:
         return export_response(urlparse(path).path.rsplit("/", 1)[-1], payload, output_root)
     if urlparse(path).path == "/api/pdf/execute":

@@ -30,7 +30,7 @@
 .lab-image { display: flex; width: var(--lab-panel-width); min-width: 0; flex-direction: column; overflow: hidden; align-self: start; border: 1px solid #c0e0f1; border-radius: 9px; background: #fff; }
 .lab-image header { flex: none; padding: 12px; border-bottom: 1px solid #d8eaf3; font-size: 12px; font-weight: 750; }
 .lab-placeholder { display: grid; width: var(--lab-image-width); height: var(--lab-image-height); flex: none; place-items: center; padding: 16px; color: #85a6b7; font-size: 13px; text-align: center; }
-.lab-image > img:not(.lab-original-image) { display: block; width: var(--lab-image-width); height: auto; flex: none; }
+.lab-image > img.lab-treatment-image { display: block; width: var(--lab-image-width); max-width: none; height: auto; flex: none; }
 .lab-subtitle { display: block; margin-bottom: 12px; font-size: 12px; }
 .lab-wide { width: 100%; }
 .lab-panel hr { margin: 18px 0; border: 0; border-top: 1px solid #e1eef6; }

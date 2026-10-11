@@ -4,6 +4,7 @@ import { connectLaboratorio } from "/texto_off/laboratorio/data_loader.js";
 import { connectRoiSelection } from "/texto_off/laboratorio/roi_selection.js";
 import { zoomDimensions } from "/texto_off/laboratorio/zoom.js";
 import { connectDegrade } from "/texto_off/laboratorio/degrade.js";
+import { connectSmooth, connectStylized } from "/texto_off/laboratorio/tratamentos.js";
 export function render(container) {
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
@@ -49,7 +50,9 @@ export function render(container) {
       <aside class="lab-panel lab-actions"><div class="lab-panel-head"><strong>Laboratório</strong></div>
         <div class="lab-panel-body"><strong class="lab-subtitle">Seleção de áreas</strong><button disabled class="lab-wide">Selecionar área</button>
           <p class="lab-muted">Nenhuma área selecionada.</p><hr/><strong class="lab-subtitle">Tratamentos</strong>
-          <button type="button" class="lab-wide" data-lab-degrade>Executar Degradê</button><p class="lab-muted" data-lab-degrade-status>Selecione uma página e pelo menos uma área.</p><p class="lab-muted">Artístico e Suave ainda não conectados.</p>
+          <button type="button" class="lab-wide" data-lab-degrade>Executar Degradê</button><p class="lab-muted" data-lab-degrade-status>Selecione uma página e pelo menos uma área.</p>
+          <button type="button" class="lab-wide" data-lab-stylized>Executar Artístico</button><p class="lab-muted" data-lab-stylized-status>Selecione uma página e pelo menos uma área.</p>
+          <button type="button" class="lab-wide" data-lab-smooth>Executar Suave</button><p class="lab-muted" data-lab-smooth-status>Selecione uma página e pelo menos uma área.</p>
         </div>
       </aside>
     </div>`;
@@ -218,24 +221,34 @@ export function render(container) {
   originalImage.hidden = true;
   originalPanel.append(originalImage);
   const roi = connectRoiSelection({ image: originalImage, button: panel.querySelector(".lab-wide"), panel: panel.querySelector(".lab-panel-body") });
+  function getTreatmentRequest() {
+    if (originalImage.hidden || !originalImage.naturalWidth || !selectedName) return null;
+    const selections = roi.getBoxesPixels();
+    if (!selections.length) return null;
+    const { provider, manga } = getContext();
+    if (!provider || !manga || !chapterSelect.value) return null;
+    return {provider, manga, source: currentSource, chapter: chapterSelect.value,
+            page: selectedName, selections};
+  }
   const degrade = connectDegrade({
-    root,
-    button: panel.querySelector('[data-lab-degrade]'),
-    getRequest() {
-      if (originalImage.hidden || !originalImage.naturalWidth || !selectedName) return null;
-      const selections = roi.getBoxesPixels();
-      if (!selections.length) return null;
-      const { provider, manga } = getContext();
-      if (!provider || !manga || !chapterSelect.value) return null;
-      return {provider, manga, source: currentSource, chapter: chapterSelect.value,
-              page: selectedName, selections};
-    },
+    root, button: panel.querySelector('[data-lab-degrade]'), getRequest: getTreatmentRequest,
   });
+  const stylized = connectStylized({
+    root, button: panel.querySelector('[data-lab-stylized]'), getRequest: getTreatmentRequest,
+  });
+  const smooth = connectSmooth({
+    root, button: panel.querySelector('[data-lab-smooth]'), getRequest: getTreatmentRequest,
+  });
+  const roiList = panel.querySelector(".lab-roi-list");
+  const roiObserver = new MutationObserver(() => { stylized.invalidate(); smooth.invalidate(); });
+  roiObserver.observe(roiList, { childList: true });
   let originalLoadSerial = 0;
 
   function displayOriginal() {
     const context = getContext();
     degrade.reset(`${context.provider}|${context.manga}|${currentSource}|${chapterSelect.value}|${selectedName}`);
+    stylized.reset(`${context.provider}|${context.manga}|${currentSource}|${chapterSelect.value}|${selectedName}`);
+    smooth.reset(`${context.provider}|${context.manga}|${currentSource}|${chapterSelect.value}|${selectedName}`);
     const page = chapterPages().find((item) => item.name === selectedName);
     const src = page?.previewUrl || "";
     const id = ++originalLoadSerial;
@@ -501,6 +514,9 @@ export function render(container) {
     document.removeEventListener("keydown", onFocusKey);
     disconnect();
     degrade.dispose();
+    roiObserver.disconnect();
+    stylized.dispose();
+    smooth.dispose();
     roi.dispose();
     browserController?.abort();
     hideExplorerPreview();
