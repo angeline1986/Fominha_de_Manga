@@ -152,3 +152,96 @@ body.lab-focus-lock { overflow: hidden; }
 }
 .lab-page .lab-focus-nav { display: flex; align-items: center; gap: 10px; }
 .lab-page .lab-focus-nav button { padding: 4px 9px; min-width: 32px; }
+
+
+/* laboratorio-l1-original: usa a URL de preview já entregue pela API */
+.lab-page .lab-original-image {
+  display: block;
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+.lab-page .lab-original-image[hidden],
+.lab-page .lab-placeholder[hidden] { display: none !important; }
+
+
+
+/* laboratorio-foco-limites-v2 — grade contida entre as laterais */
+.lab-page.lab-focus-mode .lab-columns,
+.lab-page.lab-focus-mode.lab-panel-open .lab-columns {
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) !important;
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+}
+.lab-page.lab-focus-mode.lab-panel-open .lab-columns {
+  grid-template-columns: minmax(0, 1fr) 295px !important;
+}
+.lab-page.lab-focus-mode .lab-workspace {
+  min-width: 0;
+  width: 100%;
+  overflow: hidden;
+  grid-column: 1;
+}
+.lab-page.lab-focus-mode .lab-stage {
+  min-width: 0;
+  max-width: 100%;
+  width: 100%;
+  overflow: auto;
+  flex: 1 1 auto;
+  overscroll-behavior: contain;
+}
+.lab-page.lab-focus-mode .lab-cards {
+  transform: none !important;
+  zoom: 1 !important;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  gap: 12px;
+  margin: 0;
+  align-items: start;
+}
+.lab-page.lab-focus-mode .lab-image {
+  min-width: 0 !important;
+  max-width: 100%;
+  align-self: start;
+}
+.lab-page.lab-focus-mode .lab-original-image {
+  width: 100%;
+  max-width: 100%;
+  height: auto;
+}
+.lab-page.lab-focus-mode .lab-placeholder {
+  min-height: 220px;
+  height: 220px;
+  flex: none;
+}
+.lab-page.lab-focus-mode.lab-panel-open .lab-actions {
+  display: flex !important;
+  flex-direction: column;
+  position: static !important;
+  grid-column: 2;
+  min-width: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  min-height: 0;
+  inset: auto !important;
+  z-index: auto !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  overflow-y: auto;
+}
+.lab-page.lab-focus-mode:not(.lab-panel-open) .lab-actions {
+  display: none !important;
+}
+/* Sem segunda paginação no Foco: navegação das páginas segue a sidebar. */
+.lab-page.lab-focus-mode .lab-focus-footer { display: none !important; }
+@media (max-width: 700px) {
+ .lab-page.lab-focus-mode.lab-panel-open .lab-columns {
+   grid-template-columns: minmax(0,1fr) min(260px,40vw) !important;
+ }
+}

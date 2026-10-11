@@ -197,8 +197,48 @@ export function render(container) {
     return chapterPages();
   }
 
+  const originalPanel = root.querySelector(".lab-cards > .lab-image:first-child");
+  const originalPlaceholder = originalPanel.querySelector(".lab-placeholder");
+  const originalImage = document.createElement("img");
+  originalImage.className = "lab-original-image";
+  originalImage.alt = "Imagem original selecionada";
+  originalImage.hidden = true;
+  originalPanel.append(originalImage);
+  let originalLoadSerial = 0;
+
+  function displayOriginal() {
+    const page = chapterPages().find((item) => item.name === selectedName);
+    const src = page?.previewUrl || "";
+    const id = ++originalLoadSerial;
+    originalImage.hidden = true;
+    originalImage.removeAttribute("src");
+    originalPlaceholder.hidden = false;
+    if (!page) {
+      originalPlaceholder.textContent = "Aguardando seleção da página";
+      return;
+    }
+    if (!src) {
+      originalPlaceholder.textContent = "Imagem indisponível para esta página";
+      return;
+    }
+    originalPlaceholder.textContent = "Carregando imagem original...";
+    originalImage.onload = () => {
+      if (disposed || id !== originalLoadSerial) return;
+      originalImage.hidden = false;
+      originalPlaceholder.hidden = true;
+    };
+    originalImage.onerror = () => {
+      if (disposed || id !== originalLoadSerial) return;
+      originalImage.hidden = true;
+      originalPlaceholder.hidden = false;
+      originalPlaceholder.textContent = "Não foi possível carregar a imagem original";
+    };
+    originalImage.src = src;
+  }
+
   function draw() {
     hidePreview();
+    displayOriginal();
     const all = chapterPages();
     const rows = filtered();
     const count = Math.max(1, Math.ceil(rows.length / pageSize));
