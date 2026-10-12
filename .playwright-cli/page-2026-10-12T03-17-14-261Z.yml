@@ -1,0 +1,25 @@
+- generic [ref=e4]:
+  - complementary "Navegação principal" [ref=e5]:
+    - generic [ref=e6]:
+      - button "Recolher menu" [expanded] [ref=e7] [cursor=pointer]
+      - generic [ref=e8]:
+        - strong [ref=e9]: Fominha de Mangá
+        - generic [ref=e10]: Central de Processamento
+    - generic [ref=e14]:
+      - strong [ref=e16]: Menu principal
+      - navigation "Menu principal" [ref=e17]:
+        - button "Visão Geral" [ref=e18] [cursor=pointer]
+        - button "Processamento" [ref=e21] [cursor=pointer]
+        - button "Balanceamento" [ref=e24] [cursor=pointer]
+        - button "Gerar PDF" [ref=e27] [cursor=pointer]
+        - button "Limpeza de Balões" [ref=e30] [cursor=pointer]
+        - button "Exportar Arquivos" [ref=e33] [cursor=pointer]
+    - generic [ref=e37]:
+      - button "Provider" [ref=e40] [cursor=pointer]
+      - button "Obra" [disabled] [ref=e44]
+    - generic "Ações da Central" [ref=e46]:
+      - button "Sincronizar" [ref=e47] [cursor=pointer]
+      - button "Finalizar servidor" [ref=e48] [cursor=pointer]
+  - main [ref=e49]:
+    - heading "Central V2" [level=1] [ref=e50]
+    - paragraph [ref=e51]: Estrutura inicial da nova Central de Processamento.

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="color-scheme" content="light dark">
+<title>Central V2 — Pendências</title>
+<style>
+:root { color-scheme:light dark; --bg:#f5f8fa; --panel:#fff; --sidebar:#e5f5fa; --ink:#153344; --muted:#607987; --line:#d6e4e9; --accent:#08739a; --accent-soft:#d2edf5; --shadow:0 8px 24px #17344812; }
+@media(prefers-color-scheme:dark) { :root { --bg:#111922; --panel:#17232d; --sidebar:#142a35; --ink:#e2edf1; --muted:#a2b4bd; --line:#2b414e; --accent:#74c5e2; --accent-soft:#203e4b; --shadow:0 8px 24px #0003; } }
+* { box-sizing:border-box; } html { scroll-behavior:smooth; } body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; }
+.app { min-height:100vh; display:grid; grid-template-columns:286px minmax(0,1fr); }
+.sidebar { position:sticky; top:0; height:100vh; overflow:auto; padding:1rem .75rem; background:var(--sidebar); border-right:1px solid var(--line); }
+.brand { padding:.3rem .65rem 1.1rem; color:var(--muted); font-size:.74rem; font-weight:750; letter-spacing:.1em; text-transform:uppercase; }
+.feature-nav { display:grid; gap:.28rem; }
+.feature-link { width:100%; min-height:48px; display:grid; grid-template-columns:22px 1fr 18px; align-items:center; gap:.7rem; padding:.65rem .65rem; border:0; border-radius:8px; color:#075477; background:transparent; text-align:left; font:inherit; cursor:pointer; }
+@media(prefers-color-scheme:dark) { .feature-link { color:#b9dce8; } }
+.feature-link:hover { background:#ffffff80; } @media(prefers-color-scheme:dark) { .feature-link:hover { background:#ffffff0d; } }
+.feature-link.active { background:var(--panel); color:var(--accent); box-shadow:0 1px 4px #12334412; font-weight:700; }
+.feature-link:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.feature-link svg { width:20px; height:20px; fill:none; stroke:currentColor; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+.chevron { justify-self:end; font-size:1.4rem; line-height:1; color:var(--muted); transition:transform .15s ease; } .feature-link.active .chevron { transform:rotate(90deg); color:var(--accent); }
+.workspace { min-width:0; }
+.topbar { position:sticky; top:0; z-index:2; min-height:52px; display:flex; align-items:center; padding:.55rem clamp(1rem,3vw,2rem); background:color-mix(in srgb,var(--panel) 94%,transparent); border-bottom:1px solid var(--line); backdrop-filter:blur(10px); }
+.topbar strong { font-size:.92rem; }
+.content { max-width:1080px; margin:1.25rem auto; padding:0 clamp(.8rem,2.4vw,1.6rem) 3rem; }
+.feature-panel { display:none; background:var(--panel); border:1px solid var(--line); border-radius:13px; padding:clamp(1rem,2.7vw,2rem); box-shadow:var(--shadow); }
+.feature-panel.active { display:block; }
+.panel-heading { margin:-.1rem 0 1.3rem; padding-bottom:.8rem; border-bottom:1px solid var(--line); }
+.panel-heading p { margin:0; color:var(--accent); font-size:1.35rem; line-height:1.25; font-weight:750; } .panel-heading span { color:var(--muted); font-size:.9rem; }
+.feature-panel h2 { margin:2rem 0 .7rem; padding-bottom:.4rem; border-bottom:1px solid var(--line); font-size:1.35rem; line-height:1.3; scroll-margin-top:70px; }
+.feature-panel h2:first-of-type { margin-top:.4rem; } .feature-panel h3 { margin:1.45rem 0 .5rem; font-size:1.08rem; line-height:1.35; scroll-margin-top:70px; }
+.feature-panel h4 { margin:1.1rem 0 .4rem; font-size:1rem; } p { margin:.55rem 0; } a { color:var(--accent); } code { padding:.12em .3em; border-radius:4px; background:color-mix(in srgb,var(--line) 45%,transparent); font-size:.9em; overflow-wrap:anywhere; }
+pre { overflow:auto; padding:.85rem; border-radius:8px; background:var(--bg); } ul,ol { padding-left:1.4rem; } li+li { margin-top:.18rem; } strong { font-weight:750; }
+.feature-panel table { width:100%; border-collapse:collapse; margin:1rem 0; font-size:.92rem; } th,td { padding:.58rem .7rem; border:1px solid var(--line); text-align:left; vertical-align:top; } th { background:var(--accent-soft); }
+.source-context { margin:.4rem 0; color:var(--muted); font-size:.78rem; font-weight:750; letter-spacing:.03em; text-transform:uppercase; }
+.backlog-item { margin:1.1rem 0; padding:1rem; border:1px solid var(--line); border-radius:9px; background:color-mix(in srgb,var(--panel) 92%,var(--accent-soft)); }
+.directory-diagnostic { padding:.8rem 1rem; }
+.directory-diagnostic h3 { margin:.35rem 0 .55rem; }
+.directory-diagnostic p { margin:.35rem 0; }
+.diagnostic-current { color:var(--muted); }
+.diagnostic-columns { display:grid; grid-template-columns:1fr 1fr; gap:1rem; margin:.65rem 0; }
+.diagnostic-columns section+section { border-left:1px solid var(--line); padding-left:1rem; }
+.diagnostic-columns h4 { margin:.1rem 0 .2rem; font-size:.9rem; }
+.diagnostic-done { padding-top:.45rem; border-top:1px solid var(--line); font-size:.9rem; }
+@media(max-width:760px) { .diagnostic-columns { grid-template-columns:1fr; gap:.45rem; } .diagnostic-columns section+section { border-left:0; border-top:1px solid var(--line); padding:.55rem 0 0; } }
+.empty-state { padding:2rem 1.2rem; text-align:center; border:1px dashed var(--line); border-radius:10px; color:var(--muted); } .empty-state strong { color:var(--ink); }
+.footer { color:var(--muted); font-size:.82rem; margin-top:1rem; }
+@media(max-width:760px) { .app { grid-template-columns:1fr; } .sidebar { position:sticky; z-index:3; height:auto; padding:.55rem .55rem .35rem; border-right:0; border-bottom:1px solid var(--line); } .brand { padding:.1rem .4rem .45rem; } .feature-nav { display:flex; gap:.25rem; overflow-x:auto; padding-bottom:.15rem; } .feature-link { flex:0 0 auto; width:auto; min-height:40px; grid-template-columns:18px auto 12px; gap:.42rem; padding:.5rem .58rem; white-space:nowrap; font-size:.84rem; } .feature-link svg { width:17px; height:17px; } .chevron { font-size:1.1rem; } .topbar { position:static; min-height:44px; } .content { margin:.7rem auto; } }
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar" aria-label="Navegação por feature">
+    <div class="brand">Fominha · Central V2</div>
+    <nav class="feature-nav" role="tablist" aria-label="Features do projeto"><button class="feature-link active" type="button" role="tab" id="nav-overview" aria-controls="view-overview" aria-selected="true" tabindex="0">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg><span>Visão Geral</span><span class="chevron" aria-hidden="true">›</span>
+    </button><button class="feature-link" type="button" role="tab" id="nav-processing" aria-controls="view-processing" aria-selected="false" tabindex="-1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="9" r="3"/><path d="M9 2v2m0 10v2M2 9h2m10 0h2M4.1 4.1l1.4 1.4m7 7 1.4 1.4m0-9.8-1.4 1.4m-7 7-1.4 1.4"/><circle cx="17" cy="17" r="3"/><path d="M17 12v2m0 6v2m-5-5h2m6 0h2"/></svg><span>Processamento</span><span class="chevron" aria-hidden="true">›</span>
+    </button><button class="feature-link" type="button" role="tab" id="nav-balancing" aria-controls="view-balancing" aria-selected="false" tabindex="-1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v18M5 6h14M7 6l-4 8h8L7 6Zm10 0-4 8h8l-4-8ZM5 21h14"/></svg><span>Balanceamento</span><span class="chevron" aria-hidden="true">›</span>
+    </button><button class="feature-link" type="button" role="tab" id="nav-pdf" aria-controls="view-pdf" aria-selected="false" tabindex="-1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 2h8l5 5v15H6z"/><path d="M14 2v6h5"/></svg><span>Gerar PDF</span><span class="chevron" aria-hidden="true">›</span>
+    </button><button class="feature-link" type="button" role="tab" id="nav-cleaning" aria-controls="view-cleaning" aria-selected="false" tabindex="-1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 15 9-11a2 2 0 0 1 3 0l6 5a2 2 0 0 1 0 3l-7 8H8l-5-5a2 2 0 0 1 0-3Z"/><path d="m9 21 8-9"/></svg><span>Limpeza de Balões</span><span class="chevron" aria-hidden="true">›</span>
+    </button><button class="feature-link" type="button" role="tab" id="nav-export" aria-controls="view-export" aria-selected="false" tabindex="-1">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 18a5 5 0 1 1 .6-9.96A6 6 0 0 1 19 10a4 4 0 0 1 0 8H7Z"/><path d="M12 17v-7m-3 3 3-3 3 3"/></svg><span>Exportar Arquivos</span><span class="chevron" aria-hidden="true">›</span>
+    </button></nav>
+  </aside>
+  <div class="workspace">
+    <header class="topbar"><strong>Índice de pendências</strong></header>
+    <main class="content"><section class="feature-panel active" id="view-overview" role="tabpanel" aria-labelledby="nav-overview" >
+      <div class="panel-heading"><p>Visão Geral</p><span>Pendências gerais e decisões que conectam features.</span></div><h2 id="baseline-e-uso">Baseline e uso</h2>
+<ul>
+<li><strong>HEAD base desta revisão:</strong> <code>8c0b443e</code> — <code>feat(central-v2): protege residuos manuais no nivel II</code>.</li>
+<li>A revisão documental anterior registrava P1.1 em <code>561d413d</code>; P1.2 foi publicado em <code>8c0b443e</code>.</li>
+<li>Este arquivo consolida estado, evidência e próxima investigação. Não substitui os documentos especializados nem transforma hipóteses em diagnósticos.</li>
+<li>Prioridades são orientação prática, não bloqueios automáticos ao desenvolvimento funcional.</li>
+</ul>
+<h2 id="indice-de-pendencias-por-prioridade">Índice de pendências por prioridade</h2>
+<p>Ordem: P1 (maior prioridade), depois P2, P3 e as frentes adiadas P4–P7. Itens recebidos do backlog de 12/10 mantêm a referência à BL original entre parênteses; essas BL não são IDs da seção de UX abaixo. Prioridades seguem como orientação, não autorização de implementação.</p>
+<table>
+<thead>
+<tr>
+  <th>Prioridade</th>
+  <th>Pendências</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+  <td><strong>P1 — alta / validação necessária</strong></td>
+  <td>Catálogo e autoridade do Passo 2 (validação funcional); <a href="#organizacao-dos-arquivos-do-consolidado-final-origem-bl-01">organização do Consolidado Final</a> (BL-01); <a href="#fonte-das-imagens-enviadas-ao-google-drive-origem-bl-04">origem das imagens para o Drive</a> (BL-04, condicional); compatibilidade V1 no Passo 1 (BL-05); progresso do Laboratório (BL-06); verificador automático de 200 linhas (BL-08).</td>
+</tr>
+<tr>
+  <td><strong>P2 — média / investigação e contrato</strong></td>
+  <td>Passos 3/4; boxes <code>unknown</code>; Auditoria Antes &amp; Depois; pastas e contrato do Consolidado Final (BL-02/03); shutdown de jobs (BL-07); regressão visual (BL-09); autorização com múltiplos componentes (BL-12).</td>
+</tr>
+<tr>
+  <td><strong>P3 — baixa / experiência e manutenção</strong></td>
+  <td>Pendências visuais da Curadoria; falhas preexistentes de suítes amplas (BL-10); decisão suspensa da UX assistida Degradê (BL-11); qualidade visual comparativa dos filtros (BL-13).</td>
+</tr>
+<tr>
+  <td><strong>P4 — adiada deliberadamente</strong></td>
+  <td>Sanitização arquitetural e baseline de testes; o detalhamento de automação do limite de 200 linhas está no item P1 e não deve ficar diluído nesta frente.</td>
+</tr>
+<tr>
+  <td><strong>P5–P7 — adiadas / evolução</strong></td>
+  <td>Endereçamentos e layout de dados; padronização dos logs; harness e melhorias cosméticas.</td>
+</tr>
+</tbody>
+</table>
+<h2 id="p1--triagem-de-pendencias-do-backlog-1210">P1 — Triagem de pendências do backlog 12/10</h2>
+<p>As prioridades abaixo foram integradas do arquivo <code>backlog_pendencias_fominha_central_v2_2026-10-12.md</code>. Seus IDs BL são preservados apenas como rastreabilidade à fonte. Estados e evidências são os registrados na fonte; investigar antes de tratar hipóteses como regressões.</p><article class="backlog-item directory-diagnostic"><p class="source-context">P1 · Integração: Limpeza de Balões → Exportar Arquivos · BL-04</p><h3 id="fonte-das-imagens-enviadas-ao-google-drive-origem-bl-04">Fonte das imagens enviadas ao Google Drive</h3>
+<p class="diagnostic-current"><strong>Como funciona:</strong> Exportar Arquivos copia os conteúdos selecionados para a pasta de destino. A opção <code>TEXTO OFF — MERGED</code> usa <code>04_TEXTO_OFF/MERGED</code>, não o Consolidado Final.</p>
+<p><strong>Decisão pendente:</strong> confirmar se esse conteúdo é o resultado esperado ou se o fluxo deve usar o Consolidado Final. Investigar quando houver exportação real; ainda não há evidência de cópia incorreta.</p>
+<p class="diagnostic-done"><strong>Concluído quando:</strong> a origem esperada estiver documentada e os arquivos correspondentes conferidos.</p>
+</article>
+<article class="backlog-item"><p class="source-context">P1 · Triagem do backlog 12/10</p><h3 id="validacao-automatica-do-limite-de-200-linhas-origem-bl-08">Validação automática do limite de 200 linhas (origem BL-08)</h3>
+<ul>
+<li><strong>Estado:</strong> proposta, não implementada. <strong>Prioridade da fonte:</strong> alta. A regra proposta permite até 200 linhas físicas; 201 viola. Markdown é isento; linhas em branco e comentários contam. Definir contagem para CRLF e arquivo sem newline final.</li>
+<li><strong>Inventário antes de implementar:</strong> determinar extensões elegíveis versionadas; não classificar todo arquivo não Markdown como código. Definir exclusões explícitas para dependências, venvs, <code>node_modules</code>, caches, gerados, binários, JSON/locks e submódulos. Política própria para <code>download/mangago_downloader</code>, sem alterações automáticas em seu conteúdo.</li>
+<li><strong>Verificador sugerido:</strong> <code>dev/scripts/check_file_size.py</code>; descobrir arquivos versionados via Git, aplicar escopo/exclusões e baseline legado, reportando caminho, linhas, limite e excedente com saída não zero para bloqueios.</li>
+<li><strong>Hook local:</strong> validar conteúdo staged do índice Git, inclusive staging parcial; documentar instalação. Hook é feedback local, não autoridade final.</li>
+<li><strong>CI:</strong> rodar o mesmo verificador em Pull Requests e pushes relevantes. Status check obrigatório e proteção da branch são necessários para bloquear merge; workflow isolado não impede push direto.</li>
+<li><strong>Adoção gradual:</strong> (1) inventário somente leitura, sem alterar produção; (2) bloquear arquivos novos acima de 200 e impedir crescimento de legados acima do limite, com baseline monotônico; (3) regularizar legado por responsabilidades coesas, preservar interfaces/comportamento e remover baseline progressivamente.</li>
+<li><strong>Aceite:</strong> 200 passa/201 falha; Markdown longo passa; legado pode diminuir, mas não crescer; staged parcial e renomeações/remoções são tratados corretamente; newline/CRLF consistentes; falsos positivos de gerados/dependências evitados; local e CI concordam; falha não edita arquivos; status obrigatório realmente bloqueia merge.</li>
+<li><strong>Decisões necessárias:</strong> extensões, exclusões, baseline, gerados/submódulos, hook, eventos e proteções da CI. Sequência autorizável em fases: inventário; aprovação de escopo; script/testes isolados; hook; CI/proteção; avaliação de falsos positivos e redução da dívida.</li>
+<li><strong>Limites:</strong> não alterar algoritmos Degradê/Artístico/Suave, não refatorar imediatamente todos os arquivos grandes, não tocar em <code>laboratorio_one/</code>, dados, venvs, resultados, hooks ou workflows sem autorização específica; sem commit/push. Proposta fonte: <code>proposta_validacao_automatica_limite_200_linhas.md</code> (11/10/2026).</li>
+</ul>
+</article><article class="backlog-item"><p class="source-context">P3 · Suítes, decisão e qualidade</p><h3 id="falhas-preexistentes-das-suites-amplas-origem-bl-10">Falhas preexistentes das suítes amplas (origem BL-10)</h3>
+<ul>
+<li><strong>Estado:</strong> investigação; prioridade média-baixa na fonte.</li>
+<li><strong>Proposta:</strong> reproduzir em ambiente suportado, classificar falhas legadas/regressões e corrigir mocks, contratos ou comandos sem alterar algoritmos protegidos. Não atribuir todas as falhas ao Laboratório.</li>
+<li><strong>Aceite:</strong> cada falha tem causa, status e escopo documentados.</li>
+</ul>
+</article><h2 id="p4--sanitizacao-arquitetural">P4 — Sanitização arquitetural</h2>
+<p><strong>Status:</strong> ADIADA DELIBERADAMENTE. O detalhe e a evidência permanecem em <a href="sanitizacao_pendente_central_v2.md"><code>sanitizacao_pendente_central_v2.md</code></a>; este índice não os duplica.</p>
+<p>Frentes resumidas na triagem especializada:</p>
+<ul>
+<li>scanner de arquitetura inclui <code>node_modules</code> e acaba inspecionando código de dependências;</li>
+<li>teste de navegação do Auto-Cleaner usa expectativa histórica/desatualizada;</li>
+<li>teste do Job Manager conserva expectativa antiga de <code>completed</code> mesmo com capítulo falho;</li>
+<li>mock do teste <code>http_handler.log_message</code> não fornece <code>path</code>/<code>command</code> ao handler;</li>
+<li>cinco testes HTTP não alcançam as rotas porque o ambiente bloqueia <code>socket.bind</code>;</li>
+<li>teste arquitetural define limite de 200 linhas: há arquivos que já excediam esse limite no HEAD da triagem e arquivos que o cruzaram no working tree então analisado. A automação dessa regra tem item próprio em P1; esta sanitização continua adiada;</li>
+<li>a sanitização especializada também registra regras para validação em <code>/tmp</code> e <code>/private/tmp</code>, sem executar cópia modificada do código operacional.</li>
+</ul>
+<p><strong>Próxima investigação:</strong> retomar a triagem pelo documento especializado e comparar seus números/estados com o HEAD da tarefa de sanitização. O resumo acima descreve o registro da triagem, não uma nova execução das suítes.</p>
+<h2 id="p5--enderecamentos-e-layout-de-dados">P5 — Endereçamentos e layout de dados</h2>
+<p><strong>Status:</strong> ADIADO / REVALIDADO contra <code>0f8a7a76</code> em 04/10/2026.</p>
+<p>Autoridade específica: <a href="../central_v2_conformidade_enderecamentos.md"><code>central_v2_conformidade_enderecamentos.md</code></a>. O levantamento original declara snapshot estático de 30/09/2026; cada achado foi reclassificado no HEAD atual. Há itens ainda aplicáveis, parcialmente resolvidos e alterados por implementação posterior; nenhum item de centralização de raízes/estágios foi considerado totalmente resolvido.</p>
+<p>Pontos resumidos para retomada:</p>
+<ul>
+<li>BubbleSommelier introduziu uma árvore persistida própria, que precisa integrar o futuro contrato de layout.</li>
+<li>O Job Manager guarda jobs em memória e não introduz árvore persistida própria.</li>
+<li>A política do fluxo legado <code>MERGED</code> continua sendo decisão necessária antes de alterar escritores.</li>
+<li>Primeiro separar identificador lógico, nome físico/canônico, alias legado, valor persistido e caminho físico resolvido.</li>
+<li>Não presumir autorização para mover dados, renomear diretórios, invalidar manifests, alterar hashes, remover aliases ou mudar algoritmos.</li>
+<li>Não fazer substituição textual global de <code>MERGED_NIVEL_*</code>/<code>TO_MERGED_NIVEL_*</code>; classificar cada ocorrência semanticamente.</li>
+</ul>
+<p><strong>Próxima investigação:</strong> seguir a reavaliação e o plano registrados no documento de endereçamentos antes de alterar consumidores. Definir leitura legada e política do destino de escrita antes de mudar escritores.</p>
+<h2 id="p7--harness-e-melhorias-cosmeticas">P7 — Harness e melhorias cosméticas</h2>
+<h3 id="selecao-de-capitulo-no-harness">Seleção de capítulo no harness</h3>
+<p><strong>Status:</strong> PENDÊNCIA DE INFRAESTRUTURA DE TESTE</p>
+<ul>
+<li><strong>Fato observado:</strong> numa validação, o harness estava configurado para capítulo 3, mas a seleção real permaneceu no capítulo 2; o Nível I do capítulo 2 foi reexecutado e os artefatos foram substituídos. A integridade posterior foi validada.</li>
+<li><strong>Próxima melhoria:</strong> selecionar por identidade estável, confirmar a seleção real antes do POST e abortar se o capítulo selecionado não for o esperado.</li>
+<li><strong>Escopo:</strong> harness; não atribuir esse comportamento ao runtime funcional da Central.</li>
+</ul>
+<h3 id="seletor-do-dialogo-final">Seletor do diálogo final</h3>
+<p><strong>Status:</strong> MELHORIA DE HARNESS</p>
+<ul>
+<li><strong>Fato observado:</strong> o seletor <code>Fechar</code> era ambíguo; o job já havia terminado corretamente.</li>
+<li><strong>Próxima melhoria:</strong> usar seletor estável e específico do componente. Não atribuir o incidente ao processamento.</li>
+</ul>
+<h3 id="favicon">Favicon</h3>
+<p><strong>Status:</strong> BAIXA PRIORIDADE / OPCIONAL</p>
+<ul>
+<li><strong>Fato observado:</strong> navegador solicita <code>/favicon.ico</code>, recebe 404 e a ocorrência aparece como WARNING.</li>
+<li><strong>Próxima melhoria:</strong> se desejado, fornecer um favicon válido.</li>
+<li><strong>Não fazer:</strong> não esconder o WARNING para suprimir o 404; a política atual mantém erros de assets visíveis.</li>
+</ul>
+<h2 id="p6--expandir-padronizacao-dos-logs">P6 — Expandir padronização dos logs</h2>
+<p><strong>Status:</strong> PENDENTE / EVOLUÇÃO FUTURA</p>
+<ul>
+<li><strong>Fato observado:</strong> o commit <code>72944631</code> (<code>refactor(central-v2): padroniza logs operacionais</code>) teve escopo deliberadamente limitado. BubbleSommelier e Cleaner I já usam o formato <code>HH:MM:SS.mmm LEVEL [COMPONENTE][job] ...</code>; outros fluxos podem continuar emitindo <code>[central-v2][job ...] ...</code>, inclusive nos fluxos técnicos dos Passos 3 e 4 observados nos testes manuais.</li>
+<li><strong>Impacto:</strong> apresentação e correlação operacional entre fluxos; não é, por si, falha funcional.</li>
+<li><strong>Próxima investigação:</strong> auditar um fluxo por vez e mapear progresso, callbacks, erros, subprocessos e contratos antes de expandir a padronização.</li>
+<li><strong>Não fazer:</strong> não substituir prefixos globalmente nem descartar mensagens antes de verificar sua função operacional.</li>
+</ul>
+<h2 id="criterio-de-retomada">Critério de retomada</h2>
+<p>Uma pendência só bloqueia trabalho funcional quando sua evidência demonstrar dependência direta com a tarefa em andamento. Mensagens de erro, hipóteses e dívidas de harness não devem ser promovidas a regressões sem investigação. Atualizar este índice e o documento especializado correspondente quando uma frente mudar de estado.</p>
+
+    </section><section class="feature-panel" id="view-processing" role="tabpanel" aria-labelledby="nav-processing" hidden>
+      <div class="panel-heading"><p>Processamento</p><span>Auto Merge e Merge Manual.</span></div><div class="empty-state"><strong>Sem pendências de Processamento neste backlog.</strong><p>O índice não registra itens para Auto Merge ou Merge Manual.</p></div>
+
+    </section><section class="feature-panel" id="view-balancing" role="tabpanel" aria-labelledby="nav-balancing" hidden>
+      <div class="panel-heading"><p>Balanceamento</p><span>Validar Estado e Novos Cortes.</span></div><div class="empty-state"><strong>Sem pendências de Balanceamento neste backlog.</strong><p>O índice não registra itens para Validar Estado ou Novos Cortes.</p></div>
+    </section><section class="feature-panel" id="view-pdf" role="tabpanel" aria-labelledby="nav-pdf" hidden>
+      <div class="panel-heading"><p>Gerar PDF</p><span>PDFs de imagens originais ou mescladas.</span></div><div class="empty-state"><strong>Sem pendências de geração de PDF neste backlog.</strong><p>O índice não registra itens para PDFs de imagens originais ou mescladas.</p></div>
+    </section><section class="feature-panel" id="view-cleaning" role="tabpanel" aria-labelledby="nav-cleaning" hidden>
+      <div class="panel-heading"><p>Limpeza de Balões</p><span>Fluxo Texto Off, incluindo o Consolidado Final.</span></div><article class="backlog-item directory-diagnostic"><p class="source-context">P1 · Limpeza de Balões · BL-01</p><h3 id="organizacao-dos-arquivos-do-consolidado-final-origem-bl-01">Organização dos arquivos do Consolidado Final</h3>
+<p class="diagnostic-current"><strong>Hoje:</strong> os PNGs ficam na raiz do capítulo; o manifesto registra <code>page-*.png</code>. <code>clean/</code> e <code>mask/</code> são criadas, mas ficam vazias. O relato dos capítulos 18 e 19 ainda não foi revalidado.</p>
+<div class="diagnostic-columns"><section><h4>Decisão pendente</h4><p>Definir se novos arquivos ficam na raiz ou em <code>clean/</code>. Se mudar, preservar a leitura de capítulos antigos na raiz. Não mover arquivos manualmente. BL-02/03 detalha as pastas e o contrato.</p></section><section><h4>Concluído quando</h4><p>Destino e leitura histórica estiverem definidos; manifesto e hashes permanecerem verificáveis.</p></section></div>
+</article><article class="backlog-item"><p class="source-context">P1 · Triagem do backlog 12/10</p><h3 id="progresso-e-encerramento-seguro-dos-tratamentos-l3-origens-bl-06-e-bl-07">Progresso e encerramento seguro dos tratamentos L3 (origens BL-06 e BL-07)</h3>
+<ul>
+<li><strong>Estado:</strong> melhoria proposta e investigação; planejar em conjunto. <strong>Prioridades da fonte:</strong> média-alta e média.</li>
+<li><strong>Proposta:</strong> estudar integração da barra compartilhada com estados/progresso real do backend, sem percentuais inventados; definir fila, navegação, troca de página, concorrência, respostas obsoletas e encerramento. Investigar shutdown para impedir que jobs concluídos permaneçam <code>running</code>, sem presumir que <code>process.wait()</code> travou ou que shutdown seja a causa única.</li>
+<li><strong>Aceite:</strong> estados fila/execução/conclusão/falha distinguíveis; progresso fiel quando disponível; política de shutdown explícita e estados órfãos recuperáveis; cancelar requisição no navegador não deve ser tratado como cancelamento real do processamento.</li>
+<li><strong>Não fazer:</strong> alterar worker, locks ou shutdown sem reprodução e contrato.</li>
+</ul>
+</article><h2 id="p1--catalogo-de-residuos-por-capitulo">P1 — Catálogo de resíduos por capítulo</h2>
+<p><strong>Status:</strong> CONCLUÍDO — validado funcionalmente e publicado em <code>561d413d</code>.</p>
+<ul>
+<li><strong>Implementado:</strong> estado confirmado separado do estado editável por página; dirty state determinístico por identidade/conteúdo, independente da ordem do array; bolinha consultando o estado atual do catálogo, incluindo rascunhos válidos e remoções locais.</li>
+<li><strong>Implementado:</strong> rascunhos permanecem na store por página ao navegar; “Catalogar resíduo” considera páginas dirty do capítulo, inclusive quando outra página está selecionada.</li>
+<li><strong>Implementado:</strong> POST retrocompatível aceita <code>pages</code> para batch do mesmo passo/capítulo. O backend valida todas as páginas e ocorrências antes de atualizar o manifesto com uma única substituição atômica. Página dirty com <code>occurrences=[]</code> remove o conteúdo persistido daquela página/passo.</li>
+<li><strong>Implementado:</strong> falha de validação preserva estado dirty; erro de rede ou HTTP 5xx reconcilia o snapshot via GET; retry substitui por IDs estáveis e não duplica ocorrências.</li>
+<li><strong>Validação automatizada:</strong> testes focados de comparação/catálogo frontend e backend passaram; sintaxe JS/Python e <code>git diff --check</code> passaram.</li>
+<li><strong>Pendente:</strong> validação funcional manual pela sequência descrita no pedido de implementação. Não marcar concluído nem avançar à integração com o Passo 2 antes dessa revisão.</li>
+</ul>
+<h2 id="p1--autoridade-do-catalogo-sobre-o-auto-cleaner-passo-2">P1 — Autoridade do catálogo sobre o Auto-Cleaner Passo 2</h2>
+<p><strong>Status:</strong> IMPLEMENTADO — AGUARDANDO VALIDAÇÃO FUNCIONAL</p>
+<ul>
+<li><strong>Implementado:</strong> a orquestração do Passo 2 lê o manifesto oficial <code>RESIDUE_OCCURRENCES/&lt;capítulo&gt;</code> via <code>stage_chapter()</code> e <code>read_manifest()</code>, validando provider, obra e capítulo. Consome exclusivamente <code>pages[page].steps[&quot;1&quot;].ocorrencias</code>; o catálogo continua sem depender da UI durante o runtime.</li>
+<li><strong>Autoridade:</strong> <code>residuo_degrade</code> e <code>residuo_gradiente</code> protegem pixels da região catalogada. <code>texto_residual</code> e <code>residuo_transparencia</code> não protegem nem forçam limpeza. <code>fragmento_balao</code> e <code>outro</code> permanecem neutros.</li>
+<li><strong>Ordem:</strong> máscara automática por balão → dilatações normais do Passo 2 → subtração da protection mask → inpainting. A proteção usa <code>box_normalized</code> rasterizado na dimensão real da imagem, sem padding/dilatação adicional. Não altera elegibilidade da página.</li>
+<li><strong>No-change:</strong> se a proteção remover toda a máscara automática, o inpainting é ignorado; a página gera máscara vazia, <code>clean: null</code> e <code>no_change_reason=manual_protection_removed_all_level2_mask</code>, preservando o contrato de fallback do Nível I.</li>
+<li><strong>Observabilidade estruturada:</strong> relatório e manifesto Nível II incluem <code>protected_occurrences</code>, <code>protected_pixels</code> (pixels removidos da máscara automática), <code>mask_pixels_before_protection</code>, <code>mask_pixels_after_protection</code>, <code>protected_types</code> e motivo de no-change por página. O detalhe de progresso informa proteção aplicada somente quando pixels foram removidos; não inclui bboxes.</li>
+<li><strong>Testes automatizados:</strong> cobertura para catálogo ausente, seis tipos, step/página/contexto, proteção parcial e total, página mista, dilatação, bordas/coordenadas, não chamada do inpainting no no-change e encaminhamento pelo worker batch. Testes focados de catálogo, comparação, Passo 2, máscaras, manifest, query, consolidação/fallback e processamento incompleto passaram.</li>
+<li><strong>Pendente:</strong> comparar manualmente imagem, catálogo, máscara automática, região protegida e saída. Não executar Passo 2 real antes dessa revisão.</li>
+</ul>
+<article class="backlog-item"><p class="source-context">P1 · Triagem do backlog 12/10</p><h3 id="compatibilidade-de-obras-v1-no-auto-cleaner-passo-1-origem-bl-05">Compatibilidade de obras V1 no Auto-Cleaner Passo 1 (origem BL-05)</h3>
+<ul>
+<li><strong>Estado:</strong> investigação aberta. <strong>Prioridade da fonte:</strong> alta.</li>
+<li><strong>Caso relatado:</strong> <code>Emergency_Youth Record Book</code>, 52 capítulos com <code>IMG</code> e pastas antigas de MERGE; tabela mostrava <code>ALL (52)</code> e <code>MERGES = —</code>, com execução indisponível. A localização dos arquivos não foi comprovada como causa.</li>
+<li><strong>Próximo passo:</strong> verificar endpoint, elegibilidade, manifesto e diferença entre capítulo antigo e capítulo atualmente aceito. Não reprocessar capítulos nem migrar dados às cegas.</li>
+<li><strong>Aceite:</strong> merges legados válidos reconhecidos, ou recusa com motivo técnico; capítulos elegíveis selecionáveis sem reprocessamento compulsório. Revalidar o estado atual antes de abrir implementação.</li>
+</ul>
+</article><h2 id="p1--diagnosticos-funcionais-dos-passos-3-e-4">P1 — Diagnósticos funcionais dos Passos 3 e 4</h2>
+<p>As ocorrências abaixo permanecem em diagnóstico e <strong>não estão confirmadas como regressões</strong>. Uma mensagem de falha isolada não determina se houve ausência legítima de insumo, capítulo não elegível, incompatibilidade de contrato ou regressão.</p>
+<h2 id="p2--auto-cleaner-diagnosticar-passos-3-e-4">P2 — Auto-Cleaner: diagnosticar Passos 3 e 4</h2>
+<h3 id="passo-3--transparencia-normal-nivel-tecnico-iv">Passo 3 — Transparência Normal (nível técnico IV)</h3>
+<p><strong>Status:</strong> PENDENTE DE DIAGNÓSTICO</p>
+<ul>
+<li><strong>Fato observado:</strong> validação manual em 04/10/2026 terminou em <code>failed</code>; a interface mostrou <code>Nível I não forneceu máscaras válidas para o ajuste fino.</code> na rota <code>/api/textoff/merged/levelIV/execute</code>.</li>
+<li><strong>Fato observado:</strong> a requisição chegou ao job e a UI apresentou a falha.</li>
+<li><strong>Hipótese atual:</strong> a mensagem aponta para pré-condição/artefatos produzidos pelo Passo 1. Isso ainda não determina se o insumo está legitimamente ausente, se o capítulo não era elegível, se há incompatibilidade de contrato ou se existe regressão.</li>
+<li><strong>Próxima investigação:</strong> verificar lineage, manifesto, máscaras esperadas, critérios de validade e elegibilidade do capítulo; classificar o resultado entre ausência legítima de insumo, capítulo não elegível, incompatibilidade de contrato ou regressão funcional.</li>
+<li><strong>Não fazer:</strong> não marcar o Passo 3 como quebrado com base somente na mensagem; não alterar algoritmo, thresholds ou contrato antes do diagnóstico.</li>
+</ul>
+<h3 id="passo-4--transparencia-legada-nivel-tecnico-v">Passo 4 — Transparência Legada (nível técnico V)</h3>
+<p><strong>Status:</strong> PENDENTE DE DIAGNÓSTICO</p>
+<ul>
+<li><strong>Fato observado:</strong> validação manual em 04/10/2026 terminou em <code>failed</code>; a interface mostrou <code>Nível I não forneceu texto adiado para o Nível V.</code></li>
+<li><strong>Hipótese atual:</strong> ainda é preciso determinar se o capítulo deveria conter texto adiado e se a mensagem corresponde a ausência legítima de trabalho, pré-condição não satisfeita, incompatibilidade de contrato ou regressão.</li>
+<li><strong>Próxima investigação:</strong> verificar contrato, manifesto, lineage, elegibilidade e existência esperada do texto adiado.</li>
+<li><strong>Não fazer:</strong> não tratar a mensagem como diagnóstico definitivo. Nível V é apenas o identificador técnico interno do Passo 4 atual; a interface continua com quatro passos.</li>
+</ul>
+<p><strong>Limite de nomenclatura da interface:</strong> existem exatamente quatro passos de Auto-Cleaner: Passo 1; Passo 2; Passo 3 — Transparência Normal; Passo 4 — Transparência Legada. Nível IV e Nível V só aparecem como nomes técnicos internos entre parênteses quando ajudam a localizar código, rotas, manifests ou mensagens.</p>
+<h2 id="p2--auto-cleaner-passo-1-boxes-pequenos-unknown-descartados-antes-da-raw-mask">P2 — Auto-Cleaner Passo 1: boxes pequenos <code>unknown</code> descartados antes da Raw Mask</h2>
+<p><strong>Status:</strong> DIAGNÓSTICO CONCLUÍDO — CORREÇÃO FUTURA</p>
+<ul>
+<li><strong>Casos comprovados em <code>comix / Gazing at you / capítulo 1</code>:</strong> <code>page-009-013.png</code> — <code>IT'S COLD.</code>, bbox <code>[659,2769,807,2800]</code>, área <code>4.588 px²</code>, máscara refinada com <code>1.132 px</code> na ROI; <code>page-021-025.png</code> — <code>REALLY?</code>, bbox <code>[429,408,565,438]</code>, área <code>4.080 px²</code>, máscara refinada com <code>2.205 px</code> na ROI. Nos dois casos a Raw Mask exportada do Cleaner tem <code>0</code> pixels na ROI.</li>
+<li><strong>Causa comprovada:</strong> o ComicTextDetector detecta ambos e os classifica como <code>unknown</code>. O pré-processador do Panel Cleaner converte <code>unknown</code> para idioma nulo e descarta boxes abaixo de <code>suspicious_box_min_size = 40.000</code>; a perda ocorre antes da Raw Mask exportada. Não é falha da autorização N1, deferred/transparência, Nível II, LaMa, proteção manual P1.2, Sommelier, catálogo de resíduos nem do <code>min_area=20</code>.</li>
+<li><strong>Diretriz para a correção:</strong> revisar o descarte de boxes pequenos <code>unknown</code>; não reduzir globalmente <code>suspicious_box_min_size</code>. Preservar a proteção contra falsos positivos e evitar regressão no tratamento dos balões transparentes.</li>
+<li><strong>Validação futura obrigatória:</strong> confirmar <code>IT'S COLD.</code> e <code>REALLY?</code> na Raw Mask, verificar a remoção final dos dois textos, executar regressão do capítulo 1, avaliar falsos positivos e confirmar que balões transparentes continuam funcionando.</li>
+<li><strong>Proveniência diagnóstica:</strong> MERGE SHA-256 <code>14067e5df29960233f0ff57605cbeb8add23a314a1facb8ac0b2df3c92614789</code>; execução isolada em <code>/private/tmp/fominha_level1_rawmask_diagnostic/n1/1/diagnostics/</code>.</li>
+</ul>
+<h2 id="p2--auditoria-de-qualidade-antes-depois">P2 — Auditoria de Qualidade: Antes &amp; Depois</h2>
+<p><strong>Status:</strong> IMPLEMENTADO — AGUARDANDO VALIDAÇÃO FUNCIONAL</p>
+<ul>
+<li><strong>Estado anterior:</strong> a tela abria um par por etapa (<code>Original ↔ Nível I</code> ou <code>Nível I ↔ Nível II</code>) com alternância entre divisor/visão única e lado a lado; a lista do Passo 2 omitia páginas não candidatas.</li>
+<li><strong>Implementado:</strong> a resposta de comparação em layout <code>triptych</code> fornece uma lista única de páginas e metadados para ORIGINAL, AUTO-CLEANER I e AUTO-CLEANER II. As imagens são resolvidas pelos helpers oficiais de MERGE, manifesto Nível I e <code>_valid_level2</code>; o par legado continua disponível para consumidores existentes.</li>
+<li><strong>Fallback/status:</strong> Nível II alterado usa seu <code>clean</code>; candidato analisado sem alteração usa Nível I; página não candidata também usa Nível I com status próprio. Candidato pendente é identificado separadamente. Falta de imagem Nível I ou falta de saída Nível II declarada como alterada retorna erro visível.</li>
+<li><strong>Interface:</strong> três colunas fixas sem visão única, mesmo zoom/ponto de scroll numa viewport compartilhada, troca atômica de página, 13 páginas por página na sidebar, busca, preview da imagem original, foco e catálogo de resíduos preservados. O estado do Nível II aparece discretamente no cabeçalho dessa coluna.</li>
+<li><strong>Automatizado:</strong> testes focados frontend/backend, navegação/paginação, zoom, catálogo compartilhado, fallback e artefato obrigatório ausente passaram nesta revisão.</li>
+<li><strong>Pendente:</strong> validar visualmente em <code>comix / Gazing at you / capítulo 1</code>, nas páginas <code>page-050-057.png</code> e <code>page-013-016.png</code>. Não inferir eficácia da proteção manual apenas pela tela.</li>
+</ul>
+<h2 id="p2--contrato-confiabilidade-e-cobertura-visual-adicionais">P2 — Contrato, confiabilidade e cobertura visual adicionais</h2>
+<h3 id="pastas-vazias-e-contrato-do-consolidado-final-origens-bl-02-e-bl-03">Pastas vazias e contrato do Consolidado Final (origens BL-02 e BL-03)</h3>
+<ul>
+<li><strong>Estado:</strong> melhorias propostas; prioridade média na fonte.</li>
+<li><strong>Proposta:</strong> após decidir o layout de imagens, documentar árvore, função de <code>clean/</code>, <code>mask/</code> e <code>json/</code>, semântica de <code>artifact</code>, hashes, histórico, compatibilidade e migração. Decidir se a etapa deve criar pastas que não usa, sem romper consumidores.</li>
+<li><strong>Aceite:</strong> contrato versionado e testado; somente diretórios previstos, compatibilidade preservada.</li>
+</ul>
+<h3 id="cobertura-de-regressao-visual-e-autorizacao-multipla-origens-bl-09-e-bl-12">Cobertura de regressão visual e autorização múltipla (origens BL-09 e BL-12)</h3>
+<ul>
+<li><strong>Estado:</strong> melhoria/cobertura parcial; prioridade média na fonte.</li>
+<li><strong>Proposta:</strong> mapear requisito→asserção→evidência para escala natural/zoom, ROIs, troca de página, respostas atrasadas, estados sem imagem e layout; em caso real com múltiplos componentes, comprovar autorização individual, preservação dos demais, uso único e concordância de manifesto/máscara.</li>
+<li><strong>Limites:</strong> não reabrir correções já validadas sem nova evidência; não alterar algoritmo do Cleaner.</li>
+<li><strong>Aceite:</strong> cobertura identifica o que não foi testado; nenhum componente não autorizado ou fora da ROI é alterado.</li>
+</ul>
+<h2 id="p3--inconsistencia-visual-da-curadoria">P3 — Inconsistência visual da Curadoria</h2>
+<h3 id="espacamento-entre-toolbar-e-tabela">Espaçamento entre toolbar e tabela</h3>
+<p><strong>Status:</strong> PENDÊNCIA VISUAL</p>
+<ul>
+<li><strong>Fato observado:</strong> a toolbar com busca, filtros, perfil e botão Executar Curadoria não tem espaçamento vertical adequado em relação ao cabeçalho da tabela.</li>
+<li><strong>Impacto:</strong> hierarquia visual/alinhamento da tela de Curadoria.</li>
+<li><strong>Próxima investigação:</strong> comparar telas equivalentes, localizar token, classe ou gap compartilhado e reutilizar o padrão existente; conferir responsividade e alinhamento.</li>
+<li><strong>Não fazer:</strong> não introduzir margem arbitrária específica da Curadoria antes de verificar o contrato compartilhado.</li>
+</ul>
+<h3 id="feedback-e-barra-de-progresso--resolvidos">Feedback e barra de progresso — resolvidos</h3>
+<p><strong>Status:</strong> RESOLVIDO em <code>0f8a7a76</code> (<code>fix(central-v2): padroniza feedback da curadoria de baloes</code>).</p>
+<p>A Curadoria usa a barra compartilhada na posição padrão, sem variante inline; mantém contagem/agregação em páginas; apresenta <code>showOperationSummary()</code> no sucesso e <code>showMessage()</code> no erro. Esses itens não são pendências abertas.</p>
+<h3 id="nomenclatura-bubble-sommelier">Nomenclatura Bubble Sommelier</h3>
+<p><strong>Status:</strong> PENDÊNCIA VISUAL / UX</p>
+<ul>
+<li><strong>Fato observado:</strong> ainda existe nomenclatura relacionada a “Curadoria” na navegação/tela da feature cuja nomenclatura oficial escolhida é “Bubble Sommelier”.</li>
+<li><strong>Diretriz futura:</strong> substituir a nomenclatura de Curadoria por “Bubble Sommelier”. Quando o contexto da tela/navegação já identificar a feature, evitar repetir “BUBBLE SOMMELIER” como título externo redundante; revisar a hierarquia visual sem alterar a funcionalidade.</li>
+<li><strong>Não fazer nesta pendência:</strong> não alterar execução, contratos ou comportamento funcional.</li>
+</ul>
+<h3 id="breadcrumb-na-navegacao">Breadcrumb na navegação</h3>
+<p><strong>Status:</strong> PENDÊNCIA VISUAL / UX</p>
+<ul>
+<li><strong>Fato observado:</strong> “Limpeza de Balões” não comunica claramente a posição da tela na hierarquia e funciona como retorno genérico para a seção.</li>
+<li><strong>Diretriz futura:</strong> substituir essa apresentação por breadcrumb/migalhas de pão que reflita a hierarquia oficial das rotas e nomenclaturas, por exemplo <code>Texto OFF &gt; Limpeza de Balões &gt; Bubble Sommelier</code> ou <code>Texto OFF &gt; Limpeza de Balões &gt; Pincel &amp; Retoques de Arte &gt; Degradê</code>.</li>
+<li><strong>Pré-condição:</strong> ao retomar, conferir primeiro as rotas e nomenclaturas oficiais existentes. Os exemplos são conceituais, não uma decisão fechada de hierarquia.</li>
+<li><strong>Não fazer nesta pendência:</strong> não implementar breadcrumb nem alterar navegação nesta etapa documental.</li>
+</ul>
+<h2 id="backlog-de-ux--refinamentos-da-central-v2">Backlog de UX — refinamentos da Central V2</h2>
+<p><strong>Status geral:</strong> REGISTRADO / NÃO IMPLEMENTADO. Os itens abaixo são pendências para priorização futura; este registro não altera a interface, o domínio nem contratos de API.</p>
+<h3 id="bl-01--mapear-baloes-filtro-inicial">BL-01 — Mapear Balões: filtro inicial</h3>
+<ul>
+<li><strong>Estado atual:</strong> <code>Pincel &amp; Retoques — Mapear Balões</code> abre com o filtro <code>Mapear</code> selecionado.</li>
+<li><strong>Desejado:</strong> abrir e recarregar com <code>ALL</code> selecionado, sem selecionar <code>Mapear</code> automaticamente.</li>
+<li><strong>Critério futuro:</strong> conferir o estado inicial e o estado após recarga da página.</li>
+</ul>
+<h3 id="bl-02--mapear-baloes-acesso-ao-comparador">BL-02 — Mapear Balões: acesso ao comparador</h3>
+<ul>
+<li><strong>Desejado:</strong> oferecer, a partir de uma página do Mapear, acesso a <code>Comparar página</code> para inspecionar as marcações existentes sobre a imagem.</li>
+<li><strong>Escopo:</strong> somente visualização; não criar edição nem iniciar processamento por esse acesso.</li>
+<li><strong>Critério futuro:</strong> abrir o comparador da página escolhida e ver suas marcações correspondentes.</li>
+</ul>
+<h3 id="bl-03--filtros-da-curadoria-e-nomenclatura-visual">BL-03 — Filtros da Curadoria e nomenclatura visual</h3>
+<ul>
+<li><strong>Desejado na Curadoria de Balões:</strong> <code>Todos | ⏳ Do | ✓ Done | ◉ Aptos</code>, com contadores <code>Todos (N) | ⏳ Do (N) | ✓ Done (N) | ◉ Aptos (N)</code>.</li>
+<li><strong>Regra visual global:</strong> quando <code>Candidatos</code> representar esse mesmo conceito/status na Central V2, apresentar <code>Aptos</code> em filtros, contadores, cabeçalhos, labels e textos de status relacionados.</li>
+<li><strong>Limite:</strong> preservar nomes técnicos internos, schemas, chaves JSON e contratos de API; a mudança futura é somente da apresentação ao usuário.</li>
+</ul>
+<h3 id="bl-04--curadoria-seletor-de-perfil">BL-04 — Curadoria: seletor de perfil</h3>
+<ul>
+<li><strong>Estado atual:</strong> o label externo <code>Perfil</code> repete o placeholder <code>Selecione o perfil</code>.</li>
+<li><strong>Desejado:</strong> remover o label redundante e mostrar <code>Perfil</code> no próprio select enquanto não houver opção selecionada, conforme o protótipo/print de referência.</li>
+</ul>
+<h3 id="bl-05--curadoria-espacamento-antes-da-tabela">BL-05 — Curadoria: espaçamento antes da tabela</h3>
+<ul>
+<li><strong>Desejado:</strong> aumentar o espaço vertical entre busca/filtros/ações e a tabela, reutilizando exatamente o espaçamento adotado nas páginas equivalentes da Central V2; não criar valor arbitrário.</li>
+<li><strong>Relação com registro existente:</strong> detalha a pendência <code>P3 — Inconsistência visual da Curadoria / Espaçamento entre toolbar e tabela</code> acima; não é uma segunda implementação.</li>
+</ul>
+<h3 id="bl-06--paginacao-padronizada">BL-06 — Paginação padronizada</h3>
+<ul>
+<li><strong>Desejado:</strong> nas páginas envolvidas, adicionar seletor <code>Exibir:</code> com opções <code>15</code>, <code>20</code>, <code>30</code>, <code>40</code>, <code>50</code> e default <code>15</code>.</li>
+<li><strong>Preservar:</strong> página atual, total de páginas e controles anterior/próximo.</li>
+<li><strong>Implementação futura:</strong> reutilizar o componente/padrão existente; evitar paginadores independentes para Mapear e Curadoria.</li>
+</ul>
+<h3 id="bl-07--auto-cleaner-check-quantidade-de-marcacoes-por-pagina">BL-07 — Auto-Cleaner Check: quantidade de marcações por página</h3>
+<ul>
+<li><strong>Estado atual:</strong> a lista <code>Páginas</code> usa uma bolinha para indicar ocorrências, sem quantidade.</li>
+<li><strong>Desejado:</strong> exibir indicador e contagem juntos, preferencialmente como badge compacto; por exemplo, <code>page-013-016.png    ● 3</code>. Página sem marcações não mostra indicador.</li>
+<li><strong>Fonte da contagem:</strong> marcações efetivamente disponíveis para revisão naquela página. Não alterar a lógica das ROIs para compor o badge.</li>
+</ul>
+<h3 id="bl-08--auto-cleaner-check-feedback-ao-salvar-decisao">BL-08 — Auto-Cleaner Check: feedback ao salvar decisão</h3>
+<ul>
+<li><strong>Estado atual:</strong> <code>Salvar decisão do Check</code> não apresenta confirmação visual suficientemente clara após o salvamento.</li>
+<li><strong>Desejado:</strong> depois que o backend confirmar a persistência, mostrar uma mensagem de sucesso clara e temporária, como <code>Decisão do Check salva com sucesso.</code></li>
+<li><strong>Padrão visual:</strong> reutilizar o componente de feedback de sucesso já adotado nas demais páginas da Central V2, sem criar variante exclusiva para o Check.</li>
+<li><strong>Falhas:</strong> continuar apresentando erros como erros; nunca mostrar sucesso sem confirmação real do backend.</li>
+<li><strong>Escopo:</strong> somente feedback visual. Preservar a lógica de persistência, as decisões, as ROIs e o manifesto do Auto-Cleaner Check.</li>
+</ul>
+<h3 id="diretrizes-para-a-implementacao-futura-de-bl-01-a-bl-08">Diretrizes para a implementação futura de BL-01 a BL-08</h3>
+<ul>
+<li>Preservar o visual minimalista, reutilizar componentes existentes e evitar CSS/JS duplicado.</li>
+<li>Separar ajustes visuais de mudanças de domínio; não alterar contratos funcionais sem necessidade.</li>
+<li>Usar <code>Aptos</code> na apresentação quando corresponder ao conceito hoje exibido como <code>Candidatos</code>, preservando identificadores técnicos.</li>
+<li>Respeitar o limite de 200 linhas para arquivos novos de código/teste e não ampliar violações preexistentes.</li>
+<li>Validar visualmente cada item antes de marcá-lo como concluído.</li>
+</ul>
+<article class="backlog-item"><p class="source-context">P3 · Suítes, decisão e qualidade</p><h3 id="ux-da-autorizacao-assistida-degrade-origem-bl-11--suspensa">UX da autorização assistida Degradê (origem BL-11 — suspensa)</h3>
+<ul>
+<li><strong>Estado:</strong> proposta revertida e não aprovada para nova implementação. A versão publicada com seleção individual e confirmação extra é referência funcional.</li>
+<li><strong>Próximo passo:</strong> decisão de produto separada sobre manter ou simplificar a confirmação. Exigir comparação de contratos e demonstração real antes de qualquer mudança de elegibilidade. Não reimplementar automaticamente a tentativa que falhou com <code>ROI insuficiente</code>.</li>
+</ul>
+</article><article class="backlog-item"><p class="source-context">P3 · Suítes, decisão e qualidade</p><h3 id="comparacao-visual-dos-filtros-origem-bl-13">Comparação visual dos filtros (origem BL-13)</h3>
+<ul>
+<li><strong>Estado:</strong> melhoria futura; prioridade baixa-média na fonte.</li>
+<li><strong>Proposta:</strong> quando houver demanda, registrar comparações reproduzíveis por tipo de balão. A observação de que Suave pareceu mais uniforme que Degradê/Artístico foi feita em caso específico e não deve ser generalizada nem alterar algoritmos sem avaliação.</li>
+<li><strong>Aceite:</strong> critério visual e exemplos reproduzíveis; decisão não baseada em uma captura isolada.</li>
+</ul>
+</article>
+    </section><section class="feature-panel" id="view-export" role="tabpanel" aria-labelledby="nav-export" hidden>
+      <div class="panel-heading"><p>Exportar Arquivos</p><span>Cópia dos conteúdos selecionados para a pasta de destino.</span></div><div class="empty-state"><strong>Sem pendências próprias da cópia para o Drive.</strong><p>A dúvida sobre qual resultado do Texto Off deve ser enviado é uma integração entre features e está em Visão Geral.</p></div>
+    </section>
+      <p class="footer">Gerado a partir de <code>pendencias_central_v2.md</code>. A organização por feature é uma visualização; o Markdown continua como fonte do backlog.</p>
+    </main>
+  </div>
+</div>
+<script>
+(() => {
+  const buttons=[...document.querySelectorAll('.feature-link')];
+  function activate(button, focus=false) {
+    buttons.forEach(item=>{ const active=item===button; item.classList.toggle('active',active); item.setAttribute('aria-selected',String(active)); item.tabIndex=active?0:-1; const panel=document.getElementById(item.getAttribute('aria-controls')); panel.hidden=!active; panel.classList.toggle('active',active); });
+    if(focus) button.focus();
+  }
+  buttons.forEach((button,index)=>{
+    button.addEventListener('click',()=>activate(button));
+    button.addEventListener('keydown',event=>{ let next=index; if(event.key==='ArrowDown'||event.key==='ArrowRight') next=(index+1)%buttons.length; else if(event.key==='ArrowUp'||event.key==='ArrowLeft') next=(index-1+buttons.length)%buttons.length; else if(event.key==='Home') next=0; else if(event.key==='End') next=buttons.length-1; else return; event.preventDefault(); activate(buttons[next],true); });
+  });
+  document.addEventListener('click',event=>{ const link=event.target.closest('a[href^="#"]'); if(!link) return; let id; try{id=decodeURIComponent(link.getAttribute('href').slice(1));}catch{return;} const target=document.getElementById(id); const panel=target?.closest('.feature-panel'); if(!panel||!panel.hidden) return; const button=document.querySelector(`[aria-controls="${panel.id}"]`); if(button){event.preventDefault(); activate(button); requestAnimationFrame(()=>target.scrollIntoView({behavior:'smooth',block:'start'}));} });
+})();
+</script>
+</body>
+</html>
