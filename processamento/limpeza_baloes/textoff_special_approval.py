@@ -6,7 +6,7 @@ import numpy as np
 
 
 def apply_approved_rois(original, clean_path, mask_path, raw_clean, raw_mask,
-                        report_path, boxes):
+                        report_path, boxes, approved_component_labels=None):
     report = json.loads(report_path.read_text(encoding="utf-8"))
     pages = report.get("pages") or []
     if len(pages) != 1:
@@ -18,6 +18,9 @@ def apply_approved_rois(original, clean_path, mask_path, raw_clean, raw_mask,
         raise ValueError("Máscaras de autorização especial incompatíveis.")
     selected = []
     for label in range(1, count):
+        if (approved_component_labels is not None
+                and label not in approved_component_labels):
+            continue
         decision = decisions.get(label)
         if not decision or decision.get("reason") != "transparent_balloon_deferred":
             continue
@@ -27,7 +30,9 @@ def apply_approved_rois(original, clean_path, mask_path, raw_clean, raw_mask,
         if hits:
             authorized[component] = raw_mask[component]
             selected.append({"component": label, "roi_hits": hits,
-                             "reason": "approved_check_roi_over_transparent_deferred"})
+                             "reason": ("laboratory_user_confirmed_deferred_roi"
+                                        if approved_component_labels is not None else
+                                        "approved_check_roi_over_transparent_deferred")})
     rebuilt = original.copy()
     rebuilt[authorized > 0] = raw_clean[authorized > 0]
     if not cv2.imwrite(str(mask_path), authorized) or not cv2.imwrite(str(clean_path), rebuilt):

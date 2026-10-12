@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 import json
 import time
 import cv2
@@ -12,12 +13,15 @@ def run_degrade_roi(
     selections,
     base_snapshot: Path | None = None,
     approved_check_rois: bool = False,
+    laboratory_authorization: dict | None = None,
+    laboratory_experimental: bool = False,
 ):
     from processamento.limpeza_baloes import patch_degrade_experimento as base
     if isinstance(selections, dict):
         selections = [selections]
     if not isinstance(selections, list) or not selections:
         raise ValueError("Selecione pelo menos uma região.")
+    original_selections = selections
     original = cv2.imread(str(source))
     if original is None:
         raise RuntimeError("Imagem inválida.")
@@ -31,16 +35,39 @@ def run_degrade_roi(
     started=time.perf_counter()
     target.mkdir(parents=True,exist_ok=True)
     t=time.perf_counter(); clean,mask=base._run_cleaner(source,target); cleaner=time.perf_counter()-t
-    raw_clean=cv2.imread(str(clean)) if approved_check_rois else None
-    raw_mask=cv2.imread(str(mask),cv2.IMREAD_GRAYSCALE) if approved_check_rois else None
-    if approved_check_rois and (raw_clean is None or raw_mask is None):
+    lab_approval = laboratory_authorization is not None
+    if approved_check_rois and lab_approval:
+        raise ValueError("Use uma única origem de autorização Degradê.")
+    raw_clean=cv2.imread(str(clean)) if approved_check_rois or lab_approval else None
+    raw_mask=cv2.imread(str(mask),cv2.IMREAD_GRAYSCALE) if approved_check_rois or lab_approval else None
+    if (approved_check_rois or lab_approval) and (raw_clean is None or raw_mask is None):
         raise RuntimeError("Clean/mask candidatos ausentes para autorização especial.")
-    t=time.perf_counter(); base._authorize_balloon(source,clean,mask,target); auth=time.perf_counter()-t
+    if laboratory_experimental or lab_approval:
+        raw_mask_path = target/"cleaner"/"source_mask_raw.png"
+        raw_mask_path.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(mask, raw_mask_path)
+    raw_mask_sha256 = None
+    if lab_approval:
+        from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+        raw_mask_sha256 = sha256(mask)
+    t=time.perf_counter(); base._authorize_balloon(source,clean,mask,target); auth_seconds=time.perf_counter()-t
     special_components=[]
-    if approved_check_rois:
+    if approved_check_rois or lab_approval:
         from processamento.limpeza_baloes.textoff_special_approval import apply_approved_rois
+        approved_labels = None
+        if lab_approval:
+            from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+            from central_v2.backend.orchestration.textoff_special.lab_degrade_authorization import revalidate_worker
+            auth = laboratory_authorization
+            report_path = target/"balloon_authorization.json"
+            source_hash = sha256(source)
+            approved_labels = revalidate_worker(
+                auth, source_hash, original_selections, report_path, raw_mask_sha256)
         special_components=apply_approved_rois(
-            original,clean,mask,raw_clean,raw_mask,target/"balloon_authorization.json",boxes)
+            original,clean,mask,raw_clean,raw_mask,target/"balloon_authorization.json",boxes,
+            approved_component_labels=approved_labels)
+        if lab_approval and {item["component"] for item in special_components} != approved_labels:
+            raise ValueError("PROPOSTA_OBSOLETA: componente confirmado não intersecta a ROI.")
     clean_img=cv2.imread(str(clean)); authorized=cv2.imread(str(mask),cv2.IMREAD_GRAYSCALE)
     if clean_img is None or authorized is None:
         raise RuntimeError("Clean/mask autorizados ausentes.")
@@ -117,12 +144,19 @@ def run_degrade_roi(
 
     meta={"algorithm":ALGORITHM,"proof_phase":False,"promotion_allowed":True,
           "selection_count":len(boxes),"selections":[list(b) for b in boxes],
-          "authorization_rule":"whole_existing_authorized_components_intersecting_roi",
+          "authorization_rule":("explicit_laboratory_components_intersecting_roi"
+                                if lab_approval else
+                                "whole_existing_authorized_components_intersecting_roi"),
           "authorized_pixels_before_roi":int(np.count_nonzero(authorized)),
           "authorized_pixels_after_roi":int(np.count_nonzero(restricted)),
           "components_before_count":len(before),"components_selected_count":len(selected),
           "components_selected_by_roi":selected,"processed_components":int(processed),
           "approved_check_rois":approved_check_rois,
+          "laboratory_authorization":({
+              "proposal_run_id": laboratory_authorization["proposal_run_id"],
+              "components": special_components,
+              "source": "explicit_laboratory_confirmation",
+          } if lab_approval else None),
           "special_components":special_components,
           "pixels_filled":int(filled),
           "composition_mode":composition_mode,
@@ -131,9 +165,11 @@ def run_degrade_roi(
           "base_snapshot_used":base_snapshot is not None,
           "preview_result":result.name,
           "promotion_result":promotion_result.name,
-          "timing_seconds":{"cleaner":round(cleaner,3),"balloon_authorization":round(auth,3),
+          "timing_seconds":{"cleaner":round(cleaner,3),"balloon_authorization":round(auth_seconds,3),
                             "surface_gate":round(surface_s,3),"local_heal":round(heal,3),
                             "total":round(time.perf_counter()-started,3)},
           "protected_patch_modified":False}
+    if laboratory_experimental or lab_approval:
+        meta.setdefault("artifacts", {})["raw_cleaner_mask"] = "cleaner/source_mask_raw.png"
     (target/"roi_report.json").write_text(json.dumps(meta,indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
     return result,meta

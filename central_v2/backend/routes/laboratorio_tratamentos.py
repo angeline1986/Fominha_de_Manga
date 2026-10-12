@@ -1,6 +1,5 @@
 """Experimental previews for treatments shown in Laboratory result cards."""
 import json
-import threading
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -12,9 +11,10 @@ from central_v2.backend.orchestration.textoff_special.execution import preview
 from central_v2.backend.orchestration.textoff_special.inputs import validate_selections
 from central_v2.backend.routes.laboratorio_pages import _chapter, _directory, _images
 from central_v2.backend.routes.response import RouteResponse
+from central_v2.backend.routes.laboratorio_lock import TREATMENT_LOCK
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
-_LOCK = threading.Lock()
+_LOCK = TREATMENT_LOCK
 
 
 def _json(body, status=200):

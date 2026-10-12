@@ -9,11 +9,14 @@ from .artifacts import contained_file, read_json, sha256, write_json
 from .catalog import STAGING_ROOT, python_for, treatment_for
 from .inputs import assert_unchanged, resolve_input, validate_selections
 from .process import run_worker
+from .lab_degrade_authorization import SCHEMA as LAB_DEGRADE_AUTH_SCHEMA
 
 
 def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
             approved_check_rois: bool = False, on_progress=None,
-            resolved_source: dict | None = None) -> dict:
+            resolved_source: dict | None = None,
+            laboratory_authorization: dict | None = None,
+            laboratory_experimental: bool = False) -> dict:
     key = payload.get("treatment")
     treatment_for(key)
     python_for(key)
@@ -22,6 +25,15 @@ def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
                             payload.get("filename"), payload.get("expected_sha256"))
               if resolved_source is None else _validate_resolved_source(
                   manga, payload, resolved_source))
+    if laboratory_authorization is not None:
+        if (key != "degrade" or approved_check_rois
+                or laboratory_authorization.get("schema") != LAB_DEGRADE_AUTH_SCHEMA
+                or laboratory_authorization.get("source") != source
+                or laboratory_authorization.get("selections") != selections):
+            raise ValueError("Autorização experimental Degradê inválida.")
+        laboratory_experimental = True
+    if laboratory_experimental and key != "degrade":
+        raise ValueError("A execução experimental assistida só se aplica ao Degradê.")
     mask_sources = {}
     staging = staging.resolve()
     if staging.is_relative_to(manga.resolve()):
@@ -36,6 +48,10 @@ def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
         if key != "degrade":
             raise ValueError("Aprovação do Check só se aplica ao Degradê.")
         request["approved_check_rois"] = True
+    if laboratory_authorization is not None:
+        request["laboratory_authorization"] = laboratory_authorization
+    if laboratory_experimental:
+        request["laboratory_experimental"] = True
     if payload.get("merged_level") in {"IV", "V"}:
         request["merged_level"] = payload["merged_level"]
     mask_inputs = (("authorization_mask_path", "authorization_mask.png", "authorization_mask"),

@@ -14,6 +14,8 @@ from .artifacts import write_json
 
 def run_treatment(key: str, source: Path, target: Path, selections: list,
                   *, approved_check_rois: bool = False,
+                  laboratory_authorization: dict | None = None,
+                  laboratory_experimental: bool = False,
                   progress_file: Path | None = None) -> tuple:
     expected_prefix = (runtime_folder(key) / ".venv").resolve()
     if Path(sys.prefix).resolve() != expected_prefix:
@@ -54,16 +56,34 @@ def run_treatment(key: str, source: Path, target: Path, selections: list,
                                 target / "gradiente_suave_report.json")
             _write_smooth_authorization(target, metadata)
         else:
-            if approved_check_rois and key != "degrade":
+            if (approved_check_rois or laboratory_authorization is not None
+                    or laboratory_experimental) and key != "degrade":
                 raise ValueError("Aprovação do Check só se aplica ao Degradê.")
+            if approved_check_rois and laboratory_authorization is not None:
+                raise ValueError("Escolha somente uma origem de autorização Degradê.")
             if approved_check_rois:
                 result, metadata = function(source, target, selections, approved_check_rois=True)
+            elif laboratory_authorization is not None:
+                result, metadata = function(
+                    source, target, selections,
+                    laboratory_authorization=laboratory_authorization,
+                    laboratory_experimental=True)
+            elif laboratory_experimental:
+                result, metadata = function(
+                    source, target, selections, laboratory_experimental=True)
             else:
                 result, metadata = function(source, target, selections)
             metadata.setdefault("artifacts", {})["authorized_mask"] = "roi_authorized_mask.png"
             if key == "degrade":
                 report = json.loads((target / "balloon_authorization.json").read_text(encoding="utf-8"))
                 metadata["balloon_authorization"] = report.get("model")
+                if laboratory_authorization is not None:
+                    metadata["laboratory_authorization"] = {
+                        "proposal_run_id": laboratory_authorization["proposal_run_id"],
+                        "component_ids": [item["id"] for item in
+                                          laboratory_authorization["components"]],
+                        "source": "explicit_laboratory_confirmation",
+                    }
         return result, metadata, timings
     finally:
         base.CLEANER_PY, base._run_cleaner = old_python, old_cleaner

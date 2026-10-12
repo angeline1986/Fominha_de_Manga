@@ -29,9 +29,18 @@ def run(request: dict, folder: Path) -> dict:
         result, treatment, timings = run_pre_authorized_treatment(
             key, request["merged_level"], source, target, mask)
     else:
+        laboratory_authorization = request.get("laboratory_authorization")
+        laboratory_experimental = request.get("laboratory_experimental") is True
+        if laboratory_authorization is not None and (
+                key != "degrade" or request.get("approved_check_rois") is True):
+            raise ValueError("Autorização experimental incompatível com o tratamento.")
+        if laboratory_experimental and key != "degrade":
+            raise ValueError("Execução experimental incompatível com o tratamento.")
         result, treatment, timings = run_treatment(
             key, source, target, request["selections"],
             approved_check_rois=request.get("approved_check_rois") is True,
+            laboratory_authorization=laboratory_authorization,
+            laboratory_experimental=laboratory_experimental,
             progress_file=(target / "cleaner-progress.json" if key == "degrade" else None))
     expected_algorithm = (
         f"textoff_merged_level{request['merged_level']}_from_level1_mask_v1"

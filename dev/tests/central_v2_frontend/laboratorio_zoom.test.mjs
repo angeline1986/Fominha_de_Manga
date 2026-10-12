@@ -27,6 +27,7 @@ test('layout reserva quatro painéis sem piso de largura nem escala por transfor
   assert.match(css, /grid-template-columns:\s*repeat\(4, var\(--lab-panel-width\)\)/);
   assert.match(css, /\.lab-stage\s*\{[^}]*overflow:\s*auto/s);
   assert.match(css, /\.lab-focus-mode\.lab-panel-open \.lab-columns\s*\{[^}]*minmax\(0, 1fr\) 295px/s);
+  assert.match(css, /\.lab-focus-mode \.lab-columns\s*\{[^}]*gap:\s*12px/s);
   assert.match(css, /\.lab-roi-frame \.lab-original-image\s*\{[^}]*width:\s*var\(--lab-image-width\)/s);
   assert.doesNotMatch(css, /\.lab-cards\s*\{[^}]*transform\s*:/s);
   assert.doesNotMatch(css, /\.lab-focus-mode\s+\.lab-cards/);

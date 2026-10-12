@@ -93,6 +93,23 @@ class PreviewExecutionTests(unittest.TestCase):
         approved_request = read_json(self.staging / approved["run_id"] / "request.json")
         self.assertIs(approved_request["approved_check_rois"], True)
 
+    def test_laboratory_approval_uses_separate_request_field(self):
+        from central_v2.backend.orchestration.textoff_special.inputs import resolve_input
+        self.payload["treatment"] = "degrade"
+        source = resolve_input(self.manga, self.payload["level"], self.payload["chapter"],
+                               self.payload["filename"], self.payload["expected_sha256"])
+        authorization = {"schema": "textoff_laboratorio_degrade_authorization_v1",
+                         "source": source, "selections": self.payload["selections"],
+                         "components": [{"id": "component-1"}]}
+        with patch.object(execution, "python_for", return_value=Path("worker-python")), \
+             patch.object(execution, "run_worker", side_effect=self.fake_worker):
+            result = execution.preview(self.manga, self.payload, staging=self.staging,
+                                       laboratory_authorization=authorization)
+        request = read_json(self.staging / result["run_id"] / "request.json")
+        self.assertEqual(request["laboratory_authorization"], authorization)
+        self.assertIs(request["laboratory_experimental"], True)
+        self.assertNotIn("approved_check_rois", request)
+
     def test_preview_forwards_optional_progress_callback(self):
         events = []
 

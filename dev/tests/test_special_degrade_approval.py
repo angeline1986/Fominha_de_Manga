@@ -51,6 +51,19 @@ class SpecialApprovalTests(unittest.TestCase):
         self.assertEqual(self.authorize([(90, 60, 20, 20)]), [])
         self.assertEqual(np.count_nonzero(cv2.imread(str(self.mask), 0)), 0)
 
+    def test_laboratory_allowlist_restores_only_explicit_component(self):
+        cv2.imwrite(str(self.clean), self.original)
+        cv2.imwrite(str(self.mask), np.zeros_like(self.raw_mask))
+        selected = apply_approved_rois(
+            self.original, self.clean, self.mask, self.raw_clean, self.raw_mask,
+            self.report, self.boxes, approved_component_labels={2})
+        mask = cv2.imread(str(self.mask), cv2.IMREAD_GRAYSCALE)
+        self.assertEqual([row["component"] for row in selected], [2])
+        self.assertEqual(selected[0]["reason"], "laboratory_user_confirmed_deferred_roi")
+        self.assertEqual(np.count_nonzero(mask), 400)
+        self.assertEqual(np.count_nonzero(mask[20:40, 10:30]), 0)
+        self.assertEqual(np.count_nonzero(mask[20:40, 110:130]), 0)
+
     def test_ordinary_degrade_keeps_transparent_deferral(self):
         def cleaner(_source, target):
             clean, mask = target / "clean.png", target / "mask.png"
