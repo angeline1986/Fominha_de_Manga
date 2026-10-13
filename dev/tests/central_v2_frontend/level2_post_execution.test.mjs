@@ -97,6 +97,7 @@ async function mount({ responses, outcome = 'success' }) {
       export function createPaginationControls(selection, onMove) {
         return { kind: 'pagination', selection, move: onMove };
       }
+      export function createPageSizeControl() { return { element: {}, select: {} }; }
     `,
     '/_shared/progress/progress.js': `
       export function createJobProgress() {

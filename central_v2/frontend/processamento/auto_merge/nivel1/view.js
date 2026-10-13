@@ -1,6 +1,6 @@
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
-import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createColumns, matchesLevel1Filter } from "/processamento/auto_merge/shared/registros.js";
 
@@ -36,7 +36,8 @@ export function createLevel1View({ onExecute } = {}) {
   const progress = createJobProgress();
   element.querySelector(".auto-merge-toolbar").after(progress.element);
   const results = element.querySelector(".auto-merge-results");
-  const pagination = createPagination();
+  let pagination = createPagination();
+  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
   const selectedChapters = new Set();
   let selectedFilter = "all";
   let state = { status: "idle", chapters: [], manga: null, provider: null };
@@ -89,10 +90,10 @@ export function createLevel1View({ onExecute } = {}) {
     results.append(createTable(columns, selection.rows, "Resultados registrados do Auto-Merge Nível I", {
       emptyMessage: state.chapters.length ? "Nenhum resultado para este filtro." : "Nenhum capítulo com imagens encontrado.",
     }));
-    if (rows.length) results.append(createPaginationControls(selection, (delta) => {
+    results.append(createPaginationControls(selection, (delta) => {
         pagination.move(delta);
         draw();
-      }));
+      }, { leading: pageSize.element }));
   }
 
   function resetAndDraw() {

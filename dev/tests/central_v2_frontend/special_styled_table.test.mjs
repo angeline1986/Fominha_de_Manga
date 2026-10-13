@@ -57,23 +57,23 @@ test('Artístico keeps treatment choices independent and sends only selected occ
 
 test('Artístico paginates chapters with the shared controls', async () => {
   const { load, data, tables } = setup({ mockReview: true });
-  data.estilizado.chapters = Array.from({ length: 16 }, (_, index) => ({
+  data.estilizado.chapters = Array.from({ length: 26 }, (_, index) => ({
     chapter: String(index + 1), pages: ['art.png'], status: 'pending',
     occurrences: [occurrence(`art-${index + 1}`)],
   }));
   const { render } = await load('/texto_off/especiais/level7.js');
   const container = new Element(), dispose = render(container); await tick();
   const footer = container.children[0].nodes['[data-footer]'].children[0];
-  assert.equal(footer.children[0].children[0].value, '15');
+  assert.equal(footer.children[0].children[0].value, '20');
   assert.equal(footer.children[1].children[1].textContent, '1 / 2');
-  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'chapter').length, 15);
+  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'chapter').length, 20);
   const first = tables.at(-1).rows.find((row) => row.type === 'occurrence');
   const checkbox = tables.at(-1).columns[0].render(first);
   checkbox.checked = true; checkbox.events.change();
   assert.equal(container.children[0].nodes['[data-count]'].textContent, '1');
   const currentFooter = container.children[0].nodes['[data-footer]'].children[0];
   currentFooter.children[1].children[2].events.click();
-  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'chapter').length, 1);
+  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'chapter').length, 6);
   assert.equal(container.children[0].nodes['[data-count]'].textContent, '1');
   assert.equal(container.children[0].nodes['[data-footer]'].children[0].children[1].children[1].textContent, '2 / 2');
   container.children[0].nodes['[data-footer]'].children[0].children[1].children[0].events.click();

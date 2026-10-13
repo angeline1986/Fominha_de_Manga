@@ -29,6 +29,11 @@
 
 .manual-merge-toolbar {
   flex-wrap: wrap;
+  padding: 17px 20px;
+  border: 1px solid #e3e8ef;
+  border-radius: 13px;
+  background: var(--color-surface);
+  box-shadow: 0 5px 22px #34465a08;
 }
 
 .manual-merge-toolbar label {
@@ -55,9 +60,9 @@
 
 .manual-merge-filters {
   padding: 3px;
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-control);
-  background: var(--color-primary-soft);
+  border: 0;
+  border-radius: 9px;
+  background: #f2f5f9;
 }
 
 .manual-merge-filters button {
@@ -89,23 +94,32 @@
 .manual-merge-table-card,
 .manual-merge-config {
   overflow: hidden;
-  border: 1px solid var(--color-border-primary);
-  border-radius: var(--radius-control);
+  border: 1px solid #e3e8ef;
+  border-radius: 13px;
   background: var(--color-surface);
+  box-shadow: 0 5px 22px #34465a08;
 }
 .manual-merge-sessions { display: grid; gap: var(--space-md); }
 
 .manual-merge-table th {
+  height: 43px;
+  padding: 11px 15px;
+  border-block: 1px solid #e9eef4;
+  background: #fafbfd;
+  color: #8490a2;
+  font-size: 10px;
   font-weight: var(--font-weight-bold);
-  letter-spacing: .035em;
+  letter-spacing: .065em;
   text-transform: uppercase;
 }
 
+.manual-merge-table td { height: 52px; padding: 9px 15px; vertical-align: middle; }
+
 .manual-merge-table tbody tr { cursor: pointer; }
 .manual-merge-table tbody tr:nth-child(odd) { background: #fff; }
-.manual-merge-table tbody tr:nth-child(even) { background: #f7fbfd; }
+.manual-merge-table tbody tr:nth-child(even) { background: #fff; }
 .manual-merge-table tbody tr:hover,
-.manual-merge-table tbody tr.is-selected { background: #F0FAFD; }
+.manual-merge-table tbody tr.is-selected { background: #fafcff; }
 .manual-merge-table tbody tr:focus-visible { outline: 2px solid var(--color-primary); outline-offset: -2px; }
 .manual-merge-table th:nth-child(1), .manual-merge-table td:nth-child(1) { width: 120px; }
 .manual-merge-table th:nth-child(2), .manual-merge-table td:nth-child(2) { width: 200px; }

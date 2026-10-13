@@ -35,3 +35,27 @@
   opacity: .55;
   cursor: default;
 }
+
+.pagination-page-size {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  white-space: nowrap;
+  color: #667f9c;
+}
+
+.pagination-page-size select {
+  min-height: 34px;
+  padding: 6px 27px 6px 10px;
+  border: 1px solid #dbe5f0;
+  border-radius: 7px;
+  background: var(--color-surface);
+  color: #284664;
+  font: inherit;
+  cursor: pointer;
+}
+
+@media (max-width: 600px) {
+  .pagination { gap: var(--space-sm); }
+  .pagination-page-size { flex: 1 0 100%; }
+}

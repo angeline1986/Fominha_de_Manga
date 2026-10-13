@@ -4,7 +4,7 @@ import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchMergedTextoff } from "/_app/api/textoff.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
-import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createMergedExecution } from "/texto_off/merged/execution.js";
 import { createOutcomeColumns } from "/texto_off/merged/outcome_columns.js";
@@ -71,7 +71,8 @@ export function createMergedLevel2View(onRun, onReprocess) {
   const results = element.querySelector(".auto-merge-results");
   const execute = element.querySelector("[data-execute]");
   const comparison = createComparisonLauncher(element, "2", "level2");
-  const pagination = createPagination();
+  let pagination = createPagination();
+  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
   const selected = new Set();
   const progress = createJobProgress("Texto Off — Merged Nível II");
   element.querySelector(".auto-merge-toolbar").after(progress.element);
@@ -112,7 +113,7 @@ export function createMergedLevel2View(onRun, onReprocess) {
     results.replaceChildren(createTable(columns, page.rows, "Casos para Texto Off Merged Nível II", {
       emptyMessage: state.status === "ready" ? "Nenhum capítulo corresponde ao filtro." : "",
     }));
-    if (rows.length) results.append(createPaginationControls(page, (delta) => { pagination.move(delta); draw(); }));
+    results.append(createPaginationControls(page, (delta) => { pagination.move(delta); draw(); }, { leading: pageSize.element }));
     execute.disabled = executionBusy || selected.size === 0;
   }
 

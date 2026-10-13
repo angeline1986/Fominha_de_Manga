@@ -3,7 +3,7 @@ import { MAPPING_FILTERS, matchesMapping } from "/texto_off/merged/mapping.js";
 import { createStageFilters } from "/texto_off/merged/stage_filters.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
-import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createMergedColumns } from "/texto_off/merged/columns.js";
 
@@ -36,7 +36,8 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   const filters = element.querySelector(".auto-merge-filters");
   const comparison = mode === "overview" && comparisonMode
     ? createComparisonLauncher(element, "1", comparisonMode, comparisonScope) : null;
-  const pagination = createPagination();
+  let pagination = createPagination();
+  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
   const selected = new Set();
   const progress = showExecute ? createJobProgress(title) : null;
   if (progress) element.querySelector(".auto-merge-toolbar").after(progress.element);
@@ -107,7 +108,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
     results.append(createTable(columns, selection.rows, `Capítulos para ${title}`, {
       emptyMessage: state.status === "ready" ? "Nenhum capítulo corresponde ao filtro." : "",
     }));
-    if (rows.length) results.append(createPaginationControls(selection, (delta) => { pagination.move(delta); draw(); }));
+    results.append(createPaginationControls(selection, (delta) => { pagination.move(delta); draw(); }, { leading: pageSize.element }));
     if (execute) execute.disabled = state.busy || selected.size === 0;
   }
 

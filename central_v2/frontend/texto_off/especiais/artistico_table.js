@@ -18,8 +18,7 @@ export function renderSpecialWorklist(container, treatment = "estilizado") {
   if (!config) throw new Error("Tratamento especial inválido.");
   const root = document.createElement("section");
   root.className = "auto-merge-page artistico-page";
-  root.innerHTML = `<header class="artistico-heading"><h1>Pincel & Retoques <span>/ ${config.label}</span></h1>
-    <p>Gerencie os tratamentos por capítulo, página e ocorrência</p></header>
+  root.innerHTML = `<header class="artistico-heading"><h1 class="table-heading-tooltip" data-tooltip="Gerencie os tratamentos por capítulo, página e ocorrência" tabindex="0" aria-description="Gerencie os tratamentos por capítulo, página e ocorrência">Pincel & Retoques <span>/ ${config.label}</span></h1></header>
     <div class="artistico-panel"><div class="artistico-toolbar">
       <label class="artistico-search"><span class="visually-hidden">Buscar capítulo, página ou ocorrência</span>
         <input type="search" data-query placeholder="Buscar capítulo, página ou ocorrência..."></label>

@@ -1,6 +1,6 @@
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
-import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createLevel3Columns } from "/processamento/auto_merge/shared/residuos_niveis_3_a_5.js";
 import { createStatusFilters, matchesStatus } from "/processamento/auto_merge/shared/filtros_estado.js";
@@ -8,7 +8,7 @@ import { createStatusFilters, matchesStatus } from "/processamento/auto_merge/sh
 export function createLevel5View({ onExecute } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page auto-merge-level5 auto-merge-level3";
-  element.innerHTML = `<header><h1 title="Busca global SAFE nos resíduos dirigidos do Nível IV; o restante segue para revisão.">Auto-Merge Nível V</h1></header>
+  element.innerHTML = `<header><h1 class="table-heading-tooltip" data-tooltip="Busca global SAFE nos resíduos dirigidos do Nível IV; o restante segue para revisão." tabindex="0" aria-description="Busca global SAFE nos resíduos dirigidos do Nível IV; o restante segue para revisão.">Auto-Merge Nível V</h1></header>
     <div class="auto-merge-toolbar"><label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar cap."></label>
     <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos por estado"></div>
     <button class="auto-merge-execute" type="button" data-execute>Executar Nível V</button></div>
@@ -16,7 +16,9 @@ export function createLevel5View({ onExecute } = {}) {
   const query = element.querySelector("[data-query]"), status = element.querySelector(".auto-merge-status");
   const execute = element.querySelector("[data-execute]"), results = element.querySelector(".auto-merge-results");
   const filters = element.querySelector(".auto-merge-filters");
-  const pagination = createPagination(), selected = new Set(), progress = createJobProgress("Auto-Merge Nível V");
+  let pagination = createPagination();
+  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
+  const selected = new Set(), progress = createJobProgress("Auto-Merge Nível V");
   element.querySelector(".auto-merge-toolbar").after(progress.element);
   let state = { status: "idle", chapters: [], manga: null };
   let selectedFilter = "all";
@@ -37,7 +39,7 @@ export function createLevel5View({ onExecute } = {}) {
         onSelectPage: (checked) => { current.forEach((name) => checked ? selected.add(name) : selected.delete(name)); draw(); },
       });
       results.append(createTable(columns, selection.rows, "Resíduos aguardando Auto-Merge Nível V", { emptyMessage: "Nenhum capítulo disponível para o Nível V." }));
-      if (rows.length) results.append(createPaginationControls(selection, (delta) => { pagination.move(delta); draw(); }));
+      results.append(createPaginationControls(selection, (delta) => { pagination.move(delta); draw(); }, { leading: pageSize.element }));
     }
     execute.disabled = state.busy || selected.size === 0;
   }

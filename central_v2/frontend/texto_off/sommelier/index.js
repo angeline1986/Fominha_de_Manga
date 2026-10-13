@@ -3,7 +3,7 @@ import { fetchBubbleSommelier, startBubbleSommelier, waitForTextoffJob } from "/
 import { renderBubbleSommelierReview } from "./review.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
-import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { showMessage, showOperationSummary } from "/_shared/messages/messages.js";
@@ -75,7 +75,8 @@ export function render(container) {
   let rows = [];
   let activeFilter = "all";
   const selected = new Set();
-  const pagination = createPagination();
+  let pagination = createPagination();
+  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
 
   const root = document.createElement("section");
   root.className = "auto-merge-page textoff-merged-page cleaner-overview sommelier-page";
@@ -210,10 +211,10 @@ export function render(container) {
     results.replaceChildren(createTable(columns, page.rows, "Capítulos para Curadoria de Balões", {
       emptyMessage: rows.length ? "Nenhum capítulo corresponde ao filtro." : "",
     }));
-    if (visible.length) results.append(createPaginationControls(page, (delta) => {
+    results.append(createPaginationControls(page, (delta) => {
       pagination.move(delta);
       draw();
-    }));
+    }, { leading: pageSize.element }));
     updateExecuteState();
   }
 

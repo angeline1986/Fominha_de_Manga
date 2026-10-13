@@ -5,7 +5,7 @@ import { fetchMergedTextoff, startMergedSpecialTextoff, waitForTextoffJob } from
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
-import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 import { createOutcomeColumns } from "/texto_off/merged/outcome_columns.js";
 
@@ -20,7 +20,9 @@ const descriptions = {
 
 export function renderSpecial(container, level) {
   let disposed = false, rows = [], request, filter = "pending";
-  const selected = new Set(), pagination = createPagination();
+  const selected = new Set();
+  let pagination = createPagination();
+  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
   const root = document.createElement("section");
   root.className = "auto-merge-page textoff-merged-page cleaner-outcomes";
   root.innerHTML = `<header><h1 class="textoff-page-title-hint" data-tooltip="${descriptions[level]}" tabindex="0" aria-description="${descriptions[level]}">${titles[level]}</h1></header>
@@ -61,7 +63,7 @@ export function renderSpecial(container, level) {
     results.replaceChildren(createTable(columns, page.rows, `Capítulos elegíveis para Nível ${level}`, {
       emptyMessage: "Nenhum capítulo corresponde ao filtro.",
     }));
-    if (visible.length) results.append(createPaginationControls(page, (delta) => { pagination.move(delta); draw(); }));
+    results.append(createPaginationControls(page, (delta) => { pagination.move(delta); draw(); }, { leading: pageSize.element }));
     status.textContent = "";
     status.hidden = true;
     execute.disabled = selected.size === 0;

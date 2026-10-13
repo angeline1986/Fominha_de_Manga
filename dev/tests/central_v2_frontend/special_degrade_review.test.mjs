@@ -9,8 +9,10 @@ class Element {
     this.classList = { add: (name) => classes.add(name), remove: (name) => classes.delete(name),
       contains: (name) => classes.has(name), toggle() {} };
     if (tag === 'section') this.nodes = Object.fromEntries(
-      ['query', 'filters', 'results', 'status', 'execute'].map((name) => [`[data-${name}]`, new Element()]));
+      ['query', 'filters', 'results', 'status', 'execute', 'count', 'footer']
+        .map((name) => [`[data-${name}]`, new Element()]));
     if (tag === 'section') this.nodes['.auto-merge-toolbar'] = new Element();
+    if (tag === 'section') this.nodes['.artistico-toolbar'] = new Element();
   }
   set innerHTML(value) { this.markup = value; }
   querySelector(selector) { return this.nodes?.[selector]; }
@@ -28,10 +30,17 @@ class Element {
 function setup() {
   const tables = [], screens = [];
   const data = { treatment: 'degrade', chapters: [{ chapter: '1', pages: ['page.png'],
-    page_count: 1, occurrence_count: 2, status: 'processed', review_available: true }],
+    page_count: 1, occurrence_count: 1, status: 'processed', review_available: true,
+    occurrences: [{ id: 'balloon-1', page: 'page.png', status: 'processed',
+      roi: { x: 2, y: 3, width: 10, height: 12 },
+      preview: { width: 100, height: 100, sha256: 'page-sha' } }] }],
   summary: { chapters: 1, pages: 1, occurrences: 2 } };
-  const load = browserModules({ document: { createElement: (tag) => new Element(tag) },
-    AbortController, tables, screens, data }, {
+  const load = browserModules({ document: { createElement: (tag) => new Element(tag),
+      createTextNode: (text) => Object.assign(new Element('text'), { textContent: text }) },
+    AbortController, tables, screens, data,
+    Option: class extends Element { constructor(label, value) {
+      super('option'); this.textContent = label; this.value = value;
+    } } }, {
     '/_app/state/context.js': `export function getContext() { return {provider:'comix',manga:'Example'}; }
       export function subscribeContext() { return () => {}; }`,
     '/_app/api/textoff.js': `export async function fetchSpecialTreatments() { return globalThis.data; }
@@ -40,6 +49,8 @@ function setup() {
       export async function previewSpecialPageRestore() { throw new Error('no restore'); }
       export function specialPageRestoreImageUrl() { return ''; }
       export async function startSpecialPageRestore() { throw new Error('no restore'); }`,
+    '/texto_off/especiais/artistico_preview.js': `export function createArtisticPreview() {
+      return {show(){}, hide(){}, dispose(){}}; }`,
     '/_shared/table/table.js': `export function createTable(columns,rows) {
       globalThis.tables.push({columns,rows}); return {tag:'table'}; }`,
     '/_shared/progress/progress.js': `export function createJobProgress() {
@@ -51,22 +62,34 @@ function setup() {
       element.nodes = {'.comparison-page-heading':globalThis.document.createElement('header')};
       const screen = {context,element,start(){screen.started=true;},dispose(){screen.disposed=true;},onBack};
       globalThis.screens.push(screen); return screen; }`,
+    '/texto_off/comparison/launcher.js': `import { createComparisonScreen } from '/texto_off/comparison/screen.js';
+      export function createComparisonLauncher(origin,step,mode,scope) { return { open(row) {
+        const context = {provider:'comix',manga:'Example',chapter:row.chapter,step,
+          comparisonMode:mode,scope};
+        const screen = createComparisonScreen(context, () => {
+          origin.classList.remove('comparison-origin-hidden'); screen.dispose(); });
+        const back = globalThis.document.createElement('button');
+        back.addEventListener('click', () => { origin.classList.remove('comparison-origin-hidden');
+          screen.dispose(); });
+        screen.element.querySelector('.comparison-page-heading').prepend(back);
+        origin.classList.add('comparison-origin-hidden'); origin.after(screen.element); screen.start();
+      }, dispose() {} }; }`,
   });
   return { load, tables, screens, data };
 }
 
-test('only valid processed or no_change Degradê enables the eye', async () => {
+test('Degradê chapter comparison follows review_available', async () => {
   const { load, tables, data } = setup();
   const { render } = await load('/texto_off/especiais/level6.js');
   for (const [status, available, expected] of [
-    ['processed', true, false], ['no_change', true, false], ['pending', true, true],
-    ['failed', true, true], ['processed', false, true], ['no_change', false, true],
+    ['processed', true, false], ['no_change', true, false], ['pending', true, false],
+    ['failed', true, false], ['processed', false, true], ['no_change', false, true],
   ]) {
     data.chapters[0].status = status; data.chapters[0].review_available = available;
     const dispose = render(new Element());
     await new Promise((resolve) => setImmediate(resolve));
     const table = tables.at(-1);
-    assert.equal(table.columns.at(-1).render(table.rows[0]).disabled, expected, status);
+    assert.equal(table.columns.at(-1).render(table.rows[0]).children[0].disabled, expected, status);
     dispose();
   }
 });
@@ -78,8 +101,8 @@ test('eye opens the shared comparator and Back restores Degradê', async () => {
   const dispose = render(container);
   await new Promise((resolve) => setImmediate(resolve));
   const root = container.children[0];
-  const eye = tables.at(-1).columns.at(-1).render(tables.at(-1).rows[0]);
-  eye.events.click();
+  const eye = tables.at(-1).columns.at(-1).render(tables.at(-1).rows[0]).children[0];
+  eye.events.click({ currentTarget: eye });
   assert.equal(screens[0].context.comparisonMode, 'degrade');
   assert.equal(screens[0].context.scope, 'degrade');
   assert.equal(screens[0].started, true);
@@ -91,7 +114,7 @@ test('eye opens the shared comparator and Back restores Degradê', async () => {
   dispose();
 });
 
-test('Suave enables only valid completed results and opens the shared page comparator', async () => {
+test('Suave comparison follows review_available and opens the shared page comparator', async () => {
   const { load, tables, screens, data } = setup();
   data.treatment = 'gradiente_suave';
   const { render } = await load('/texto_off/especiais/level8.js');
@@ -102,16 +125,17 @@ test('Suave enables only valid completed results and opens the shared page compa
     data.chapters[0].status = status; data.chapters[0].review_available = available;
     const dispose = render(new Element());
     await new Promise((resolve) => setImmediate(resolve));
-    const column = tables.at(-1).columns.find((item) => item.id === 'review');
-    assert.equal(column.render(tables.at(-1).rows[0]).disabled, disabled, status);
+    const column = tables.at(-1).columns.find((item) => item.id === 'actions');
+    assert.equal(column.render(tables.at(-1).rows[0]).children[0].disabled, disabled, status);
     dispose();
   }
   data.chapters[0].status = 'processed'; data.chapters[0].review_available = true;
   const container = new Element();
   const dispose = render(container);
   await new Promise((resolve) => setImmediate(resolve));
-  const eye = tables.at(-1).columns.find((item) => item.id === 'review').render(data.chapters[0]);
-  eye.events.click();
+  const eye = tables.at(-1).columns.find((item) => item.id === 'actions')
+    .render(tables.at(-1).rows[0]).children[0];
+  eye.events.click({ currentTarget: eye });
   assert.equal(screens.at(-1).context.step, 'suave');
   assert.equal(screens.at(-1).context.comparisonMode, 'suave');
   assert.equal(screens.at(-1).context.scope, 'suave');

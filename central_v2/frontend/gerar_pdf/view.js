@@ -33,7 +33,7 @@ export function createPdfView(container, source) {
         <th>CAP.</th><th>${source === "merged" ? "MERGE" : "IMAGENS"}</th><th>PDF</th><th>AÇÕES</th>
       </tr></thead><tbody data-rows></tbody></table></div>
       <footer class="pdf-v2-footer">
-        <label class="pdf-v2-page-size">Exibir: <select data-size><option>13</option><option>26</option><option>52</option></select></label>
+        <label class="pdf-v2-page-size">Exibir: <select data-size><option>13</option><option>20</option><option>30</option><option>40</option><option>50</option><option>60</option></select></label>
         <div class="pdf-v2-page-controls">
           <button type="button" data-prev aria-label="Página anterior">&lt;&lt;</button>
           <span data-counter>1 / 1</span>

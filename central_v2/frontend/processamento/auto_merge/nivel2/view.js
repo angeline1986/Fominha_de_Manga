@@ -1,6 +1,6 @@
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
-import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createLevel2Columns } from "/processamento/auto_merge/shared/residuos_nivel2.js";
 import { createStatusFilters, matchesStatus } from "/processamento/auto_merge/shared/filtros_estado.js";
@@ -9,7 +9,7 @@ export function createLevel2View({ onExecute } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page auto-merge-level2";
   element.innerHTML = `
-    <header><h1 title="Processa os resíduos recebidos do Nível I em busca de divisões seguras.">Auto-Merge Nível II</h1></header>
+    <header><h1 class="table-heading-tooltip" data-tooltip="Processa os resíduos recebidos do Nível I em busca de divisões seguras." tabindex="0" aria-description="Processa os resíduos recebidos do Nível I em busca de divisões seguras.">Auto-Merge Nível II</h1></header>
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search">
         <span class="visually-hidden">Buscar capítulo</span>
@@ -26,7 +26,8 @@ export function createLevel2View({ onExecute } = {}) {
   const execute = element.querySelector("[data-execute]");
   const results = element.querySelector(".auto-merge-results");
   const filters = element.querySelector(".auto-merge-filters");
-  const pagination = createPagination();
+  let pagination = createPagination();
+  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
   const selectedChapters = new Set();
   const progress = createJobProgress("Auto-Merge Nível II");
   const handleExecute = () => onExecute?.([...selectedChapters]);
@@ -66,10 +67,10 @@ export function createLevel2View({ onExecute } = {}) {
       results.append(createTable(columns, selection.rows, "Resíduos aguardando Auto-Merge Nível II", {
         emptyMessage: "Nenhum capítulo disponível para o Nível II.",
       }));
-      if (rows.length) results.append(createPaginationControls(selection, (delta) => {
+      results.append(createPaginationControls(selection, (delta) => {
           pagination.move(delta);
           draw();
-        }));
+        }, { leading: pageSize.element }));
     }
     execute.disabled = state.busy || selectedChapters.size === 0;
   }

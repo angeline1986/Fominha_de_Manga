@@ -24,3 +24,15 @@ test('pagination keeps previous and next disabled at the page boundaries', async
     assert.equal(actions[2].disabled, next);
   }
 });
+
+test('page size control exposes the approved options and emits the chosen size', async () => {
+  const { load } = setup();
+  const { createPageSizeControl } = await load('/_shared/pagination/pagination.js');
+  let selected;
+  const control = createPageSizeControl((size) => { selected = size; });
+  assert.deepEqual(control.select.children.map((option) => option.value),
+    ['13', '20', '30', '40', '50', '60']);
+  control.select.value = '40';
+  control.select.events.change();
+  assert.equal(selected, 40);
+});

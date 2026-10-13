@@ -26,7 +26,7 @@ test('Degradê and Suave share the approved three-level worklist and pagination'
     assert.equal(JSON.stringify(tables.at(-1).rows.map((row) => row.type)), '["chapter"]');
     const footer = root.nodes['[data-footer]'].children[0];
     assert.equal(JSON.stringify(footer.children[0].children[0].children.map((item) => item.value)),
-      JSON.stringify(['15', '20', '30', '40', '50']));
+      JSON.stringify(['13', '20', '30', '40', '50', '60']));
     assert.equal(footer.children[1].children[1].textContent, '1 / 1');
     dispose();
   }
@@ -121,7 +121,7 @@ test('Suave preview crops the real page by ROI and search finds occurrences', as
 test('Degradê paginates chapters and retains occurrence selection across redraws', async () => {
   const { load, tables, data } = setup({ mockReview: true });
   const template = data.degrade.chapters[0];
-  data.degrade.chapters = Array.from({ length: 16 }, (_, index) => ({
+  data.degrade.chapters = Array.from({ length: 26 }, (_, index) => ({
     ...template, chapter: String(index + 1), occurrences: template.occurrences.map((item) => ({
       ...item, id: `${item.id}-${index + 1}` })),
   }));
@@ -133,11 +133,11 @@ test('Degradê paginates chapters and retains occurrence selection across redraw
   let footer = root.nodes['[data-footer]'].children[0];
   assert.equal(footer.children[1].children[1].textContent, '1 / 2');
   footer.children[1].children[2].events.click();
-  assert.equal(shown(tables, 'chapter').length, 1);
+  assert.equal(shown(tables, 'chapter').length, 6);
   assert.equal(root.nodes['[data-count]'].textContent, '1');
   footer = root.nodes['[data-footer]'].children[0];
   footer.children[1].children[0].events.click();
   assert.equal(check(tables, first).checked, true);
-  assert.equal(shown(tables, 'chapter').length, 15);
+  assert.equal(shown(tables, 'chapter').length, 20);
   dispose();
 });

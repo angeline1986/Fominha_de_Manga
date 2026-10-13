@@ -4,21 +4,21 @@ import { browserModules } from './modules.mjs';
 
 const rows = Array.from({ length: 65 }, (_, i) => i + 1);
 
-test('65 records have five pages with bounded navigation and no missing rows', async () => {
+test('65 records have four pages with bounded navigation and no missing rows', async () => {
   const load = browserModules();
   const { createPagination } = await load('/_shared/pagination/model.js');
   const pagination = createPagination();
   const collected = [];
-  for (let page = 1; page <= 5; page++) {
+  for (let page = 1; page <= 4; page++) {
     const selected = pagination.select(rows);
     assert.equal(selected.page, page);
-    assert.equal(selected.pages, 5);
-    assert.equal(selected.rows.length, page === 5 ? 5 : 15);
+    assert.equal(selected.pages, 4);
+    assert.equal(selected.rows.length, page === 4 ? 5 : 20);
     collected.push(...selected.rows);
     pagination.move(1);
   }
   assert.deepEqual(collected, rows);
-  assert.equal(pagination.select(rows).page, 5);
+  assert.equal(pagination.select(rows).page, 4);
   pagination.move(-100);
   assert.equal(pagination.select(rows).page, 1);
 });
@@ -28,11 +28,11 @@ test('shrinking and empty results clamp the current page; reset returns to first
   const { createPagination } = await load('/_shared/pagination/model.js');
   const pagination = createPagination();
   pagination.select(rows);
-  pagination.move(4);
-  const reduced = pagination.select(rows.slice(0, 17));
-  assert.equal(reduced.page, 2);
-  assert.equal(reduced.start, 16);
-  assert.equal(reduced.end, 17);
+  pagination.move(3);
+  const reduced = pagination.select(rows.slice(0, 45));
+  assert.equal(reduced.page, 3);
+  assert.equal(reduced.start, 41);
+  assert.equal(reduced.end, 45);
   pagination.reset();
   assert.equal(pagination.select(rows).page, 1);
   const empty = pagination.select([]);
@@ -67,5 +67,5 @@ test('a list can override the shared page size without affecting other lists', a
   assert.equal(first.start, 1);
   ninePerPage.move(1);
   assert.equal(ninePerPage.select(rows).start, 10);
-  assert.equal(sharedSize.select(rows).rows.length, 15);
+  assert.equal(sharedSize.select(rows).rows.length, 20);
 });

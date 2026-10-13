@@ -1,3 +1,5 @@
+import { paginationConfig } from "/_shared/pagination/config.js";
+
 export function createPaginationControls(selection, onMove, options = {}) {
   const element = document.createElement("nav");
   element.className = "pagination";
@@ -25,4 +27,22 @@ export function createPaginationControls(selection, onMove, options = {}) {
   element.append(options.leading ?? range);
   if (!options.hideEmptyActions || selection.total) element.append(actions);
   return element;
+}
+
+export function createPageSizeControl(onChange, selected = paginationConfig.pageSize) {
+  const label = document.createElement("label");
+  label.className = "pagination-page-size";
+  label.textContent = "Exibir:";
+  const select = document.createElement("select");
+  select.setAttribute("aria-label", "Itens por página");
+  for (const value of paginationConfig.pageSizeOptions) {
+    const option = document.createElement("option");
+    option.value = String(value);
+    option.textContent = String(value);
+    select.append(option);
+  }
+  select.value = String(selected);
+  select.addEventListener("change", () => onChange(Number(select.value)));
+  label.append(select);
+  return { element: label, select };
 }

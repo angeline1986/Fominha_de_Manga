@@ -41,7 +41,8 @@ test('level 2 shows a separate Reprocessar action only for completed rows', asyn
     '/_shared/pagination/model.js': `
       export function createPagination() { return { reset() {}, select(rows) { return { rows }; } }; }`,
     '/_shared/pagination/pagination.js': `
-      export function createPaginationControls() { return {}; }`,
+      export function createPaginationControls() { return {}; }
+      export function createPageSizeControl() { return { element: {}, select: {} }; }`,
     '/_shared/progress/progress.js': `
       export function createJobProgress() { return { element: {}, update() {} }; }`,
     '/texto_off/merged/execution.js': `export function createMergedExecution() { return {}; }`,
