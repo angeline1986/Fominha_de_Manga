@@ -12,6 +12,10 @@ from central_v2.backend.orchestration.textoff_special.execution import preview
 from central_v2.backend.orchestration.textoff_special.inputs import validate_selections
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT
 from central_v2.backend.routes.laboratorio_lock import TREATMENT_LOCK
+from central_v2.backend.routes.laboratorio_logging import (
+    authorization_ready, authorization_unavailable, run_treatment_logged,
+    treatment_blocked,
+)
 from central_v2.backend.orchestration.textoff_special.lab_degrade_authorization import (
     candidate_rows, consume, issue, load_pending, selections_digest,
 )
@@ -66,11 +70,13 @@ def execute(payload, output_root):
     if not isinstance(payload, dict):
         return _json({'error': 'Requisição inválida.'}, 400)
     if not _LOCK.acquire(blocking=False):
+        treatment_blocked("degrade")
         return _json({'error': 'Há outro tratamento experimental em andamento.'}, 409)
     try:
         manga, source, request = _resolve(payload, output_root)
-        manifest = preview(manga, request, staging=STAGING, resolved_source=source,
-                           laboratory_experimental=True)
+        manifest = run_treatment_logged("degrade", payload, lambda: preview(
+            manga, request, staging=STAGING, resolved_source=source,
+            laboratory_experimental=True))
         if manifest.get('execution_status') != 'succeeded':
             detail = manifest.get('error') or {}
             description = detail.get('error', '') if isinstance(detail, dict) else ''
@@ -115,8 +121,10 @@ def authorization_candidates(payload):
         mask = contained_file(folder, 'treatment/cleaner/source_mask_raw.png')
         candidates, binding = candidate_rows(request, report, mask)
         if not candidates:
+            authorization_unavailable(run_id)
             return _json({'error': 'Nenhum componente adiado elegível intersecta as ROIs.'}, 422)
         token, record = issue(folder, run_id, request, candidates, binding)
+        authorization_ready(run_id, len(candidates))
         return _json({'proposal_run_id': run_id, 'proposal_token': token,
                       'expires_at': record['expires_at'], 'candidates': candidates})
     except (ValueError, OSError, KeyError, TypeError) as error:
@@ -127,7 +135,9 @@ def confirm_authorization(payload, output_root):
     if not isinstance(payload, dict):
         return _json({'error': 'Requisição inválida.'}, 400)
     if not _LOCK.acquire(blocking=False):
+        treatment_blocked("degrade")
         return _json({'error': 'Há outro tratamento experimental em andamento.'}, 409)
+    source_run_id = payload.get('proposal_run_id')
     try:
         manga, source, request = _resolve(payload, output_root)
         run_id = _field(payload.get('proposal_run_id'), 'Proposta')
@@ -151,9 +161,10 @@ def confirm_authorization(payload, output_root):
             raise ValueError('PROPOSTA_OBSOLETA: classificação experimental mudou.')
         selected = payload.get('component_ids')
         authorization = consume(folder, record, selected)
-        manifest = preview(manga, request, staging=STAGING, resolved_source=source,
-                           laboratory_authorization=authorization,
-                           laboratory_experimental=True)
+        manifest = run_treatment_logged("degrade", payload, lambda: preview(
+            manga, request, staging=STAGING, resolved_source=source,
+            laboratory_authorization=authorization,
+            laboratory_experimental=True), correlation_id=source_run_id)
         if manifest.get('execution_status') != 'succeeded':
             detail = manifest.get('error') or {}
             return _json({'error': 'Degradê assistido não concluiu; consulte o manifesto experimental.',

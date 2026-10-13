@@ -25,8 +25,9 @@ test('os três tratamentos recebem a mesma seleção natural e invalidam juntos 
     if (selector === '.lab-cards > .lab-image:first-child') return originalPanel;
     return null;
   } };
-  const navigation = { getSelection: () => ({ source: 'img', chapter: '2', page: 'page-013.png',
-    pages: [{ name: 'page-013.png', previewUrl: '/original.png' }] }) };
+  let selection = { source: 'img', chapter: '2', page: 'page-013.png',
+    pages: [{ name: 'page-013.png', previewUrl: '/original.png' }] };
+  const navigation = { getSelection: () => selection };
   const workspace = {
     setZoomEnabled: (value) => calls.zoom.push(['enabled', value]),
     resetZoomDimensions: () => calls.zoom.push(['reset']),
@@ -58,6 +59,13 @@ test('os três tratamentos recebem a mesma seleção natural e invalidam juntos 
       selections: [{ x: 284, y: 1065, width: 420, height: 76 }],
     });
   }
+  selection = { ...selection, page: 'page-014.png',
+    pages: [{ name: 'page-014.png', previewUrl: '/original-14.png' }] };
+  controller.displayOriginal();
+  assert.equal(calls.reset.slice(3).length, 3);
+  assert.ok(calls.reset.slice(3).every(([, key]) => key.includes('page-014.png')));
+  image.onload();
+  assert.equal(image.src, '/original-14.png');
   calls.observer();
   assert.deepEqual(calls.invalidated, ['degrade', 'stylized', 'smooth']);
   controller.dispose();

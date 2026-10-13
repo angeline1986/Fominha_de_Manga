@@ -3,8 +3,7 @@ import {
   executeStylizedLaboratory,
 } from "/_app/api/laboratorio.js";
 
-function connectTreatment({ root, button, getRequest, cardIndex, statusSelector,
-                           label, execute }) {
+function connectTreatment({ root, button, getRequest, cardIndex, label, execute }) {
   const panel = root.querySelector(`.lab-cards > .lab-image:nth-child(${cardIndex})`);
   const placeholder = panel.querySelector(".lab-placeholder");
   const image = document.createElement("img");
@@ -12,18 +11,21 @@ function connectTreatment({ root, button, getRequest, cardIndex, statusSelector,
   image.alt = `Prévia experimental ${label}`;
   image.hidden = true;
   panel.append(image);
-  const note = root.querySelector(statusSelector);
-  let controller = null, serial = 0, sourceKey = "";
+  let serial = 0, sourceKey = "";
+  const controllers = new Set();
+
+  function setState(state, message, busy = false) {
+    placeholder.dataset.state = state;
+    placeholder.setAttribute("aria-busy", String(busy));
+    placeholder.textContent = message;
+    placeholder.hidden = false;
+  }
 
   function clear() {
     serial++;
-    controller?.abort();
-    controller = null;
     image.hidden = true;
     image.removeAttribute("src");
-    placeholder.hidden = false;
-    placeholder.textContent = "Aguardando execução";
-    note.textContent = "Selecione uma página e pelo menos uma área.";
+    setState("waiting", "Aguardando execução");
     button.disabled = false;
   }
 
@@ -36,40 +38,43 @@ function connectTreatment({ root, button, getRequest, cardIndex, statusSelector,
   async function run() {
     const payload = getRequest();
     if (!payload) {
-      note.textContent = "Selecione uma imagem carregada e pelo menos uma área.";
+      setState("waiting", "Selecione uma imagem carregada e pelo menos uma área.");
       return;
     }
     const id = ++serial;
-    controller = new AbortController();
+    const snapshot = JSON.stringify(payload);
+    const active = new AbortController();
+    controllers.add(active);
     button.disabled = true;
     image.hidden = true;
     image.removeAttribute("src");
-    placeholder.hidden = false;
-    placeholder.textContent = `Processando ${label}...`;
-    note.textContent = "Processamento experimental em andamento.";
+    setState("running", `Executando ${label}…`, true);
     try {
-      const result = await execute(payload, controller.signal);
-      if (id !== serial) return;
+      const result = await execute(payload, active.signal);
+      if (!isCurrent(id, snapshot)) return;
       image.onload = () => {
-        if (id !== serial) return;
+        if (!isCurrent(id, snapshot)) return;
         image.hidden = false;
-        placeholder.hidden = true;
-        note.textContent = `Prévia ${label} pronta. Nenhum arquivo oficial foi alterado.`;
+        setState("completed", "Concluído");
       };
       image.onerror = () => {
-        if (id !== serial) return;
-        placeholder.textContent = `Falha ao abrir a prévia ${label}.`;
-        note.textContent = "O resultado experimental não pôde ser exibido.";
+        if (!isCurrent(id, snapshot)) return;
+        image.hidden = true;
+        setState("failed", `Falha ao abrir a prévia ${label}.`);
       };
       image.src = result.image_url;
     } catch (error) {
-      if (id === serial && error.name !== "AbortError") {
-        placeholder.textContent = `${label} não concluído: ${error.message}`;
-        note.textContent = "O resultado dos outros tratamentos foi preservado.";
+      if (isCurrent(id, snapshot) && error.name !== "AbortError") {
+        setState("failed", `${label} não concluído: ${error.message}`);
       }
     } finally {
+      controllers.delete(active);
       if (id === serial) button.disabled = false;
     }
+  }
+
+  function isCurrent(id, snapshot) {
+    return id === serial && JSON.stringify(getRequest()) === snapshot;
   }
 
   button.addEventListener("click", run);
@@ -78,7 +83,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, statusSelector,
     invalidate: clear,
     dispose() {
       serial++;
-      controller?.abort();
+      controllers.forEach((controller) => controller.abort());
       button.removeEventListener("click", run);
       image.remove();
     },
@@ -87,12 +92,12 @@ function connectTreatment({ root, button, getRequest, cardIndex, statusSelector,
 
 export function connectStylized(options) {
   return connectTreatment({ ...options, cardIndex: 3,
-    statusSelector: "[data-lab-stylized-status]", label: "Artístico",
+    label: "Artístico",
     execute: executeStylizedLaboratory });
 }
 
 export function connectSmooth(options) {
   return connectTreatment({ ...options, cardIndex: 4,
-    statusSelector: "[data-lab-smooth-status]", label: "Suave",
+    label: "Suave",
     execute: executeSmoothLaboratory });
 }

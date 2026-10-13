@@ -4,7 +4,7 @@ export function drawDegradeCandidates({review, highlights, frame, candidates, on
   heading.textContent = 'Componentes adiados detectados';
   const explanation = document.createElement('p');
   explanation.className = 'lab-muted';
-  explanation.textContent = 'Marque apenas as regiões que deseja autorizar. A confirmação é separada da classificação automática.';
+  explanation.textContent = 'Selecione os componentes que deseja autorizar para esta imagem e estas áreas.';
   review.replaceChildren(heading, explanation);
   const original = frame.querySelector('img');
   for (const candidate of candidates) {
@@ -27,7 +27,7 @@ export function drawDegradeCandidates({review, highlights, frame, candidates, on
   }
   const confirm = document.createElement('button');
   confirm.type = 'button'; confirm.className = 'lab-wide';
-  confirm.textContent = 'Confirmar seleção e executar Degradê';
+  confirm.textContent = 'Autorizar e executar';
   confirm.disabled = true; review.append(confirm);
   review.querySelectorAll('input[type=checkbox]').forEach((input) => {
     input.addEventListener('change', () => {

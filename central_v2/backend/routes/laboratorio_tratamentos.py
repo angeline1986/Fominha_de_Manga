@@ -12,6 +12,9 @@ from central_v2.backend.orchestration.textoff_special.inputs import validate_sel
 from central_v2.backend.routes.laboratorio_pages import _chapter, _directory, _images
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.laboratorio_lock import TREATMENT_LOCK
+from central_v2.backend.routes.laboratorio_logging import (
+    run_treatment_logged, treatment_blocked,
+)
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
 _LOCK = TREATMENT_LOCK
@@ -31,6 +34,7 @@ def _execute(payload, output_root, treatment):
     if not isinstance(payload, dict):
         return _json({"error": "Requisição inválida."}, 400)
     if not _LOCK.acquire(blocking=False):
+        treatment_blocked(treatment)
         return _json({"error": "Há um tratamento experimental em andamento."}, 409)
     try:
         provider = _field(payload.get("provider"), "Provider")
@@ -54,7 +58,8 @@ def _execute(payload, output_root, treatment):
                   "predecessors": []}
         request = {"treatment": treatment, "level": "LAB", "chapter": chapter,
                    "filename": filename, "expected_sha256": digest, "selections": boxes}
-        manifest = preview(manga, request, staging=STAGING, resolved_source=source)
+        manifest = run_treatment_logged(treatment, payload, lambda: preview(
+            manga, request, staging=STAGING, resolved_source=source))
         if manifest.get("execution_status") != "succeeded":
             detail = manifest.get("error") or {}
             error = detail.get("error", "") if isinstance(detail, dict) else ""

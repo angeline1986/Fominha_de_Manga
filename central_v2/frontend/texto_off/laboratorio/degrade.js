@@ -1,5 +1,4 @@
 /** Laboratório L3: Degradê experimental com autorização individual e temporária. */
-import { confirmMessage } from "/_shared/messages/messages.js";
 import { confirmDegradeLaboratory, executeDegradeLaboratory,
   getDegradeAuthorizationCandidates } from "/_app/api/laboratorio.js";
 import { drawDegradeCandidates } from "/texto_off/laboratorio/degrade_candidates.js";
@@ -9,21 +8,15 @@ export function connectDegrade({ root, button, getRequest }) {
   const image = document.createElement('img');
   Object.assign(image, {className: 'lab-original-image', alt: 'Prévia experimental Degradê', hidden: true});
   panel.append(image);
-  const note = root.querySelector('[data-lab-degrade-status]');
-  const progress = document.createElement('progress');
-  progress.className = 'lab-degrade-progress';
-  progress.setAttribute('aria-label', 'Tratamento Degradê em execução');
-  progress.hidden = true;
-  note.after(progress);
   const review = document.createElement('section');
   Object.assign(review, {className: 'lab-degrade-review', hidden: true});
   review.setAttribute('aria-label', 'Autorização assistida de componentes Degradê');
-  note.after(review);
+  button.after(review);
   const frame = root.querySelector('.lab-roi-frame');
   const highlights = document.createElement('div');
   highlights.className = 'lab-degrade-highlights';
   frame?.append(highlights);
-  let controller = null;
+  const controllers = new Set();
   let serial = 0;
   let sourceKey = '';
   let proposal = null;
@@ -33,38 +26,40 @@ export function connectDegrade({ root, button, getRequest }) {
     review.hidden = true;
     highlights.replaceChildren();
   }
-  function clearResult(message = 'Aguardando execução') {
-    image.hidden = true; image.removeAttribute('src'); placeholder.hidden = false;
+  function setState(state, message, busy = false) {
+    placeholder.dataset.state = state;
+    placeholder.setAttribute('aria-busy', String(busy));
     placeholder.textContent = message;
+    placeholder.hidden = false;
+  }
+  function clearResult(message = 'Aguardando execução', state = 'waiting') {
+    image.hidden = true; image.removeAttribute('src');
+    setState(state, message);
   }
   function reset(key) {
     if (sourceKey === key) return;
     sourceKey = key;
     invalidate();
-    note.textContent = 'Selecione uma página e pelo menos uma área.';
-    progress.hidden = true;
     button.disabled = false;
   }
   function invalidate() {
     serial++;
-    controller?.abort();
-    controller = null;
     clearReview();
     clearResult();
-    progress.hidden = true;
+    button.disabled = false;
   }
   function current(id, snapshot) {
     return id === serial && JSON.stringify(getRequest()) === snapshot;
   }
-  function showResult(result, id) {
+  function showResult(result, id, snapshot) {
     image.onload = () => {
-      if (id !== serial) return;
-      image.hidden = false; placeholder.hidden = true;
-      note.textContent = 'Prévia experimental pronta. Nenhum arquivo oficial foi alterado.';
+      if (!current(id, snapshot)) return;
+      image.hidden = false;
+      setState('completed', 'Concluído');
     };
     image.onerror = () => {
-      if (id !== serial) return;
-      clearResult('Falha ao abrir a prévia experimental.');
+      if (!current(id, snapshot)) return;
+      clearResult('Falha ao abrir a prévia experimental.', 'failed');
     };
     image.src = result.image_url;
   }
@@ -79,28 +74,17 @@ export function connectDegrade({ root, button, getRequest }) {
     const snapshot = proposal.requestSnapshot;
     if (!current(id, snapshot)) {
       invalidate();
-      note.textContent = 'Proposta invalidada: a imagem ou as ROIs mudaram.';
       return;
     }
     const rows = proposal.candidates.filter((item) => selected.includes(item.id));
-    const confirmed = await confirmMessage({title: 'Autorizar componentes adiados',
-      message: `Você confirmou ${rows.map((item) => `componente ${item.component}`).join(', ')} para esta imagem e estas ROIs. A autorização vale somente para esta execução experimental.`,
-      confirmText: 'Autorizar e executar'});
-    if (!confirmed) {
-      note.textContent = 'Autorização cancelada; o Degradê não foi executado.';
-      confirmButton.disabled = false;
-      return;
-    }
-    if (!current(id, snapshot)) {
+    if (!current(id, snapshot) || rows.length !== selected.length) {
       invalidate();
-      note.textContent = 'Confirmação invalidada: a imagem ou as ROIs mudaram.';
       return;
     }
     confirmButton.disabled = true;
     button.disabled = true;
-    progress.hidden = false;
-    note.textContent = 'Executando os componentes confirmados...';
-    const active = new AbortController(); controller = active;
+    setState('running', 'Executando os componentes confirmados…', true);
+    const active = new AbortController(); controllers.add(active);
     try {
       const result = await confirmDegradeLaboratory({
         ...getRequest(), proposal_run_id: proposal.runId,
@@ -108,63 +92,65 @@ export function connectDegrade({ root, button, getRequest }) {
       }, active.signal);
       if (!current(id, snapshot)) return;
       clearReview();
-      showResult(result, id);
+      showResult(result, id, snapshot);
     } catch (error) {
-      if (id === serial && error.name !== 'AbortError') {
+      if (current(id, snapshot) && error.name !== 'AbortError') {
         clearReview();
-        note.textContent = `Autorização não concluída: ${error.message}`;
+        setState('failed', `Autorização não concluída: ${error.message}`);
       }
     } finally {
-      if (id === serial) { button.disabled = false; progress.hidden = true; controller = null; }
+      controllers.delete(active);
+      if (id === serial) button.disabled = false;
     }
   }
   async function run() {
     const payload = getRequest();
     if (!payload) {
-      note.textContent = 'Selecione uma imagem carregada e pelo menos uma área.';
+      setState('waiting', 'Selecione uma imagem carregada e pelo menos uma área.');
       return;
     }
     const id = ++serial;
     const snapshot = JSON.stringify(payload);
-    controller?.abort();
-    const active = new AbortController(); controller = active;
+    const active = new AbortController(); controllers.add(active);
     clearReview();
-    clearResult('Processando Degradê...');
+    clearResult('Executando classificação Degradê…', 'running');
     button.disabled = true;
-    note.textContent = 'Classificação automática em andamento.';
-    progress.hidden = false;
     try {
       const result = await executeDegradeLaboratory(payload, active.signal);
-      if (current(id, snapshot)) showResult(result, id);
+      if (current(id, snapshot)) showResult(result, id, snapshot);
     } catch (error) {
-      if (id !== serial || error.name === 'AbortError') return;
+      if (!current(id, snapshot) || error.name === 'AbortError') return;
       const runId = error.body?.run_id;
-      if (runId) {
+      if (error.status === 422 && runId) {
         try {
           const candidates = await getDegradeAuthorizationCandidates(runId, active.signal);
           if (!current(id, snapshot)) return;
           proposal = {runId: candidates.proposal_run_id, token: candidates.proposal_token,
             requestSnapshot: snapshot, candidates: candidates.candidates};
           drawCandidates(candidates.candidates);
-          note.textContent = `A classificação automática adiou ${candidates.candidates.length} componente(s). Revise e confirme individualmente.`;
+          setState('waiting', 'Aguardando revisão e autorização dos componentes adiados.');
           return;
         } catch (candidateError) {
-          if (candidateError.name === 'AbortError' || id !== serial) return;
-          note.textContent = `Degradê não concluído: ${candidateError.message}`;
+          if (candidateError.name === 'AbortError' || !current(id, snapshot)) return;
+          if (candidateError.status === 422) {
+            setState('waiting', 'Nenhum componente adiado elegível para autorização nesta seleção.');
+          } else {
+            setState('failed', `Degradê não concluído: ${candidateError.message}`);
+          }
         }
       } else {
-        note.textContent = `Degradê não concluído: ${error.message}`;
+        setState('failed', `Degradê não concluído: ${error.message}`);
       }
-      placeholder.textContent = 'Consulte os registros do experimento.';
     } finally {
-      if (id === serial) { button.disabled = false; progress.hidden = true; controller = null; }
+      controllers.delete(active);
+      if (id === serial) button.disabled = false;
     }
   }
   button.addEventListener('click', run);
   return {reset, invalidate, dispose() {
     serial++;
-    controller?.abort();
+    controllers.forEach((controller) => controller.abort());
     button.removeEventListener('click', run);
-    image.remove(); progress.remove(); review.remove(); highlights.remove();
+    image.remove(); review.remove(); highlights.remove();
   }};
 }

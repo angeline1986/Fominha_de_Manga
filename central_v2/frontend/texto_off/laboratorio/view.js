@@ -35,18 +35,20 @@ export function createLaboratorioView(container) {
         <div class="lab-stage">
           <div class="lab-cards">
             <section class="lab-image"><header>ORIGINAL</header><div class="lab-placeholder">Aguardando seleção da página</div></section>
-            <section class="lab-image"><header>DEGRADÊ</header><div class="lab-placeholder">Aguardando execução</div></section>
-            <section class="lab-image"><header>ARTÍSTICO</header><div class="lab-placeholder">Aguardando execução</div></section>
-            <section class="lab-image"><header>SUAVE</header><div class="lab-placeholder">Aguardando execução</div></section>
+            <section class="lab-image lab-treatment-card"><header>DEGRADÊ</header><div class="lab-placeholder" data-treatment-status="degrade" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
+            <section class="lab-image lab-treatment-card"><header>ARTÍSTICO</header><div class="lab-placeholder" data-treatment-status="stylized" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
+            <section class="lab-image lab-treatment-card"><header>SUAVE</header><div class="lab-placeholder" data-treatment-status="smooth" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
           </div>
         </div>
       </main>
       <aside class="lab-panel lab-actions"><div class="lab-panel-head"><strong>Laboratório</strong></div>
         <div class="lab-panel-body"><strong class="lab-subtitle">Seleção de áreas</strong><button disabled class="lab-wide">Selecionar área</button>
           <p class="lab-muted">Nenhuma área selecionada.</p><hr/><strong class="lab-subtitle">Tratamentos</strong>
-          <button type="button" class="lab-wide" data-lab-degrade>Executar Degradê</button><p class="lab-muted" data-lab-degrade-status>Selecione uma página e pelo menos uma área.</p>
-          <button type="button" class="lab-wide" data-lab-stylized>Executar Artístico</button><p class="lab-muted" data-lab-stylized-status>Selecione uma página e pelo menos uma área.</p>
-          <button type="button" class="lab-wide" data-lab-smooth>Executar Suave</button><p class="lab-muted" data-lab-smooth-status>Selecione uma página e pelo menos uma área.</p>
+          <div class="lab-treatment-actions">
+            <button type="button" class="lab-wide" data-lab-degrade>Executar Degradê</button>
+            <button type="button" class="lab-wide" data-lab-stylized>Executar Artístico</button>
+            <button type="button" class="lab-wide" data-lab-smooth>Executar Suave</button>
+          </div>
         </div>
       </aside>
     </div>`;

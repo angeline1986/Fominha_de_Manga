@@ -14,6 +14,11 @@ class Element {
   removeEventListener(type, fn) { this.listeners[type] = (this.listeners[type] || []).filter((item) => item !== fn); }
   dispatch(type, event = {}) { for (const fn of this.listeners[type] || []) fn({ currentTarget: this, ...event }); }
   append(...items) { this.children.push(...items); }
+  insertBefore(item, reference) {
+    this.children = this.children.filter((child) => child !== item);
+    const index = this.children.indexOf(reference);
+    this.children.splice(index < 0 ? this.children.length : index, 0, item);
+  }
   add(item) { this.children.push(item); }
   after(...items) { this.afterNodes = items; }
   setAttribute(name, value) { this.attributes[name] = value; }
@@ -26,12 +31,11 @@ class Element {
 
 function degradeRoot() {
   const card = new Element(); card.placeholder = new Element();
-  const note = new Element(), frame = new Element();
+  const note = card.placeholder, frame = new Element();
   return {
     card, note, frame,
     root: { querySelector(selector) {
       if (selector === '.lab-cards > .lab-image:nth-child(2)') return card;
-      if (selector === '[data-lab-degrade-status]') return note;
       if (selector === '.lab-roi-frame') return frame;
       return null;
     } },
@@ -45,8 +49,21 @@ test('Laboratório carrega sua composição modular e mantém os quatro cartões
   const { routes } = await load('/_app/router/routes.js');
   assert.equal(routes.laboratorio.module, '/texto_off/laboratorio/index.js');
   const view = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/view.js', import.meta.url), 'utf8');
+  const style = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/style.css', import.meta.url), 'utf8');
+  const degrade = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/degrade.js', import.meta.url), 'utf8');
+  const candidates = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/degrade_candidates.js', import.meta.url), 'utf8');
   const cards = [...view.matchAll(/<header>(ORIGINAL|DEGRADÊ|ARTÍSTICO|SUAVE)<\/header>/g)].map((match) => match[1]);
   assert.deepEqual(cards, ['ORIGINAL', 'DEGRADÊ', 'ARTÍSTICO', 'SUAVE']);
+  assert.equal((view.match(/Selecione uma página e pelo menos uma área\./g) || []).length, 0);
+  assert.equal((view.match(/data-treatment-status=/g) || []).length, 3);
+  assert.match(view, /class="lab-treatment-actions"[\s\S]*data-lab-degrade[\s\S]*data-lab-stylized[\s\S]*data-lab-smooth/);
+  assert.match(style, /\.lab-treatment-actions\s*\{\s*display:\s*grid;\s*gap:\s*10px;/);
+  assert.match(style, /\.lab-placeholder\[data-treatment-status\]\s*\{[^}]*position:\s*sticky;[^}]*top:\s*var\(--lab-treatment-header-height/);
+  assert.equal((view.match(/class="lab-image lab-treatment-card"/g) || []).length, 3);
+  assert.match(style, /\.lab-treatment-card > header\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;/);
+  assert.doesNotMatch(style, /lab-degrade-progress|lab-treatment-spin|content:\s*["'][0-9]+%/);
+  assert.doesNotMatch(degrade, /confirmMessage|Autorizar componentes adiados/);
+  assert.match(candidates, /confirm\.textContent\s*=\s*'Autorizar e executar'/);
 });
 
 test('páginas carregadas continuam selecionáveis e origem dispara o mesmo evento', async () => {
@@ -131,7 +148,7 @@ test('resposta Degradê atrasada não substitui a seleção invalidada', async (
   const execution = deferred(), state = { request: { page: 'a.png', selections: [{ x: 1 }] } };
   const load = browserModules({ AbortController, document: { createElement: () => new Element() }, execution }, {
     '/_shared/messages/messages.js': 'export async function confirmMessage() { return true; }',
-    '/_app/api/laboratorio.js': 'export async function executeDegradeLaboratory() { return globalThis.execution.promise; } export async function confirmDegradeLaboratory() {} export async function getDegradeAuthorizationCandidates() {}',
+    '/_app/api/laboratorio.js': 'export async function executeDegradeLaboratory(_payload, signal) { globalThis.execution.signal = signal; return globalThis.execution.promise; } export async function confirmDegradeLaboratory() {} export async function getDegradeAuthorizationCandidates() {}',
     '/texto_off/laboratorio/degrade_candidates.js': 'export function drawDegradeCandidates() {}',
   });
   const { connectDegrade } = await load('/texto_off/laboratorio/degrade.js');
@@ -139,20 +156,18 @@ test('resposta Degradê atrasada não substitui a seleção invalidada', async (
   const connector = connectDegrade({ root, button, getRequest: () => state.request });
   button.dispatch('click');
   connector.invalidate();
+  assert.equal(execution.signal.aborted, false);
   execution.resolve({ image_url: '/stale.png' });
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(card.children.find((child) => child.className === 'lab-original-image').src, '');
   connector.dispose();
 });
 
-test('mudança da ROI durante a confirmação invalida a proposta antes de executar', async () => {
-  let resolveConfirmation;
+test('mudança da ROI antes da autorização invalida a proposta sem executar', async () => {
   const calls = { confirmed: 0 };
-  const gate = new Promise((resolve) => { resolveConfirmation = resolve; });
   const state = { request: { page: 'a.png', selections: [{ x: 1 }] } };
-  const load = browserModules({ AbortController, document: { createElement: () => new Element() }, gate, calls }, {
-    '/_shared/messages/messages.js': 'export async function confirmMessage() { return globalThis.gate; }',
-    '/_app/api/laboratorio.js': `export async function executeDegradeLaboratory() { throw Object.assign(new Error('deferred'), { body: { run_id: 'run-1' } }); }
+  const load = browserModules({ AbortController, document: { createElement: () => new Element() }, calls }, {
+    '/_app/api/laboratorio.js': `export async function executeDegradeLaboratory() { throw Object.assign(new Error('deferred'), { status: 422, body: { run_id: 'run-1' } }); }
       export async function getDegradeAuthorizationCandidates() { return { proposal_run_id:'proposal-1', proposal_token:'token', candidates:[{id:'candidate-1',component:2}] }; }
       export async function confirmDegradeLaboratory() { globalThis.calls.confirmed++; }`,
     '/texto_off/laboratorio/degrade_candidates.js': 'export function drawDegradeCandidates(options) { options.review.onConfirm = options.onConfirm; }',
@@ -162,12 +177,10 @@ test('mudança da ROI durante a confirmação invalida a proposta antes de execu
   const connector = connectDegrade({ root, button, getRequest: () => state.request });
   button.dispatch('click');
   await new Promise((resolve) => setTimeout(resolve, 0));
-  const confirm = note.afterNodes.find((child) => child.className === 'lab-degrade-review').onConfirm;
-  const pending = confirm({ currentTarget: new Element() });
+  const confirm = button.afterNodes.find((child) => child.className === 'lab-degrade-review').onConfirm;
   state.request = { page: 'a.png', selections: [{ x: 9 }] };
-  resolveConfirmation(true);
-  await pending;
+  await confirm({ currentTarget: new Element() });
   assert.equal(calls.confirmed, 0);
-  assert.match(note.textContent, /Confirmação invalidada/);
+  assert.equal(note.textContent, 'Aguardando execução');
   connector.dispose();
 });
