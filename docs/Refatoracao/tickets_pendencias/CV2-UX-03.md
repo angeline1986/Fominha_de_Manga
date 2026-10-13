@@ -1,7 +1,7 @@
 # CV2-UX-03 — Padronizar tabelas e cabeçalhos no estilo Artístico
 
 - **Prioridade:** P3 (sugerida)
-- **Status:** A Fazer
+- **Status:** DONE
 - **Visão:** Visão de Produto · Visão Geral (padrão transversal de UX/UI)
 - **Responsável:** A definir
 
@@ -10,13 +10,13 @@
 **Referência visual:** Modern Enterprise SaaS UI · Minimalist Dashboard Design; usar Pincel & Retoques / Artístico como referência visual da página e da tabela.
 
 **Critério de Aceite:**
-- [ ] Inventariar e aplicar o padrão visual a todas as tabelas da Central V2.
-- [ ] Manter composição coerente de página, cabeçalho, painel, busca, filtros, ações, tabela, estado vazio e paginação, conforme a referência.
-- [ ] Disponibilizar o controle `Exibir` com as opções 13, 20, 30, 40, 50 e 60 itens por página.
-- [ ] Remover legendas e subtítulos visíveis dos títulos das páginas; apresentar o mesmo contexto em tooltip associado ao título.
-- [ ] Permitir consultar as tooltips por hover e foco de teclado, com associação acessível ao título.
-- [ ] Preservar busca, filtros, seleção, ações e paginação existentes em cada feature.
-- [ ] Confirmar legibilidade e uso responsivo em diferentes larguras de tela.
+- [x] Inventariar e aplicar o padrão visual a todas as tabelas da Central V2.
+- [x] Manter composição coerente de página, cabeçalho, painel, busca, filtros, ações, tabela, estado vazio e paginação, conforme a referência.
+- [x] Disponibilizar o controle `Exibir` com as opções 13, 20, 30, 40, 50 e 60 itens por página.
+- [x] Remover legendas e subtítulos visíveis dos títulos das páginas; apresentar o mesmo contexto em tooltip associado ao título.
+- [x] Permitir consultar as tooltips por hover e foco de teclado, com associação acessível ao título.
+- [x] Preservar busca, filtros, seleção, ações e paginação existentes em cada feature.
+- [x] Confirmar legibilidade e uso responsivo em diferentes larguras de tela.
 
 **Restrições (o que NÃO fazer):**
 - Não alterar regras de negócio, significado dos filtros ou APIs.
@@ -34,3 +34,10 @@
 - A mudança do padrão de 15 para 20 foi conferida nos consumidores: Auto-Merge I–V, Texto Off Merged, Sommelier e Artístico usam o valor compartilhado e seus controles oferecem as opções aprovadas. Comparação fixa 13 itens e a lista de Balanceamento fixa 9; Gerar PDF mantém paginação própria e 13 como padrão. Não foi encontrada quebra de consumidores.
 - `sommelier/index.js` já tinha **319 linhas em `HEAD`** (320 atualmente) e `gerar_pdf/view.js`, **247 linhas em `HEAD`** (247 atualmente); ambos ultrapassavam o limite antes deste ticket. Nenhuma refatoração foi iniciada.
 - **Validação visual em navegador permanece pendente.**
+
+## Encerramento — 13/10/2026
+
+- Os ajustes finais de largura dos campos de busca e do seletor Perfil foram concluídos. Os placeholders de busca somente por capítulo foram padronizados para `Capítulo`; a busca do Pincel & Retoques manteve a indicação de capítulo, página e ocorrência.
+- A conferência em navegador mediu 240 px para as buscas no desktop e 120 px para o Perfil, alinhado verticalmente aos demais controles. No mobile, os campos se adaptam à largura disponível sem rolagem horizontal na toolbar da Curadoria.
+- Testes direcionados de Auto-Merge, Cleaner, Texto Off, tratamentos especiais e paginação: **28/28 aprovados**. `git diff --check` passou.
+- Com esses ajustes e as entregas anteriores deste ticket, os critérios de aceite estão concluídos.

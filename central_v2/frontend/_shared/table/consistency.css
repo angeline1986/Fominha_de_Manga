@@ -1,0 +1,69 @@
+/* Consistência visual validada em navegador para as tabelas da Central V2. */
+.auto-merge-page:not(.artistico-page):not(.textoff-special-manual) .auto-merge-search,
+.artistico-page .artistico-search,
+.manual-merge-page .manual-merge-toolbar > label {
+  flex: 0 1 240px;
+  width: 240px;
+  min-width: 200px;
+  max-width: 240px;
+}
+
+.pdf-v2 .pdf-v2-toolbar input {
+  flex: 0 1 240px;
+  width: 240px;
+  max-width: 240px;
+}
+
+.auto-merge-page.sommelier-page .sommelier-profile { flex-basis: 120px; }
+.auto-merge-page.sommelier-page .sommelier-profile select { width: 120px; }
+
+.auto-merge-page.sommelier-page [data-list-view] { display: grid; gap: 0; }
+.auto-merge-page.sommelier-page [data-list-view] > header { margin: 0 0 16px; }
+.auto-merge-page.sommelier-page [data-list-view] > .auto-merge-toolbar {
+  align-items: center;
+  margin: 0;
+  padding: 16px 20px;
+  border-radius: 12px 12px 0 0;
+}
+.auto-merge-page.sommelier-page [data-list-view] > .auto-merge-status {
+  margin: 0;
+  padding: 10px 20px;
+  border-inline: 1px solid #dce5ed;
+  background: #fff;
+  color: #66778d;
+}
+.auto-merge-page.sommelier-page [data-list-view] > .auto-merge-status:empty { display: none; }
+.auto-merge-page.sommelier-page [data-list-view] > .auto-merge-results {
+  border-top: 0;
+  border-radius: 0 0 12px 12px;
+}
+
+.artistico-page .artistico-heading { margin-bottom: 4px; }
+.artistico-page .artistico-heading h1 { font-size: 24px; }
+.artistico-page .artistico-toolbar { gap: 8px; padding: 15.5px 20px; }
+.artistico-page .artistico-search input { height: 38px; }
+.artistico-page .artistico-execute { min-height: 38px; }
+.manual-merge-page > .manual-merge-toolbar { padding: 16px 20px; min-height: 72px; }
+.pdf-v2 .pdf-v2-filters { padding: 2px; }
+.pdf-v2 .pdf-v2-filters button { padding-block: 6px; }
+
+@media (max-width: 700px) {
+  .auto-merge-page:not(.artistico-page):not(.textoff-special-manual) .auto-merge-search,
+  .artistico-page .artistico-search,
+  .manual-merge-page .manual-merge-toolbar > label {
+    flex: 1 1 100%; width: auto; min-width: 0; max-width: none;
+  }
+  .pdf-v2 .pdf-v2-toolbar input { flex: 1 1 100%; width: 100%; min-width: 0; max-width: none; }
+  .auto-merge-page.sommelier-page [data-list-view] > .auto-merge-toolbar {
+    align-items: stretch; padding-inline: 12px;
+  }
+  .auto-merge-page.sommelier-page .auto-merge-search {
+    order: 1; flex: 1 1 100%; width: 100%; min-width: 0; max-width: none;
+  }
+  .auto-merge-page.sommelier-page .auto-merge-filters {
+    order: 2; flex: 1 1 100%; min-width: 0; max-width: 100%;
+    flex-wrap: nowrap; overflow-x: auto;
+  }
+  .auto-merge-page.sommelier-page .sommelier-profile { order: 3; flex: 0 0 120px; }
+  .auto-merge-page.sommelier-page .sommelier-execute { order: 4; flex: 1 1 120px; margin-left: 0; }
+}

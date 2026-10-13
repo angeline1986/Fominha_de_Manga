@@ -14,7 +14,7 @@
 |---|---|---|
 | [CV2-UX-01](tickets_pendencias/CV2-UX-01.md) | Redesenhar a sidebar minimizada | DONE |
 | [CV2-UX-02](tickets_pendencias/CV2-UX-02.md) | Restaurar a ação Sincronizar da sidebar | DONE |
-| [CV2-UX-03](tickets_pendencias/CV2-UX-03.md) | Padronizar tabelas e cabeçalhos no estilo Artístico | DO |
+| [CV2-UX-03](tickets_pendencias/CV2-UX-03.md) | Padronizar tabelas e cabeçalhos no estilo Artístico | DONE |
 
 ### Saúde Arquitetural
 

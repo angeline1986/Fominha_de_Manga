@@ -9,7 +9,7 @@ export function createMergeManualView() {
   element.innerHTML = `
     <header><h1 class="table-heading-tooltip" data-tooltip="Selecione capítulos para configurar as faixas de páginas." tabindex="0" aria-description="Selecione capítulos para configurar as faixas de páginas.">Merge Manual</h1></header>
     <div class="manual-merge-toolbar">
-      <label><span class="visually-hidden">Buscar capítulo</span><input type="search" data-search placeholder="Buscar capítulo..."></label>
+      <label><span class="visually-hidden">Buscar capítulo</span><input type="search" data-search placeholder="Capítulo"></label>
       <div class="manual-merge-filters" role="group" aria-label="Filtrar capítulos">
         ${filters.map(([key, label], index) => `<button type="button" data-filter="${key}" aria-pressed="${index === 0}">${label}</button>`).join("")}
       </div><span class="manual-merge-count" data-count></span>

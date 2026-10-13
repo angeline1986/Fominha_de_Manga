@@ -28,7 +28,7 @@
 .pdf-v2-sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
 
 /* pdf-v2-tooltip-title-v1 */
-.pdf-v2 .pdf-v2-heading{display:flex;align-items:center;gap:8px;margin:0 0 12px}
+.pdf-v2 .pdf-v2-heading{display:flex;align-items:center;gap:8px;margin:0 0 20px}
 .pdf-v2 .pdf-v2-heading h1{margin:0!important;line-height:1.25}
 .pdf-v2 .pdf-v2-title-help{display:inline-flex;align-items:center;justify-content:center;cursor:help;font-size:16px;color:#647e93;line-height:1;outline-offset:3px}
 .pdf-v2 .pdf-v2-title-help:hover,.pdf-v2 .pdf-v2-title-help:focus{color:#1b709a}

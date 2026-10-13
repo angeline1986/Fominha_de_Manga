@@ -13,7 +13,7 @@ export function createLevel2View({ onExecute } = {}) {
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search">
         <span class="visually-hidden">Buscar capítulo</span>
-        <input type="search" data-query placeholder="Buscar cap.">
+        <input type="search" data-query placeholder="Capítulo">
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos por estado"></div>
       <button class="auto-merge-execute" type="button" data-execute>Executar Nível II</button>

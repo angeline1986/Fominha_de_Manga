@@ -16,7 +16,7 @@ export function createPdfView(container, source) {
     <div class="pdf-v2-heading"><h1>${source === "merged" ? "PDF do Merge" : "PDF de Imagens Originais"}</h1><span class="pdf-v2-title-help" tabindex="0" role="note" aria-label="Gere PDFs dos capítulos selecionados com os perfis Q93 ou Q88." title="Gere PDFs dos capítulos selecionados com os perfis Q93 ou Q88.">ⓘ</span></div>
     <section class="pdf-v2-card">
       <div class="pdf-v2-toolbar">
-        <input data-search type="search" aria-label="Buscar capítulo" placeholder="Buscar capítulo..." />
+        <input data-search type="search" aria-label="Buscar capítulo" placeholder="Capítulo" />
         <div class="pdf-v2-filters" role="group" aria-label="Filtro de PDFs">
           <button type="button" data-filter="all" aria-pressed="true">All</button>
           <button type="button" data-filter="missing" aria-pressed="false">Sem PDF</button>

@@ -9,7 +9,7 @@ export function createLevel5View({ onExecute } = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page auto-merge-level5 auto-merge-level3";
   element.innerHTML = `<header><h1 class="table-heading-tooltip" data-tooltip="Busca global SAFE nos resíduos dirigidos do Nível IV; o restante segue para revisão." tabindex="0" aria-description="Busca global SAFE nos resíduos dirigidos do Nível IV; o restante segue para revisão.">Auto-Merge Nível V</h1></header>
-    <div class="auto-merge-toolbar"><label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Buscar cap."></label>
+    <div class="auto-merge-toolbar"><label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Capítulo"></label>
     <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos por estado"></div>
     <button class="auto-merge-execute" type="button" data-execute>Executar Nível V</button></div>
     <p class="auto-merge-status" role="status" aria-live="polite"></p><div class="auto-merge-results"></div>`;
