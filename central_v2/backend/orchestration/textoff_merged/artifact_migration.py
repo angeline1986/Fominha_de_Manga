@@ -2,17 +2,16 @@
 from __future__ import annotations
 
 import json
-import logging
 import os
 from pathlib import Path
 import shutil
 import tempfile
 import uuid
 
+from central_v2.backend.operational_log import emit
 
 REGISTRY_PATH = Path(__file__).with_name("artifact-migration-registry.json")
 TEXT_OFF_ROOT = Path("FLUXO_SECUNDARIO") / "04_TEXTO_OFF"
-logger = logging.getLogger(__name__)
 
 
 class ArtifactAuthorityUnavailable(FileNotFoundError):
@@ -103,7 +102,9 @@ def resolve_authoritative_stage_chapter(
         status = "MISSING_TARGET" if not path.exists() else "INVALID_TARGET"
         message = (f"AUTHORITY_UNAVAILABLE authority=target stage={stage_id} "
                    f"chapter={chapter} status={status} target={path}")
-        logger.error(message)
+        emit("ERROR", "autoridade de artefatos indisponível",
+             component="ARTIFACT-MIGRATION", autoridade=authority,
+             estágio=stage_id, capítulo=chapter, status=status, destino=path)
         raise ArtifactAuthorityUnavailable(message)
     return path
 

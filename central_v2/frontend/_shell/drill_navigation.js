@@ -46,8 +46,16 @@ export function createDrillNavigation() {
   const backButton = element.querySelector(".drill-back");
 
   let trigger = null;
+  let activeSectionId = null;
   const selectedValues = new Map();
   const lastActions = new Map();
+
+  function setActiveSection(sectionId) {
+    activeSectionId = sectionId;
+    element.querySelectorAll(".drill-root-item").forEach((button) => {
+      button.classList.toggle("is-current", button.dataset.section === activeSectionId);
+    });
+  }
 
   function openSection(sectionId, sourceButton) {
     const section = navigation.find((item) => item.id === sectionId);
@@ -57,6 +65,8 @@ export function createDrillNavigation() {
     }
 
     trigger = sourceButton;
+    setActiveSection(sectionId);
+    sourceButton.setAttribute("aria-expanded", "true");
     element.dispatchEvent(new CustomEvent("menu:detail-open", { bubbles: true }));
     sectionTitle.textContent = section.label;
     element.classList.toggle("is-limpeza-baloes", sectionId === "texto-off");
@@ -80,6 +90,7 @@ export function createDrillNavigation() {
 
     const previousTrigger = trigger;
     trigger = null;
+    previousTrigger?.setAttribute("aria-expanded", "false");
 
     previousTrigger?.focus();
   }
@@ -89,9 +100,13 @@ export function createDrillNavigation() {
 
     if (sectionButton) {
       const section = navigation.find((item) => item.id === sectionButton.dataset.section);
+      const compact = element.closest(".app-sidebar")?.classList.contains("is-collapsed");
+      if (compact) {
+        element.dispatchEvent(new CustomEvent("menu:expand-request", { bubbles: true }));
+      }
       openSection(sectionButton.dataset.section, sectionButton);
       const action = section && (lastActions.get(section.id) ?? section.defaultAction);
-      if (action) dispatchAction(action, actionLabel(section, action), section.id);
+      if (action && !compact) dispatchAction(action, actionLabel(section, action), section.id);
       return;
     }
 
@@ -115,7 +130,10 @@ export function createDrillNavigation() {
       actionButton.classList.add("is-current");
       const section = sectionForAction(actionButton.dataset.action);
       const sectionId = section?.id;
-      if (sectionId) lastActions.set(sectionId, actionButton.dataset.action);
+      if (sectionId) {
+        lastActions.set(sectionId, actionButton.dataset.action);
+        setActiveSection(sectionId);
+      }
 
       dispatchAction(actionButton.dataset.action, actionButton.textContent.trim(), sectionId);
     }
@@ -135,7 +153,7 @@ export function createDrillNavigation() {
     }
   });
 
-  return { element, dispose: disposePreview };
+  return { element, dispose: disposePreview, closeSection };
 }
 
 function sectionForAction(action) {

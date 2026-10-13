@@ -58,7 +58,8 @@ def _run(job_id: str, operation, component: str | None = None) -> None:
                 elif component:
                     pass
                 else:
-                    print(f"[central-v2][job {job_id[:8]}] {percent}% · {chapter}: {message}", flush=True)
+                    emit("INFO", message, component="CENTRAL", job_id=job_id,
+                         progresso=f"{percent}%", capítulo=chapter)
 
     with _lock:
         _jobs[job_id]["status"] = "running"
@@ -70,7 +71,8 @@ def _run(job_id: str, operation, component: str | None = None) -> None:
         if component:
             emit("INFO", "execução iniciada", **{"capítulos": expected_chapters})
         else:
-            print(f"[central-v2][job {job_id[:8]}] execução iniciada", flush=True)
+            emit("INFO", "execução iniciada", component="CENTRAL", job_id=job_id,
+                 capítulos=expected_chapters)
         try:
             results = operation(update, job_id)
             failures = [item for item in results if isinstance(item, dict) and item.get("status") == "failed"]
@@ -86,30 +88,28 @@ def _run(job_id: str, operation, component: str | None = None) -> None:
         if component == "CLEANER-I" and status == "completed":
             job["progress"]["percent"] = 100
     summary = error or (f"{len(results)} capítulo(s)" if results else status)
-    if component:
-        summary_fields = {"capítulos": len(results)}
-        if component == "SOMMELIER":
-            summary_fields.update(
-                **{
-                    "páginas": sum(int(item.get("pages") or 0) for item in results if isinstance(item, dict)),
-                    "balões": sum(int(item.get("balloons") or 0) for item in results if isinstance(item, dict)),
-                },
-                candidatos=sum(int(item.get("candidates") or 0) for item in results if isinstance(item, dict)),
-            )
-        elif component == "CLEANER-I":
-            summary_fields.update(
-                **{"páginas": sum(int(item.get("pages") or 0) for item in results if isinstance(item, dict))},
-                saidas=sum(int(item.get("outputs") or 0) for item in results if isinstance(item, dict)),
-            )
-        summary_fields["duração"] = short_duration(time.perf_counter() - operation_started)
-        if status == "failed":
-            emit("ERROR", "falha na execução", component=component, job_id=job_id,
-                 erro=summary, **summary_fields)
-        else:
-            emit("INFO", "execução concluída", component=component, job_id=job_id,
-                 **summary_fields)
+    summary_fields = {"capítulos": len(results),
+                      "duração": short_duration(time.perf_counter() - operation_started)}
+    if component == "SOMMELIER":
+        summary_fields.update(
+            **{
+                "páginas": sum(int(item.get("pages") or 0) for item in results if isinstance(item, dict)),
+                "balões": sum(int(item.get("balloons") or 0) for item in results if isinstance(item, dict)),
+            },
+            candidatos=sum(int(item.get("candidates") or 0) for item in results if isinstance(item, dict)),
+        )
+    elif component == "CLEANER-I":
+        summary_fields.update(
+            **{"páginas": sum(int(item.get("pages") or 0) for item in results if isinstance(item, dict))},
+            saidas=sum(int(item.get("outputs") or 0) for item in results if isinstance(item, dict)),
+        )
+    log_component = component or "CENTRAL"
+    if status == "failed":
+        emit("ERROR", "falha na execução", component=log_component, job_id=job_id,
+             erro=summary, **summary_fields)
     else:
-        print(f"[central-v2][job {job_id[:8]}] {status}: {summary}", flush=True)
+        emit("INFO", "execução concluída", component=log_component, job_id=job_id,
+             resultado=summary, **summary_fields)
 
 
 def submit(operation, total: int = 0, component: str | None = None) -> dict:

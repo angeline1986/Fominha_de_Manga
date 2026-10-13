@@ -49,6 +49,7 @@ export function mountShell(root, onStopped) {
   const toggle = root.querySelector(".sidebar-toggle");
   function toggleSidebar() {
     const collapsed = sidebar.classList.toggle("is-collapsed");
+    if (collapsed) drillNavigation.closeSection();
     toggle.setAttribute("aria-expanded", String(!collapsed));
     toggle.setAttribute("aria-label", collapsed ? "Expandir menu" : "Recolher menu");
   }
@@ -61,13 +62,18 @@ export function mountShell(root, onStopped) {
   const drillNavigation = createDrillNavigation();
   navigation.append(drillNavigation.element);
   const context = root.querySelector("#app-context");
+  const expandCompactMenu = () => {
+    if (sidebar.classList.contains("is-collapsed")) toggleSidebar();
+  };
   const showContextOnMenu = (event) => {
     context.hidden = event.type === "menu:detail-open";
   };
+  navigation.addEventListener("menu:expand-request", expandCompactMenu);
   navigation.addEventListener("menu:detail-open", showContextOnMenu);
   navigation.addEventListener("menu:detail-close", showContextOnMenu);
 
   return () => {
+    navigation.removeEventListener("menu:expand-request", expandCompactMenu);
     navigation.removeEventListener("menu:detail-open", showContextOnMenu);
     navigation.removeEventListener("menu:detail-close", showContextOnMenu);
     toggle.removeEventListener("click", toggleSidebar);

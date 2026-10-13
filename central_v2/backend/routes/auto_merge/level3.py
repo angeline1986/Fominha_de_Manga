@@ -1,11 +1,12 @@
 """Auto Merge Level 3 query and execution HTTP contracts."""
 
 import json
-import logging
 from pathlib import Path
+import traceback
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.catalog import build_catalog
 from central_v2.backend.state.manga_state import build_structural_state, resolve_manga
+from central_v2.backend.operational_log import emit
 from orquestracao.auto_merge.consulta_nivel3 import query_level3
 from central_v2.backend.jobs.manager import submit
 from central_v2.backend.state.manga_state import resolve_manga
@@ -30,7 +31,8 @@ def level3_response(query: dict, output_root: Path) -> RouteResponse:
     except OSError:
         payload, status = {"error": "Não foi possível consultar os resíduos do Nível III."}, 500
     except Exception:
-        logging.exception("Falha inesperada ao consultar Auto-Merge Nível III")
+        emit("ERROR", "falha inesperada ao consultar Auto-Merge Nível III",
+             component="AUTO-MERGE-III", detalhe=traceback.format_exc())
         payload, status = {"error": "Falha inesperada ao consultar os resíduos do Nível III."}, 500
     return RouteResponse(status, json.dumps(payload, ensure_ascii=False).encode("utf-8"))
 

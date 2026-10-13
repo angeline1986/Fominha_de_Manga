@@ -2,7 +2,7 @@ import { iconMarkup } from "/_shared/icons/icons.js";
 import { segmentedMarkup } from "/_shell/merge_levels.js";
 
 export function rootItem(section) {
-  return `<button class="drill-item drill-root-item" type="button" data-section="${section.id}">
+  return `<button class="drill-item drill-root-item" type="button" data-section="${section.id}" aria-label="${section.label}" title="${section.label}" aria-expanded="false">
     ${iconMarkup(section.id)}
     <span class="drill-item-label">${section.label}</span>
     <span class="drill-arrow">${iconMarkup("next")}</span>

@@ -28,9 +28,10 @@ test('Limpeza de Balões keeps each flow and brush action on its existing route'
   const { navigation } = await load('/_shell/navigation.js');
   const menu = navigation.find((section) => section.id === 'texto-off');
   assert.equal(menu.label, 'Limpeza de Balões');
-  const [timeline, brush] = menu.groups;
+  const timeline = menu.groups.find((group) => group.type === 'timeline');
+  const brush = menu.groups.find((group) => group.label === 'PINCEL & RETOQUES DE ARTE');
   assert.equal(timeline.items.map((item) => item.id).join(','), [
-    'texto-off-merged-i', 'texto-off-merged-iii', 'bubble-sommelier',
+    'texto-off-merged-i', 'texto-off-merged-iii', 'bubble-sommelier', 'auto-cleaner-check',
   ].join(','));
   assert.equal(timeline.control.options.map((option) => option.action).join(','), [
     'texto-off-merged-ii', 'texto-off-merged-iv', 'texto-off-merged-v',

@@ -44,10 +44,10 @@ class ArtifactAuthoritySafetyTests(unittest.TestCase):
     def test_missing_target_does_not_fall_back_to_legacy(self):
         legacy = self.stage_dir("legacy") / "styled-balloon-report.json"
         self.write_report(legacy, "legacy-only")
-        with self.assertLogs(artifact_migration.logger, level="ERROR") as logs:
+        with patch.object(artifact_migration, "emit") as log:
             result = load_mapear_results(self.manga, "1")
         self.assertFalse(result["available"])
-        self.assertIn("status=MISSING_TARGET", " ".join(logs.output))
+        self.assertEqual(log.call_args.kwargs["status"], "MISSING_TARGET")
         self.assertTrue(legacy.is_file())
         self.assertFalse(self.stage_dir("target").exists())
 
@@ -57,10 +57,10 @@ class ArtifactAuthoritySafetyTests(unittest.TestCase):
         target = self.stage_dir("target")
         target.parent.mkdir(parents=True, exist_ok=True)
         target.write_bytes(b"not a directory")
-        with self.assertLogs(artifact_migration.logger, level="ERROR") as logs:
+        with patch.object(artifact_migration, "emit") as log:
             result = load_mapear_results(self.manga, "1")
         self.assertFalse(result["available"])
-        self.assertIn("status=INVALID_TARGET", " ".join(logs.output))
+        self.assertEqual(log.call_args.kwargs["status"], "INVALID_TARGET")
         self.assertEqual(target.read_bytes(), b"not a directory")
 
     def test_invalid_target_report_does_not_fall_back_to_legacy(self):

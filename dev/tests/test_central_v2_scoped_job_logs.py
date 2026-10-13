@@ -6,6 +6,28 @@ from central_v2.backend.jobs import manager
 
 
 class ScopedJobLogTests(unittest.TestCase):
+    def test_generic_job_logs_use_the_operational_format(self):
+        job_id = "feedface" + "0" * 24
+        manager._jobs[job_id] = {
+            "id": job_id, "status": "queued", "chapter": "", "progress": {"total": 1},
+            "results": [], "error": "", "created_at": manager._now(),
+            "updated_at": manager._now(),
+        }
+
+        def operation(progress, _job_id):
+            progress("7", {"stage": "process", "percent": 50, "message": "metade concluída"})
+            return [{"chapter": "7", "status": "ok"}]
+
+        try:
+            with patch("builtins.print") as output:
+                manager._run(job_id, operation)
+            lines = [call.args[0] for call in output.call_args_list]
+            self.assertTrue(all(" INFO [CENTRAL][feedfa] " in line for line in lines))
+            self.assertTrue(any("metade concluída · progresso=50% capítulo=7" in line for line in lines))
+            self.assertTrue(any("execução concluída" in line and "duração=" in line for line in lines))
+        finally:
+            manager._jobs.pop(job_id, None)
+
     def test_cleaner_job_stays_below_100_during_authorization_then_completes_atomically(self):
         job_id = "cleaner-progress-contract"
         authorization_started = threading.Event()

@@ -7,7 +7,10 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
   const { navigation } = await load('/_shell/navigation.js');
   const { groupMarkup } = await load('/_shell/drill_navigation_markup.js');
   const menu = navigation.find((section) => section.id === 'texto-off');
-  const [timeline, brush, audit, legacy] = menu.groups;
+  const timeline = menu.groups.find((group) => group.type === 'timeline');
+  const brush = menu.groups.find((group) => group.label === 'PINCEL & RETOQUES DE ARTE');
+  const audit = menu.groups.find((group) => group.label === 'AUDITORIA DE QUALIDADE');
+  const legacy = menu.groups.find((group) => group.label === 'LEGADO');
 
   assert.equal(menu.defaultAction, 'texto-off-merged-i');
   assert.equal(timeline.label, 'FLUXO DE LIMPEZA');
@@ -19,7 +22,7 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
     ['04', 'Auto-Cleaner Check', 'auto-cleaner-check'],
   ]);
   assert.equal(timeline.control.number, '05');
-  assert.equal(timeline.control.label, 'Auto-Cleaner: Transparência');
+  assert.equal(timeline.control.label, 'Auto-Cleaner: Glass');
   assert.deepEqual(JSON.parse(JSON.stringify(timeline.control.options.map((option) => [option.label, option.action]))), [
     ['Básica', 'texto-off-merged-ii'],
     ['Normal', 'texto-off-merged-iv'],
@@ -33,7 +36,7 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
   assert.match(timelineMarkup, /ui-icon--circle-dot/);
   for (const text of [
     '01', '02', '03', '04', '05', 'Auto-Cleaner', 'Mapear', 'Bubble Sommelier', 'Auto-Cleaner Check',
-    'Auto-Cleaner: Transparência', 'Básica', 'Normal', 'Legada',
+    'Auto-Cleaner: Glass', 'Básica', 'Normal', 'Legada',
   ]) assert.match(timelineMarkup, new RegExp(text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
   for (const tooltip of [
     'Passo 1 — Limpeza inicial', 'Localizar balões especiais', 'Curadoria de balões',

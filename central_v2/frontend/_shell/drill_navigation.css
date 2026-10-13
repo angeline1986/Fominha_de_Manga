@@ -176,3 +176,23 @@
 .navigation-hover-preview-images figure { min-width: 0; margin: 0; }
 .navigation-hover-preview-images figcaption { margin-bottom: 4px; color: var(--color-text-muted); font-size: var(--font-size-label); font-weight: var(--font-weight-bold); }
 .navigation-hover-preview-images img { display: block; width: 100%; height: 170px; object-fit: contain; border-radius: 5px; background: var(--color-surface-soft); }
+
+.app-sidebar.is-collapsed .drill-layer-root .drill-heading { display: none; }
+.app-sidebar.is-collapsed .drill-list { gap: 6px; padding: 8px 0; }
+.app-sidebar.is-collapsed .drill-root-item { position: relative; width: 44px; min-height: 44px; justify-content: center; margin: 0 auto; padding: 8px; }
+.app-sidebar.is-collapsed .drill-root-item > .ui-icon { width: 20px; height: 20px; }
+.app-sidebar.is-collapsed .drill-root-item .drill-item-label,
+.app-sidebar.is-collapsed .drill-root-item .drill-arrow { display: none; }
+.app-sidebar.is-collapsed .drill-root-item.is-current { background: var(--color-primary-soft-strong); color: var(--color-primary); }
+.app-sidebar.is-collapsed .drill-root-item.is-current::before { position: absolute; top: 8px; bottom: 8px; left: -8px; width: 3px; border-radius: 3px; background: var(--color-primary); content: ""; }
+.app-sidebar.is-collapsed .drill-root-item::after { position: absolute; z-index: 3; top: 50%; left: calc(100% + 8px); padding: 6px 10px; transform: translateY(-50%); border-radius: 6px; background: var(--color-text); color: var(--color-surface); content: attr(aria-label); opacity: 0; pointer-events: none; white-space: nowrap; }
+.app-sidebar.is-collapsed .drill-root-item:hover::after,
+.app-sidebar.is-collapsed .drill-root-item:focus-visible::after { opacity: 1; }
+.app-sidebar.is-collapsed .drill-root-item:disabled { opacity: .5; cursor: not-allowed; }
+
+@media (max-height: 500px) {
+  .app-sidebar.is-collapsed .drill-list { gap: 2px; padding: 2px 0; }
+  .app-sidebar.is-collapsed .drill-root-item { min-height: 36px; }
+  .app-sidebar.is-collapsed .app-sidebar-actions { gap: 4px; padding-top: 6px; }
+  .app-sidebar.is-collapsed .sidebar-action { flex-basis: 34px; }
+}

@@ -1,7 +1,7 @@
 # CV2-UX-01 — Redesenhar a sidebar minimizada
 
 - **Prioridade:** P3 (média)
-- **Status:** A Fazer — conceito aprovado; não implementado
+- **Status:** DONE
 - **Visão:** Visão de Produto · Visão Geral (navegação transversal)
 - **Responsável:** A definir
 
@@ -10,16 +10,20 @@
 **Referência visual:** Opção A — minimalista, com navegação preservada. Os símbolos do wireframe são conceituais; a proposta deve reutilizar os ícones originais da sidebar expandida.
 
 **Critério de Aceite:**
-- [ ] Sidebar compacta com aproximadamente 60 px, ícones centralizados, espaçamento consistente e paleta azul atual.
-- [ ] Exibir os seis módulos: Visão Geral, Processamento, Balanceamento, Gerar PDF, Limpeza de Balões e Exportar Arquivos.
-- [ ] Identificar o módulo ativo com barra vertical azul e, se necessário, fundo sutil.
-- [ ] Manter Expandir no topo; Atualizar e Ligar/Desligar servidor no rodapé, separados da navegação.
-- [ ] Preservar Provider e Obra na sidebar expandida, sem versões compactas desses campos.
-- [ ] Mostrar tooltip com nome completo no hover e foco; garantir nomes acessíveis, teclado e estados de hover, foco, ativo e desabilitado.
-- [ ] Manter acessíveis destinos e submenus; definir na proposta técnica o comportamento dos menus com subitens.
-- [ ] Expandir sem perder página, filtros ou contexto selecionado e sem saltos de layout.
-- [ ] Confirmar responsividade e coerência visual com a sidebar atual.
-- [ ] Apresentar protótipo visual ou proposta técnica antes de implementar, incluindo arquivos afetados e comportamento de submenus.
+- [x] Sidebar compacta com 60 px, ícones centralizados, espaçamento consistente e paleta azul atual.
+- [x] Exibir os seis módulos da fonte única `navigation.js` com os ícones originais.
+- [x] Identificar o módulo selecionado com barra vertical azul e fundo sutil.
+- [x] Manter Expandir no topo e Sincronizar/Finalizar servidor no rodapé.
+- [x] Preservar Provider e Obra na sidebar expandida, sem versões compactas desses campos.
+- [x] Mostrar tooltip no hover e foco; manter nomes acessíveis, teclado e estados de hover, foco, ativo e desabilitado.
+- [x] Ao selecionar um ícone compacto, expandir no módulo correspondente sem trocar a página; destinos existentes continuam sendo acionados pelos subitens.
+- [x] Recolher ou expandir sem apagar seleções de submenu nem o contexto de Provider e Obra.
+- [x] Ajustar o modo compacto para telas menores e alturas reduzidas.
+- [x] Implementar conforme a Opção A e o comportamento aprovado para submenus.
+
+**Validação:** `sidebar_compact.test.mjs` e `router.test.mjs` aprovados (12/12). Após atualizar somente expectativas desatualizadas, `navigation_textoff.test.mjs` e `textoff_merged.test.mjs` também passaram (6/6). `navigation.js` permaneceu inalterado. `git diff --check` passou.
+
+**Arquivos implementados:** `central_v2/frontend/_shell/shell.css`, `shell.js`, `drill_navigation.js`, `drill_navigation.css` e `drill_navigation_markup.js`. Cobertura específica em `dev/tests/central_v2_frontend/sidebar_compact.test.mjs`.
 
 **Restrições (o que NÃO fazer):**
 - Não alterar regras de negócio ou APIs.

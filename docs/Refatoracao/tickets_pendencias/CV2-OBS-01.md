@@ -1,37 +1,34 @@
-# CV2-OBS-01 — Inventariar e padronizar logs de terminal do projeto
+# CV2-OBS-01 — Padronizar logs do terminal da Central V2
 
-- **Prioridade:** P3 (média, sugerida)
-- **Status:** A Fazer — não implementar nesta etapa
-- **Visão:** Saúde Arquitetural · Observabilidade · Fominha_de_Manga
+- **Prioridade:** P3 (média)
+- **Status:** Concluído
+- **Visão:** Saúde Arquitetural · Observabilidade · Central V2
 - **Responsável:** A definir
 
-**Objetivo:** Inventariar os logs divergentes, validar um contrato comum e padronizar a saída do terminal gradualmente, sem alterar o comportamento dos processamentos.
+**Objetivo:** Unificar a apresentação dos logs operacionais do backend da Central V2, sem alterar o funcionamento do projeto.
 
-**Abrangência:** Central V1 e V2, Auto-Merge, Balanceamento, PDF, TextoOff, Cleaner, workers e orquestradores.
+**Abrangência executada:** `central_v2/backend/`. Saídas JSON de subprocessos, diagnósticos técnicos capturados pelo processo pai e registros de auditoria foram preservados. A Central V1 permaneceu intacta.
 
-**Referência inicial de formato:** `HH:MM:SS.mmm NÍVEL [CATEGORIA] mensagem · atributo=valor`. O contrato final de apresentação precisa ser validado antes da implementação.
-
-**Estratégia:**
-1. Inventariar `print()`, logging e mensagens verbosas, classificando saídas operacionais e diagnósticas.
-2. Propor o contrato final e listar os arquivos afetados para aprovação.
-3. Implementar em módulos incrementais, reutilizando a infraestrutura existente.
-4. Validar formato, rastreabilidade, regressões e ausência de mudanças funcionais.
+**Implementação concluída:**
+- Reutilizada a infraestrutura de `central_v2/backend/operational_log.py`.
+- Padronizados logs de jobs, inicialização do servidor, consulta do Auto-Merge Nível III, resumo do Texto Off Nível II e indisponibilidade da autoridade de artefatos.
+- Preservados os protocolos JSON, respostas HTTP, regras de processamento, autoridade de artefatos e exceções.
 
 **Critério de Aceite:**
-- [ ] Apresentar inventário dos fluxos, formatos divergentes e arquivos afetados antes de implementar.
-- [ ] Validar exemplos e contrato para timestamp, severidade, categoria, mensagem e metadados.
-- [ ] Garantir consistência para eventos equivalentes e legibilidade em execuções simples e em lote.
-- [ ] Tornar identificáveis início, evolução, conclusão, falha e duração; correlacionar por `run_id` quando disponível.
-- [ ] Diferenciar logs operacionais dos detalhes diagnósticos e preservar registros úteis para auditoria.
-- [ ] Reutilizar a infraestrutura de logging existente e evitar duplicações ou mensagens irrelevantes.
-- [ ] Testar regressões dos fluxos afetados sem alterar regras, algoritmos ou resultados de processamento.
-- [ ] Não registrar dados sensíveis, tokens ou credenciais.
+- [x] Logs operacionais alterados seguem o formato existente de timestamp, nível, categoria, mensagem e atributos.
+- [x] Início, progresso, conclusão, falha e duração dos jobs são registrados sem alterar os dados de progresso nem os resultados.
+- [x] Testes específicos validam o formato dos jobs e os campos de autoridade de artefatos.
+- [x] Testes de logging e testes direcionados aos módulos afetados passaram: 48 testes aprovados.
+- [x] Revisão final confirmou que `level3.py` preserva o traceback e o contrato HTTP, e que `artifact_migration.py` preserva as regras de autoridade, validação e exceções.
+- [x] Confirmado que a Central V1 permaneceu intacta.
+- [x] Nenhuma alteração de código fora de `central_v2/backend/`; testes limitados aos contratos específicos em `dev/tests/`.
 
-**Restrições (o que NÃO fazer):**
-- Não substituir indiscriminadamente `print()` sem avaliar sua finalidade.
-- Não alterar processamento para melhorar apenas a apresentação dos logs.
-- Não iniciar implementação antes do inventário e da aprovação do contrato.
-- Respeitar o limite de 200 linhas físicas por arquivo de código.
-- Não fazer commit ou push sem autorização explícita.
+**Validação registrada:** revisão do diff e `git diff --check` aprovados. Não foi feito commit ou push; continuam dependendo de autorização explícita.
 
-**Links de Referência:** Item legado P6 “Expandir padronização dos logs” em `docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.md` (frente anterior limitada à Central V2).
+**Arquivos de backend envolvidos:** `jobs/manager.py`, `server.py`, `routes/auto_merge/level3.py`, `orchestration/textoff_merged/level2_transparent.py` e `orchestration/textoff_merged/artifact_migration.py`.
+
+**Testes específicos:** `test_central_v2_scoped_job_logs.py` e `test_textoff_artifact_authority_safety.py`.
+
+**Restrições preservadas:** nenhuma alteração em regras de negócio, algoritmos, resultados, Central V1 ou contratos de subprocessos. Limite de 200 linhas físicas por arquivo de código respeitado.
+
+**Referência:** `central_v2/backend/operational_log.py`.

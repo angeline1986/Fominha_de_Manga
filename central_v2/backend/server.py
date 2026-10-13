@@ -3,6 +3,7 @@ import threading
 import webbrowser
 
 from central_v2.backend.http_handler import Handler
+from central_v2.backend.operational_log import emit
 from orquestracao.central_session import server_session
 
 HOST = "127.0.0.1"
@@ -12,8 +13,8 @@ PORT = 8090
 def main():
     with server_session():
         server = ThreadingHTTPServer((HOST, PORT), Handler)
-        print(f"Central V2: http://{HOST}:{PORT}", flush=True)
-        print(f"Health:     http://{HOST}:{PORT}/health", flush=True)
+        emit("INFO", "servidor iniciado", component="SERVER",
+             url=f"http://{HOST}:{PORT}", health=f"http://{HOST}:{PORT}/health")
 
         browser_timer = threading.Timer(0.6, lambda: webbrowser.open(f"http://{HOST}:{PORT}"))
         try:

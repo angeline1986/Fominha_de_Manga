@@ -5,6 +5,7 @@ import argparse
 import json
 from pathlib import Path
 
+from central_v2.backend.operational_log import emit
 from .level2_batch import process_batch
 from .level2_process import process
 
@@ -22,12 +23,14 @@ def main() -> int:
         jobs = json.loads(args.batch_manifest.read_text(encoding="utf-8"))
         results = process_batch(jobs, args.progress)
         failed = [item for item in results if item["report"].get("integrity_ok") is not True]
-        print(f"Merged Nível II: {len(results) - len(failed)}/{len(results)} capítulo(s) processados.", flush=True)
+        emit("INFO", "processamento em lote concluído", component="MERGE-II",
+             capítulos=f"{len(results) - len(failed)}/{len(results)}")
         return 1 if failed else 0
     if not all((args.source_dir, args.level1_dir, args.output_dir, args.report)):
         parser.error("informe --batch-manifest ou todos os argumentos de capítulo")
     report = process(args.source_dir, args.level1_dir, args.output_dir, args.report, args.progress)
-    print(f"Merged Nível II: {report['pages_with_text']}/{report['pages_analyzed']} página(s) com texto autorizado.", flush=True)
+    emit("INFO", "processamento do capítulo concluído", component="MERGE-II",
+         páginas_com_texto=report["pages_with_text"], páginas_analisadas=report["pages_analyzed"])
     return 0
 
 
