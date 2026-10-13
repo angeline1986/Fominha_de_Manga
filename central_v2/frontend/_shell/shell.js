@@ -2,6 +2,7 @@ import { iconMarkup } from "/_shared/icons/icons.js";
 import { mountContext } from "/_shell/context.js";
 import { createDrillNavigation } from "/_shell/drill_navigation.js";
 import { bindShutdown } from "/_shell/shutdown.js";
+import { synchronizeContext } from "/_app/context/context_controller.js";
 
 export function mountShell(root, onStopped) {
   root.innerHTML = `
@@ -47,6 +48,29 @@ export function mountShell(root, onStopped) {
   const navigation = root.querySelector("#app-navigation");
   const sidebar = root.querySelector("#app-sidebar");
   const toggle = root.querySelector(".sidebar-toggle");
+  const sync = root.querySelector('[data-action="sync"]');
+  let syncFeedbackTimer = null;
+  function setSyncFeedback(message) {
+    sync.setAttribute("aria-label", message);
+    sync.title = message;
+  }
+  async function onSync() {
+    if (sync.disabled) return;
+    sync.disabled = true;
+    sync.setAttribute("aria-busy", "true");
+    setSyncFeedback("Sincronizando…");
+    try {
+      await synchronizeContext();
+      setSyncFeedback("Sincronização concluída");
+    } catch {
+      setSyncFeedback("Falha ao sincronizar");
+    } finally {
+      sync.disabled = false;
+      sync.removeAttribute("aria-busy");
+      clearTimeout(syncFeedbackTimer);
+      syncFeedbackTimer = setTimeout(() => setSyncFeedback("Sincronizar"), 2500);
+    }
+  }
   function toggleSidebar() {
     const collapsed = sidebar.classList.toggle("is-collapsed");
     if (collapsed) drillNavigation.closeSection();
@@ -54,6 +78,7 @@ export function mountShell(root, onStopped) {
     toggle.setAttribute("aria-label", collapsed ? "Expandir menu" : "Recolher menu");
   }
   toggle.addEventListener("click", toggleSidebar);
+  sync.addEventListener("click", onSync);
   const disposeContext = mountContext(root.querySelector("#app-context"));
   const disposeShutdown = bindShutdown(
     root.querySelector('[data-action="stop-server"]'),
@@ -77,6 +102,8 @@ export function mountShell(root, onStopped) {
     navigation.removeEventListener("menu:detail-open", showContextOnMenu);
     navigation.removeEventListener("menu:detail-close", showContextOnMenu);
     toggle.removeEventListener("click", toggleSidebar);
+    sync.removeEventListener("click", onSync);
+    clearTimeout(syncFeedbackTimer);
     drillNavigation.dispose();
     disposeContext();
     disposeShutdown();

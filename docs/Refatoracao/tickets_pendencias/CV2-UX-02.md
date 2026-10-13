@@ -1,18 +1,20 @@
 # CV2-UX-02 — Restaurar a ação Sincronizar da sidebar
 
 - **Prioridade:** P2 (sugerida)
-- **Status:** Em Investigação
+- **Status:** DONE
 - **Visão:** Visão de Produto · Visão Geral (ação transversal)
 - **Responsável:** A definir
 
 **Objetivo:** Fazer o botão Sincronizar atualizar o estado da obra selecionada conforme o contrato documentado da Central.
 
 **Critério de Aceite:**
-- [ ] Reproduzir o problema em ambiente isolado e registrar evidência.
-- [ ] Comparar o comportamento com a HEAD anterior antes de classificar como regressão; sem evidência, manter em investigação.
-- [ ] Definir a ação do botão com base no contrato existente: atualizar o estado da obra selecionada.
-- [ ] Ao acionar Sincronizar, atualizar o catálogo e recarregar o estado da obra mantendo Provider e Obra selecionados quando ainda disponíveis.
-- [ ] Comunicar falhas de sincronização sem perder o contexto atual.
+- [x] Confirmado que o botão existia sem ação de sincronização conectada.
+- [x] Implementada a atualização do catálogo e do estado da obra selecionada pelos endpoints existentes.
+- [x] Provider e Obra são preservados quando válidos; seleções removidas são limpas.
+- [x] Falhas e respostas atrasadas não sobrescrevem o contexto atual.
+- [x] Feedback de sucesso/falha e bloqueio de sincronizações simultâneas validados.
+
+**Validação:** `context_selector.test.mjs` (2/2), testes de sincronização (`context_sync.test.mjs` e `shell_sync.test.mjs`, 10/10) e testes de contexto, sidebar compacta e roteamento (16/16) aprovados. `git diff --check` passou.
 
 **Restrições (o que NÃO fazer):**
 - Não alterar regras de negócio nem APIs sem necessidade demonstrada.

@@ -15,6 +15,8 @@ import {
 } from "/_app/state/manga_state.js";
 
 let mangaRequestSequence = 0;
+let mangaStateRequest = null;
+let synchronizationRequest = null;
 
 export async function initializeContext() {
   const catalog = await fetchCatalog();
@@ -63,7 +65,15 @@ export async function changeManga(manga) {
     };
   }
 
-  const state = await fetchMangaState(provider, manga);
+  const activeRequest = { requestSequence, provider, manga };
+  activeRequest.promise = fetchMangaState(provider, manga);
+  mangaStateRequest = activeRequest;
+  let state;
+  try {
+    state = await activeRequest.promise;
+  } finally {
+    if (mangaStateRequest === activeRequest) mangaStateRequest = null;
+  }
 
   if (requestSequence !== mangaRequestSequence) {
     return {
@@ -78,4 +88,49 @@ export async function changeManga(manga) {
     context: getContext(),
     mangaState: getMangaState(),
   };
+}
+
+async function synchronizeCurrentContext() {
+  const requestSequence = mangaRequestSequence;
+  const catalog = await fetchCatalog();
+  const current = getContext();
+  const provider = current.provider && Object.hasOwn(catalog, current.provider)
+    ? current.provider : null;
+  const manga = provider && (catalog[provider] ?? []).includes(current.manga)
+    ? current.manga : null;
+
+  setCatalog(catalog);
+  if (provider !== current.provider) {
+    changeProvider(provider);
+    return { context: getContext(), mangaState: getMangaState() };
+  }
+  if (manga !== current.manga) {
+    return changeManga(manga);
+  }
+  if (!manga || requestSequence !== mangaRequestSequence) {
+    return { context: getContext(), mangaState: getMangaState() };
+  }
+  if (mangaStateRequest?.requestSequence === requestSequence
+    && mangaStateRequest.provider === provider && mangaStateRequest.manga === manga) {
+    await mangaStateRequest.promise;
+    return { context: getContext(), mangaState: getMangaState() };
+  }
+
+  const stateSequence = ++mangaRequestSequence;
+  const state = await fetchMangaState(provider, manga);
+  const latest = getContext();
+  if (stateSequence === mangaRequestSequence
+    && latest.provider === provider && latest.manga === manga) {
+    setMangaState(state);
+  }
+  return { context: getContext(), mangaState: getMangaState() };
+}
+
+export function synchronizeContext() {
+  if (synchronizationRequest) return synchronizationRequest;
+  const request = synchronizeCurrentContext().finally(() => {
+    if (synchronizationRequest === request) synchronizationRequest = null;
+  });
+  synchronizationRequest = request;
+  return request;
 }

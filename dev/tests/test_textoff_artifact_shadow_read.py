@@ -60,13 +60,14 @@ class TextoffArtifactShadowReadTests(unittest.TestCase):
             self.write(target / "sample.bin", b"same")
         before_files = {p: p.read_bytes() for p in self.manga.rglob("*") if p.is_file()}
 
-        with self.assertLogs(artifact_shadow_read.logger, level="INFO") as output:
+        with self.assertLogs(artifact_shadow_read.logger, level="DEBUG") as output:
             for item in entries:
                 artifact_shadow_read.observe_shadow_read(
                     self.manga, item["stage_id"], "1"
                 )
 
         self.assertEqual(len([line for line in output.output if "comparison_status=MATCH" in line]), 5)
+        self.assertTrue(all(record.levelname == "DEBUG" for record in output.records))
         for item in entries:
             self.assertIn(f"stage={item['stage_id']}", " ".join(output.output))
             self.assertIn(f"target_path={item['target_path']}/1", " ".join(output.output))
@@ -93,38 +94,42 @@ class TextoffArtifactShadowReadTests(unittest.TestCase):
                         target.write_bytes(target_payload)
                     else:
                         self.write(target / "styled-balloon-report.json", target_payload)
-                with self.assertLogs(artifact_shadow_read.logger, level="INFO") as output:
+                with self.assertLogs(artifact_shadow_read.logger, level="DEBUG") as output:
                     result = load_mapear_results(self.manga, "1")
                 self.assertEqual(result["soft_gradient"]["count"], 1)
                 self.assertTrue(any(f"comparison_status={status}" in line
                                     for line in output.output))
+                self.assertTrue(all(record.levelname == "DEBUG" for record in output.records))
 
     def test_missing_legacy_never_falls_back_to_valid_target(self):
         _, target = self.stage_paths("mapear")
         self.write(target / "styled-balloon-report.json", self.mapear_report("target"))
-        with self.assertLogs(artifact_shadow_read.logger, level="WARNING") as output:
+        with self.assertLogs(artifact_shadow_read.logger, level="DEBUG") as output:
             result = load_mapear_results(self.manga, "1")
         self.assertFalse(result["available"])
         self.assertEqual(result["status"], "unavailable")
         self.assertIn("comparison_status=MISSING_LEGACY", " ".join(output.output))
+        self.assertTrue(all(record.levelname == "DEBUG" for record in output.records))
         self.assertFalse(self.stage_paths("mapear")[0].exists())
 
     def test_both_missing_is_diagnosed_as_missing_legacy_without_traceback(self):
-        with self.assertLogs(artifact_shadow_read.logger, level="WARNING") as output:
+        with self.assertLogs(artifact_shadow_read.logger, level="DEBUG") as output:
             artifact_shadow_read.observe_shadow_read(self.manga, "mapear", "1")
         report = " ".join(output.output)
         self.assertIn("comparison_status=MISSING_LEGACY", report)
         self.assertNotIn("SHADOW_READ_ERROR", report)
+        self.assertTrue(all(record.levelname == "DEBUG" for record in output.records))
 
     def test_sommelier_worklist_does_not_fall_back_to_target_report(self):
         merge = self.manga / "FLUXO_SECUNDARIO/02_MERGE/1/page.png"
         self.write(merge, b"page")
         _, target = self.stage_paths("bubble_sommelier")
         self.write(target / "report.json", b'{"status":"completed"}')
-        with self.assertLogs(artifact_shadow_read.logger, level="WARNING") as output:
+        with self.assertLogs(artifact_shadow_read.logger, level="DEBUG") as output:
             result = query_sommelier(self.manga)
         self.assertIsNone(result["chapters"][0]["sommelier"])
         self.assertIn("comparison_status=MISSING_LEGACY", " ".join(output.output))
+        self.assertTrue(all(record.levelname == "DEBUG" for record in output.records))
 
     def test_shadow_internal_error_is_logged_and_legacy_result_survives(self):
         legacy, target = self.stage_paths("mapear")

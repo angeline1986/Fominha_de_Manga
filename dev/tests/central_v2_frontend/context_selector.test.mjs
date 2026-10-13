@@ -23,7 +23,7 @@ function findAll(element, predicate) {
   return [ ...(predicate(element) ? [element] : []), ...element.children.flatMap((child) => findAll(child, predicate)) ];
 }
 
-test('provider and work names appear inside their comboboxes with accessible names', async () => {
+test('selected provider and work values keep their accessible field names', async () => {
   const load = browserModules({ document: { createElement: (tag) => new ElementStub(tag) } });
   const { createContextSelector } = await load('/_shell/context_selector.js');
   const selector = createContextSelector({
@@ -36,7 +36,7 @@ test('provider and work names appear inside their comboboxes with accessible nam
   assert.deepEqual(triggers.map((trigger) => trigger.getAttribute('aria-label')),
     ['Provider: comix', 'Obra: Gazing at you']);
   assert.deepEqual(triggers.map((trigger) => trigger.children.map((child) => child.textContent)), [
-    ['Provider', 'comix'], ['Obra', 'Gazing at you'],
+    ['comix'], ['Gazing at you'],
   ]);
 });
 

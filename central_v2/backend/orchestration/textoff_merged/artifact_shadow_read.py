@@ -60,14 +60,11 @@ def observe_shadow_read(
             result.get("legacy_path"), result.get("target_path"),
             status, len(artifacts), summary,
         )
-        if status in {"MATCH", "STRUCTURAL_MATCH"}:
-            logger.info(report, *values)
-        else:
-            logger.warning(report, *values)
+        logger.debug(report, *values)
     except FileNotFoundError as exc:
         if str(exc).startswith("Ambos os artefatos estão ausentes:"):
             missing_status = "MISSING_TARGET" if authority == "target" else "MISSING_LEGACY"
-            logger.warning(
+            logger.debug(
                 "%s stage=%s chapter=%s authority=%s legacy_path=%s target_path=%s "
                 "comparison_status=%s artifact_count=0 differences=legacy_and_target_missing",
                 label, stage_id, chapter, authority, legacy_path, target_path, missing_status,

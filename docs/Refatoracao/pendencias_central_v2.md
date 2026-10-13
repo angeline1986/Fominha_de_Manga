@@ -13,7 +13,7 @@
 | ID | Tarefa | Status |
 |---|---|---|
 | [CV2-UX-01](tickets_pendencias/CV2-UX-01.md) | Redesenhar a sidebar minimizada | DONE |
-| [CV2-UX-02](tickets_pendencias/CV2-UX-02.md) | Restaurar a ação Sincronizar da sidebar | IN PROGRESS |
+| [CV2-UX-02](tickets_pendencias/CV2-UX-02.md) | Restaurar a ação Sincronizar da sidebar | DONE |
 | [CV2-UX-03](tickets_pendencias/CV2-UX-03.md) | Padronizar tabelas e cabeçalhos no estilo Artístico | DO |
 
 ### Saúde Arquitetural
@@ -24,6 +24,7 @@
 | [BL-08](tickets_pendencias/BL-08.md) | Validar automaticamente o limite de 200 linhas | DO |
 | [BL-09](tickets_pendencias/BL-09.md) | Cobrir contratos visuais do Laboratório | DO |
 | [CV2-OBS-01](tickets_pendencias/CV2-OBS-01.md) | Padronizar logs do terminal da Central V2 | DONE |
+| [CV2-OBS-02](tickets_pendencias/CV2-OBS-02.md) | Reduzir logs rotineiros do SHADOW_READ | DONE |
 
 ## Processamento
 
