@@ -133,7 +133,7 @@ function pagination(root) {
   return root.querySelector('.auto-merge-results').children.find((child) => child.kind === 'pagination');
 }
 
-test('successful Passo 2 completion switches pending to ALL, resets pagination and shows processed/no_change rows', async () => {
+test('successful Passo 2 completion switches Do to All, resets pagination and shows processed/no_change rows', async () => {
   const updated = chapters({ 1: 'processed', 2: 'no_change' });
   const app = await mount({ responses: [
     { status: 'ready', provider: 'comix', manga: 'Obra teste', chapters: pendingChapters() },
@@ -141,8 +141,8 @@ test('successful Passo 2 completion switches pending to ALL, resets pagination a
   ] });
   const { root, state, dispose } = app;
 
-  assert.equal(filterButton(root, 'Pendente').getAttribute('aria-pressed'), 'true');
-  assert.equal(filterButton(root, 'Pendente').textContent, 'Pendente (31)');
+  assert.equal(filterButton(root, 'Do').getAttribute('aria-pressed'), 'true');
+  assert.equal(filterButton(root, 'Do').textContent, 'Do (31)');
   selectChapter(root, '1');
   assert.equal(root.querySelector('[data-execute]').disabled, false);
   pagination(root).move(1);
@@ -151,13 +151,13 @@ test('successful Passo 2 completion switches pending to ALL, resets pagination a
   await root.querySelector('[data-execute]').click();
 
   assert.equal(state.fetchCount, 2, 'successful completion uses one existing reload');
-  assert.equal(filterButton(root, 'ALL').getAttribute('aria-pressed'), 'true');
-  assert.equal(filterButton(root, 'ALL').textContent, 'ALL (31)');
+  assert.equal(filterButton(root, 'All').getAttribute('aria-pressed'), 'true');
+  assert.equal(filterButton(root, 'All').textContent, 'All (31)');
   assert.equal(pagination(root).selection.page, 1);
   assert.ok(table(root).rows.some((row) => row.chapter === '1' && row.level2_status === 'processed'));
   assert.ok(table(root).rows.some((row) => row.chapter === '2' && row.level2_status === 'no_change'));
-  assert.equal(filterButton(root, 'Concluído').textContent, 'Concluído (1)');
-  assert.equal(filterButton(root, 'Inalterado').textContent, 'Inalterado (1)');
+  assert.equal(filterButton(root, 'Done').textContent, 'Done (1)');
+  assert.equal(filterButton(root, 'No Change').textContent, 'No Change (1)');
   assert.equal(root.querySelector('[data-execute]').disabled, true, 'successful completion clears selection');
   dispose();
 });
@@ -173,7 +173,7 @@ test('failed Passo 2 job does not switch filters or reload as a success', async 
   await root.querySelector('[data-execute]').click();
 
   assert.equal(state.fetchCount, 1);
-  assert.equal(filterButton(root, 'Pendente').getAttribute('aria-pressed'), 'true');
+  assert.equal(filterButton(root, 'Do').getAttribute('aria-pressed'), 'true');
   assert.equal(pagination(root).selection.page, 2);
   assert.equal(state.errors.length, 1);
   dispose();
@@ -188,13 +188,13 @@ test('ordinary same-manga refresh preserves the filter selected by the user', as
   ] });
   const { root, state, dispose } = app;
 
-  await filterButton(root, 'Concluído').click();
-  assert.equal(filterButton(root, 'Concluído').getAttribute('aria-pressed'), 'true');
+  await filterButton(root, 'Done').click();
+  assert.equal(filterButton(root, 'Done').getAttribute('aria-pressed'), 'true');
   await state.contextRefresh();
 
   assert.equal(state.fetchCount, 2);
-  assert.equal(filterButton(root, 'Concluído').getAttribute('aria-pressed'), 'true');
+  assert.equal(filterButton(root, 'Done').getAttribute('aria-pressed'), 'true');
   assert.deepEqual(table(root).rows.map((row) => row.chapter), ['1', '3']);
-  assert.equal(filterButton(root, 'ALL').textContent, 'ALL (31)');
+  assert.equal(filterButton(root, 'All').textContent, 'All (31)');
   dispose();
 });

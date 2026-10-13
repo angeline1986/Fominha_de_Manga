@@ -11,7 +11,7 @@ import { createArtisticRows } from "/texto_off/especiais/artistico_rows.js";
 import { artisticCounts, artisticGroups, artisticKey, artisticSelected } from "/texto_off/especiais/artistico_model.js";
 import { WORKLISTS, executableOccurrences, executionSelection } from "/texto_off/especiais/special_worklist_policy.js";
 
-const FILTERS = [["all", "Todos"], ["pending", "Pendentes"], ["completed", "Concluídos"]];
+const FILTERS = [["all", "All"], ["pending", "Do"], ["completed", "Done"]];
 
 export function renderSpecialWorklist(container, treatment = "estilizado") {
   const config = WORKLISTS[treatment];

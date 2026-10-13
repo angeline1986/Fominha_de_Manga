@@ -44,7 +44,9 @@ export function createStageFilters(container, onChange) {
       secondary.replaceChildren();
       for (const [key, label] of STAGES) {
         const count = rows.filter((row) => matchesStage(row, key)).length;
-        main.append(button(`${label} (${count})`, active === key, () => {
+        const filterLabel = key === "all" ? "All" : key === "map" ? "Mapear"
+          : key === "retouch" ? "Retoque" : label;
+        main.append(button(`${filterLabel} (${count})`, active === key, () => {
           active = key; onChange();
         }));
       }

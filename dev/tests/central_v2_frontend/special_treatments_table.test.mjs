@@ -14,6 +14,10 @@ test('Degradê and Suave share the approved three-level worklist and pagination'
     const root = container.children[0], table = tables.at(-1);
     assert.equal(calls.at(-1), treatment);
     assert.match(root.className, /artistico-page/);
+    const filterLabels = root.nodes['[data-filters]'].children.map((button) =>
+      `${button.children[0].textContent}${button.children[1].textContent}`).join(',');
+    assert.equal(filterLabels, treatment === 'degrade'
+      ? 'All(2),Do(2),Done(0)' : 'All(2),Do(0),Done(2)');
     assert.equal(table.columns[1].label, 'CAP.');
     assert.equal(JSON.stringify(table.rows.map((row) => row.type)), JSON.stringify(
       treatment === 'degrade' ? ['chapter', 'page', 'occurrence', 'occurrence']
@@ -133,11 +137,11 @@ test('Degradê paginates chapters and retains occurrence selection across redraw
   let footer = root.nodes['[data-footer]'].children[0];
   assert.equal(footer.children[1].children[1].textContent, '1 / 2');
   footer.children[1].children[2].events.click();
-  assert.equal(shown(tables, 'chapter').length, 6);
+  assert.equal(shown(tables, 'chapter').length, 13);
   assert.equal(root.nodes['[data-count]'].textContent, '1');
   footer = root.nodes['[data-footer]'].children[0];
   footer.children[1].children[0].events.click();
   assert.equal(check(tables, first).checked, true);
-  assert.equal(shown(tables, 'chapter').length, 20);
+  assert.equal(shown(tables, 'chapter').length, 13);
   dispose();
 });

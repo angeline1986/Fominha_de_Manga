@@ -17,11 +17,11 @@ export function createLevel1View({ onExecute } = {}) {
         <input type="search" data-query placeholder="Buscar cap.">
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos">
-        <button type="button" data-filter="all" aria-pressed="true">Todos</button>
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
         <button type="button" data-filter="clean" aria-pressed="false">Limpeza pronta</button>
         <button type="button" data-filter="pdf_merge" aria-pressed="false">PDF pronto</button>
-        <button type="button" data-filter="occurrences" aria-pressed="false">Com ocorrências</button>
-        <button type="button" data-filter="merge" aria-pressed="false">MERGE identificado</button>
+        <button type="button" data-filter="occurrences" aria-pressed="false">Ocorrências</button>
+        <button type="button" data-filter="merge" aria-pressed="false">Done</button>
       </div>
       <button class="auto-merge-execute" type="button" data-execute>Executar</button>
     </div>

@@ -18,9 +18,9 @@ export function createPdfView(container, source) {
       <div class="pdf-v2-toolbar">
         <input data-search type="search" aria-label="Buscar capítulo" placeholder="Buscar capítulo..." />
         <div class="pdf-v2-filters" role="group" aria-label="Filtro de PDFs">
-          <button type="button" data-filter="all" aria-pressed="true">Todos</button>
+          <button type="button" data-filter="all" aria-pressed="true">All</button>
           <button type="button" data-filter="missing" aria-pressed="false">Sem PDF</button>
-          <button type="button" data-filter="generated" aria-pressed="false">Gerados</button>
+          <button type="button" data-filter="generated" aria-pressed="false">Com PDF</button>
         </div>
         <div class="pdf-v2-quality-switch" role="group" aria-label="Qualidade do PDF">
           <button type="button" data-quality-option="93" aria-pressed="true" title="Q93 — Alta qualidade">Q93</button>

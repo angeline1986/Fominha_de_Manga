@@ -1,9 +1,9 @@
 const FILTERS = [
-  ["all", "Todos"],
-  ["pending", "Pendente"],
-  ["partial", "Parcial"],
-  ["resolved", "Resolvido"],
-  ["invalid", "Revisar"],
+  ["all", "All"],
+  ["pending", "Do"],
+  ["partial", "Partial"],
+  ["resolved", "Done"],
+  ["invalid", "Review"],
 ];
 
 export function createStatusFilters(container, { chapters, value, onChange }) {

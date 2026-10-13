@@ -2,6 +2,8 @@ export const OUTCOME_FILTERS = [
   ["all", "ALL"], ["pending", "Pendente"], ["processed", "Concluído"],
   ["unchanged", "Inalterado"], ["residue", "Resíduo"],
 ];
+const FILTER_LABELS = { all: "All", pending: "Do", processed: "Done",
+  unchanged: "No Change", residue: "Resíduo" };
 
 export function matchesOutcome(row, filter) {
   if (filter === "all") return true;
@@ -17,7 +19,8 @@ export function drawOutcomeFilters(container, rows, active, onSelect) {
     button.type = "button";
     button.className = "auto-merge-filter-button";
     const count = rows.filter((row) => matchesOutcome(row, key)).length;
-    button.textContent = key === "residue" ? label : `${label} (${count})`;
+    const filterLabel = FILTER_LABELS[key] || label;
+    button.textContent = key === "residue" ? filterLabel : `${filterLabel} (${count})`;
     if (key === "residue") button.title = "Capítulos com resíduos adiados registrados no Passo 1";
     button.classList.toggle("active", active === key);
     button.setAttribute("aria-pressed", String(active === key));

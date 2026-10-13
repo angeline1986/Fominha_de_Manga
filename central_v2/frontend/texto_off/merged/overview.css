@@ -33,6 +33,10 @@
 
 .cleaner-overview .cleaner-retouch-filters[hidden] { display: none; }
 
+@media (min-width: 701px) {
+  .auto-merge-page.cleaner-overview .auto-merge-filters { flex-wrap: nowrap; gap: 2px; }
+}
+
 .cleaner-overview .auto-merge-filter-button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;

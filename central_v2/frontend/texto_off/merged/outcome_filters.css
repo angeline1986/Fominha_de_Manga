@@ -14,6 +14,10 @@
   overflow: visible;
 }
 
+@media (min-width: 701px) {
+  .auto-merge-page.cleaner-outcomes .auto-merge-filters { flex-wrap: nowrap; gap: 2px; }
+}
+
 .cleaner-outcomes .auto-merge-filter-button:focus-visible {
   outline: 2px solid var(--color-primary);
   outline-offset: 2px;

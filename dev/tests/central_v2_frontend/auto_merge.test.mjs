@@ -122,6 +122,21 @@ test('Level I filters identify rows with values in their matching output columns
   controller.dispose();
 });
 
+test('Auto-Merge status filter labels change without changing their filter keys', async () => {
+  const container = { replaceChildren() { this.children = []; }, append(button) { this.children.push(button); } };
+  const document = { createElement: () => ({ classList: { toggle() {} }, setAttribute() {},
+    addEventListener() {} }) };
+  const { createStatusFilters, matchesStatus } = await browserModules({ document })
+    ('/processamento/auto_merge/shared/filtros_estado.js');
+  const chapters = [{ status: 'Disponível' }, { status: 'Parcial' },
+    { status: 'Resolvido' }, { status: 'Registro inválido' }];
+  createStatusFilters(container, { chapters, value: 'all', onChange() {} });
+  assert.equal(container.children.map((button) => button.textContent).join(','),
+    'All (4),Do (1),Partial (1),Done (1),Review (1)');
+  assert.deepEqual(chapters.map((row) => ['pending', 'partial', 'resolved', 'invalid']
+    .find((filter) => matchesStatus(row, filter))), ['pending', 'partial', 'resolved', 'invalid']);
+});
+
 test('Level II route uses its dedicated residual consultation page', async () => {
   const boxes = [];
   const load = browserModules({ document: { createElement() {

@@ -28,3 +28,17 @@ test('outcome filters distinguish unchanged from unavailable and use recorded re
   assert.equal(matchesOutcome({ cleaned: false, deferred_components: 2 }, 'residue'), false);
   assert.equal(matchesOutcome({ level2_status: 'invalid_merge' }, 'all'), true);
 });
+
+test('outcome filter pills use approved labels without renaming table columns', async () => {
+  const container = { replaceChildren(...children) { this.children = children; },
+    append(button) { this.children.push(button); } };
+  const document = { createElement: () => ({ classList: { toggle() {} }, setAttribute() {},
+    addEventListener() {} }) };
+  const { drawOutcomeFilters, OUTCOME_FILTERS } = await browserModules({ document })
+    ('/texto_off/merged/outcome_filters.js');
+  drawOutcomeFilters(container, [], 'all', () => {});
+  assert.equal(container.children.map((button) => button.textContent).join(','),
+    'All (0),Do (0),Done (0),No Change (0),Resíduo');
+  assert.equal(Array.from(OUTCOME_FILTERS, ([, label]) => label).join(','),
+    'ALL,Pendente,Concluído,Inalterado,Resíduo');
+});

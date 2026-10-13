@@ -1,7 +1,7 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { renderMergeManualSession } from "/processamento/merge_manual/session_view.js";
 
-const filters = [["all", "Todos"], ["pending", "Pendentes"], ["resolved", "Resolvidos"], ["review", "Revisar"]];
+const filters = [["all", "All"], ["pending", "Do"], ["resolved", "Done"], ["review", "Review"]];
 
 export function createMergeManualView() {
   const element = document.createElement("section");

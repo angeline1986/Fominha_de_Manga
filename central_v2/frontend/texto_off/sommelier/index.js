@@ -9,10 +9,10 @@ import { createJobProgress } from "/_shared/progress/progress.js";
 import { showMessage, showOperationSummary } from "/_shared/messages/messages.js";
 
 const FILTERS = [
-  ["all", "ALL"],
-  ["pending", "PENDENTE"],
-  ["analyzed", "ANALISADO"],
-  ["candidates", "CANDIDATOS"],
+  ["all", "All"],
+  ["pending", "Do"],
+  ["analyzed", "Done"],
+  ["candidates", "Candidato"],
 ];
 
 export function aggregateSommelierProgress(job, chapters, pagesByChapter) {
@@ -93,9 +93,8 @@ export function render(container) {
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar curadoria"></div>
       <label class="sommelier-profile">
-        <span>Perfil</span>
         <select data-profile aria-label="Perfil">
-          <option value="">Selecione o perfil</option>
+          <option value="">Perfil</option>
           <option value="poc_a_v1">poc_a_v1</option>
           <option value="poc_b_v1">poc_b_v1</option>
         </select>

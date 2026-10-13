@@ -8,8 +8,8 @@ import { createJobProgress } from "/_shared/progress/progress.js";
 import { createMergedColumns } from "/texto_off/merged/columns.js";
 
 const FILTERS = [
-  ["all", "Todos"], ["pending", "Pendente"],
-  ["processed", "Concluído"], ["invalid", "MERGE inválido"],
+  ["all", "All"], ["pending", "Do"],
+  ["processed", "Done"], ["invalid", "MERGE invál."],
 ];
 
 export function createMergedView(onExecute, { title = "Texto Off — Merged", executeLabel, mode,
@@ -72,7 +72,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
         return !row.selectable;
       }).length;
       button.type = "button";
-      button.textContent = `${label} (${count})`;
+      button.textContent = `${key === "all" && mode === "level3" ? "All" : label} (${count})`;
       button.classList.toggle("active", key === selectedFilter);
       button.setAttribute("aria-pressed", String(key === selectedFilter));
       button.addEventListener("click", () => { selectedFilter = key; pagination.reset(); draw(); });
