@@ -1,5 +1,5 @@
 /** Laboratório L3: Degradê experimental com autorização individual e temporária. */
-import { confirmDegradeLaboratory, executeDegradeLaboratory,
+import { confirmDegradeLaboratoryJob, executeDegradeLaboratoryJob,
   getDegradeAuthorizationCandidates } from "/_app/api/laboratorio.js";
 import { drawDegradeCandidates } from "/texto_off/laboratorio/degrade_candidates.js";
 export function connectDegrade({ root, button, getRequest, progress }) {
@@ -87,10 +87,12 @@ export function connectDegrade({ root, button, getRequest, progress }) {
     const progressRun = progress?.start('Executando Degradê');
     const active = new AbortController(); controllers.add(active);
     try {
-      const result = await confirmDegradeLaboratory({
+      const result = await confirmDegradeLaboratoryJob({
         ...getRequest(), proposal_run_id: proposal.runId,
         proposal_token: proposal.token, component_ids: selected,
-      }, active.signal);
+      }, active.signal, (state) => {
+        if (progressRun != null) progress?.update?.(progressRun, state);
+      });
       if (!current(id, snapshot)) return;
       clearReview();
       showResult(result, id, snapshot);
@@ -119,7 +121,9 @@ export function connectDegrade({ root, button, getRequest, progress }) {
     const progressRun = progress?.start('Executando Degradê');
     button.disabled = true;
     try {
-      const result = await executeDegradeLaboratory(payload, active.signal);
+      const result = await executeDegradeLaboratoryJob(payload, active.signal, (state) => {
+        if (progressRun != null) progress?.update?.(progressRun, state);
+      });
       if (current(id, snapshot)) showResult(result, id, snapshot);
     } catch (error) {
       if (!current(id, snapshot) || error.name === 'AbortError') return;

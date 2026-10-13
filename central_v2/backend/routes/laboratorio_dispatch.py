@@ -9,6 +9,7 @@ from central_v2.backend.routes.laboratorio_degrade import (
     execute as lab_degrade_execute,
     result_image as lab_degrade_image,
 )
+from central_v2.backend.routes.laboratorio_degrade_jobs import start as start_degrade_job
 from central_v2.backend.routes.laboratorio_pages import response as laboratorio_pages_response
 from central_v2.backend.routes.laboratorio_tratamentos import (
     execute_smooth as lab_smooth_execute,
@@ -42,6 +43,10 @@ def dispatch_laboratorio_post(
     path: str, payload: object, output_root: Path = OUTPUT_ROOT,
 ) -> tuple[bool, RouteResponse | None]:
     route = urlparse(path).path
+    if route == "/api/textoff/laboratorio/degrade/job":
+        return True, start_degrade_job(payload, output_root)
+    if route == "/api/textoff/laboratorio/degrade/authorize-job":
+        return True, start_degrade_job(payload, output_root, assisted=True)
     if route == "/api/textoff/laboratorio/degrade/execute":
         return True, lab_degrade_execute(payload, output_root)
     if route == "/api/textoff/laboratorio/degrade/authorization-candidates":

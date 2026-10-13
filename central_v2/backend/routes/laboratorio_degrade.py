@@ -66,7 +66,7 @@ def _result(manifest):
                   'validation': manifest.get('validation'), 'status': 'succeeded'})
 
 
-def execute(payload, output_root):
+def execute(payload, output_root, on_progress=None):
     if not isinstance(payload, dict):
         return _json({'error': 'Requisição inválida.'}, 400)
     if not _LOCK.acquire(blocking=False):
@@ -76,7 +76,7 @@ def execute(payload, output_root):
         manga, source, request = _resolve(payload, output_root)
         manifest = run_treatment_logged("degrade", payload, lambda: preview(
             manga, request, staging=STAGING, resolved_source=source,
-            laboratory_experimental=True))
+            laboratory_experimental=True, on_progress=on_progress))
         if manifest.get('execution_status') != 'succeeded':
             detail = manifest.get('error') or {}
             description = detail.get('error', '') if isinstance(detail, dict) else ''
@@ -131,7 +131,7 @@ def authorization_candidates(payload):
         return _json({'error': str(error)}, 409)
 
 
-def confirm_authorization(payload, output_root):
+def confirm_authorization(payload, output_root, on_progress=None):
     if not isinstance(payload, dict):
         return _json({'error': 'Requisição inválida.'}, 400)
     if not _LOCK.acquire(blocking=False):
@@ -164,7 +164,7 @@ def confirm_authorization(payload, output_root):
         manifest = run_treatment_logged("degrade", payload, lambda: preview(
             manga, request, staging=STAGING, resolved_source=source,
             laboratory_authorization=authorization,
-            laboratory_experimental=True), correlation_id=source_run_id)
+            laboratory_experimental=True, on_progress=on_progress), correlation_id=source_run_id)
         if manifest.get('execution_status') != 'succeeded':
             detail = manifest.get('error') or {}
             return _json({'error': 'Degradê assistido não concluiu; consulte o manifesto experimental.',

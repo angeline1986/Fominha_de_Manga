@@ -98,3 +98,41 @@ export async function executeSmoothLaboratoryJob(payload, signal, onProgress) {
       { signal, cache: "no-store" }));
   }
 }
+
+// 422 is an expected outcome when assisted Degradê authorization is available.
+async function waitDegradeJob(path, payload, signal, onProgress) {
+  const { job } = await post(path, payload, signal);
+  if (!job?.id) throw new Error("O servidor não retornou o job Degradê.");
+  let current = job;
+  while (true) {
+    if (signal?.aborted) throw new DOMException("Cancelado", "AbortError");
+    onProgress?.(current.progress || {});
+    const item = current.results?.[0];
+    if (current.status === "failed") {
+      const error = new Error(item?.error || current.error || "Degradê não concluído.");
+      error.status = item?.http_status || 400;
+      error.body = { run_id: item?.run_id, failure_type: item?.failure_type };
+      throw error;
+    }
+    if (current.status === "completed") {
+      if (!item?.image_url) throw new Error("Prévia Degradê indisponível.");
+      return item;
+    }
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { signal?.removeEventListener("abort", aborted); resolve(); }, 500);
+      const aborted = () => { clearTimeout(timer); reject(new DOMException("Cancelado", "AbortError")); };
+      signal?.addEventListener("abort", aborted, { once: true });
+      if (signal?.aborted) aborted();
+    });
+    ({ job: current } = await requestJson(`/api/jobs/${encodeURIComponent(job.id)}`,
+      { signal, cache: "no-store" }));
+  }
+}
+
+export function executeDegradeLaboratoryJob(payload, signal, onProgress) {
+  return waitDegradeJob("/api/textoff/laboratorio/degrade/job", payload, signal, onProgress);
+}
+
+export function confirmDegradeLaboratoryJob(payload, signal, onProgress) {
+  return waitDegradeJob("/api/textoff/laboratorio/degrade/authorize-job", payload, signal, onProgress);
+}
