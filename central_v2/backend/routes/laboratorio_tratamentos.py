@@ -116,6 +116,39 @@ def execute_stylized(payload, output_root):
     return _execute(payload, output_root, "estilizado")
 
 
+
+def start_smooth_job(payload, output_root):
+    """Suave: three observed checkpoints, without simulated worker progress."""
+    if not isinstance(payload, dict):
+        return _json({"error": "Requisição inválida."}, 400)
+
+    def operation(update, _job_id):
+        milestone = {"snapshot": 1, "worker": 2, "validated": 3}
+
+        def checkpoint(event):
+            completed = milestone.get(event.get("stage"))
+            if completed is None:
+                return
+            update(str(payload.get("chapter", "")), {
+                "completed": completed, "total": 3,
+                "percent": min(99, int(completed * 100 / 3)),
+                "stage": event["stage"], "message": event["message"],
+                "countUnit": "etapa(s) verificadas",
+            })
+
+        response = _execute(payload, output_root, "gradiente_suave", checkpoint)
+        body = json.loads(response.body)
+        if response.status != 200:
+            return [{"status": "failed", "error": body.get("error", "Falha experimental.")}]
+        update(str(payload.get("chapter", "")), {
+            "completed": 3, "total": 3, "percent": 100,
+            "stage": "complete", "message": "Suave concluído e validado",
+            "countUnit": "etapa(s) verificadas",
+        })
+        return [{"status": "succeeded", **body}]
+
+    return _json({"job": submit(operation, total=3)}, 202)
+
 def execute_smooth(payload, output_root):
     return _execute(payload, output_root, "gradiente_suave")
 

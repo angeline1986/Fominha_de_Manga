@@ -1,5 +1,5 @@
 import {
-  executeSmoothLaboratory,
+  executeSmoothLaboratoryJob,
   executeStylizedLaboratoryJob,
 } from "/_app/api/laboratorio.js";
 
@@ -103,5 +103,5 @@ export function connectStylized(options) {
 export function connectSmooth(options) {
   return connectTreatment({ ...options, cardIndex: 4,
     label: "Suave",
-    execute: executeSmoothLaboratory });
+    execute: executeSmoothLaboratoryJob });
 }

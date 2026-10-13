@@ -14,6 +14,7 @@ from central_v2.backend.routes.laboratorio_tratamentos import (
     execute_smooth as lab_smooth_execute,
     execute_stylized as lab_stylized_execute,
     start_stylized_job as lab_stylized_start_job,
+    start_smooth_job as lab_smooth_start_job,
     result_image as lab_stylized_image,
 )
 from central_v2.backend.routes.response import RouteResponse
@@ -51,6 +52,8 @@ def dispatch_laboratorio_post(
         return True, lab_stylized_start_job(payload, output_root)
     if route == "/api/textoff/laboratorio/estilizado/execute":
         return True, lab_stylized_execute(payload, output_root)
+    if route == "/api/textoff/laboratorio/gradiente_suave/job":
+        return True, lab_smooth_start_job(payload, output_root)
     if route == "/api/textoff/laboratorio/gradiente_suave/execute":
         return True, lab_smooth_execute(payload, output_root)
     return False, None
