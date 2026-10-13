@@ -1,9 +1,9 @@
 import {
   executeSmoothLaboratory,
-  executeStylizedLaboratory,
+  executeStylizedLaboratoryJob,
 } from "/_app/api/laboratorio.js";
 
-function connectTreatment({ root, button, getRequest, cardIndex, label, execute }) {
+function connectTreatment({ root, button, getRequest, cardIndex, label, execute, progress }) {
   const panel = root.querySelector(`.lab-cards > .lab-image:nth-child(${cardIndex})`);
   const placeholder = panel.querySelector(".lab-placeholder");
   const image = document.createElement("img");
@@ -18,7 +18,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute 
     placeholder.dataset.state = state;
     placeholder.setAttribute("aria-busy", String(busy));
     placeholder.textContent = message;
-    placeholder.hidden = false;
+    placeholder.hidden = state === "running";
   }
 
   function clear() {
@@ -49,8 +49,11 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute 
     image.hidden = true;
     image.removeAttribute("src");
     setState("running", `Executando ${label}…`, true);
+    const progressRun = progress?.start(`Executando ${label}`);
     try {
-      const result = await execute(payload, active.signal);
+      const result = await execute(payload, active.signal, (state) => {
+        if (progressRun != null) progress?.update?.(progressRun, state);
+      });
       if (!isCurrent(id, snapshot)) return;
       image.onload = () => {
         if (!isCurrent(id, snapshot)) return;
@@ -68,6 +71,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute 
         setState("failed", `${label} não concluído: ${error.message}`);
       }
     } finally {
+      progress?.finish(progressRun);
       controllers.delete(active);
       if (id === serial) button.disabled = false;
     }
@@ -93,7 +97,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute 
 export function connectStylized(options) {
   return connectTreatment({ ...options, cardIndex: 3,
     label: "Artístico",
-    execute: executeStylizedLaboratory });
+    execute: executeStylizedLaboratoryJob });
 }
 
 export function connectSmooth(options) {

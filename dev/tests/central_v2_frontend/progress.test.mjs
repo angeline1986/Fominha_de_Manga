@@ -9,7 +9,7 @@ function progressDocument() {
     attributes: {},
     setAttribute(name, value) { this.attributes[name] = value; },
     querySelector(selector) {
-      if (!nodes.has(selector)) nodes.set(selector, { textContent: '', attributes: {}, setAttribute(name, value) { this.attributes[name] = value; } });
+      if (!nodes.has(selector)) nodes.set(selector, { textContent: '', attributes: {}, setAttribute(name, value) { this.attributes[name] = value; }, removeAttribute(name) { delete this.attributes[name]; } });
       return nodes.get(selector);
     },
   };
@@ -47,6 +47,26 @@ test('Curadoria uses standard shared progress placement and page counts', async 
   assert.equal(document.nodes.get('[data-count]').textContent, '2 de 18 páginas · 11%');
   progress.update({ busy: false });
   assert.equal(document.element.hidden, true);
+});
+
+test('shared progress supports indeterminate work without a fabricated value', async () => {
+  const document = progressDocument();
+  const load = browserModules({ document });
+  const { createJobProgress } = await load('/_shared/progress/progress.js');
+  const progress = createJobProgress('Laboratório');
+  const bar = document.nodes.get('progress');
+  progress.update({ busy: true, title: 'Executando Artístico', percent: 65, completed: 1, total: 2 });
+  bar.attributes.value = '65';
+  progress.update({ busy: true, title: 'Executando Artístico', indeterminate: true });
+
+  assert.equal(document.element.hidden, false);
+  assert.equal(document.nodes.get('[data-title]').textContent, 'Executando Artístico');
+  assert.equal(document.nodes.get('[data-count]').textContent, 'Em andamento');
+  assert.equal(Object.hasOwn(bar.attributes, 'value'), false);
+  assert.equal(Object.hasOwn(bar.attributes, 'aria-valuenow'), false);
+  progress.update({ busy: true, percent: 65, completed: 1, total: 2 });
+  assert.equal(bar.value, 65);
+  progress.update({ busy: false });
 });
 
 test('Sommelier page progress aggregates chapters and completes failed jobs cleanly', async () => {

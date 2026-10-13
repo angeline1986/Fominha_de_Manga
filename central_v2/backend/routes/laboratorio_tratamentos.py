@@ -12,6 +12,7 @@ from central_v2.backend.orchestration.textoff_special.inputs import validate_sel
 from central_v2.backend.routes.laboratorio_pages import _chapter, _directory, _images
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.laboratorio_lock import TREATMENT_LOCK
+from central_v2.backend.jobs.manager import submit
 from central_v2.backend.routes.laboratorio_logging import (
     run_treatment_logged, treatment_blocked,
 )
@@ -30,7 +31,7 @@ def _field(value, label):
     return value
 
 
-def _execute(payload, output_root, treatment):
+def _execute(payload, output_root, treatment, on_progress=None):
     if not isinstance(payload, dict):
         return _json({"error": "Requisição inválida."}, 400)
     if not _LOCK.acquire(blocking=False):
@@ -59,7 +60,8 @@ def _execute(payload, output_root, treatment):
         request = {"treatment": treatment, "level": "LAB", "chapter": chapter,
                    "filename": filename, "expected_sha256": digest, "selections": boxes}
         manifest = run_treatment_logged(treatment, payload, lambda: preview(
-            manga, request, staging=STAGING, resolved_source=source))
+            manga, request, staging=STAGING, resolved_source=source,
+            on_progress=on_progress))
         if manifest.get("execution_status") != "succeeded":
             detail = manifest.get("error") or {}
             error = detail.get("error", "") if isinstance(detail, dict) else ""
@@ -78,6 +80,36 @@ def _execute(payload, output_root, treatment):
         return _json({"error": str(error)}, 400)
     finally:
         _LOCK.release()
+
+
+
+def start_stylized_job(payload, output_root):
+    """Asynchronous experimental preview with verified lifecycle milestones."""
+    if not isinstance(payload, dict):
+        return _json({"error": "Requisição inválida."}, 400)
+    def operation(update, _job_id):
+        milestone = {"snapshot": 1, "worker": 2, "validated": 3}
+        def checkpoint(event):
+            completed = milestone.get(event.get("stage"))
+            if completed is None:
+                return
+            update(str(payload.get("chapter", "")), {
+                "completed": completed, "total": 3,
+                "percent": min(99, int(completed * 100 / 3)),
+                "stage": event["stage"], "message": event["message"],
+                "countUnit": "etapa(s) verificadas",
+            })
+        response = _execute(payload, output_root, "estilizado", checkpoint)
+        body = json.loads(response.body)
+        if response.status != 200:
+            return [{"status": "failed", "error": body.get("error", "Falha experimental.")}]
+        update(str(payload.get("chapter", "")), {
+            "completed": 3, "total": 3, "percent": 100,
+            "stage": "complete", "message": "Artístico concluído e validado",
+            "countUnit": "etapa(s) verificadas",
+        })
+        return [{"status": "succeeded", **body}]
+    return _json({"job": submit(operation, total=3)}, 202)
 
 
 def execute_stylized(payload, output_root):

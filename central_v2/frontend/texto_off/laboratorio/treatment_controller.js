@@ -4,7 +4,7 @@ import { connectDegrade } from "/texto_off/laboratorio/degrade.js";
 import { connectSmooth, connectStylized } from "/texto_off/laboratorio/tratamentos.js";
 
 /** Integra imagem original, ROIs e os três estados experimentais independentes. */
-export function connectTreatmentController({ root, navigation, workspace, image }) {
+export function connectTreatmentController({ root, navigation, workspace, image, progress }) {
   const panel = root.querySelector(".lab-actions");
   const originalPanel = root.querySelector(".lab-cards > .lab-image:first-child");
   const placeholder = originalPanel.querySelector(".lab-placeholder");
@@ -25,14 +25,49 @@ export function connectTreatmentController({ root, navigation, workspace, image 
     return { provider, manga, source: selected.source, chapter: selected.chapter,
       page: selected.page, selections };
   }
+  let progressSequence = 0;
+  let progressDisposed = false;
+  const activeProgress = new Map();
+  function syncProgress() {
+    if (progressDisposed || !activeProgress.size) {
+      progress?.update({ busy: false });
+      return;
+    }
+    const state = [...activeProgress.values()].pop();
+    progress?.update({ busy: true, title: state.title,
+      message: state.progress?.message || "Tratamento em andamento.",
+      ...(state.progress ? { percent: state.progress.percent,
+        completed: state.progress.completed, total: state.progress.total,
+        countUnit: "etapa(s) verificadas" } : { indeterminate: true }) });
+  }
+  const treatmentProgress = {
+    start(title) {
+      if (progressDisposed) return null;
+      const id = ++progressSequence;
+      activeProgress.set(id, { title, progress: null });
+      syncProgress();
+      return id;
+    },
+    update(id, state) {
+      if (progressDisposed || !activeProgress.has(id)) return;
+      const entry = activeProgress.get(id);
+      entry.progress = state;
+      syncProgress();
+    },
+    finish(id) {
+      if (id == null || progressDisposed) return;
+      activeProgress.delete(id);
+      syncProgress();
+    },
+  };
   const degrade = connectDegrade({
-    root, button: panel.querySelector("[data-lab-degrade]"), getRequest,
+    root, button: panel.querySelector("[data-lab-degrade]"), getRequest, progress: treatmentProgress,
   });
   const stylized = connectStylized({
-    root, button: panel.querySelector("[data-lab-stylized]"), getRequest,
+    root, button: panel.querySelector("[data-lab-stylized]"), getRequest, progress: treatmentProgress,
   });
   const smooth = connectSmooth({
-    root, button: panel.querySelector("[data-lab-smooth]"), getRequest,
+    root, button: panel.querySelector("[data-lab-smooth]"), getRequest, progress: treatmentProgress,
   });
   const roiObserver = new MutationObserver(() => {
     degrade.invalidate();
@@ -90,6 +125,9 @@ export function connectTreatmentController({ root, navigation, workspace, image 
     displayOriginal,
     dispose() {
       disposed = true;
+      progressDisposed = true;
+      activeProgress.clear();
+      progress?.update({ busy: false });
       originalLoadSerial++;
       degrade.dispose();
       roiObserver.disconnect();

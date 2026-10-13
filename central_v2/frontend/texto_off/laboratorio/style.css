@@ -34,7 +34,6 @@
 .lab-placeholder { display: grid; width: var(--lab-image-width); height: var(--lab-image-height); flex: none; place-items: center; padding: 16px; color: #85a6b7; font-size: 13px; text-align: center; }
 .lab-image > img.lab-treatment-image, .lab-image > img.lab-original-image { display: block; width: var(--lab-image-width); max-width: none; height: auto; flex: none; }
 .lab-placeholder[data-treatment-status] { position: sticky; z-index: 3; top: var(--lab-treatment-header-height, 39px); display: grid; width: 100%; height: auto; min-height: 50px; flex: none; place-items: center; padding: 9px 12px; border-bottom: 1px solid #d8eaf3; background: #fff; color: #658fa6; font-size: 12px; text-align: center; }
-.lab-placeholder[data-treatment-status="degrade"][data-state="running"], .lab-placeholder[data-treatment-status="stylized"][data-state="running"], .lab-placeholder[data-treatment-status="smooth"][data-state="running"] { color: #245e7a; background: #f0f8fc; font-size: 14px; font-weight: 700; }
 .lab-placeholder[data-state="completed"] { min-height: 42px; background: #eff8f3; color: #2c7560; }
 .lab-placeholder[data-state="failed"] { background: #fff4f1; color: #a34a43; }
 .lab-subtitle { display: block; margin-bottom: 12px; font-size: 12px; }

@@ -42,8 +42,35 @@
   accent-color: var(--color-primary);
 }
 
+/* Estado sem percentual: trilho visível, sem simular preenchimento ou deslocamento. */
+.job-progress progress:indeterminate {
+  appearance: none;
+  -webkit-appearance: none;
+  visibility: visible;
+  border: 0;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #cfe8f4;
+}
+.job-progress progress:indeterminate::-webkit-progress-bar {
+  border-radius: 999px;
+  background: linear-gradient(90deg, #d6ebf5, #9fcfdf);
+}
+.job-progress progress:indeterminate::-webkit-progress-value {
+  background: transparent;
+  animation: none;
+}
+.job-progress progress:indeterminate::-moz-progress-bar {
+  background: transparent;
+  animation: none;
+}
+
 .app-body:has(.app-sidebar.is-collapsed) .job-progress {
   left: calc(var(--sidebar-width-collapsed) + var(--space-lg));
+}
+
+.app-body:has(.lab-page.lab-focus-mode) .job-progress {
+  left: var(--space-lg);
 }
 
 @media (max-width: 760px) {

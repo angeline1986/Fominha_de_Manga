@@ -46,3 +46,29 @@ export function executeSmoothLaboratory(payload, signal) {
     signal,
   });
 }
+
+export async function executeStylizedLaboratoryJob(payload, signal, onProgress) {
+  const { job } = await post("/api/textoff/laboratorio/estilizado/job", payload, signal);
+  if (!job?.id) throw new Error("O servidor não retornou o job do Artístico.");
+  let current = job;
+  while (true) {
+    if (signal?.aborted) throw new DOMException("Cancelado", "AbortError");
+    onProgress?.(current.progress || {});
+    if (current.status === "failed") {
+      throw new Error(current.error || "Tratamento Artístico não concluído.");
+    }
+    if (current.status === "completed") {
+      const result = current.results?.[0];
+      if (!result?.image_url) throw new Error("Resultado Artístico indisponível.");
+      return result;
+    }
+    await new Promise((resolve, reject) => {
+      const timer = setTimeout(() => { signal?.removeEventListener("abort", aborted); resolve(); }, 500);
+      const aborted = () => { clearTimeout(timer); reject(new DOMException("Cancelado", "AbortError")); };
+      signal?.addEventListener("abort", aborted, { once: true });
+      if (signal?.aborted) aborted();
+    });
+    ({ job: current } = await requestJson(`/api/jobs/${encodeURIComponent(job.id)}`,
+      { signal, cache: "no-store" }));
+  }
+}

@@ -28,6 +28,10 @@ test('feedback contextual mantém os tratamentos independentes e ignora resposta
   const oldStylized = deferred(), newStylized = deferred(), failedSmooth = deferred();
   const fixtures = { stylized: [oldStylized, newStylized], smooth: [failedSmooth], signals: {} };
   const pending = { page: 'page-1.png', selections: [{ x: 1 }] };
+  const progressEvents = [];
+  let progressId = 0;
+  const progress = { start: (title) => { const id = ++progressId; progressEvents.push(['start', title, id]); return id; },
+    finish: (id) => progressEvents.push(['finish', id]) };
   const panels = [3, 4].map(() => {
     const panel = new Element(), placeholder = new Element();
     placeholder.hidden = false;
@@ -53,17 +57,20 @@ test('feedback contextual mantém os tratamentos independentes e ignora resposta
   });
   const { connectStylized, connectSmooth } = await load('/texto_off/laboratorio/tratamentos.js');
   const stylizedButton = new Element(), smoothButton = new Element();
-  const stylized = connectStylized({ root, button: stylizedButton, getRequest: () => pending });
-  connectSmooth({ root, button: smoothButton, getRequest: () => pending });
+  const stylized = connectStylized({ root, button: stylizedButton, getRequest: () => pending, progress });
+  connectSmooth({ root, button: smoothButton, getRequest: () => pending, progress });
 
   stylizedButton.dispatch('click');
+  assert.equal(progressEvents[0][1], 'Executando Artístico');
   assert.equal(panels[0].placeholder.dataset.state, 'running');
+  assert.equal(panels[0].placeholder.hidden, true);
   assert.equal(panels[1].placeholder.textContent, 'Aguardando execução');
   pending.page = 'page-2.png';
   stylized.invalidate();
   assert.equal(fixtures.signals.stylized.aborted, false);
   oldStylized.resolve({ image_url: '/stale.png' });
   await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.deepEqual(progressEvents[1].slice(0, 2), ['finish', progressEvents[0][2]]);
   assert.equal(panels[0].children.find((item) => item.className === 'lab-treatment-image')?.src, '');
   assert.equal(panels[0].placeholder.dataset.state, 'waiting');
 
@@ -77,8 +84,10 @@ test('feedback contextual mantém os tratamentos independentes e ignora resposta
   assert.ok(panels[0].children.indexOf(panels[0].placeholder) < panels[0].children.indexOf(image));
 
   smoothButton.dispatch('click');
+  assert.equal(progressEvents.at(-1)[1], 'Executando Suave');
   failedSmooth.reject(new Error('worker falhou'));
   await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.equal(progressEvents.at(-1)[0], 'finish');
   assert.equal(panels[1].placeholder.dataset.state, 'failed');
   assert.match(panels[1].placeholder.textContent, /worker falhou/);
   assert.equal(panels[0].placeholder.dataset.state, 'completed');
@@ -96,6 +105,10 @@ test('Degradê mantém a revisão assistida e exibe o resultado autorizado no pr
     return null;
   } };
   const request = { page: 'page-1.png', selections: [{ x: 1 }] };
+  const progressEvents = [];
+  let progressId = 0;
+  const progress = { start: (title) => { const id = ++progressId; progressEvents.push(['start', title, id]); return id; },
+    finish: (id) => progressEvents.push(['finish', id]) };
   const load = browserModules({ AbortController, document: { createElement: () => new Element() }, calls }, {
     '/_app/api/laboratorio.js': `export async function executeDegradeLaboratory() {
       throw Object.assign(new Error('adiado'), { status: 422, body: { run_id: 'run-1' } });
@@ -107,17 +120,21 @@ test('Degradê mantém a revisão assistida e exibe o resultado autorizado no pr
     '/texto_off/laboratorio/degrade_candidates.js': 'export function drawDegradeCandidates(options) { options.review.onConfirm = options.onConfirm; }',
   });
   const { connectDegrade } = await load('/texto_off/laboratorio/degrade.js');
-  const degrade = connectDegrade({ root, button, getRequest: () => request });
+  const degrade = connectDegrade({ root, button, getRequest: () => request, progress });
   button.dispatch('click');
+  assert.equal(progressEvents[0][1], 'Executando Degradê');
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(placeholder.dataset.state, 'waiting');
   assert.match(placeholder.textContent, /revisão e autorização/);
+  assert.deepEqual(progressEvents[1].slice(0, 2), ['finish', progressEvents[0][2]]);
   const review = button.afterNodes[0];
   const authorizeButton = new Element();
   authorizeButton.disabled = true;
   authorizeButton.textContent = 'Autorizar e executar';
   assert.equal(authorizeButton.textContent, 'Autorizar e executar');
   await review.onConfirm({ currentTarget: authorizeButton });
+  assert.equal(progressEvents[2][1], 'Executando Degradê');
+  assert.equal(progressEvents.at(-1)[0], 'finish');
   assert.equal(calls[0].proposal_token, 'token');
   assert.equal(JSON.stringify(calls[0].component_ids), '["component-1"]');
   assert.equal(calls[0].page, 'page-1.png');

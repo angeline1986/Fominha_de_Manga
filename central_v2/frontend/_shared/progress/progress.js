@@ -25,6 +25,13 @@ export function createJobProgress(defaultTitle = "Auto-Merge Nível I", options 
       element.hidden = !state.busy;
       title.textContent = state.title || defaultTitle;
       message.textContent = state.message || "Preparando processamento…";
+      if (state.indeterminate) {
+        count.textContent = state.status || "Em andamento";
+        bar.removeAttribute("value");
+        bar.removeAttribute("aria-valuenow");
+        bar.removeAttribute("aria-valuetext");
+        return;
+      }
       const percent = Math.round(Math.max(0, Math.min(100, Number(state.percent) || 0)));
       const completed = Math.max(0, Number(state.completed) || 0);
       const total = Math.max(0, Number(state.total) || 0);

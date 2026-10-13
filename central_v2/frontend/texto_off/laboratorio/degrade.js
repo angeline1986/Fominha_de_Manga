@@ -2,7 +2,7 @@
 import { confirmDegradeLaboratory, executeDegradeLaboratory,
   getDegradeAuthorizationCandidates } from "/_app/api/laboratorio.js";
 import { drawDegradeCandidates } from "/texto_off/laboratorio/degrade_candidates.js";
-export function connectDegrade({ root, button, getRequest }) {
+export function connectDegrade({ root, button, getRequest, progress }) {
   const panel = root.querySelector('.lab-cards > .lab-image:nth-child(2)');
   const placeholder = panel.querySelector('.lab-placeholder');
   const image = document.createElement('img');
@@ -30,7 +30,7 @@ export function connectDegrade({ root, button, getRequest }) {
     placeholder.dataset.state = state;
     placeholder.setAttribute('aria-busy', String(busy));
     placeholder.textContent = message;
-    placeholder.hidden = false;
+    placeholder.hidden = state === 'running';
   }
   function clearResult(message = 'Aguardando execução', state = 'waiting') {
     image.hidden = true; image.removeAttribute('src');
@@ -84,6 +84,7 @@ export function connectDegrade({ root, button, getRequest }) {
     confirmButton.disabled = true;
     button.disabled = true;
     setState('running', 'Executando os componentes confirmados…', true);
+    const progressRun = progress?.start('Executando Degradê');
     const active = new AbortController(); controllers.add(active);
     try {
       const result = await confirmDegradeLaboratory({
@@ -99,6 +100,7 @@ export function connectDegrade({ root, button, getRequest }) {
         setState('failed', `Autorização não concluída: ${error.message}`);
       }
     } finally {
+      progress?.finish(progressRun);
       controllers.delete(active);
       if (id === serial) button.disabled = false;
     }
@@ -114,6 +116,7 @@ export function connectDegrade({ root, button, getRequest }) {
     const active = new AbortController(); controllers.add(active);
     clearReview();
     clearResult('Executando classificação Degradê…', 'running');
+    const progressRun = progress?.start('Executando Degradê');
     button.disabled = true;
     try {
       const result = await executeDegradeLaboratory(payload, active.signal);
@@ -142,6 +145,7 @@ export function connectDegrade({ root, button, getRequest }) {
         setState('failed', `Degradê não concluído: ${error.message}`);
       }
     } finally {
+      progress?.finish(progressRun);
       controllers.delete(active);
       if (id === serial) button.disabled = false;
     }

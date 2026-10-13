@@ -13,6 +13,7 @@ from central_v2.backend.routes.laboratorio_pages import response as laboratorio_
 from central_v2.backend.routes.laboratorio_tratamentos import (
     execute_smooth as lab_smooth_execute,
     execute_stylized as lab_stylized_execute,
+    start_stylized_job as lab_stylized_start_job,
     result_image as lab_stylized_image,
 )
 from central_v2.backend.routes.response import RouteResponse
@@ -46,6 +47,8 @@ def dispatch_laboratorio_post(
         return True, lab_degrade_candidates(payload)
     if route == "/api/textoff/laboratorio/degrade/authorize":
         return True, lab_degrade_authorize(payload, output_root)
+    if route == "/api/textoff/laboratorio/estilizado/job":
+        return True, lab_stylized_start_job(payload, output_root)
     if route == "/api/textoff/laboratorio/estilizado/execute":
         return True, lab_stylized_execute(payload, output_root)
     if route == "/api/textoff/laboratorio/gradiente_suave/execute":

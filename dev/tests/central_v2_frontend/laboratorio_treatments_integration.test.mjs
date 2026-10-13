@@ -48,11 +48,22 @@ test('os três tratamentos recebem a mesma seleção natural e invalidam juntos 
   });
   const { connectTreatmentController } = await load('/texto_off/laboratorio/treatment_controller.js');
   const image = new Element();
-  const controller = connectTreatmentController({ root, navigation, workspace, image });
+  const progressStates = [];
+  const controller = connectTreatmentController({ root, navigation, workspace, image,
+    progress: { update: (state) => progressStates.push({ ...state }) } });
   controller.displayOriginal();
   image.onload();
   assert.equal(image.src, '/original.png');
   assert.equal(calls.options.length, 3);
+  assert.ok(calls.options.every(({ progress }) => progress === calls.options[0].progress));
+  const progressApi = calls.options[0].progress;
+  const firstRun = progressApi.start('Executando Artístico');
+  const secondRun = progressApi.start('Executando Suave');
+  assert.equal(progressStates.at(-1).title, 'Executando Suave');
+  progressApi.finish(firstRun);
+  assert.equal(progressStates.at(-1).title, 'Executando Suave');
+  progressApi.finish(secondRun);
+  assert.equal(progressStates.at(-1).busy, false);
   for (const options of calls.options) {
     assert.deepEqual(JSON.parse(JSON.stringify(options.getRequest())), {
       provider: 'comix', manga: 'Obra', source: 'img', chapter: '2', page: 'page-013.png',
@@ -68,6 +79,10 @@ test('os três tratamentos recebem a mesma seleção natural e invalidam juntos 
   assert.equal(image.src, '/original-14.png');
   calls.observer();
   assert.deepEqual(calls.invalidated, ['degrade', 'stylized', 'smooth']);
+  const pendingProgress = progressApi.start('Executando Degradê');
   controller.dispose();
+  assert.equal(progressStates.at(-1).busy, false);
+  progressApi.finish(pendingProgress);
+  assert.equal(progressStates.at(-1).busy, false);
   assert.deepEqual(calls.disposed, ['degrade', 'stylized', 'smooth']);
 });

@@ -85,11 +85,15 @@ def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
         assert_unchanged(source)
         _assert_masks_unchanged(mask_sources)
         write_json(folder / "request.json", request)
+        if on_progress is not None and key == "estilizado":
+            on_progress({"stage": "snapshot", "message": "Entrada preparada e conferida"})
         worker_args = (key, folder / "request.json", folder / "logs/worker.log")
         if on_progress is None:
             run_worker(*worker_args)
         else:
             run_worker(*worker_args, on_progress=on_progress)
+        if on_progress is not None and key == "estilizado":
+            on_progress({"stage": "worker", "message": "Tratamento Artístico finalizado"})
         result = read_json(folder / "worker-result.json")
         output = contained_file(folder, result["result_file"])
         if sha256(output) != result["validation"]["result_sha256"]:
@@ -97,6 +101,8 @@ def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
         assert_unchanged(source)
         _assert_masks_unchanged(mask_sources)
         manifest.update(result, execution_status="succeeded")
+        if on_progress is not None and key == "estilizado":
+            on_progress({"stage": "validated", "message": "Resultado validado"})
     except BaseException as exc:
         error_file = folder / "worker-error.json"
         detail = read_json(error_file) if error_file.is_file() else {"error": str(exc)}
