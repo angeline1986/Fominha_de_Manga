@@ -5,7 +5,7 @@ from pathlib import Path
 _PLAN_LOCK=threading.Lock()
 _PLANS={}
 CONTENT={
- "textoff_merged":{"label":"Texto Off — MERGED","source":("FLUXO_SECUNDARIO","04_TEXTO_OFF","MERGED"),"dest":"raws_semi-clean"},
+ "textoff_merged":{"label":"Texto Off — MERGED","source":("FLUXO_SECUNDARIO","04_TEXTO_OFF","07_CONSOLIDADO_FINAL"),"dest":"raws_semi-clean"},
  "pdf_merge":{"label":"PDF_MERGE","source":("FLUXO_SECUNDARIO","03_PDF_MERGE"),"dest":"Traducoes"},
 }
 
@@ -49,14 +49,58 @@ def _keys(selected):
     if not out: raise ValueError("Selecione pelo menos um conteúdo para exportar.")
     return out
 
-def _discover(manga,selected,work_dest):
+def list_source_files(manga, kind):
+    """List only eligible files under the selected manga's configured export source."""
+    if kind not in CONTENT: raise ValueError("Conteúdo de exportação inválido.")
+    manga=Path(manga).resolve()
+    base=manga.joinpath(*CONTENT[kind]["source"]).resolve()
+    if not base.is_relative_to(manga): raise ValueError("Origem inválida.")
+    result=[]
+    if base.is_dir():
+        for src in sorted(base.rglob("*")):
+            if src.is_symlink() or not src.is_file() or _excluded(src): continue
+            resolved=src.resolve()
+            if not resolved.is_relative_to(base): continue
+            result.append({"path":src.relative_to(base).as_posix(),"size":src.stat().st_size})
+    return {"kind":kind,"files":result}
+
+
+def _normalize_selection(selections, keys):
+    if selections is None: return None
+    if not isinstance(selections,dict) or set(selections)-set(keys):
+        raise ValueError("Seleção de arquivos inválida.")
+    normalized={}
+    for key in keys:
+        values=selections.get(key)
+        if values is None: continue  # Omitting a category preserves export-all.
+        if not isinstance(values,list) or not values or len(values)>10000:
+            raise ValueError("Selecione pelo menos um arquivo na categoria.")
+        valid=[]
+        for value in values:
+            if not isinstance(value,str) or not value or "\\" in value or value.startswith("/"):
+                raise ValueError("Nome de arquivo inválido.")
+            path=Path(value)
+            if path.is_absolute() or any(x in (".","..") for x in path.parts) or path.as_posix()!=value:
+                raise ValueError("Caminho de arquivo inválido.")
+            if value not in valid: valid.append(value)
+        normalized[key]=set(valid)
+    return normalized
+
+
+def _discover(manga,selected,work_dest,selections=None):
     files=[]; summary={}
     for key in selected:
         cfg=CONTENT[key]; base=manga.joinpath(*cfg["source"]).resolve()
         counts={"new":0,"identical":0,"conflict":0}; size=0
+        allowed=selections.get(key) if selections is not None else None
+        found=set()
         if base.is_dir():
             for src in sorted(base.rglob("*")):
-                if not src.is_file() or _excluded(src): continue
+                if src.is_symlink() or not src.is_file() or _excluded(src): continue
+                if not src.resolve().is_relative_to(base): continue
+                source_rel=src.relative_to(base).as_posix()
+                if allowed is not None and source_rel not in allowed: continue
+                found.add(source_rel)
                 rel=Path(cfg["dest"])/src.relative_to(base)
                 target=(work_dest/rel).resolve()
                 st=src.stat(); src_hash=_sha256(src)
@@ -66,16 +110,19 @@ def _discover(manga,selected,work_dest):
                 item={"kind":key,"source":str(src),"relative":str(rel),"size":int(st.st_size),
                       "mtime_ns":int(st.st_mtime_ns),"sha256":src_hash,"status":status}
                 files.append(item); counts[status]+=1; size+=item["size"]
+        if allowed is not None and found!=allowed:
+            raise ValueError("A seleção contém arquivos indisponíveis. Selecione novamente.")
         summary[key]={"label":cfg["label"],"files":sum(counts.values()),"bytes":size,"available":base.is_dir(),**counts}
     return files,summary
 
-def simulate_export(manga,destination,selected):
+def simulate_export(manga,destination,selected,selections=None):
     manga=Path(manga).resolve(); parent=_destination(destination); work_dest=_work_destination(parent,manga.name); keys=_keys(selected)
-    files,summary=_discover(manga,keys,work_dest)
+    selection=_normalize_selection(selections,keys)
+    files,summary=_discover(manga,keys,work_dest,selection)
     if not files: raise ValueError("Nenhum arquivo elegível foi encontrado para os conteúdos selecionados.")
     pid=uuid.uuid4().hex
     plan={"id":pid,"manga":str(manga),"destination_parent":str(parent),"destination":str(work_dest),
-          "selected":keys,"files":files,"summary":summary}
+          "selected":keys,"file_selection":selection,"files":files,"summary":summary}
     with _PLAN_LOCK: _PLANS[pid]=plan
     new=sum(x["status"]=="new" for x in files); identical=sum(x["status"]=="identical" for x in files); conflicts=sum(x["status"]=="conflict" for x in files)
     return {"ok":True,"plan_id":pid,"destination_parent":str(parent),"destination":str(work_dest),
@@ -102,7 +149,7 @@ def execute_plan(manga,plan_id):
     if str(manga)!=plan["manga"]: raise ValueError("A obra mudou desde a simulação. Simule novamente.")
     parent=_destination(plan["destination_parent"]); work_dest=_work_destination(parent,manga.name)
     if str(work_dest)!=plan["destination"]: raise ValueError("O destino mudou desde a simulação. Simule novamente.")
-    current,_=_discover(manga,plan["selected"],work_dest)
+    current,_=_discover(manga,plan["selected"],work_dest,plan.get("file_selection"))
     sig=lambda xs:{(x["kind"],x["relative"]):(x["size"],x["mtime_ns"],x["sha256"],x["status"]) for x in xs}
     if sig(current)!=sig(plan["files"]): raise ValueError("A origem ou o destino mudou desde a simulação. Simule novamente.")
     conflicts=[x for x in current if x["status"]=="conflict"]

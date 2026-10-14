@@ -2,6 +2,7 @@ import { getContext, subscribeContext } from "/_app/state/context.js";
 import { KINDS, mb, invalidate, api, post } from "/exportar_arquivos/state.js";
 import { confirmMessage, showMessage } from "/_shared/messages/messages.js";
 import { createDirectoryBrowser } from "/exportar_arquivos/browser.js";
+import { createFilePicker } from "/exportar_arquivos/file_picker.js";
 
 export function createExportView(container) {
   const style = document.createElement("link");
@@ -23,7 +24,8 @@ export function createExportView(container) {
         <fieldset class="export-contents"><legend>Conteúdo para exportar</legend>
           ${KINDS.map(k => `<label class="export-content"><input type="checkbox" data-kind="${k.key}" checked />
             <span class="export-content-body"><strong>${k.label}</strong><small>Destino: <code>${k.dest}/</code></small></span>
-            <span class="export-item-count" data-count="${k.key}">—</span></label>`).join("")}
+            <span class="export-item-count" data-count="${k.key}">—</span>
+            <button type="button" class="export-secondary export-icon-button" data-pick="${k.key}" title="Escolher arquivos" aria-label="Escolher arquivos de ${k.label}"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg></button></label>`).join("")}
         </fieldset>
         <div class="export-exclusions"><strong>Exclusões automáticas</strong><div><code>*_mask.png</code><code>*.json</code><code>.DS_Store</code></div></div>
         <footer class="export-actions"><span data-available>2 origens disponíveis para seleção</span>
@@ -41,7 +43,10 @@ export function createExportView(container) {
   container.replaceChildren(root);
   const browser = createDirectoryBrowser(root, path => { state.destination = path; changed(); });
   const $ = q => root.querySelector(q);
-  const state = { destination: "", plan: null, result: null, busy: false, disposed: false };
+  const state = { destination: "", plan: null, result: null, busy: false, disposed: false, fileSelection: {} };
+  const picker = createFilePicker(root, (kind, selection) => {
+    state.fileSelection[kind] = selection; changed();
+  });
   const kinds = () => [...root.querySelectorAll("[data-kind]:checked")].map(el => el.dataset.kind);
   const status = message => { $("[data-state]").textContent = message; };
   function displayDestination(path) {
@@ -65,7 +70,9 @@ export function createExportView(container) {
     const summary = plan?.summary || {};
     for (const kind of KINDS) {
       const s = summary[kind.key];
-      $(`[data-count="${kind.key}"]`).textContent = s ? `${s.files} arq · ${mb(s.bytes)}` : "—";
+      const chosen = state.fileSelection[kind.key];
+      $(`[data-count="${kind.key}"]`).textContent = s ? `${s.files} arq · ${mb(s.bytes)}` :
+        chosen ? `${chosen.length} selecionado(s)` : "Todos";
     }
     const tree = $("[data-tree]"); tree.replaceChildren();
     const rootNode = document.createElement("strong"); rootNode.textContent = `${ctx.manga || "Obra"}/`; tree.append(rootNode);
@@ -86,18 +93,23 @@ export function createExportView(container) {
     $("[data-simulate]").disabled = state.busy || !ctx.manga || !state.destination || !selected.length;
     $("[data-browse]").disabled = state.busy;
     root.querySelectorAll("[data-kind]").forEach(box => { box.disabled = state.busy; });
+    root.querySelectorAll("[data-pick]").forEach(button => { button.disabled = state.busy || !ctx.manga; });
     $("[data-execute]").disabled = state.busy || !plan?.can_export || !plan.plan_id;
     $("[data-available]").textContent = `${selected.length} conteúdo(s) selecionado(s)`;
   }
   function changed() { invalidate(state); status("Configuração alterada. Simule novamente antes de exportar."); render(); }
   root.querySelectorAll("[data-kind]").forEach(box => box.addEventListener("change", changed));
-  const unsubscribe = subscribeContext(() => { changed(); });
+  const unsubscribe = subscribeContext(() => { state.fileSelection = {}; picker.close(); changed(); });
+  root.querySelectorAll("[data-pick]").forEach(button => button.addEventListener("click", () => {
+    const {provider,manga} = getContext();
+    picker.open(provider,manga,button.dataset.pick,state.fileSelection[button.dataset.pick]);
+  }));
   $("[data-browse]").addEventListener("click", () => browser.open(state.destination));
   $("[data-simulate]").addEventListener("click", async () => {
     const { provider, manga } = getContext(); const selected = kinds();
     state.busy = true; invalidate(state); status("Simulando exportação e conferindo os arquivos…"); render();
     try {
-      state.plan = await post("/api/export/simulate", { provider, manga, destination: state.destination, contents: selected });
+      state.plan = await post("/api/export/simulate", { provider, manga, destination: state.destination, contents: selected, file_selection: state.fileSelection });
       status(state.plan.conflicts ? `${state.plan.conflicts} conflito(s). A exportação está bloqueada.` :
         state.plan.can_export ? `${state.plan.new_files} arquivo(s) novo(s). Pronto para exportar.` : "Arquivos já exportados. Nenhuma cópia necessária.");
     } catch (e) { status(`Falha na simulação: ${e.message}`); }
@@ -139,5 +151,5 @@ export function createExportView(container) {
   }
   loadDefaultDestination();
   render();
-  return () => { defaultRequest.abort(); state.disposed = true; unsubscribe(); browser.dispose(); style.remove(); root.remove(); };
+  return () => { defaultRequest.abort(); state.disposed = true; unsubscribe(); browser.dispose(); picker.dispose(); style.remove(); root.remove(); };
 }
