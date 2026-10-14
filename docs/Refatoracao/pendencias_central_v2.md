@@ -7,6 +7,7 @@
 | ID | Tarefa | Status |
 |---|---|---|
 | [BL-04](tickets_pendencias/BL-04.md) | Confirmar a origem das imagens enviadas ao Drive | IN PROGRESS |
+| [CV2-CAT-03](tickets_pendencias/CV2-CAT-03.md) | Integrar Lezhinus ao catálogo da Central V2 | DO |
 
 ### UX/UI transversal
 
@@ -48,7 +49,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [BL-02](tickets_pendencias/BL-02.md) | Definir as pastas criadas pelo Consolidado Final | IN PROGRESS |
 | [BL-03](tickets_pendencias/BL-03.md) | Documentar o contrato do Consolidado Final | DO |
 | [BL-05](tickets_pendencias/BL-05.md) | Investigar compatibilidade V1 no Auto-Cleaner Passo 1 | IN PROGRESS |
-| [BL-06](tickets_pendencias/BL-06.md) | Exibir feedback contextual dos tratamentos no Laboratório | IN PROGRESS |
+| [BL-06](tickets_pendencias/BL-06.md) | Exibir feedback contextual dos tratamentos no Laboratório | DONE |
 | [BL-12](tickets_pendencias/BL-12.md) | Validar autorização Degradê com múltiplos componentes | IN PROGRESS |
 | [BL-13](tickets_pendencias/BL-13.md) | Sair do modo Foco com Esc | DO |
 | [CV2-AC-01](tickets_pendencias/CV2-AC-01.md) | Corrigir descarte de boxes pequenos `unknown` | DO |
