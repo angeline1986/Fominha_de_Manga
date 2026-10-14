@@ -24,7 +24,10 @@ def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -
     handled, response = dispatch_laboratorio_post(path, payload, output_root)
     if handled:
         return response
-    if urlparse(path).path in {"/api/export/simulate", "/api/export/execute"}:
+    if urlparse(path).path == "/api/export/saved-works":
+        from central_v2.backend.routes.saved_works import change_response
+        return change_response(payload)
+    if urlparse(path).path in {"/api/export/files", "/api/export/simulate", "/api/export/execute"}:
         return export_response(urlparse(path).path.rsplit("/", 1)[-1], payload, output_root)
     if urlparse(path).path == "/api/pdf/execute":
         return execute_pdf_response(payload, output_root)

@@ -58,6 +58,10 @@ def dispatch_get(
             body=health_response(),
         )
 
+    if request.path == "/api/export/saved-works":
+        from central_v2.backend.routes.saved_works import list_response
+        return list_response(parse_qs(request.query))
+
     if request.path == "/api/export/default-destination":
         return default_destination_response()
 

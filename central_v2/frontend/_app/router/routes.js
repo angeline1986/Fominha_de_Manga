@@ -95,6 +95,10 @@ export const routes = {
     context: "exportar-arquivos",
     module: "/exportar_arquivos/index.js",
   },
+  "obras-download": {
+    context: "exportar-arquivos",
+    module: "/exportar_arquivos/saved_works/index.js",
+  },
   "destino-local": {
     context: "exportar-arquivos",
     module: "/exportar_arquivos/index.js",
