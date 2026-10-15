@@ -28,6 +28,8 @@
 | [BL-09](tickets_pendencias/BL-09.md) | Cobrir contratos visuais do Laboratório | DO |
 | [CV2-OBS-01](tickets_pendencias/CV2-OBS-01.md) | Padronizar logs do terminal da Central V2 | DONE |
 | [CV2-OBS-02](tickets_pendencias/CV2-OBS-02.md) | Reduzir logs rotineiros do SHADOW_READ | DONE |
+| [CV2-OBS-03](tickets_pendencias/CV2-OBS-03.md) | Instrumentar autorização automática do Degradê para diagnóstico de falhas de detecção de balão | TODO · P1 |
+| [CV2-OBS-04](tickets_pendencias/CV2-OBS-04.md) | Investigar classificação de transparência e resíduos no Auto-Cleaner Nível I | TODO · P1 |
 
 ## Processamento
 

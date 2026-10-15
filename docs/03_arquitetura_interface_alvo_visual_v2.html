@@ -1,0 +1,203 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fominha_de_Manga — Arquitetura-alvo Central V2</title>
+<style>
+:root{--bg:#f2f5f1;--paper:#fcfdfb;--ink:#28332f;--muted:#66736d;--line:#d6ddd7;--green:#3c6f5b;--greenbg:#e8f1ed;--blue:#4d7084;--bluebg:#eaf0f3;--amber:#86662e;--amberbg:#f5efe4;--shadow:0 7px 24px rgba(42,57,49,.055)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}
+main{max-width:1550px;margin:auto;padding:30px 24px 60px}header,.panel,.section{background:var(--paper);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+header{padding:24px 27px;margin-bottom:18px}.kicker{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--green);font-weight:800}
+h1{margin:4px 0 8px;font-size:30px}h2{font-size:19px;margin:0 0 6px}h3{font-size:14px;margin:0 0 7px}p{color:var(--muted);max-width:1200px}
+.grid{display:grid;grid-template-columns:.8fr 1.2fr;gap:18px}.panel{padding:20px;min-width:0}.legacy{border-top:4px solid var(--amber)}.v2{border-top:4px solid var(--green)}
+.sub{font-size:12px;color:var(--muted);margin:5px 0 14px}.tree{background:#f7f8f6;border:1px solid var(--line);border-radius:12px;padding:14px;overflow:auto}
+pre{margin:0;white-space:pre;font:12.5px/1.62 ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;color:#43524b}
+.section{padding:20px;margin-top:18px}.layers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:15px}.layer{border:1px solid var(--line);border-radius:12px;padding:15px;background:#f8f9f7}
+.layer strong{display:block;margin-bottom:5px;color:#33473e}.layer span{font-size:12px;color:var(--muted)}.arrow{text-align:center;font-size:20px;color:var(--green);display:none}
+.rules{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px}.rule{border:1px solid var(--line);background:#f8f9f7;border-radius:11px;padding:14px}
+.rule strong{display:block;color:#33473e;margin-bottom:5px}.rule span{font-size:12px;color:var(--muted)}
+.flow{background:var(--greenbg);border:1px solid #ccddd4;border-radius:11px;padding:15px;white-space:pre-wrap;font:12.5px/1.65 ui-monospace,SFMono-Regular,Menlo,monospace}
+.callout{background:var(--bluebg);border-left:4px solid var(--blue);padding:13px 15px;border-radius:0 9px 9px 0;color:#566d78;margin-top:14px}
+.warn{background:var(--amberbg);border-left-color:var(--amber);color:#725a32}.nav{columns:2;column-gap:36px}.nav h3{break-after:avoid;margin-top:12px}.nav ul{margin-top:5px;color:var(--muted)}
+code{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+
+.arch-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:16px 0 9px}.arch-heading strong{color:#33473e}.arch-heading span{font-size:11px;color:var(--muted)}
+.arch-flow{display:grid;gap:6px}.arch-step{display:grid;grid-template-columns:34px minmax(145px,.4fr) minmax(0,1fr);gap:11px;align-items:center;border:1px solid var(--line);border-left:4px solid var(--green);border-radius:10px;background:#f8f9f7;padding:10px 12px}.arch-step .number{display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:var(--greenbg);color:var(--green);font-size:11px;font-weight:800}.arch-step strong{font-size:12px;color:#33473e}.arch-step span{font-size:11.5px;color:var(--muted)}.arch-step.backend{border-left-color:var(--blue)}.arch-step.backend .number{background:var(--bluebg);color:var(--blue)}.arch-step.domain{border-left-color:#86662e}.arch-step.domain .number{background:var(--amberbg);color:var(--amber)}.arch-step.authority{border-left-color:#718476}.arch-arrow{text-align:center;color:var(--green);font-size:16px;line-height:16px}.arch-return{margin-top:9px;border:1px dashed #afc4b8;border-radius:9px;background:#f2f7f4;padding:10px 12px;color:#4f695d;font-size:11.5px}.arch-return strong{color:#33473e}.arch-key{display:flex;flex-wrap:wrap;gap:7px 14px;margin-top:11px;color:var(--muted);font-size:11px}.arch-key span{display:inline-flex;align-items:center;gap:6px}.arch-key i{width:9px;height:9px;border-radius:50%;background:var(--green)}.arch-key .k-backend{background:var(--blue)}.arch-key .k-domain{background:var(--amber)}.arch-key .k-authority{background:#718476}
+@media(max-width:700px){.arch-heading{display:block}.arch-heading span{display:block;margin-top:2px}.arch-step{grid-template-columns:30px minmax(0,1fr);gap:8px}.arch-step span{grid-column:2}.arch-key{gap:6px 10px}}
+@media(max-width:1050px){.grid,.layers,.rules{grid-template-columns:1fr}.nav{columns:1}}
+</style>
+</head>
+<body><main>
+<header>
+<div class="kicker">Central V2 · migração progressiva · arquitetura-alvo</div>
+<h1>Fominha_de_Manga — Central atual × Central V2</h1>
+<p>A Central atual permanece como baseline operacional e referência comportamental. A V2 nasce fisicamente isolada, reutiliza os domínios existentes e preserva manifests, SHA, artefatos e contratos de autoridade.</p>
+</header>
+
+<section class="grid">
+<div class="panel legacy">
+<h2>Central atual — legada</h2>
+<div class="sub">Permanece funcional durante a migração; não será desmontada como pré-requisito da V2.</div>
+<div class="tree"><pre>interface_web/
+├── processing_web.py   ← hotspot backend
+├── index.html
+├── app.js
+├── mega_menu.js
+├── styles.css
+├── balanceamento.{js,css}
+├── merge_manual*.{js,css}
+├── textoff_*.{js,css}
+├── exportacao.{js,css}
+└── viewer_core.js
+
+Papel durante a migração
+├── baseline operacional
+├── referência comportamental
+├── correções indispensáveis
+└── sem novas responsabilidades
+    quando a feature puder nascer na V2</pre></div>
+</div>
+
+<div class="panel v2">
+<h2>Central V2 — arquitetura-alvo</h2>
+<div class="sub">A interface da V2 controla o fluxo; os algoritmos e artefatos oficiais continuam nas implementações existentes.</div>
+<div class="tree"><pre>central_v2/
+├── frontend/
+│   ├── _shell/       navegação e contexto
+│   ├── _app/         API, estado e rotas
+│   ├── _shared/      componentes reutilizáveis
+│   └── &lt;feature&gt;/    telas e comportamento da feature
+└── backend/
+    ├── server.py     inicialização HTTP
+    ├── routes/       contratos de entrada e saída
+    ├── jobs/         execução assíncrona e progresso
+    ├── state/        projeções consultáveis
+    └── orchestration/ casos de uso da V2</pre></div>
+<div class="arch-heading"><strong>O caminho de uma ação</strong><span>Ex.: selecionar uma operação e executá-la</span></div>
+<div class="arch-flow" role="group" aria-label="Fluxo de uma ação na arquitetura-alvo da Central V2">
+<div class="arch-step"><b class="number">01</b><strong>Tela da feature<br><code>frontend/&lt;feature&gt;/</code></strong><span>Apresenta a interface e combina shell e componentes compartilhados. A tela chama a API da V2.</span></div>
+<div class="arch-arrow" aria-hidden="true">↓</div>
+<div class="arch-step backend"><b class="number">02</b><strong>Fronteira HTTP<br><code>routes/ · jobs/ · state/</code></strong><span>Rotas recebem e validam pedidos. Jobs acompanham trabalhos longos; state expõe os dados necessários à tela.</span></div>
+<div class="arch-arrow" aria-hidden="true">↓</div>
+<div class="arch-step backend"><b class="number">03</b><strong>Coordenação<br><code>backend/orchestration/</code></strong><span>Organiza pré-condições e sequência do caso de uso; reutiliza fluxos existentes em <code>orquestracao/</code> quando aplicável.</span></div>
+<div class="arch-arrow" aria-hidden="true">↓</div>
+<div class="arch-step domain"><b class="number">04</b><strong>Regras e processamento<br><code>processamento/</code></strong><span>Executa algoritmos especializados, como Merge, limpeza, Balanceamento, PDF e exportação.</span></div>
+<div class="arch-arrow" aria-hidden="true">↓</div>
+<div class="arch-step authority"><b class="number">05</b><strong>Fonte oficial<br><code>manifests · hashes · arquivos</code></strong><span>Registra e preserva os artefatos que determinam o estado válido do processamento.</span></div>
+</div>
+<div class="arch-return"><strong>O retorno sobe pelo mesmo caminho:</strong> resultado ou progresso → rota e projeção de estado → API/store → tela atualizada. A interface não substitui a autoridade dos manifests e arquivos.</div>
+<div class="arch-key" aria-label="Legenda das camadas"><span><i></i>Interface V2</span><span><i class="k-backend"></i>Infraestrutura e coordenação V2</span><span><i class="k-domain"></i>Domínio existente</span><span><i class="k-authority"></i>Dados oficiais</span></div>
+</div>
+</section>
+
+<section class="section">
+<h2>Fronteiras de responsabilidade</h2>
+<p>A V2 não cria uma segunda implementação dos algoritmos. Cada camada possui responsabilidade explícita e as dependências apontam para baixo.</p>
+<div class="layers">
+<div class="layer"><strong>1 · Central V2</strong><span>HTTP, UI, DTOs, jobs, navegação, projeções e transporte.</span></div>
+<div class="layer"><strong>2 · Orquestração</strong><span>Casos de uso, sequência, pré-condições e coordenação entre domínios.</span></div>
+<div class="layer"><strong>3 · Domínio</strong><span>Merge, Texto Off, Balanceamento, PDF, validação, exportação e demais regras especializadas.</span></div>
+<div class="layer"><strong>4 · Autoridade</strong><span>Manifests, SHA, predecessor, filesystem e artefatos oficiais.</span></div>
+</div>
+<div class="flow">CENTRAL V2
+    ↓
+ORQUESTRAÇÃO
+    ↓
+DOMÍNIO EXISTENTE
+    ↓
+ARTEFATOS / AUTORIDADE</div>
+</section>
+
+<section class="section">
+<h2>Backend compartilhado — não duplicar</h2>
+<div class="grid">
+<div>
+<h3>orquestracao/</h3>
+<div class="tree"><pre>orquestracao/
+├── menu.py
+├── proc_merge.py
+├── proc_textoff.py
+├── proc_balance.py
+├── proc_pdf.py
+└── proc_export.py</pre></div>
+</div>
+<div>
+<h3>processamento/</h3>
+<div class="tree"><pre>processamento/
+├── unificacao_imagens/
+├── merge_manual/
+├── balanceamento/
+├── limpeza_baloes/
+├── validacao_imagens/
+├── pdf_original/
+└── exportacao/</pre></div>
+</div>
+</div>
+<div class="callout"><strong>Contrato:</strong> orquestração coordena; <code>processamento/</code> executa. Algoritmos, thresholds e regras protegidas permanecem nas implementações autoritativas existentes.</div>
+</section>
+
+<section class="section">
+<h2>Frontend V2</h2>
+<div class="rules">
+<div class="rule"><strong>_app ≠ _shared</strong><span>API client, store e router são infraestrutura da aplicação, não componentes visuais.</span></div>
+<div class="rule"><strong>Shared não vira monólito</strong><span>Tabela, zoom, viewer, pager, focus, modal, toolbar e feedback continuam independentes.</span></div>
+<div class="rule"><strong>Página compõe</strong><span>A página configura componentes compartilhados e mantém somente comportamento específico.</span></div>
+<div class="rule"><strong>~200 linhas</strong><span>É gatilho de revisão arquitetural, nunca regra para cortar código arbitrariamente.</span></div>
+</div>
+<div class="flow">am3_page.js
+├── usa _shared/table/
+├── usa _shared/filter/
+├── usa _shared/pager/
+├── usa _shared/toolbar/
+└── contém somente comportamento específico do Nível III</div>
+</section>
+
+<section class="section">
+<h2>Navegação-alvo</h2>
+<div class="nav">
+<h3>Visão Geral</h3><ul><li>Resumo</li><li>Validar imagens</li></ul>
+<h3>Processamento</h3><ul><li>Auto Merge — Níveis I, II, III, IV e V</li><li>Revisão — Merge e Merge V2</li><li>Merge Manual — Validar e Novos Merges</li></ul>
+<h3>Balanceamento</h3><ul><li>Validar</li><li>Novos Cortes</li></ul>
+<h3>Gerar PDF</h3><ul><li>Original</li><li>Merge</li></ul>
+<h3>Texto Off</h3><ul><li>Original</li><li>Merged</li><li>Comparar resultados</li><li>Correção assistida</li><li>Especiais</li></ul>
+<h3>Exportar arquivos</h3><ul><li>Exportar</li></ul>
+</div>
+</section>
+
+<section class="section">
+<h2>Migração vertical por fluxo</h2>
+<div class="flow">contrato atual
+→ rota V2
+→ orquestração
+→ domínio existente
+→ autoridade / artefatos existentes
+→ projeção de estado V2
+→ página V2
+→ validação funcional
+→ fluxo considerado migrado</div>
+<div class="callout"><strong>Features continuam:</strong> uma feature nova pode nascer diretamente na V2 quando isso não exigir duplicar regras de domínio.</div>
+</section>
+
+<section class="section">
+<h2>Descontinuação da Central atual</h2>
+<p>A V1 somente será descontinuada após equivalência funcional validada nos fluxos aplicáveis.</p>
+<div class="rules">
+<div class="rule"><strong>Processamento</strong><span>Seleção, Auto-Merge I–V, Review e Merge Manual.</span></div>
+<div class="rule"><strong>Pós-processamento</strong><span>Balanceamento, PDF, Texto Off e Tratamentos Especiais.</span></div>
+<div class="rule"><strong>Infraestrutura</strong><span>Jobs, progresso, erros, mídia e previews.</span></div>
+<div class="rule"><strong>Autoridade</strong><span>Manifests preservados e casos reais críticos validados.</span></div>
+</div>
+<div class="callout warn"><strong>Regra de corte:</strong> V1 e V2 podem coexistir, mas não devem possuir implementações concorrentes dos algoritmos de domínio.</div>
+</section>
+
+<section class="section">
+<h2>Princípio de evolução</h2>
+<div class="flow">preservar V1
+→ implementar uma fatia vertical na V2
+→ reutilizar domínio existente
+→ validar equivalência / contrato
+→ migrar o próximo fluxo
+→ descontinuar V1 somente ao final</div>
+</section>
+</main></body></html>
