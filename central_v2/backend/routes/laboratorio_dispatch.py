@@ -18,6 +18,9 @@ from central_v2.backend.routes.laboratorio_tratamentos import (
     start_smooth_job as lab_smooth_start_job,
     result_image as lab_stylized_image,
 )
+from central_v2.backend.routes.laboratorio_solidos import (
+    execute as lab_solidos_execute, image_response as lab_solidos_image,
+)
 from central_v2.backend.routes.response import RouteResponse
 from config.data_paths import OUTPUT_ROOT
 
@@ -30,6 +33,8 @@ def dispatch_laboratorio_get(request, output_root: Path = OUTPUT_ROOT) -> tuple[
         )
         return True, response
 
+    if request.path == "/api/textoff/laboratorio/solidos/image":
+        return True, lab_solidos_image(parse_qs(request.query), output_root)
     if request.path == "/api/textoff/laboratorio/degrade/image":
         return True, lab_degrade_image(parse_qs(request.query))
     if request.path == "/api/textoff/laboratorio/estilizado/image":
@@ -43,6 +48,8 @@ def dispatch_laboratorio_post(
     path: str, payload: object, output_root: Path = OUTPUT_ROOT,
 ) -> tuple[bool, RouteResponse | None]:
     route = urlparse(path).path
+    if route == "/api/textoff/laboratorio/solidos/execute":
+        return True, lab_solidos_execute(payload, output_root)
     if route == "/api/textoff/laboratorio/degrade/job":
         return True, start_degrade_job(payload, output_root)
     if route == "/api/textoff/laboratorio/degrade/authorize-job":

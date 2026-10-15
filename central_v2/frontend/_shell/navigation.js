@@ -96,6 +96,8 @@ export const navigation = [
             tooltip: "Curadoria de balões" },
           { number: "04", id: "auto-cleaner-check", label: "Auto-Cleaner Check", icon: "compare",
             tooltip: "Revisar e aprovar áreas identificadas" },
+          { number: "05", id: "auto-cleaner-solidos", label: "Auto-Cleaner: Sólidos", icon: "sparkles",
+            tooltip: "Limpar áreas brancas aprovadas no Check" },
         ],
         control: {
           type: "timeline-segmented",
@@ -106,7 +108,7 @@ export const navigation = [
           tooltip: "Tratamento de balões translúcidos",
           showBadge: false,
           hideCaption: true,
-          number: "05",
+          number: "06",
           options: [
             { value: "basic", action: "texto-off-merged-ii", label: "Básica",
               tooltip: "Passo 2 — Transparência Básica" },

@@ -1,7 +1,7 @@
 import { getContext } from "/_app/state/context.js";
 import { connectRoiSelection } from "/texto_off/laboratorio/roi_selection.js";
 import { connectDegrade } from "/texto_off/laboratorio/degrade.js";
-import { connectSmooth, connectStylized } from "/texto_off/laboratorio/tratamentos.js";
+import { connectSmooth, connectStylized, connectSolid } from "/texto_off/laboratorio/tratamentos.js";
 
 /** Integra imagem original, ROIs e os três estados experimentais independentes. */
 export function connectTreatmentController({ root, navigation, workspace, image, progress }) {
@@ -69,10 +69,14 @@ export function connectTreatmentController({ root, navigation, workspace, image,
   const smooth = connectSmooth({
     root, button: panel.querySelector("[data-lab-smooth]"), getRequest, progress: treatmentProgress,
   });
+  const solid = connectSolid({
+    root, button: panel.querySelector("[data-lab-solid]"), getRequest, progress: treatmentProgress,
+  });
   const roiObserver = new MutationObserver(() => {
     degrade.invalidate();
     stylized.invalidate();
     smooth.invalidate();
+    solid.invalidate();
   });
   roiObserver.observe(panel.querySelector(".lab-roi-list"), { childList: true });
   let originalLoadSerial = 0;
@@ -85,6 +89,7 @@ export function connectTreatmentController({ root, navigation, workspace, image,
     degrade.reset(identity);
     stylized.reset(identity);
     smooth.reset(identity);
+    solid.reset(identity);
     const page = selected.pages.find((item) => item.name === selected.page);
     const src = page?.previewUrl || "";
     const id = ++originalLoadSerial;
@@ -133,6 +138,7 @@ export function connectTreatmentController({ root, navigation, workspace, image,
       roiObserver.disconnect();
       stylized.dispose();
       smooth.dispose();
+      solid.dispose();
       roi.dispose();
     },
   };

@@ -38,6 +38,10 @@ export function executeStylizedLaboratory(payload, signal) {
   });
 }
 
+export function executeSolidLaboratory(payload, signal) {
+  return post("/api/textoff/laboratorio/solidos/execute", payload, signal);
+}
+
 export function executeSmoothLaboratory(payload, signal) {
   return requestJson("/api/textoff/laboratorio/gradiente_suave/execute", {
     method: "POST",

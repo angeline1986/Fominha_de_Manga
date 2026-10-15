@@ -16,6 +16,8 @@
 | [CV2-UX-01](tickets_pendencias/CV2-UX-01.md) | Redesenhar a sidebar minimizada | DONE |
 | [CV2-UX-02](tickets_pendencias/CV2-UX-02.md) | Restaurar a ação Sincronizar da sidebar | DONE |
 | [CV2-UX-03](tickets_pendencias/CV2-UX-03.md) | Padronizar tabelas e cabeçalhos no estilo Artístico | DONE |
+| [CV2-UX-04](tickets_pendencias/CV2-UX-04.md) | Corrigir alinhamento da barra de progresso global | TODO |
+| [CV2-UX-05](tickets_pendencias/CV2-UX-05.md) | Padronizar o nome Bubble Sommelier na tela de curadoria | TODO |
 
 ### Saúde Arquitetural
 
@@ -55,6 +57,8 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [CV2-AC-01](tickets_pendencias/CV2-AC-01.md) | Corrigir descarte de boxes pequenos `unknown` | DO |
 | [CV2-AC-03](tickets_pendencias/CV2-AC-03.md) | Diagnosticar o Auto-Cleaner Passo 3 | IN PROGRESS |
 | [CV2-AC-04](tickets_pendencias/CV2-AC-04.md) | Diagnosticar o Auto-Cleaner Passo 4 | IN PROGRESS |
+| [CV2-AC-05](tickets_pendencias/CV2-AC-05.md) | Investigar falha inicial no carregamento de imagens do Auto-Cleaner Check | TODO |
+| [CV2-AC-06](tickets_pendencias/CV2-AC-06.md) | Padronizar filtros de capítulo e página do Auto-Cleaner Check | TODO |
 | [CV2-AUD-01](tickets_pendencias/CV2-AUD-01.md) | Validar visualmente a Auditoria Antes & Depois | DO |
 | [CV2-CAT-01](tickets_pendencias/CV2-CAT-01.md) | Validar o catálogo de resíduos por capítulo | DO |
 | [CV2-CAT-02](tickets_pendencias/CV2-CAT-02.md) | Validar a autoridade do catálogo no Auto-Cleaner Passo 2 | DO |

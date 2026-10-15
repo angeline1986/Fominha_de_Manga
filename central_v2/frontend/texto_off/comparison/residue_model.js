@@ -5,6 +5,7 @@ export const RESIDUE_TYPES = [
   ["balao_estilizado", "Balão estilizado"],
   ["fragmento_balao", "Fragmento de balão"],
   ["texto_residual", "Texto residual"],
+  ["residuo_balao_solido_branco", "Resíduo em balão sólido branco"],
   ["outro", "Outro defeito"],
 ];
 

@@ -29,7 +29,7 @@ export function createLaboratorioView(container) {
         </div>
       </aside>
       <main class="lab-workspace">
-        <div class="lab-toolbar"><div><strong>Laboratório</strong><div class="lab-muted">Uma imagem original · três tratamentos independentes</div></div>
+        <div class="lab-toolbar"><div><strong>Laboratório</strong><div class="lab-muted">Uma imagem original · quatro tratamentos independentes</div></div>
           <div class="lab-tool-group"><button disabled type="button">−</button><span>40%</span><button disabled type="button">+</button><button disabled type="button">1:1</button><button disabled type="button" aria-label="Foco" title="Foco"><svg aria-hidden="true" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button></div>
         </div>
         <div class="lab-stage">
@@ -38,6 +38,7 @@ export function createLaboratorioView(container) {
             <section class="lab-image lab-treatment-card"><header>DEGRADÊ</header><div class="lab-placeholder" data-treatment-status="degrade" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
             <section class="lab-image lab-treatment-card"><header>ARTÍSTICO</header><div class="lab-placeholder" data-treatment-status="stylized" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
             <section class="lab-image lab-treatment-card"><header>SUAVE</header><div class="lab-placeholder" data-treatment-status="smooth" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
+            <section class="lab-image lab-treatment-card"><header>SÓLIDOS</header><div class="lab-placeholder" data-treatment-status="solid" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
           </div>
         </div>
       </main>
@@ -48,6 +49,7 @@ export function createLaboratorioView(container) {
             <button type="button" class="lab-wide" data-lab-degrade>Executar Degradê</button>
             <button type="button" class="lab-wide" data-lab-stylized>Executar Artístico</button>
             <button type="button" class="lab-wide" data-lab-smooth>Executar Suave</button>
+            <button type="button" class="lab-wide" data-lab-solid>Executar Sólidos</button>
           </div>
         </div>
       </aside>

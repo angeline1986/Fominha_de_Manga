@@ -43,6 +43,10 @@ export const routes = {
     context: "texto-off",
     module: "/texto_off/sommelier/index.js",
   },
+  "auto-cleaner-solidos": {
+    context: "texto-off",
+    module: "/texto_off/solidos/index.js",
+  },
   "auto-cleaner-check": {
     context: "texto-off",
     module: "/texto_off/check/index.js",

@@ -8,6 +8,10 @@ from central_v2.backend.routes.textoff_residue_occurrences import (
     ROUTE as RESIDUE_OCCURRENCES_ROUTE, residue_occurrences_get_response,
     residue_occurrences_post_response,
 )
+from central_v2.backend.routes.solid_stage import (
+    ROUTE as SOLID_ROUTE, overview as solid_overview, execute as solid_execute,
+    page_image as solid_image,
+)
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.special_page_restore import (
     ROUTE as RESTORE_PAGE_ROUTE, get_response as restore_page_get,
@@ -26,6 +30,10 @@ from central_v2.backend.routes.textoff_merged import (
 
 
 def dispatch_textoff_merged_get(request, output_root: Path) -> RouteResponse | None:
+    if request.path == SOLID_ROUTE:
+        return solid_overview(parse_qs(request.query), output_root)
+    if request.path == SOLID_ROUTE + "/image":
+        return solid_image(parse_qs(request.query), output_root)
     if request.path in {RESTORE_PAGE_ROUTE, RESTORE_PAGE_ROUTE + "/image"}:
         return restore_page_get(parse_qs(request.query), output_root,
                                 image=request.path.endswith("/image"))
@@ -49,6 +57,8 @@ def dispatch_textoff_merged_get(request, output_root: Path) -> RouteResponse | N
 def dispatch_textoff_merged_post(path: str, payload: object,
                                  output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
     route = urlparse(path).path
+    if route == SOLID_ROUTE + "/execute":
+        return solid_execute(payload, output_root)
     if route == RESTORE_PAGE_ROUTE:
         return restore_page_post(payload, output_root)
     if route == RESIDUE_OCCURRENCES_ROUTE:

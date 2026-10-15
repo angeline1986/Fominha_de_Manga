@@ -21,6 +21,7 @@ OCCURRENCE_POLICIES = {
     "balao_estilizado": OccurrencePolicy("Balão estilizado", True),
     "fragmento_balao": OccurrencePolicy("Fragmento de balão", True),
     "texto_residual": OccurrencePolicy("Texto residual", False),
+    "residuo_balao_solido_branco": OccurrencePolicy("Resíduo em balão sólido branco", True),
     "outro": OccurrencePolicy("Outro defeito", True),
 }
 

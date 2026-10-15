@@ -26,7 +26,7 @@
 .lab-page .lab-panel-toggle, .lab-page .lab-close-panel { background: #fff; white-space: nowrap; }
 .lab-page .lab-close-panel { padding: 2px 8px; }
 .lab-stage { width: 100%; max-width: 100%; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 18px; background-color: #f8fdff; background-image: radial-gradient(#c6dfee .8px, transparent .8px); background-size: 18px 18px; }
-.lab-cards { display: grid; grid-template-columns: repeat(4, var(--lab-panel-width)); align-items: start; gap: 12px; width: max-content; margin: 0; }
+.lab-cards { display: grid; grid-template-columns: repeat(5, var(--lab-panel-width)); align-items: start; gap: 12px; width: max-content; margin: 0; }
 .lab-image { display: flex; width: var(--lab-panel-width); min-width: 0; flex-direction: column; overflow: hidden; align-self: start; border: 1px solid #c0e0f1; border-radius: 9px; background: #fff; }
 .lab-treatment-card { --lab-treatment-header-height: 40px; overflow: clip; }
 .lab-image header { flex: none; padding: 12px; border-bottom: 1px solid #d8eaf3; font-size: 12px; font-weight: 750; }
