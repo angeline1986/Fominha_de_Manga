@@ -1,0 +1,8 @@
+.solid-inspector{width:min(1100px,94vw);height:min(90vh,900px);border:1px solid #c3e0ef;border-radius:10px;padding:0;color:#14516c;background:#fff}
+.solid-inspector::backdrop{background:#0b283c77}
+.solid-inspector header,.solid-inspector-tools{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 16px;border-bottom:1px solid #d8eaf3}
+.solid-inspector button,.solid-inspector select{border:1px solid #c3e0ef;border-radius:6px;padding:7px;background:#fff;color:inherit}
+.solid-inspector-images{display:grid;grid-template-columns:1fr 1fr;gap:18px;padding:16px;height:calc(100% - 112px);overflow:auto;background:#f8fdff}
+.solid-inspector-images section{min-width:0;background:#fff;border:1px solid #c3e0ef}
+.solid-inspector-images strong{display:block;padding:10px;border-bottom:1px solid #d8eaf3}
+.solid-inspector-images img{display:block;width:100%;height:auto}

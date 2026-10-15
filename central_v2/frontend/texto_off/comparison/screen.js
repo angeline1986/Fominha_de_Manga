@@ -2,6 +2,7 @@ import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { fetchComparison, comparisonImageUrl } from "/_app/api/comparison.js";
 import { createSlider } from "/texto_off/comparison/slider.js";
+import { createSolidCatalog } from "/texto_off/comparison/solid_catalog.js";
 import { comparisonModeConfig, INITIAL_ZOOM, clampZoom, level2StatusText } from "/texto_off/comparison/model.js";
 import { createPageList } from "/texto_off/comparison/page_list.js";
 import { createResidueCatalog } from "/texto_off/comparison/residue_catalog.js";
@@ -61,8 +62,10 @@ export function createComparisonScreen(context, onBack) {
     else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; catalog.render?.(); }
     drawState();
   }, context.comparisonMode);
-  const createCatalog = ["degrade", "suave", "artistico"].includes(context.comparisonMode)
+  const createCatalog = context.comparisonMode === "solid" ? createSolidCatalog
+    : ["degrade", "suave", "artistico"].includes(context.comparisonMode)
     ? createDegradeContext : createResidueCatalog;
+  if (context.comparisonMode === "solid") query("[data-panel-toggle]").hidden = true;
   const catalog = createCatalog({ workspace: query(".comparison-workspace"), slider, context,
     onPersistedCount: (pageName, count) => {
       const page = pages.find((item) => item.name === pageName);

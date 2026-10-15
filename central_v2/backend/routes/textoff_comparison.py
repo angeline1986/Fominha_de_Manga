@@ -23,6 +23,10 @@ from central_v2.backend.orchestration.textoff_merged.special_styled_review impor
 
 
 def comparison_response(query: dict, output_root: Path, *, image=False) -> RouteResponse:
+    if (_value(query, "comparisonMode") == "solid" and _value(query, "scope") == "solid"
+            and _value(query, "step") == "solid"):
+        from .solid_comparison import response as solid_response
+        return solid_response(query, output_root, image=image)
     if (_value(query, "comparisonMode") == "degrade" and _value(query, "scope") == "degrade"
             and _value(query, "step") == "degrade"):
         return degrade_comparison_response(query, output_root, image=image)

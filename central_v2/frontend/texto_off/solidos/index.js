@@ -1,91 +1,142 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
+import { createJobProgress } from "/_shared/progress/progress.js";
+import { createSolidTable } from "/texto_off/solidos/table.js";
+import { createSolidInspector } from "/texto_off/solidos/inspector.js";
 
 const API = "/api/textoff/solidos";
-const url = (path, params) => path + "?" + new URLSearchParams(params);
-
+const endpoint = (path, params) => path + "?" + new URLSearchParams(params);
+async function responseJson(url, options) {
+  const response = await fetch(url, options);
+  const data = await response.json();
+  if (!response.ok) throw new Error(data.error || `HTTP ${response.status}`);
+  return data;
+}
 export function render(container) {
   const root = document.createElement("section");
-  root.style.cssText = "padding:18px;display:grid;gap:14px;color:#14516c";
-  root.innerHTML = `<h3 style="margin:0">05 — Auto-Cleaner: Sólidos</h3>
-    <p style="margin:0">Prévia independente · áreas aprovadas no Check · mesmo motor do Laboratório</p>
-    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-      <label>Capítulo <select data-chapter></select></label>
-      <button data-run type="button">Executar Sólidos</button>
-      <label>Página <select data-page></select></label>
-    </div><div data-state role="status"></div>
-    <div style="display:flex;gap:14px;overflow:auto;align-items:start">
-      <section><strong>ANTES</strong><img data-before style="display:block;width:320px;height:auto" /></section>
-      <section><strong>DEPOIS</strong><img data-after style="display:block;width:320px;height:auto" /></section>
-    </div>`;
+  root.className = "auto-merge-page textoff-merged-page cleaner-overview";
+  root.innerHTML = `<header><h1 class="textoff-page-title-hint" tabindex="0"
+    data-tooltip="Limpeza direcionada às áreas sólidas aprovadas no Check"
+    aria-description="Limpeza direcionada às áreas sólidas aprovadas no Check">Auto-Cleaner: Sólidos</h1></header>
+    <div class="auto-merge-toolbar">
+      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span>
+      <input type="search" data-search placeholder="Capítulo"></label>
+      <div class="auto-merge-filters" data-filters role="group" aria-label="Filtrar capítulos"></div>
+      <button class="auto-merge-execute" data-run type="button">Executar Sólidos</button>
+    </div>
+    <p class="auto-merge-status" data-state role="status" aria-live="polite"></p>
+    <div class="auto-merge-results" data-results></div>`;
+  const stylesheet = document.createElement("link");
+  stylesheet.rel = "stylesheet";
+  stylesheet.href = "/texto_off/solidos/style.css";
+  document.head.append(stylesheet);
   container.replaceChildren(root);
-  const chapter = root.querySelector("[data-chapter]");
-  const page = root.querySelector("[data-page]");
-  const state = root.querySelector("[data-state]");
-  const run = root.querySelector("[data-run]");
-  const before = root.querySelector("[data-before]");
-  const after = root.querySelector("[data-after]");
-  let chapters = [], disposed = false, abort = new AbortController();
-  const current = () => getContext();
-  function showImages() {
-    const selected = chapters.find(row => row.chapter === chapter.value);
-    const hasResult = Boolean(selected?.processed && page.value);
-    for (const [img, kind] of [[before, "before"], [after, "after"]]) {
-      if (!hasResult) { img.removeAttribute("src"); img.hidden = true; continue; }
-      img.hidden = false;
-      img.src = url(API + "/image", { provider: current().provider,
-        manga: current().manga, chapter: chapter.value, page: page.value, kind });
+  const status = root.querySelector("[data-state]");
+  const runButton = root.querySelector("[data-run]");
+  const search = root.querySelector("[data-search]");
+  const filters = root.querySelector("[data-filters]");
+  const progress = createJobProgress("Auto-Cleaner: Sólidos");
+  root.querySelector(".auto-merge-toolbar").after(progress.element);
+  const inspector = createSolidInspector(root, API);
+  let rows = [], selected = new Set(), filter = "all", page = 0;
+  let busy = false, disposed = false, controller = null, generation = 0;
+  const table = createSolidTable(root.querySelector("[data-results]"), {
+    onSelect(chapter, checked) { checked ? selected.add(chapter) : selected.delete(chapter); draw(); },
+    onSelectPage(chapters, checked) {
+      chapters.forEach(chapter => checked ? selected.add(chapter) : selected.delete(chapter)); draw();
+    },
+    inspect(row) { inspector.open(row, getContext()); },
+    changePage(next) { page = next; draw(); },
+  });
+  function matching() {
+    const term = search.value.trim().toLocaleLowerCase("pt-BR");
+    return rows.filter(row => row.chapter.toLocaleLowerCase("pt-BR").includes(term)
+      && (filter === "all" || filter === "pending" && !row.processed
+        || filter === "processed" && row.processed));
+  }
+  function drawFilters() {
+    filters.replaceChildren();
+    for (const [key, label] of [["all","All"],["pending","Pendentes"],["processed","Concluídos"]]) {
+      const count = rows.filter(row => key === "all" || (key === "processed") === Boolean(row.processed)).length;
+      const button = document.createElement("button");
+      button.className = "auto-merge-filter-button";
+      button.classList.toggle("active", key === filter);
+      button.setAttribute("aria-pressed", String(key === filter));
+      button.textContent = `${label} (${count})`;
+      button.type = "button";
+      button.onclick = () => { filter = key; page = 0; draw(); };
+      filters.append(button);
     }
   }
-  function selectChapter() {
-    const selected = chapters.find(row => row.chapter === chapter.value);
-    page.replaceChildren(...(selected?.pages || []).map(name => new Option(name, name)));
-    run.disabled = !selected || selected.processed;
-    state.textContent = selected ? `${selected.regions} áreas aprovadas · ${selected.processed ? "Prévia disponível" : "Aguardando execução"}` : "Nenhuma área aprovada";
-    showImages();
+  function draw() {
+    drawFilters();
+    const current = matching();
+    const valid = new Set(rows.filter(r => !r.processed).map(r => r.chapter));
+    selected = new Set([...selected].filter(ch => valid.has(ch)));
+    table.draw(current, selected, page, busy);
+    runButton.disabled = busy || selected.size === 0;
   }
   async function load() {
-    abort.abort(); abort = new AbortController();
-    const { provider, manga } = current();
-    if (!provider || !manga) { state.textContent = "Selecione uma obra"; return; }
-    state.textContent = "Consultando ocorrências aprovadas…";
+    controller?.abort();
+    controller = new AbortController();
+    const id = ++generation;
+    const { provider, manga } = getContext();
+    rows = []; selected.clear(); page = 0;
+    if (!provider || !manga) {
+      status.textContent = "Selecione uma obra."; draw(); return;
+    }
+    status.textContent = "Consultando capítulos...";
+    draw();
     try {
-      const res = await fetch(url(API, { provider, manga }), { signal: abort.signal });
-      const data = await res.json(); if (!res.ok) throw Error(data.error || "Falha ao consultar");
-      if (disposed) return;
-      chapters = data.chapters || [];
-      const old = chapter.value;
-      chapter.replaceChildren(...chapters.map(c => new Option(`Cap. ${c.chapter}`, c.chapter)));
-      if (chapters.some(c => c.chapter === old)) chapter.value = old;
-      selectChapter();
-    } catch (e) { if (e.name !== "AbortError") state.textContent = e.message; }
-  }
-  async function execute() {
-    const { provider, manga } = current();
-    run.disabled = true; state.textContent = "Executando Sólidos…";
-    try {
-      const response = await fetch(API + "/execute", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ provider, manga, chapter: chapter.value }), signal: abort.signal });
-      const data = await response.json();
-      if (!response.ok) throw Error(data.error || "Falha ao iniciar");
-      let job = data.job;
-      while (!disposed && job?.status !== "completed" && job?.status !== "failed") {
-        await new Promise(resolve => setTimeout(resolve, 600));
-        const poll = await fetch(`/api/jobs/${encodeURIComponent(job.id)}`, { signal: abort.signal });
-        const payload = await poll.json(); job = payload.job;
-        state.textContent = job?.progress?.message || "Processando regiões aprovadas…";
-      }
-      if (job?.status === "failed") throw Error(job.error || "Tratamento falhou");
-      if (!disposed) await load();
-    } catch (e) {
-      if (e.name !== "AbortError" && !disposed) state.textContent = e.message;
-      if (!disposed) run.disabled = false;
+      const data = await responseJson(endpoint(API, { provider, manga }), { signal: controller.signal });
+      if (disposed || id !== generation) return;
+      rows = data.chapters || [];
+      status.textContent = rows.length ? "" : "Nenhuma área sólida aprovada no Check.";
+      draw();
+    } catch (error) {
+      if (!disposed && id === generation && error.name !== "AbortError") status.textContent = error.message;
     }
   }
-  chapter.addEventListener("change", selectChapter);
-  page.addEventListener("change", showImages);
-  run.addEventListener("click", execute);
+  async function execute() {
+    if (busy || !selected.size) return;
+    busy = true; draw();
+    const context = getContext();
+    const chapters = [...selected];
+    try {
+      for (let i = 0; i < chapters.length; i++) {
+        const chapter = chapters[i];
+        status.textContent = `Capítulo ${chapter} (${i+1}/${chapters.length})`;
+        progress.update({ busy:true, title:"Auto-Cleaner: Sólidos",
+          completed:i, total:chapters.length, percent:Math.floor(i*100/chapters.length),
+          message:`Executando capítulo ${chapter}` });
+        const data = await responseJson(API+"/execute", {
+          method:"POST", headers:{"Content-Type":"application/json"},
+          body: JSON.stringify({provider:context.provider,manga:context.manga,chapter}),
+        });
+        let job = data.job;
+        while (!disposed && job?.status !== "completed" && job?.status !== "failed") {
+          await new Promise(resolve => setTimeout(resolve, 600));
+          job = (await responseJson(`/api/jobs/${encodeURIComponent(job.id)}`)).job;
+          status.textContent = job?.progress?.message || `Processando capítulo ${chapter}...`;
+        }
+        if (disposed) return;
+        if (job?.status === "failed") throw new Error(`Capítulo ${chapter}: ${job.error || "falha"}`);
+        progress.update({busy:true, title:"Auto-Cleaner: Sólidos",
+          completed:i+1, total:chapters.length, percent:Math.floor((i+1)*100/chapters.length),
+          message:`Capítulo ${chapter} concluído`});
+      }
+      await load();
+    } catch (error) {
+      if (!disposed) status.textContent = error.message;
+    } finally {
+      busy = false; progress.update({busy:false}); if (!disposed) draw();
+    }
+  }
+  search.addEventListener("input", () => {page=0;draw();});
+  runButton.addEventListener("click", execute);
   const unsubscribe = subscribeContext(load);
   load();
-  return () => { disposed = true; abort.abort(); unsubscribe(); root.remove(); };
+  return () => {
+    disposed = true; generation++; controller?.abort(); unsubscribe();
+    inspector.dispose(); progress.element.remove(); stylesheet.remove(); root.remove();
+  };
 }
