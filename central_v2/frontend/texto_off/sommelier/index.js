@@ -177,15 +177,33 @@ export function render(container) {
     const page = pagination.select(visible);
 
     const columns = [
-      { id: "select", label: "", render: (row) => {
+      { id: "select", header: () => {
+        const eligible = page.rows.filter((row) => row.merge_valid !== false);
+        const count = eligible.filter((row) => selected.has(row.chapter)).length;
+        const input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = eligible.length > 0 && count === eligible.length;
+        input.indeterminate = count > 0 && count < eligible.length;
+        input.disabled = executionBusy || eligible.length === 0;
+        input.setAttribute("aria-label", "Selecionar todos os capítulos desta página");
+        input.addEventListener("change", () => {
+          for (const row of eligible) {
+            if (input.checked) selected.add(row.chapter);
+            else selected.delete(row.chapter);
+          }
+          draw();
+        });
+        return input;
+      }, render: (row) => {
         const input = document.createElement("input");
         input.type = "checkbox";
         input.checked = selected.has(row.chapter);
+        input.disabled = executionBusy || row.merge_valid === false;
         input.setAttribute("aria-label", `Selecionar capítulo ${row.chapter}`);
         input.addEventListener("change", () => {
           if (input.checked) selected.add(row.chapter);
           else selected.delete(row.chapter);
-          updateExecuteState();
+          draw();
         });
         return input;
       }},
