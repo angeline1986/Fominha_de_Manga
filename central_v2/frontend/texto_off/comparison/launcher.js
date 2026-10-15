@@ -11,6 +11,7 @@ export function canCompare(row, step, mode = comparisonModeForStep(step)) {
 
 export function createComparisonLauncher(origin, step, mode = comparisonModeForStep(step), scope = "") {
   let screen = null, unsubscribe = null, focus = null, scroll = 0;
+  let availableChapters = [];
   function close(restore = true) {
     unsubscribe?.(); unsubscribe = null;
     screen?.dispose(); screen?.element.remove(); screen = null;
@@ -26,6 +27,10 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
     focus = button;
     scroll = origin.parentElement.scrollTop;
     screen = createComparisonScreen({ provider, manga, chapter: row.chapter, step,
+      ...(mode === "check" ? { availableChapters, onChapterChange: (chapter) => {
+        const targetRow = availableChapters.find((entry) => String(entry.chapter) === String(chapter));
+        if (targetRow && canCompare(targetRow, step, mode)) open(targetRow, button);
+      } } : {}),
       comparisonMode: mode, ...(scope ? { scope } : {}),
       ...(target.page ? { initialPage: target.page } : {}),
       ...(target.occurrence ? { initialOccurrence: target.occurrence } : {}) }, close);
@@ -47,6 +52,7 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
   }
   return {
     open,
+    setChapters(chapters) { availableChapters = Array.isArray(chapters) ? chapters : []; },
     column: {
       id: "comparison",
       header() {

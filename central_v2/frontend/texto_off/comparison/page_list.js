@@ -5,7 +5,7 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
   getDraftOccurrenceCount = () => null }) {
   const pagination = createPagination(COMPARISON_PAGE_SIZE);
   function render(pages, selectedIndex) {
-    const result = pagination.select(filterComparisonPages(pages, search.value));
+    const result = pagination.select(filterComparisonPages(pages, search?.value || ""));
     list.replaceChildren();
     for (const { page, originalIndex } of result.rows) {
       const button = document.createElement("button");
@@ -62,13 +62,13 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
     if (item && !item.contains(event.relatedTarget)) onPreview(null);
   }
   list.addEventListener("pointerover", onPointerOver); list.addEventListener("pointerout", onPointerOut);
-  search.addEventListener("input", onSearch);
+  search?.addEventListener("input", onSearch);
   return {
     render(pages, selectedIndex) { currentPages = pages; currentSelected = selectedIndex; renderCurrent(); },
     setOccurrenceCount, setDraftOccurrenceCount,
     dispose() {
       list.removeEventListener("pointerover", onPointerOver); list.removeEventListener("pointerout", onPointerOut);
-      search.removeEventListener("input", onSearch);
+      search?.removeEventListener("input", onSearch);
     },
   };
 }

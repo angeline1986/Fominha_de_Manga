@@ -104,7 +104,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
         draw();
       },
     });
-    if (comparison) columns.push(comparison.column);
+    if (comparison) { comparison.setChapters(state.chapters); columns.push(comparison.column); }
     results.append(createTable(columns, selection.rows, `Capítulos para ${title}`, {
       emptyMessage: state.status === "ready" ? "Nenhum capítulo corresponde ao filtro." : "",
     }));

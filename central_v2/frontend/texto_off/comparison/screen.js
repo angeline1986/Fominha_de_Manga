@@ -13,13 +13,17 @@ export function createComparisonScreen(context, onBack) {
   const mode = comparisonModeConfig(context.comparisonMode);
   const element = document.createElement("section");
   element.className = "comparison-screen focus-mode-root";
+  if (context.comparisonMode === "check") element.classList.add("comparison-check-filters");
   element.setAttribute("aria-label", mode.heading.replace(" · ", ": "));
   element.innerHTML = `<header class="comparison-page-heading">${mode.heading}</header>
     <div class="comparison-workspace">
       <aside class="comparison-sidebar">
-        <div class="comparison-sidebar-heading"><h2>Páginas</h2><span>Cap. ${escapeHtml(context.chapter)}</span></div>
-        <label class="comparison-search"><span class="visually-hidden">Buscar página pelo nome</span>
-          <input data-search type="search" placeholder="Buscar página"></label>
+        <div class="comparison-sidebar-heading"><h2>Páginas</h2>${context.comparisonMode === "check" ? "" : `<span>Cap. ${escapeHtml(context.chapter)}</span>`}</div>
+        ${context.comparisonMode === "check" ? `<div class="comparison-check-selects">
+          <label><span class="visually-hidden">Capítulo</span><select data-check-chapter aria-label="Capítulo"></select></label>
+          <label><span class="visually-hidden">Página</span><select data-check-page aria-label="Página"></select></label>
+        </div>` : `<label class="comparison-search"><span class="visually-hidden">Buscar página pelo nome</span>
+          <input data-search type="search" placeholder="Buscar página"></label>`}
         <div class="comparison-page-list" data-pages role="listbox" aria-label="Páginas do capítulo"></div>
         <div class="comparison-pagination" data-pagination></div>
       </aside>
@@ -51,6 +55,58 @@ export function createComparisonScreen(context, onBack) {
     <aside class="comparison-hover-preview" data-preview role="tooltip" hidden>
       <img alt="Prévia da imagem original"><span data-preview-name></span></aside>`;
   const query = (selector) => element.querySelector(selector);
+  if (context.comparisonMode === "check") {
+    const style = document.createElement("style");
+    style.textContent = `.comparison-check-filters .comparison-check-selects{
+        display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.34fr);
+        gap:9px;margin:0 0 14px;align-items:center
+      }
+      .comparison-check-filters .comparison-check-selects label{
+        position:relative;display:block;min-width:0
+      }
+      .comparison-check-filters .comparison-check-selects label::after{
+        content:"";pointer-events:none;position:absolute;
+        width:8px;height:8px;right:15px;top:calc(50% - 6px);
+        border-right:1.8px solid #537b93;border-bottom:1.8px solid #537b93;
+        transform:rotate(45deg)
+      }
+      .comparison-check-filters .comparison-check-selects select{
+        display:block;width:100%;min-width:0;height:44px;
+        box-sizing:border-box;padding:0 34px 0 13px;
+        border:1px solid #c7dfed;border-radius:10px;
+        background-color:#fff;color:#275875;
+        font-family:inherit;font-size:15px;font-weight:500;line-height:1.3;
+        letter-spacing:0;appearance:none;-webkit-appearance:none;
+        box-shadow:none;cursor:pointer;outline:none
+      }
+      .comparison-check-filters .comparison-check-selects select:hover{
+        border-color:#9bc8e1
+      }
+      .comparison-check-filters .comparison-check-selects select:focus-visible{
+        border-color:#5b9ec1;outline:2px solid #aed7ec;outline-offset:1px
+      }
+      .comparison-check-filters .comparison-check-selects select:disabled{
+        color:#738e9f;background-color:#f8fbfd;cursor:default
+      }
+      .comparison-check-filters .comparison-check-selects label:has(select:disabled)::after{
+        opacity:.55
+      }`;
+    element.append(style);
+    const chapterSelect = query("[data-check-chapter]");
+    const chapters = Array.isArray(context.availableChapters) ? context.availableChapters : [];
+    const candidates = chapters.filter((item) => item.cleaned === true);
+    if (!candidates.some((item) => String(item.chapter) === String(context.chapter))) {
+      candidates.unshift({ chapter: context.chapter });
+    }
+    for (const item of candidates) {
+      const option = document.createElement("option");
+      option.value = String(item.chapter);
+      option.textContent = `Cap. ${item.chapter}`;
+      chapterSelect.append(option);
+    }
+    chapterSelect.value = String(context.chapter);
+    chapterSelect.addEventListener("change", () => context.onChapterChange?.(chapterSelect.value));
+  }
   const canvas = query("[data-viewport]");
   const state = query("[data-state]"), preview = query("[data-preview]");
   const controller = new AbortController();
@@ -113,6 +169,8 @@ export function createComparisonScreen(context, onBack) {
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index >= pages.length - 1;
     pageList.render(pages, index);
+    const pageSelect = query("[data-check-page]");
+    if (pageSelect) pageSelect.value = String(index);
     activeImageIndex = index;
     const imageContext = { ...context, layout: mode.layout };
     const status = context.comparisonMode === "before_after" && page.level2_status
@@ -167,6 +225,8 @@ export function createComparisonScreen(context, onBack) {
     if (pages[index + delta]) selectPage(index + delta);
   }
   function onPanel(event) { if (event.target.closest("[data-panel-toggle]")) catalog.toggle(); }
+  const pageSelect = query("[data-check-page]");
+  if (pageSelect) pageSelect.addEventListener("change", () => selectPage(Number(pageSelect.value)));
   const disposePageList = pageList.dispose;
   element.addEventListener("click", onZoom);
   element.addEventListener("click", onMove);
@@ -178,6 +238,16 @@ export function createComparisonScreen(context, onBack) {
       const result = await fetchComparison({ ...context, layout: mode.layout }, controller.signal);
       if (disposed) return;
       pages = result.pages || [];
+      if (pageSelect) {
+        pageSelect.replaceChildren();
+        pages.forEach((page, pageIndex) => {
+          const option = document.createElement("option");
+          option.value = String(pageIndex);
+          option.textContent = page.name.replace(/^page-/, "Pág. ").replace(/\.png$/i, "");
+          pageSelect.append(option);
+        });
+        pageSelect.disabled = pages.length === 0;
+      }
       catalog.setPages?.(pages);
       if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
       if (context.initialPage) index = Math.max(0, pages.findIndex((page) =>
