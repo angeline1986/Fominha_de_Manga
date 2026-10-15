@@ -187,6 +187,11 @@
 
 .drill-navigation.is-limpeza-baloes .drill-action-sommelier .drill-action-arrow { color: #fff; }
 
+.sommelier-page [data-list-view][hidden],
+.sommelier-page [data-review-host][hidden] {
+  display: none !important;
+}
+
 .sommelier-page .auto-merge-results { overflow-x: auto; }
 .sommelier-page .data-table { min-width: 760px; }
 .sommelier-page .data-table th,
