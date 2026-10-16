@@ -65,7 +65,7 @@ def review_response(query_values: dict, output_root: Path) -> RouteResponse:
         chapter = validate_chapter_id(_required(query_values, "chapter"))
         stage_dir = stage_chapter(manga, "BUBBLE_SOMMELIER", chapter)
         report = load_review_report(manga, chapter, stage_dir=stage_dir)
-        observe_shadow_read(manga, "bubble_sommelier", chapter)
+        observe_shadow_read(manga, "bubble_sommelier", chapter, debug_only=True)
         result = report["checkpoints"]["result"]
         pages = []
         for page in report["pages"]:
@@ -101,7 +101,7 @@ def crop_response(query_values: dict, output_root: Path) -> RouteResponse:
         identity = validate_crop_identity(_required(query_values, "identity"))
         stage_dir = stage_chapter(manga, "BUBBLE_SOMMELIER", chapter)
         report = load_review_report(manga, chapter, stage_dir=stage_dir)
-        observe_shadow_read(manga, "bubble_sommelier", chapter)
+        observe_shadow_read(manga, "bubble_sommelier", chapter, debug_only=True)
         bubble = next(
             (bubble for page in report["pages"] for bubble in page["bubbles"]
              if bubble["identity"] == identity),

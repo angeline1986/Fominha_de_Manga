@@ -26,13 +26,22 @@ export async function waitForBalanceJob(job, onProgress = () => {}) {
     ({ job: current } = await requestJson(`/api/jobs/${encodeURIComponent(job.id)}`, { cache: "no-store" }));
   }
   onProgress(current);
+  invalidateCleanerOverview();
   if (current.status === "failed") throw new Error(current.error || "O job de Balanceamento falhou.");
   return current.results || [];
 }
 
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, options);
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
-  return payload;
+  try {
+    const response = await fetch(url, options);
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+    return payload;
+  } finally {
+    if (options.method === "POST") {
+      const { provider, manga } = JSON.parse(options.body);
+      invalidateCleanerOverview(provider, manga);
+    }
+  }
 }
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";

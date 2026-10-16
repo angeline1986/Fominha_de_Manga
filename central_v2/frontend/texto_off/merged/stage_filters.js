@@ -40,22 +40,27 @@ export function createStageFilters(container, onChange) {
     matches: (row) => matchesStage(row, active, [...treatments]),
     reset() { active = "all"; treatments.clear(); },
     draw(rows) {
+      const loading = rows === null;
       main.replaceChildren();
       secondary.replaceChildren();
       for (const [key, label] of STAGES) {
-        const count = rows.filter((row) => matchesStage(row, key)).length;
+        const count = loading ? "…" : rows.filter((row) => matchesStage(row, key)).length;
         const filterLabel = key === "all" ? "All" : key === "map" ? "Mapear"
           : key === "retouch" ? "Retoque" : label;
-        main.append(button(`${filterLabel} (${count})`, active === key, () => {
+        const control = button(`${filterLabel} (${count})`, active === key, () => {
           active = key; onChange();
-        }));
+        });
+        control.disabled = loading;
+        main.append(control);
       }
       secondary.hidden = active !== "retouch";
       for (const [key, label] of RETOUCH) {
-        secondary.append(button(label, treatments.has(key), () => {
+        const control = button(label, treatments.has(key), () => {
           treatments.has(key) ? treatments.delete(key) : treatments.add(key);
           onChange();
-        }));
+        });
+        control.disabled = loading;
+        secondary.append(control);
       }
     },
   };

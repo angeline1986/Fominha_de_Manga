@@ -7,59 +7,21 @@ from pathlib import Path
 import subprocess
 import tempfile
 
-from .artifact_paths import artifact_file, artifact_ref, json_file
+from .artifact_paths import artifact_ref
 from .artifact_shadow_read import observe_shadow_read
 from .artifact_migration import mirror_stage_chapter
 from .execution import validate_selection
-from .manifests import _manifest_matches_merge, _stage_manifest, _stage_manifest_sha256
+from .manifests import _stage_manifest, _stage_manifest_sha256
 from .runtime import REPOSITORY_ROOT, python_for
 from .styled_balloon_detector import ALGORITHM
 from .stages import CONSOLIDATED, LEVEL1, LEVEL3, stage_chapter
+from .level3_query import query_level3
 from .consolidated import consolidated_is_current, rebuild_consolidated
 from .consolidated_artifacts import consolidated_image
 from .consolidated import promote_stage
-from central_v2.backend.state.sorting import natural_sort_key
 from processamento.unificacao_imagens import image_stitcher as v3
 
 STAGE = LEVEL3
-
-
-def query_level3(manga: Path) -> dict:
-    rows = []
-    root = manga / "IMG"
-    chapters = sorted((path.name for path in root.iterdir() if path.is_dir()),
-                      key=natural_sort_key) if root.is_dir() else []
-    from .query import query_merged
-    merge_rows = {row["chapter"]: row for row in query_merged(manga)["chapters"]}
-    for chapter in chapters:
-        level1 = _stage_manifest(manga, LEVEL1, chapter)
-        ready = _manifest_matches_merge(level1, manga, chapter)
-        consolidated_ready = consolidated_is_current(manga, chapter) if ready else False
-        path = _manifest_path(manga, chapter)
-        try:
-            manifest = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, ValueError, TypeError):
-            manifest = {}
-        observe_shadow_read(manga, "mapear", chapter)
-        current = (ready and consolidated_ready and manifest.get("algorithm") == ALGORITHM
-                   and manifest.get("source_consolidated_manifest_sha256") ==
-                   _file_sha256(stage_chapter(manga, CONSOLIDATED, chapter)
-                                / "json/clean-manifest.json")
-                   and manifest.get("integrity_ok") is True
-                   and manifest.get("source_merge_manifest_sha256") ==
-                   _file_sha256(v3.merge_manifest_path(manga / "IMG" / chapter))
-                   and bool(json_file(path.parent.parent, "styled-balloon-report.json").is_file()))
-        candidate_pages = _candidate_pages(path.parent.parent) if current else []
-        rows.append({
-            "chapter": chapter, "merge_valid": bool(merge_rows.get(chapter, {}).get("merge_valid")),
-            "merge_count": int(merge_rows.get(chapter, {}).get("merge_count") or 0),
-            "cleaned": current, "selectable": ready and not current,
-            "level3_status": "processed" if current else "pending" if ready else "missing_level1",
-            "pages_analyzed": int(manifest.get("pages_analyzed") or 0) if current else 0,
-            "candidate_count": int(manifest.get("candidate_count") or 0) if current else 0,
-            "candidate_pages": candidate_pages,
-        })
-    return {"chapters": rows, "total": len(rows)}
 
 
 def execute_level3(manga: Path, chapters: list[str], progress, preflight=None) -> list[dict]:
@@ -145,36 +107,6 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
     return {"pages": len(images), "candidate_count": int(report.get("candidate_count") or 0),
             "candidate_types": report.get("candidate_types", {}),
             "manifest": str(target / "json/clean-manifest.json")}
-
-
-def _manifest_path(manga: Path, chapter: str) -> Path:
-    return stage_chapter(manga, STAGE, chapter) / "json/clean-manifest.json"
-
-
-def _candidate_pages(chapter_dir: Path) -> list[dict]:
-    try:
-        report = json.loads(json_file(chapter_dir, "styled-balloon-report.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError, TypeError):
-        return []
-    pages = []
-    for page in report.get("pages", []):
-        candidates = page.get("styled_balloon_candidates") if isinstance(page, dict) else None
-        if not candidates or not isinstance(page.get("source"), str):
-            continue
-        pages.append({"source": page["source"], "candidates": [
-            {"bbox": item.get("bbox"), "candidate_type": item.get("candidate_type"),
-             "segmenter_confidence": item.get("segmenter_confidence"),
-             "features": item.get("features", {})}
-            for item in candidates if isinstance(item, dict) and _valid_candidate(item)
-        ]})
-    return [page for page in pages if page["candidates"]]
-
-
-def _valid_candidate(item: dict) -> bool:
-    bbox = item.get("bbox")
-    return (isinstance(bbox, list) and len(bbox) == 4
-            and all(isinstance(value, (int, float)) for value in bbox)
-            and isinstance(item.get("candidate_type"), str))
 
 
 def _sha256(path: Path) -> str:

@@ -1,11 +1,50 @@
 """Read and validate MERGE and TextOff stage manifests."""
 import hashlib
 import json
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .artifact_paths import artifact_file, json_file
 from .stages import LEVEL1, stage_chapter
+
+_documents = ContextVar("textoff_manifest_documents", default=None)
+
+
+def _read_document(path: Path) -> bytes:
+    documents = _documents.get()
+    if documents is not None and path in documents:
+        content = documents[path]
+        if content is None:
+            raise FileNotFoundError(path)
+        return content
+    try:
+        content = path.read_bytes()
+    except FileNotFoundError:
+        if documents is not None:
+            documents[path] = None
+        raise
+    if documents is not None:
+        documents[path] = content
+    return content
+
+
+@contextmanager
+def manifest_snapshot():
+    """Share manifest bytes within a query and reject changes during that query."""
+    documents = {}
+    token = _documents.set(documents)
+    try:
+        yield
+        for path, content in documents.items():
+            if content is None:
+                if path.exists() or path.is_symlink():
+                    raise OSError("Manifest alterado durante a consulta.")
+            elif path.read_bytes() != content:
+                raise OSError("Manifest alterado durante a consulta.")
+    finally:
+        _documents.reset(token)
 
 def _clean_manifest(manga: Path, chapter: str) -> dict:
     path = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED" / chapter / "clean-manifest.json"
@@ -20,7 +59,7 @@ def _listing_merge_artifacts(chapter: Path) -> list[Path]:
     """Read MERGE metadata and check file presence without decoding image pixels."""
     manifest_path = v3.merge_manifest_path(chapter)
     try:
-        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        manifest = json.loads(_read_document(manifest_path).decode("utf-8"))
         outputs = manifest.get("outputs")
         expected_count = int(manifest.get("merged_images") or 0)
         source_height = int(manifest.get("source_total_height") or 0)
@@ -58,7 +97,7 @@ def _stage_manifest(manga: Path, stage: str, chapter: str) -> dict:
     folder = stage_chapter(manga, stage, chapter)
     path = json_file(folder, "clean-manifest.json")
     try:
-        value = json.loads(path.read_text(encoding="utf-8"))
+        value = json.loads(_read_document(path).decode("utf-8"))
         return value if isinstance(value, dict) else {}
     except (OSError, ValueError, TypeError):
         return {}
@@ -68,7 +107,7 @@ def _stage_manifest_sha256(manga: Path, stage: str, chapter: str) -> str | None:
     folder = stage_chapter(manga, stage, chapter)
     path = json_file(folder, "clean-manifest.json")
     try:
-        return hashlib.sha256(path.read_bytes()).hexdigest()
+        return hashlib.sha256(_read_document(path)).hexdigest()
     except OSError:
         return None
 

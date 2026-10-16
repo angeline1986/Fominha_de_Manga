@@ -3,6 +3,8 @@ from __future__ import annotations
 
 import json
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 from pathlib import Path
 import shutil
 import tempfile
@@ -12,6 +14,7 @@ from central_v2.backend.operational_log import emit
 
 REGISTRY_PATH = Path(__file__).with_name("artifact-migration-registry.json")
 TEXT_OFF_ROOT = Path("FLUXO_SECUNDARIO") / "04_TEXTO_OFF"
+_registry_snapshot = ContextVar("textoff_registry_snapshot", default=None)
 
 
 class ArtifactAuthorityUnavailable(FileNotFoundError):
@@ -66,11 +69,32 @@ def mirror_stage_chapter(manga: Path, stage_id: str, chapter: str) -> bool:
         raise ArtifactMirrorError(stage_id, legacy, target, str(exc)) from exc
 
 
-def _read_registry(path: Path) -> dict:
-    payload = json.loads(path.read_text(encoding="utf-8"))
+def _parse_registry(content: bytes) -> dict:
+    payload = json.loads(content.decode("utf-8"))
     if not isinstance(payload, dict) or not isinstance(payload.get("stages"), list):
         raise ValueError("Registry de migração inválido.")
     return payload
+
+
+def _read_registry(path: Path) -> dict:
+    snapshot = _registry_snapshot.get()
+    if snapshot is not None and Path(path) == snapshot[0]:
+        return snapshot[2]
+    return _parse_registry(Path(path).read_bytes())
+
+
+@contextmanager
+def registry_snapshot():
+    """Reuse one authoritative registry per read, rejecting mid-read changes."""
+    path = REGISTRY_PATH
+    content = path.read_bytes()
+    token = _registry_snapshot.set((path, content, _parse_registry(content)))
+    try:
+        yield
+        if path.read_bytes() != content:
+            raise OSError("Registry de migração alterado durante a consulta.")
+    finally:
+        _registry_snapshot.reset(token)
 
 
 def resolve_authoritative_stage_chapter(

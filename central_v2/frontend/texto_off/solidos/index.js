@@ -1,4 +1,5 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createSolidTable } from "/texto_off/solidos/table.js";
 import { createSolidInspector } from "/texto_off/solidos/inspector.js";
@@ -128,6 +129,7 @@ export function render(container) {
     } catch (error) {
       if (!disposed) status.textContent = error.message;
     } finally {
+      invalidateCleanerOverview(context.provider, context.manga);
       busy = false; progress.update({busy:false}); if (!disposed) draw();
     }
   }

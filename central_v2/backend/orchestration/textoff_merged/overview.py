@@ -3,6 +3,9 @@ from pathlib import Path
 
 from .query import query_merged_level2
 from .level3_styled import query_level3
+from .artifact_migration import registry_snapshot
+from .manifests import manifest_snapshot
+from .stages import stage_path_snapshot
 from central_v2.backend.orchestration.textoff_special.artifacts import (
     contained_file, read_json, sha256,
 )
@@ -13,8 +16,15 @@ TREATMENTS = {"degrade": "degrade", "estilizado": "artistic", "gradiente_suave":
 
 
 def query_cleaner_overview(manga: Path) -> dict:
+    with registry_snapshot(), manifest_snapshot(), stage_path_snapshot():
+        return _query_cleaner_overview(manga)
+
+
+def _query_cleaner_overview(manga: Path) -> dict:
     result = query_merged_level2(manga)
-    mapped = {row["chapter"]: row["cleaned"] for row in query_level3(manga)["chapters"]}
+    merge_rows = {row["chapter"]: row for row in result["chapters"]}
+    mapped = {row["chapter"]: row["cleaned"]
+              for row in query_level3(manga, merge_rows)["chapters"]}
     previews = current_previews(manga)
     for row in result["chapters"]:
         flags = previews.get(row["chapter"], set()) if row["cleaned"] else set()

@@ -33,8 +33,26 @@
 
 .cleaner-overview .cleaner-retouch-filters[hidden] { display: none; }
 
-@media (min-width: 701px) {
+@media (min-width: 1161px) {
   .auto-merge-page.cleaner-overview .auto-merge-filters { flex-wrap: nowrap; gap: 2px; }
+}
+
+@media (min-width: 701px) and (max-width: 1160px) {
+  .auto-merge-page.cleaner-overview .cleaner-filter-groups {
+    flex-basis: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    order: 3;
+  }
+  .auto-merge-page.cleaner-overview .auto-merge-filters { flex-wrap: wrap; }
+  .auto-merge-page.cleaner-overview .cleaner-retouch-filters { align-self: flex-start; }
+}
+
+.cleaner-overview.cleaner-is-loading .auto-merge-results { min-height: 570px; }
+.cleaner-loading-placeholder {
+  min-height: 568px;
+  background: repeating-linear-gradient(to bottom, transparent 0 44px,
+    #f5f8fb 44px 45px, transparent 45px 46px);
 }
 
 .cleaner-overview .auto-merge-filter-button:focus-visible {

@@ -1,8 +1,16 @@
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";
+
 async function requestJson(url, options = {}) {
-  const response = await fetch(url, options);
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
-  return payload;
+  const mutation = options.method && options.method !== "GET";
+  const context = mutation ? JSON.parse(options.body || "{}") : null;
+  try {
+    const response = await fetch(url, options);
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+    return payload;
+  } finally {
+    if (mutation) invalidateCleanerOverview(context.provider, context.manga);
+  }
 }
 
 export async function fetchMergedTextoff(provider, manga, signal, level = "") {
@@ -101,6 +109,7 @@ export async function waitForTextoffJob(job, onProgress = () => {}) {
     ({ job: current } = await requestJson(`/api/jobs/${encodeURIComponent(job.id)}`, { cache: "no-store" }));
   }
   onProgress(current);
+  invalidateCleanerOverview();
   if (current.status === "failed") throw new Error(current.error || "A execução de TextOff falhou.");
   return current.results || [];
 }

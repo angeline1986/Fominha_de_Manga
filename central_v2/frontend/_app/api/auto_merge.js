@@ -91,12 +91,22 @@ export async function openAutoMergeFolder(provider, manga, chapter, level) {
 }
 
 export async function fetchJob(jobId, signal) {
-  return requestJson(`/api/jobs/${encodeURIComponent(jobId)}`, { signal, cache: "no-store" });
+  const result = await requestJson(`/api/jobs/${encodeURIComponent(jobId)}`, { signal, cache: "no-store" });
+  if (["completed", "failed"].includes(result.job?.status)) invalidateCleanerOverview();
+  return result;
 }
 
 async function requestJson(url, options) {
-  const response = await fetch(url, options);
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || `Falha na solicitação (${response.status}).`);
-  return payload;
+  try {
+    const response = await fetch(url, options);
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || `Falha na solicitação (${response.status}).`);
+    return payload;
+  } finally {
+    if (url.endsWith("/execute")) {
+      const { provider, manga } = JSON.parse(options.body);
+      invalidateCleanerOverview(provider, manga);
+    }
+  }
 }
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";

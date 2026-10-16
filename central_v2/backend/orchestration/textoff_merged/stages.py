@@ -1,6 +1,8 @@
 """Canonical TextOff Merged output names and legacy read compatibility."""
 from pathlib import Path
 import os
+from contextlib import contextmanager
+from contextvars import ContextVar
 
 LEVEL1 = "TO_MERGED_NIVEL_I"
 LEVEL2 = "TO_MERGED_NIVEL_II"
@@ -19,6 +21,30 @@ PINCEIS = {
     "PINCEL_SUAVE": "06_PINCEL/SUAVE",
     "CONSOLIDADO_FINAL": "07_CONSOLIDADO_FINAL",
 }
+_paths = ContextVar("textoff_stage_paths", default=None)
+
+
+def _fingerprint(path: Path):
+    try:
+        stat = path.stat()
+        return stat.st_dev, stat.st_ino, stat.st_mtime_ns, stat.st_ctime_ns
+    except OSError:
+        return None
+
+
+@contextmanager
+def stage_path_snapshot():
+    """Reuse validated stage paths, then verify authority and directory identity."""
+    paths = {}
+    token = _paths.set(paths)
+    try:
+        yield
+        for (manga, stage, chapter, read_legacy), (path, identity) in paths.items():
+            current = _resolve_stage_chapter(manga, stage, chapter, read_legacy=read_legacy)
+            if current != path or _fingerprint(current) != identity:
+                raise OSError("Caminho de estágio alterado durante a consulta.")
+    finally:
+        _paths.reset(token)
 
 
 def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
@@ -36,6 +62,19 @@ def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
 
 
 def stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = True) -> Path:
+    paths = _paths.get()
+    canonical = ALIASES.get(stage, stage)
+    if paths is not None and canonical not in PINCEIS:
+        key = (Path(manga), stage, chapter, read_legacy)
+        if key in paths:
+            return paths[key][0]
+        result = _resolve_stage_chapter(manga, stage, chapter, read_legacy=read_legacy)
+        paths[key] = (result, _fingerprint(result))
+        return result
+    return _resolve_stage_chapter(manga, stage, chapter, read_legacy=read_legacy)
+
+
+def _resolve_stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
     if canonical == LEVEL1 and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") == "1":
         return stage_root(manga, LEVEL1, read_legacy=False) / chapter

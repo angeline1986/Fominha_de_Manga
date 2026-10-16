@@ -1,6 +1,7 @@
 """Consulta isolada, somente leitura, de paginas originais para o Laboratorio."""
 import json
 import mimetypes
+import os
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -44,11 +45,22 @@ def _chapter(image_root, name):
 
 
 def _images(folder):
-    return sorted((p for p in folder.iterdir()
-        if p.is_file() and p.suffix.lower() in IMAGE_EXTENSIONS
-        and not p.stem.lower().endswith("_old")
-        and p.resolve().is_relative_to(folder.resolve())),
-        key=lambda p: natural_sort_key(p.name))
+    root, files = folder.resolve(), []
+    with os.scandir(folder) as entries:
+        for entry in entries:
+            path = Path(entry.path)
+            if (path.suffix.lower() not in IMAGE_EXTENSIONS
+                    or path.stem.lower().endswith("_old")):
+                continue
+            try:
+                if not entry.is_file(follow_symlinks=True):
+                    continue
+                if entry.is_symlink() and not path.resolve().is_relative_to(root):
+                    continue
+            except OSError:
+                continue
+            files.append(path)
+    return sorted(files, key=lambda path: natural_sort_key(path.name))
 
 
 def response(query, output_root, *, image=False):
@@ -66,8 +78,11 @@ def response(query, output_root, *, image=False):
             folder = _chapter(image_root, chapter)
             if not page or Path(page).name != page or page in {".", ".."}:
                 raise ValueError("Página inválida.")
+            requested = Path(page)
             target = (folder / page).resolve()
-            if target not in [p.resolve() for p in _images(folder)]:
+            if (not target.is_relative_to(folder) or not target.is_file()
+                    or requested.suffix.lower() not in IMAGE_EXTENSIONS
+                    or requested.stem.lower().endswith("_old")):
                 raise ValueError("Imagem indisponível.")
             return RouteResponse(200, target.read_bytes(),
                 mimetypes.guess_type(target.name)[0] or "image/png")

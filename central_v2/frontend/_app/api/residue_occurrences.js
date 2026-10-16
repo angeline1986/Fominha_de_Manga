@@ -15,10 +15,15 @@ export async function fetchResidueOccurrences(context, signal) {
 }
 
 export async function saveResidueOccurrences(payload, signal) {
-  return requestJson("/api/textoff/residue-occurrences", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    signal,
-    body: JSON.stringify(payload),
-  });
+  try {
+    return await requestJson("/api/textoff/residue-occurrences", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      signal,
+      body: JSON.stringify(payload),
+    });
+  } finally {
+    invalidateCleanerOverview(payload.provider, payload.manga);
+  }
 }
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";

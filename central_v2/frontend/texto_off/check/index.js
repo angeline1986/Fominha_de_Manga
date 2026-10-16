@@ -1,10 +1,10 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
-import { fetchMergedTextoff } from "/_app/api/textoff.js";
+import { cachedCleanerOverview, loadCleanerOverview,
+  subscribeCleanerOverview } from "/_app/api/cleaner_overview.js";
 import { createMergedView } from "/texto_off/merged/view.js";
 
 export function render(container) {
   let requestId = 0;
-  let controller;
   let disposed = false;
   const view = createMergedView(() => {}, {
     title: "Auto-Cleaner Check",
@@ -19,17 +19,20 @@ export function render(container) {
 
   async function load() {
     const id = ++requestId;
-    controller?.abort();
-    controller = new AbortController();
     const { provider, manga } = getContext();
     if (!provider || !manga) {
       view.update({ status: "idle", provider, manga, chapters: [] });
       return;
     }
+    const cached = cachedCleanerOverview(provider, manga);
+    if (cached) { view.update({ status: "ready", ...cached }); return; }
     view.update({ status: "loading", provider, manga, chapters: [] });
     try {
-      const result = await fetchMergedTextoff(provider, manga, controller.signal, "1");
-      if (!disposed && id === requestId) view.update({ status: "ready", ...result });
+      const result = await loadCleanerOverview(provider, manga);
+      const current = getContext();
+      if (!disposed && id === requestId && current.provider === provider && current.manga === manga) {
+        view.update({ status: "ready", ...result });
+      }
     } catch (error) {
       if (!disposed && id === requestId && error.name !== "AbortError") {
         view.update({ status: "error", provider, manga, chapters: [], error: error.message });
@@ -38,12 +41,13 @@ export function render(container) {
   }
 
   const unsubscribe = subscribeContext(load);
+  const unsubscribeData = subscribeCleanerOverview(load);
   load();
   return () => {
     disposed = true;
     requestId += 1;
-    controller?.abort();
     unsubscribe();
+    unsubscribeData();
     view.dispose();
   };
 }

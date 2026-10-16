@@ -56,7 +56,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   }
 
   function drawFilters() {
-    if (stageFilters) { stageFilters.draw(state.chapters); return; }
+    if (stageFilters) { stageFilters.draw(state.status === "loading" ? null : state.chapters); return; }
     filters.replaceChildren();
     const options = mode === "level3"
       ? MAPPING_FILTERS
@@ -83,12 +83,21 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   function draw() {
     results.replaceChildren();
     element.setAttribute("aria-busy", String(state.status === "loading"));
+    element.classList.toggle("cleaner-is-loading", mode === "overview" && state.status === "loading");
     if (state.status === "idle") status.textContent = "Selecione uma obra para consultar os MERGEs oficiais.";
     else if (state.status === "loading") status.textContent = `Consultando ${state.manga}…`;
     else if (state.status === "error") status.textContent = state.error;
     else status.textContent = "";
     status.hidden = state.status === "ready";
     drawFilters();
+    if (mode === "overview" && state.status === "loading") {
+      const placeholder = document.createElement("div");
+      placeholder.className = "cleaner-loading-placeholder";
+      placeholder.setAttribute("aria-hidden", "true");
+      results.append(placeholder);
+      if (execute) execute.disabled = true;
+      return;
+    }
     const term = query.value.trim().toLocaleLowerCase("pt-BR");
     const rows = state.chapters.filter((row) => row.chapter.toLocaleLowerCase("pt-BR").includes(term) && matches(row));
     const selection = pagination.select(rows);

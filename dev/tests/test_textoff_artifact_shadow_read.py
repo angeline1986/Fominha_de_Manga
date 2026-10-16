@@ -114,7 +114,9 @@ class TextoffArtifactShadowReadTests(unittest.TestCase):
 
     def test_both_missing_is_diagnosed_as_missing_legacy_without_traceback(self):
         with self.assertLogs(artifact_shadow_read.logger, level="DEBUG") as output:
-            artifact_shadow_read.observe_shadow_read(self.manga, "mapear", "1")
+            artifact_shadow_read.observe_shadow_read(
+                self.manga, "mapear", "1", debug_only=True
+            )
         report = " ".join(output.output)
         self.assertIn("comparison_status=MISSING_LEGACY", report)
         self.assertNotIn("SHADOW_READ_ERROR", report)
@@ -150,6 +152,14 @@ class TextoffArtifactShadowReadTests(unittest.TestCase):
         with patch.object(artifact_shadow_read, "validate_stage_chapter") as validator:
             artifact_shadow_read.observe_shadow_read(
                 self.manga, "mapear", "1", registry_path=registry_path
+            )
+        validator.assert_not_called()
+
+    def test_shadow_validation_is_skipped_when_debug_logging_is_disabled(self):
+        with patch.object(artifact_shadow_read.logger, "isEnabledFor", return_value=False), \
+             patch.object(artifact_shadow_read, "validate_stage_chapter") as validator:
+            artifact_shadow_read.observe_shadow_read(
+                self.manga, "mapear", "1", debug_only=True
             )
         validator.assert_not_called()
 

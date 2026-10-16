@@ -28,12 +28,17 @@ export async function generateMergeManualProposal(selection, cuts) {
 }
 
 export async function applyMergeManualProposal(selection) {
-  const response = await fetch("/api/merge-manual/apply", {
-    method: "POST",
-    headers: { "Content-Type": "application/json", Accept: "application/json" },
-    body: JSON.stringify(selection),
-  });
-  const payload = await response.json();
-  if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
-  return payload;
+  try {
+    const response = await fetch("/api/merge-manual/apply", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(selection),
+    });
+    const payload = await response.json();
+    if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+    return payload;
+  } finally {
+    invalidateCleanerOverview(selection.provider, selection.manga);
+  }
 }
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";

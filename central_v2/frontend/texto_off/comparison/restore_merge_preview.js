@@ -1,4 +1,6 @@
 // Check-only Reset: optimistic version guard, explicit confirmation, reload callback.
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";
+
 export function bindRestoreMergePreview(root,getSelection,onRestored) {
   const button=document.createElement('button');
   button.type='button';button.className='btn comparison-restore-merge';
@@ -44,19 +46,21 @@ export function bindRestoreMergePreview(root,getSelection,onRestored) {
   }
   async function apply(){
     if(!pending||busy)return;
+    const payload=pending;
     busy=true;confirm.disabled=true;
     cancels.forEach(el=>el.disabled=true);
     status.textContent='Restaurando página no Check…';
     try{
       const res=await fetch('/api/textoff/check/reset-merge',{method:'POST',
-        headers:{'Content-Type':'application/json'},body:JSON.stringify(pending)});
+        headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
       const data=await res.json();
       if(!res.ok||!['restored','already_restored'].includes(data.status))throw new Error(data.error||'Reset não concluído.');
       status.textContent='Página restaurada. Atualizando comparação…';
       await onRestored?.();
       busy=false;close();
     }catch(err){status.textContent=`Não foi possível concluir: ${err.message}`;}
-    finally{busy=false;cancels.forEach(el=>el.disabled=false);}
+    finally{invalidateCleanerOverview(payload.provider,payload.manga);
+      busy=false;cancels.forEach(el=>el.disabled=false);}
   }
   button.addEventListener('click',open);confirm.addEventListener('click',apply);
   return {setReady(value){button.disabled=!value;if(!value)close();},

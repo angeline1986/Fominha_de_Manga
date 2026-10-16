@@ -42,7 +42,7 @@ def query(manga: Path) -> dict:
         for chapter in chapter_names:
             imgs = images(merge_dir(manga, chapter))
             state = _sommelier_state(stage_chapter(manga, "BUBBLE_SOMMELIER", chapter) / "report.json")
-            observe_shadow_read(manga, "bubble_sommelier", chapter)
+            observe_shadow_read(manga, "bubble_sommelier", chapter, debug_only=True)
             chapters.append({
                 "chapter": chapter,
                 "merge_count": len(imgs),

@@ -1,13 +1,22 @@
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";
+
 async function requestJson(url, options) {
-  const response = await fetch(url, options);
-  const body = await response.json();
-  if (!response.ok) {
-    const error = new Error(body.error || `Falha HTTP ${response.status}`);
-    error.body = body;
-    error.status = response.status;
-    throw error;
+  try {
+    const response = await fetch(url, options);
+    const body = await response.json();
+    if (!response.ok) {
+      const error = new Error(body.error || `Falha HTTP ${response.status}`);
+      error.body = body;
+      error.status = response.status;
+      throw error;
+    }
+    return body;
+  } finally {
+    if (options?.method === "POST" && !url.endsWith("authorization-candidates")) {
+      const { provider, manga } = JSON.parse(options.body);
+      invalidateCleanerOverview(provider, manga);
+    }
   }
-  return body;
 }
 
 function post(url, payload, signal) {
@@ -58,6 +67,9 @@ export async function executeStylizedLaboratoryJob(payload, signal, onProgress) 
   while (true) {
     if (signal?.aborted) throw new DOMException("Cancelado", "AbortError");
     onProgress?.(current.progress || {});
+    if (["failed", "completed"].includes(current.status)) {
+      invalidateCleanerOverview(payload.provider, payload.manga);
+    }
     if (current.status === "failed") {
       throw new Error(current.error || "Tratamento Artístico não concluído.");
     }
@@ -84,6 +96,9 @@ export async function executeSmoothLaboratoryJob(payload, signal, onProgress) {
   while (true) {
     if (signal?.aborted) throw new DOMException("Cancelado", "AbortError");
     onProgress?.(current.progress || {});
+    if (["failed", "completed"].includes(current.status)) {
+      invalidateCleanerOverview(payload.provider, payload.manga);
+    }
     if (current.status === "failed") {
       throw new Error(current.error || "Tratamento Suave não concluído.");
     }
@@ -111,6 +126,9 @@ async function waitDegradeJob(path, payload, signal, onProgress) {
   while (true) {
     if (signal?.aborted) throw new DOMException("Cancelado", "AbortError");
     onProgress?.(current.progress || {});
+    if (["failed", "completed"].includes(current.status)) {
+      invalidateCleanerOverview(payload.provider, payload.manga);
+    }
     const item = current.results?.[0];
     if (current.status === "failed") {
       const error = new Error(item?.error || current.error || "Degradê não concluído.");

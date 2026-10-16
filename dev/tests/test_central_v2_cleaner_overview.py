@@ -17,6 +17,7 @@ class CleanerOverviewTests(unittest.TestCase):
                  {"chapter": "1", "cleaned": False}]}), \
              patch.object(overview, "current_previews", return_value={"1": {"ac4", "artistic"}}):
             row = overview.query_cleaner_overview(Path("/manga"))["chapters"][0]
+            overview.query_level3.assert_called_once_with(Path("/manga"), {"1": rows[0]})
         self.assertEqual(row["stages"], dict(ac1=True, ac2=True, ac3=False, ac4=True, map=False))
         self.assertEqual(row["retouch"], dict(degrade=False, artistic=True, soft=False))
         self.assertTrue(row["selectable"])

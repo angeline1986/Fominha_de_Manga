@@ -18,8 +18,11 @@ def observe_shadow_read(
     chapter: str,
     *,
     registry_path: Path | None = None,
+    debug_only: bool = False,
 ) -> None:
     """Log M4 comparison results; this function never supplies consumer data."""
+    if debug_only and not logger.isEnabledFor(logging.DEBUG):
+        return
     legacy_path = target_path = None
     authority = "legacy"
     label = "SHADOW_READ"
