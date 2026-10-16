@@ -8,6 +8,8 @@ import tempfile
 from PIL import Image
 from central_v2.backend.routes.laboratorio_solidos import _filter, _sha
 from .auto_cleaner_check_manifest import manifest_path, _read_check_manifest
+from .auto_cleaner_check_images import check_image
+from .reset_check_override import effective
 from .stages import LEVEL1, stage_chapter
 
 STAGE = "05_AUTO_CLEANER_SOLIDOS"
@@ -23,14 +25,22 @@ def rows_for(manga, document, chapter):
     return rows, _sha(check)
 
 
-def source_for(manga, chapter, page):
+def source_for(manga, chapter, page, expected_sha256=None):
     if not isinstance(page, str) or Path(page).name != page or not page.lower().endswith(".png"):
         raise ValueError("Página inválida no Check")
     folder = stage_chapter(manga, LEVEL1, chapter)
     source = (folder / "clean" / (Path(page).stem + "_clean.png")).resolve()
     if not source.is_relative_to(folder.resolve()) or not source.is_file():
         raise ValueError("Saída original do Auto-Cleaner I indisponível: " + page)
-    return source
+    check = check_image(manga, chapter, page, source)
+    current = effective(manga, chapter, page, check)
+    if expected_sha256 is not None:
+        # Existing previews must retain their own, immutable input version.
+        for candidate in (current, check, source):
+            if _sha(candidate) == expected_sha256:
+                return candidate
+        raise ValueError("Fonte histórica da prévia Sólidos indisponível")
+    return current
 
 
 def execute_chapter(manga, document, chapter):

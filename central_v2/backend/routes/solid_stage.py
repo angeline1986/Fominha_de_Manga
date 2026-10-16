@@ -85,8 +85,8 @@ def page_image(query, output_root):
         if item is None:
             raise ValueError("Página não faz parte desta prévia")
         if kind == "before":
-            target = source_for(manga, chapter, page)
             expected = item["source_sha256"]
+            target = source_for(manga, chapter, page, expected_sha256=expected)
         elif kind in ("after", "mask"):
             suffix = "clean" if kind == "after" else "mask"
             target = folder / suffix / (Path(page).stem + f"_{suffix}.png")
