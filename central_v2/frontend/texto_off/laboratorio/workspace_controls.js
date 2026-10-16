@@ -64,12 +64,19 @@ export function connectWorkspaceControls(root, originalImage) {
   let active = true;
   const onFocusKey = (event) => {
     if (!active || !root.isConnected) return;
+    if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return;
+    if (event.key === "Escape") {
+      if (root.classList.contains("lab-focus-mode")) {
+        event.preventDefault();
+        setFocus(false);
+      }
+      return;
+    }
     const element = event.target;
     if (element instanceof HTMLElement && (
       element.isContentEditable || ["INPUT", "TEXTAREA", "SELECT"].includes(element.tagName)
     )) return;
-    if (event.key === "Escape" && root.classList.contains("lab-focus-mode")) setFocus(false);
-    else if (event.key.toLowerCase() === "f" && !event.altKey && !event.ctrlKey && !event.metaKey) {
+    if (event.key.toLowerCase() === "f" && !event.altKey && !event.ctrlKey && !event.metaKey) {
       event.preventDefault();
       setFocus(!root.classList.contains("lab-focus-mode"));
     }

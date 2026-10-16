@@ -1,5 +1,26 @@
 import { paginationConfig } from "/_shared/pagination/config.js";
 
+// Atalho para paginadores de tabela ativos; um listener por módulo, não por renderização.
+function onTablePaginationKey(event) {
+  if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || event.defaultPrevented || event.repeat
+      || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+  const target = event.target;
+  if (target instanceof Element && target.closest(
+    'input, textarea, select, button, [contenteditable], [role="slider"], [role="dialog"], [role="listbox"]'
+  )) return;
+  if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')
+      || document.body.classList.contains('has-image-focus')
+      || document.body.classList.contains('lab-focus-lock')) return;
+  const pagers = [...document.querySelectorAll('nav.pagination')].filter((nav) =>
+    nav.getClientRects().length && !nav.closest('[hidden], [aria-hidden="true"]'));
+  if (pagers.length !== 1) return;
+  const button = pagers[0].querySelectorAll('button.pagination-button')[event.key === 'ArrowLeft' ? 0 : 1];
+  if (!button || button.disabled) return;
+  event.preventDefault();
+  button.click();
+}
+document.addEventListener('keydown', onTablePaginationKey);
+
 export function createPaginationControls(selection, onMove, options = {}) {
   const element = document.createElement("nav");
   element.className = "pagination";

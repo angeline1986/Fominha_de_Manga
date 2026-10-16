@@ -121,6 +121,20 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
   });
   root.addEventListener("laboratorio:pages", loadPages);
 
+  function onPaginationKey(event) {
+    if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || event.defaultPrevented || event.repeat
+        || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !root.isConnected) return;
+    if (event.target instanceof Element && event.target.closest(
+      'input, textarea, select, button, [contenteditable], [role="slider"], [role="dialog"], [role="listbox"]'
+    )) return;
+    if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return;
+    const button = event.key === 'ArrowLeft' ? prev : next;
+    if (button.disabled) return;
+    event.preventDefault();
+    button.click();
+  }
+  document.addEventListener('keydown', onPaginationKey);
+
   return {
     draw,
     getSelection() {
@@ -136,6 +150,9 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
       draw();
       return true;
     },
-    dispose() { root.removeEventListener("laboratorio:pages", loadPages); },
+    dispose() {
+      root.removeEventListener("laboratorio:pages", loadPages);
+      document.removeEventListener('keydown', onPaginationKey);
+    },
   };
 }
