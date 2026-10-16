@@ -30,6 +30,9 @@ from central_v2.backend.routes.textoff_merged import (
 
 
 def dispatch_textoff_merged_get(request, output_root: Path) -> RouteResponse | None:
+    if request.path == "/api/textoff/check/reset-merge/preflight":
+        from central_v2.backend.routes.reset_merge_preflight_route import response
+        return response(request.query, output_root)
     if request.path == SOLID_ROUTE:
         return solid_overview(parse_qs(request.query), output_root)
     if request.path == SOLID_ROUTE + "/image":
@@ -57,6 +60,9 @@ def dispatch_textoff_merged_get(request, output_root: Path) -> RouteResponse | N
 def dispatch_textoff_merged_post(path: str, payload: object,
                                  output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
     route = urlparse(path).path
+    if route == "/api/textoff/check/reset-merge":
+        from central_v2.backend.routes.reset_check_route import post
+        return post(payload, output_root)
     if route == SOLID_ROUTE + "/execute":
         return solid_execute(payload, output_root)
     if route == RESTORE_PAGE_ROUTE:

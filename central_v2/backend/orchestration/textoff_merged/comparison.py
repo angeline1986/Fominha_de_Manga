@@ -10,6 +10,7 @@ from .manifests import (
 from .stages import LEVEL1, LEVEL2, stage_chapter
 from .consolidated import _changed_source_set, _valid_level2, consolidated_is_current
 from .auto_cleaner_check_images import check_image
+from .reset_check_override import effective as check_reset_effective
 from .overview import current_preview_records
 from .query import query_merged_level2
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
@@ -43,7 +44,8 @@ def comparison_pairs(manga: Path, chapter: str, step: str, *, check: bool = Fals
             continue
         before, after = original, clean
         if check:
-            after = check_image(manga, chapter, original.name, clean)
+            after = check_reset_effective(manga, chapter, original.name,
+                     check_image(manga, chapter, original.name, clean))
         if step == "2":
             if original.name not in level2.get("candidate_source_artifacts", []):
                 continue

@@ -8,6 +8,7 @@ import { createPageList } from "/texto_off/comparison/page_list.js";
 import { createResidueCatalog } from "/texto_off/comparison/residue_catalog.js";
 import { createDegradeContext } from "/texto_off/comparison/degrade_context.js";
 import { bindDegradeViewTools } from "/texto_off/comparison/degrade_view_tools.js";
+import { bindRestoreMergePreview } from "/texto_off/comparison/restore_merge_preview.js";
 
 export function createComparisonScreen(context, onBack) {
   const mode = comparisonModeConfig(context.comparisonMode);
@@ -55,6 +56,12 @@ export function createComparisonScreen(context, onBack) {
     <aside class="comparison-hover-preview" data-preview role="tooltip" hidden>
       <img alt="Prévia da imagem original"><span data-preview-name></span></aside>`;
   const query = (selector) => element.querySelector(selector);
+  if (context.comparisonMode === "check") {
+    const stylesheet = document.createElement("link");
+    stylesheet.rel = "stylesheet";
+    stylesheet.href = "/texto_off/comparison/restore_merge_preview.css";
+    element.append(stylesheet);
+  }
   if (context.comparisonMode === "check") {
     const style = document.createElement("style");
     style.textContent = `.comparison-check-filters .comparison-check-selects{
@@ -144,6 +151,10 @@ export function createComparisonScreen(context, onBack) {
     onPreview: showPreview, onPreviewPosition: drawPreviewPosition,
     getDraftOccurrenceCount: (pageName) => catalog.draftOccurrenceCount(pageName),
   });
+  const restorePreview = context.comparisonMode === "check"
+    ? bindRestoreMergePreview(query(".comparison-canvas-controls"), () => ({
+        context, page: pages[index],
+      }), () => load()) : null;
   const disposeFocus = bindFocusMode(element, { button: focusButton });
   const disposeViewTools = context.comparisonMode === "degrade" ? bindDegradeViewTools(query(".comparison-canvas-controls"), slider) : () => {};
   document.body.append(preview);
@@ -169,6 +180,7 @@ export function createComparisonScreen(context, onBack) {
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index >= pages.length - 1;
     pageList.render(pages, index);
+    restorePreview?.setReady(Boolean(pages[index]));
     const pageSelect = query("[data-check-page]");
     if (pageSelect) pageSelect.value = String(index);
     activeImageIndex = index;
@@ -265,6 +277,7 @@ export function createComparisonScreen(context, onBack) {
     element.removeEventListener("click", onMove); element.removeEventListener("click", onPanel);
     element.removeEventListener("keydown", onKeyDown);
     catalog.dispose(); slider.dispose(); disposeFocus();
+    restorePreview?.dispose();
     disposeViewTools();
   }
   drawState();
