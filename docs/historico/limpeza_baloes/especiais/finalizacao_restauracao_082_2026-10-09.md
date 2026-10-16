@@ -64,7 +64,7 @@ A inspeção visual dos recortes confirma o texto `…COMING THIS WAY RIGHT NOW?
 
 ## Comparação visual
 
-Abrir o [comparador interativo atualizado](</private/tmp/fominha-restore-082-real-fn8zuoq9/visual/comparador.html>). Ele apresenta a página atual, o snapshot restaurado e a imagem do Check lado a lado. Zoom e rolagem são sincronizados; o contorno vermelho marca a ROI aprovada. Os três PNGs foram copiados sem transformação e têm hashes registrados em [hashes.json](</private/tmp/fominha-restore-082-real-fn8zuoq9/visual/hashes.json>). O registro completo está em [evidence.json](</private/tmp/fominha-restore-082-real-fn8zuoq9/evidence.json>).
+Abrir o comparador interativo atualizado (referência histórica: `/private/tmp/fominha-restore-082-real-fn8zuoq9/visual/comparador.html`). Ele apresenta a página atual, o snapshot restaurado e a imagem do Check lado a lado. Zoom e rolagem são sincronizados; o contorno vermelho marca a ROI aprovada. Os três PNGs foram copiados sem transformação e têm hashes registrados em hashes.json (referência histórica: `/private/tmp/fominha-restore-082-real-fn8zuoq9/visual/hashes.json`). O registro completo está em evidence.json (referência histórica: `/private/tmp/fominha-restore-082-real-fn8zuoq9/evidence.json`).
 
 A inspeção deve considerar a página inteira e o contexto do balão. A ROI coincide; a diferença fora dela é a razão objetiva para não liberar outra execução Artística.
 

@@ -283,7 +283,7 @@ A Curadoria usa a barra compartilhada na posição padrão, sem variante inline;
 
 ## P4 — Sanitização arquitetural
 
-**Status:** ADIADA DELIBERADAMENTE. O detalhe e a evidência permanecem em [`sanitizacao_pendente_central_v2.md`](sanitizacao_pendente_central_v2.md); este índice não os duplica.
+**Status:** ADIADA DELIBERADAMENTE. O detalhe e a evidência permanecem em [`sanitizacao_pendente_central_v2.md`](../../planos/sanitizacao_pendente_central_v2.md); este índice não os duplica.
 
 Frentes resumidas na triagem especializada:
 
@@ -301,7 +301,7 @@ Frentes resumidas na triagem especializada:
 
 **Status:** ADIADO / REVALIDADO contra `0f8a7a76` em 04/10/2026.
 
-Autoridade específica: [`central_v2_conformidade_enderecamentos.md`](../central_v2_conformidade_enderecamentos.md). O levantamento original declara snapshot estático de 30/09/2026; cada achado foi reclassificado no HEAD atual. Há itens ainda aplicáveis, parcialmente resolvidos e alterados por implementação posterior; nenhum item de centralização de raízes/estágios foi considerado totalmente resolvido.
+Autoridade específica: [`central_v2_conformidade_enderecamentos.md`](../../../central_v2_conformidade_enderecamentos.md). O levantamento original declara snapshot estático de 30/09/2026; cada achado foi reclassificado no HEAD atual. Há itens ainda aplicáveis, parcialmente resolvidos e alterados por implementação posterior; nenhum item de centralização de raízes/estágios foi considerado totalmente resolvido.
 
 Pontos resumidos para retomada:
 

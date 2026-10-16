@@ -1,0 +1,1303 @@
+{
+  "files": {
+    "docs/03_arquitetura_interface_alvo_visual_v2.html": "0d29edd2ce4a8aa76a68902ae7f53cc84d023eb1756df6bde5e663bbc65c902c",
+    "docs/OLD/00_plano_refatoracao_arquitetural.md": "7101bda107d115589caf5ecd1757fec2527875b9f32a066fdfbd357e307d1222",
+    "docs/OLD/fluxo_narrativo_milestones.md": "b8e5c0325518888e6fb5b3c0489b95c0bea90d8b20d2b331855786876d366f40",
+    "docs/OLD/investigacao_cleaner_v1_v2_parcial_2026-10-09.md": "e427f89f798bd329f324e6d8bd13367b1881d3812a7485622e2aa38e74e8dae0",
+    "docs/OLD/merge_review_stabilization_v1.md": "044f82bac25f347a8201be39b8d62579198a409fd0054ab08f8709282a86b2c4",
+    "docs/OLD/plano_milestones_img_old.md": "1d1b8f9a5681fe391c4a85e6f5a2eb413de8bd8d3f4abcc0baaccebf431e22a6",
+    "docs/README.md": "735e5a1bd6fa33117d68b0c7a60280223526b8cba0a1ee4b42f02f4d30332c64",
+    "docs/Refatoracao/00_arquitetura/00_plano_refatoracao_arquitetural.md": "0d853fff5d2c474660e4473d46265df24991d96f58c3dbcdaf88c9e9c8d73b56",
+    "docs/Refatoracao/00_arquitetura/01_ambientes_virtuais.md": "87c1fa353f3889dcee641902c4ab38900a553c01f008549e5c47406aa69775db",
+    "docs/Refatoracao/00_arquitetura/02_baseline_testes_e_contratos.md": "6b3399c6f6a59fdc72043e6b2796c8c8363fddd67236e458833807776f2c9ed8",
+    "docs/Refatoracao/00_arquitetura/03_arquitetura_interface_alvo.html": "62eeb525bb0cd015b65f3a7fca9432da6d49a03c065daadb15b7c8998ae1c80c",
+    "docs/Refatoracao/00_arquitetura/03_arquitetura_interface_alvo.md": "8487e624453e2f70518d864e8d0c875fc9ee5b24262752cf2b7f8d1f380a68a2",
+    "docs/Refatoracao/00_arquitetura/04a_mapa_metro_fluxos_manifestos.md": "71e0b823f6ea6209b2e04c46e1b30adfbfd912a7b44b05ebffd7854528383b44",
+    "docs/Refatoracao/00_arquitetura/04b_mapa_metro_auditoria_proveniencia.md": "2200c085b830492e2d1e5fe813930bc13e3ff1bacbffb8b62b3d925e919a138f",
+    "docs/Refatoracao/00_arquitetura/catalogo_fluxos_criticos.md": "34a46d59727efdbae92d689d9461bce15e21a273cf4b82a5827d0aa8a8b9b54c",
+    "docs/Refatoracao/00_arquitetura/contrato_telas_inspecao_imagem.md": "ec25f713004f7491eb663d53f7aaa0d5b95d784ddb25c3356cf49ddf80755afd",
+    "docs/Refatoracao/00_arquitetura/estado_atual_e_inventario_estrutural.md": "2c77fbe8530c5ba733c89683184ffc3ddb41456bd4aebc26f4a39731721ebd85",
+    "docs/Refatoracao/00_arquitetura/investigacao_cleaner_v1_v2_parcial_2026-10-09.md": "e427f89f798bd329f324e6d8bd13367b1881d3812a7485622e2aa38e74e8dae0",
+    "docs/Refatoracao/00_arquitetura/mapa_componentes_e_dependencias.md": "b34f60db7b880e0412fd4b19cdc312c284d20c37b66d2383816fbf8f56020375",
+    "docs/Refatoracao/02_processamento/auto_merge/evidencias/nivel_1/cenarios_sinteticos.jsonl": "4b252db8ef3303015316f25ed2a6ee2b03f2fe637cee21db6a23450266a07b47",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_1/consulta_v2.md": "62a95043b1c0c91cd1a4bc251e62ad42194e3f622cc86b164d545c29fe414968",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_1/contrato.md": "1d4390535d60935877dc8ec6c29db8aa91ebc09961359a2a36b82d6e9e1f2c17",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_1/estrategia_v2.md": "ad7f06b0aa5763b5ac27af3abfd4b6d021acf4bed7d36188d0a328b1d43b14f4",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_1/plano_e_evidencias.md": "e7b2cef6065394feb76f782ae5fa6e09e5e68141175d12658cb79643a7feab3e",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_2/analise_v2.md": "a43ebf274f88a774259865264031fbe2bb806e8c5c7b4362ab53520a56369c69",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_3/implementacao_v2.md": "d1b520036ae33ff8417e31c1a215892cb66b7473a2fd3554ecb169573a61b318",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_4/implementacao_v2.md": "25672c5fd10f77bbea3ed3fb65d34e5401de10850b40edb3594c6007b8bed29f",
+    "docs/Refatoracao/02_processamento/auto_merge/nivel_5/implementacao_v2.md": "b5b3e085185568416ea2192de1fe424413278e8ae20aa3d06dbcd938334ee2a6",
+    "docs/Refatoracao/02_processamento/text_off/correcao_assistida/analise_correcao_assistida_e_tratamentos_especiais.md": "ec447f24e3055e1e6edf65a0f38ea331b1984b7bced09fcfd7c91997d2f903af",
+    "docs/Refatoracao/02_processamento/text_off/especiais/comparacao_transparencia_candy_ch1_ch3.md": "b32e7720a4a94ad2dfbe7f2e725410a245dd46377de571cfe7b2b42403a6f86e",
+    "docs/Refatoracao/02_processamento/text_off/especiais/continuidade_2026-09-29.md": "ec4e1b326840d3f0a7e2a5f67e6b12dea929261d6801c7dc996c2b596380941d",
+    "docs/Refatoracao/02_processamento/text_off/especiais/correcao_entrada_artistico_082_2026-10-09.md": "de1916606371bab705ff04fb9f1c545e976ef975caac722e7387530f91a5970e",
+    "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md": "4f0dbf7e890ac7b95d7d77b330579710b2b5131a82948df43cd71a00a7358aa1",
+    "docs/Refatoracao/02_processamento/text_off/especiais/ensaio_restauracao_082_2026-10-09.md": "5ca79b27c8d2c9bd9b43ede83c820b29fa5a958f2675d3a4f94ba93b02a56943",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/balao_transparente_legado_runtime.json": "61f5f9c308efec313740af2b0a26fcdea69f8827343448dc06f6d6b5c0d45002",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/balao_transparente_runtime.json": "c5d58e1ba8ad97bfd990c74049e4a5dfbf7fb4dc7c44186d81ce820a740837ae",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/candy_comparison.json": "c06d6bb0a33cbb5813639592f169f6ff778c2907088ff0ea061f30b3e9064a5c",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/entradas_autorizadas.json": "2a54a44cf10f05d8f425a5b6a110f58828d91d82e12c91f138a83d15dcbd262b",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/execucoes_v1.json": "81d848fcf277ab09f363588e4a758a0451bdf067e36fb17f9028ba9e12b929cb",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/matriz_resultados.json": "e97ebd5be8a4f94b3388ec8e8baca24b82e7786e2d1ee9085a08927c22e43164",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/SHA256SUMS.txt": "d5ebd10086c55a0a545a772f7af369736cd12aabecd6648302e03aca5667142f",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/degrade_suave_direct_packages.txt": "dc4a4fa4fdb9ad357eeb39e8e5c94242bf6ec88b03182bfc46a3c3c9198b4105",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/degrade_suave_pip_check.txt": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/degrade_suave_pip_freeze.txt": "5eccb798d49237512d3017c1d533a966bbdcbc71f25638d7279f7011064c74fa",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/degrade_suave_python.txt": "acaa5255e934975951b86d3ff1018ab408646d676728eed1a024483368a0e4e3",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_degrade_direct_packages.txt": "ab5d348c5b87e79e7a9c7dd0a0ddba6a6ce1b836dd3b31f64ec8efa0740e7659",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_degrade_pip_check.txt": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_degrade_pip_freeze.txt": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_degrade_python.txt": "acaa5255e934975951b86d3ff1018ab408646d676728eed1a024483368a0e4e3",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_estilizado_direct_packages.txt": "ab5d348c5b87e79e7a9c7dd0a0ddba6a6ce1b836dd3b31f64ec8efa0740e7659",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_estilizado_pip_check.txt": "9261363b733079a641c2e4cc9bc46ffa1d8336945a87f807b6cf68847dbc9b09",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_estilizado_pip_freeze.txt": "842103e5e1c24ea735dde631ce2835644928bf954f7e7cb05bda5e22ee98e66e",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-30/patch_estilizado_python.txt": "acaa5255e934975951b86d3ff1018ab408646d676728eed1a024483368a0e4e3",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-10-09/078_degrade_estagios.png": "0a62c0575d42f1cf184e954db3a6a71850d57182dbcc9c4011e5a77112d9246c",
+    "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-10-09/082_suave_antes_depois.png": "da250a9be86fd965621ffcbfa1ad47d24a0427c77b19f5b6c2f752b778289a3a",
+    "docs/Refatoracao/02_processamento/text_off/especiais/executor_e_comparacao_v2.md": "bfbc72e49a2bb6b0bb22f5f3decd2421644370ad3ca50fd240144762cf6bea82",
+    "docs/Refatoracao/02_processamento/text_off/especiais/finalizacao_restauracao_082_2026-10-09.md": "6866832768a326f44e8750c67eff6c61fa64a0ec2082b72fcf161363f4fbbf0d",
+    "docs/Refatoracao/02_processamento/text_off/especiais/inventario_e_contrato_v2.md": "2fbbbbce5fb67a5539ea9672eeb08be7552bce097fb21862fa43cfeaf2124525",
+    "docs/Refatoracao/02_processamento/text_off/merged/consolidacao_nivel_iii_e_reducao_armazenamento_2026-09-30.md": "77c6d1d35e6aa143cb366b30e8c20377b838d147df53aac0d44f14ae03428b4b",
+    "docs/Refatoracao/02_processamento/text_off/merged/niveis_iii_a_v.md": "3739c52984270e3a1ae538f8626b39f88386cbea617b58a79a14a3f1cdf28bbd",
+    "docs/Refatoracao/02_processamento/text_off/solidos/01_Solidos_Parametros_Contrato_Tecnico.md": "c8f5353e499ea25f3aab9a19050f6abce316c9222492ab03743424f93f53fbbb",
+    "docs/Refatoracao/02_processamento/text_off/solidos/02_UI_Comparacao_Curadoria_Selecao.md": "37981f87bc57b229d4b1f4c156c760eaf35f6b6dd1358e0016988338a0b5b9a3",
+    "docs/Refatoracao/02_processamento/text_off/solidos/03_Runbook_Incidentes_Evidencias.md": "ebef238570caf051e213c955d62b99d98643a4c47bab22716d81262b75e0e815",
+    "docs/Refatoracao/02_processamento/text_off/solidos/README.md": "6f3c3af2ba6e99b9fb5583181a0532d1dcfc98dbc8beec002c3c2c02222d4b0a",
+    "docs/Refatoracao/03_balanceamento/mapa_metro_balanceamento.md": "952f4213b9df2398c130290be089254f33989ba41266e2849ebbc2c721969548",
+    "docs/Refatoracao/90_central_v2/responsabilidades_e_ciclo_de_vida.md": "252a64e9f68493eb0e0ac4bb7e4f83ec1c2cc5dc34f55ee98b90dd03c387b5f6",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_baseline_SHA256SUMS.txt": "a08ff4c5d93356860d4c3bc396a81024e17cc8d4e972e257c1e46644f5848f93",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_models_SHA256SUMS.txt": "0dc2f4f501f6870e3bcc682ef214625d70f19c2d1aecc43a44daff9dc635f38e",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_outlined-text.ini": "93e8a2abbb43da67f4e565fd413068e800d3faad06629a6ce8fe9bf1a734bf1e",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_packages.json": "471b65b124ab1c64db632dd7b0b61565e9ab0504fbefc2ed1e1daafc749629a5",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_pip_freeze.txt": "8163c9d67ccbad4de53f6eb645e614dbab597ac80f387ad9bad232102edbb676",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/cleaner_v2_python.txt": "d87e6eea94f61efbf4679056c60ceef0a2c35a63e575ab4527b88b7aeb6a3667",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/gradiente_suave_SHA256SUMS.txt": "3958518cbdf858b599e380ba470cfbfb418c6fd8e6930c0a3a4d6041a5250ef1",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/gradiente_suave_direct_packages.txt": "7bb59fec55a5f09d822b43466befdf41fb43b08a3e5d8927bb409ac47edd3e66",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/gradiente_suave_pip_freeze.txt": "53cb865a153728fa75a588bd899d4b54ebe41cebecb74949dcd89194ca2c19e6",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/gradiente_suave_python.txt": "d87e6eea94f61efbf4679056c60ceef0a2c35a63e575ab4527b88b7aeb6a3667",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/level3_regional_SHA256SUMS.txt": "dae61c784536e7de6699a596ab56caf3cc4dda2ea69c1e9647c52073af21d428",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/level3_regional_direct_packages.txt": "f0890b7e988f45492731054e2d27c22951e73adb7f59b8a7a324088d3dee57e9",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/level3_regional_pip_freeze.txt": "b3aa0440cc1b33aa95a43fd05f10428a7ea75431d9b44ec7ce757f0dfbc8d9f6",
+    "docs/Refatoracao/99_evidencias_transversais/environment_baseline/2026-09-25/level3_regional_python.txt": "d87e6eea94f61efbf4679056c60ceef0a2c35a63e575ab4527b88b7aeb6a3667",
+    "docs/Refatoracao/99_evidencias_transversais/plano_refatoracao_original.md": "b96af66533c8b3fb31190e517f9a107ce9785d3efebaed0de23adefd2a047794",
+    "docs/Refatoracao/pendencias_central_v2.html": "96e08d228aed9d4d2dd456dbe354311d41dfd00f7140ea0bf068acbe2b1c4d32",
+    "docs/Refatoracao/pendencias_central_v2.md": "e4f7a16de092183d96e89ce5e190cfe006b0e0e51ebae843fa7a905779eafa9b",
+    "docs/Refatoracao/plano_milestones_protecao_historico_central_v2.md": "b43247616a56d8359709a13be62ca896ee09ff5c2ecf3a188a64b78828ed0b2e",
+    "docs/Refatoracao/politica_investigacao_regressoes.md": "326229464a148e6c0188d71f2badbf89d2a44131a61f330a92b6d12bb18cad7e",
+    "docs/Refatoracao/sanitizacao_pendente_central_v2.md": "55c1d3a55e1a80e5cc5810c6d201abc558e46c72b6b869765ac3a22f178efda6",
+    "docs/Refatoracao/tickets_pendencias/BL-01.md": "5a02df5a2c23106f425e95eba72f3857c9bb9d4882f5bed63cb8fea0ed0db8bf",
+    "docs/Refatoracao/tickets_pendencias/BL-02.md": "27ea5989e9ba475587a3d644c7b175834f67c7afa68df742853b7e840b913fb7",
+    "docs/Refatoracao/tickets_pendencias/BL-03.md": "4d844b0ded8f2054fedc51ad5bad2b25755c045936be0baa5d550db4b6a7b0e3",
+    "docs/Refatoracao/tickets_pendencias/BL-04.md": "9c3bf8b1659d74fb1f1e4bd84c22542989987d7302f35af716ab520f05c087f6",
+    "docs/Refatoracao/tickets_pendencias/BL-05.md": "34160298d395d83d17cc3948360e17d2a97c66e5b1c87a169a3ef3676cef1d68",
+    "docs/Refatoracao/tickets_pendencias/BL-06.md": "941a9ff786704e518e73fb2404e23604b6468bdeba43e1d546779757056c1b15",
+    "docs/Refatoracao/tickets_pendencias/BL-07.md": "908b74e6f6a64fcceb4cc707ef4e1aa84ae6d0eda47ab1726553f9eb1ffc21a4",
+    "docs/Refatoracao/tickets_pendencias/BL-08.md": "316244d69ccaa22f5f06ea52e1d1d782eb9c21a7e3c6aa4d518cef54368e1650",
+    "docs/Refatoracao/tickets_pendencias/BL-09.md": "f7617fdab33fa6358067311b753068b41b30395b24e5f716ced247de31b0cc88",
+    "docs/Refatoracao/tickets_pendencias/BL-12.md": "31dc5772c3c1029b370c5aeefce4d29bc8f706c8e0ad0c506f62db93e4e421cf",
+    "docs/Refatoracao/tickets_pendencias/BL-13.md": "e6afafd43067da1f5d77535b337cfa13647f1cc4fca2d8fae2f95feee5405cd4",
+    "docs/Refatoracao/tickets_pendencias/CV2-AC-01.md": "728d41eaf9727a221bc1b529c5c09e666fbe356027fba1ac1072387772fcd892",
+    "docs/Refatoracao/tickets_pendencias/CV2-AC-03.md": "9cd3e5fc484c7bb01e353acedd70892cfae8759dbb0702543432120d91e3c698",
+    "docs/Refatoracao/tickets_pendencias/CV2-AC-04.md": "7db1cbaa51d539a6264cc47393d6f99ae7c95fc4238fdb8d9e5f3c1028e44231",
+    "docs/Refatoracao/tickets_pendencias/CV2-AC-05.md": "f0f55a27b8cfed2def991705185b97c03533a4422933d1099f18c82eb89d4ed5",
+    "docs/Refatoracao/tickets_pendencias/CV2-AC-06.md": "5954f7e07ce0709cd7af3d994c23f94027eb7e783a157f0842b4117c928ae2b0",
+    "docs/Refatoracao/tickets_pendencias/CV2-AM-01.md": "6672c3c74dc17f5f872441575221517b85640be621ad9798b2bd10477bdcb524",
+    "docs/Refatoracao/tickets_pendencias/CV2-AUD-01.md": "1b2c5e4015106b40182faa01c1cf17741e265aca6c20479f5b851fd3ee0887c7",
+    "docs/Refatoracao/tickets_pendencias/CV2-CAT-01.md": "65bfa536c20503bc249018e727f1a6cefced253b2e1cdeaa0290329e392175f5",
+    "docs/Refatoracao/tickets_pendencias/CV2-CAT-02.md": "e76540010ae0a89eb273dec6cc7b7525c86525172e5f7a3673ee62a734e8caac",
+    "docs/Refatoracao/tickets_pendencias/CV2-CAT-03.md": "0eed7468e62f1a1a2d9112cf56a496e891e1ebc6c0b28191403446c7df007846",
+    "docs/Refatoracao/tickets_pendencias/CV2-OBS-01.md": "5438098a9af1a5d406b74ef3a98a3b195ad9b32ea7e0210857ed02936372887b",
+    "docs/Refatoracao/tickets_pendencias/CV2-OBS-02.md": "eb74cdeb0ed00aa7e86e4f9d34603674199dd967f9b6b747d7a08a485d556ddc",
+    "docs/Refatoracao/tickets_pendencias/CV2-OBS-03.md": "069962a7b1d0cfd3d52f46e7f192e8d9ba2b2a6f9e6913467b5395e5757afa86",
+    "docs/Refatoracao/tickets_pendencias/CV2-OBS-04.md": "ba8c7672020a563fb83626aa73fb610d9878a46c330ad73b7b45b3874150e212",
+    "docs/Refatoracao/tickets_pendencias/CV2-PERF-01.md": "2eaf3f9a209b7ba63a871e9e86b88dfeb6eafa66d3077b2a3bec7c79d9a6009f",
+    "docs/Refatoracao/tickets_pendencias/CV2-UX-01.md": "ab1cb3136c2d485d92f66609111a5210717421388cfe7d6fbbe97467e630b5b0",
+    "docs/Refatoracao/tickets_pendencias/CV2-UX-02.md": "cc2b0b71ef2c1d673eb5de9c54cec77b2d78f0ed1e77d37ac44a8a8f74261610",
+    "docs/Refatoracao/tickets_pendencias/CV2-UX-03.md": "e76a4139903adfdd79ca279374522217fe0e4fa99c9922b64ba29ac9fd5cba6e",
+    "docs/Refatoracao/tickets_pendencias/CV2-UX-04.md": "2129fb6cdb867c2396acdba491bb3b3afd4c782c2223af709b068744609847b0",
+    "docs/Refatoracao/tickets_pendencias/CV2-UX-05.md": "d6d2f4c3d6d5c3fd0a4c2af4e61b7b2a1ed066f93ecf7ff81012b65fef41bb5d",
+    "docs/archive/backlog_legacy_2026_10_12/backlog_pendencias_fominha_central_v2_2026-10-12.md": "ed52b356690e813762eb7fc9fe1dc3dddcde6de1d81df304f1396ad910f97f3f",
+    "docs/archive/backlog_legacy_2026_10_12/backlog_pendencias_fominha_central_v2_2026-10-12_consolidado.md": "ed52b356690e813762eb7fc9fe1dc3dddcde6de1d81df304f1396ad910f97f3f",
+    "docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.html": "79144c365da2f338739ea2a8eefd594e2846bbf52cb53f65e81b7c1398dfd64d",
+    "docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.md": "ed92bd8dcc447abf0d45d2c3ba1ed82954319c768cdd4c6c7426ec1ad016769f",
+    "docs/archive/backlog_legacy_2026_10_12/proposta_validacao_automatica_limite_200_linhas.md": "271ad72ab53af2fac5c3561e8c3fcaf6b4ef7ead1e7f1e739cca39981eaece07",
+    "docs/arquitetura/README.md": "4a60ff06fa211d0242bec515586d17014e73c6688125ad871047d3782022d0e0",
+    "docs/arquitetura/algoritmos_especiais_compartilhados.md": "9055686551fe7984913acee2c2c8d8d56ea6eaf1bb22af3674d503b749d28138",
+    "docs/arquitetura/limpeza_baloes_v1_v2.md": "b40a987e72aa3786cc42e04c5c0147e391cac597ec5d326bb4f62a8d83a790ec",
+    "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md": "5b23e27e203995eaea3ee553d771f2cb031ce00038d82de83c439aa38509db69",
+    "docs/central_v1/README.md": "2637f4b6ff49dde27019a6ff158e22a08bea4075842a529bcccb00f70c30cd67",
+    "docs/central_v1/arquitetura.md": "e10f344bff0d08f98a09eff78c14f8bf79e46e27acd6c7d858714688411190f2",
+    "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md": "0c07e4939a24cc776b661e7491472f423d47332fe4fb26d9d37b225923d9f468",
+    "docs/central_v1/limpeza_baloes/pipeline.md": "5817310da389cdbc7076f869a736aa85e051c91a7d442b77e79e2d6ad538c947",
+    "docs/central_v1/limpeza_baloes/visao_geral.md": "33442e53e5147e936ebb012f4078fda9629ea6386dff798d69c3866ac4016a98",
+    "docs/central_v2/README.md": "9f5560af7359e707e380a95fcde1dd0772350ed8646611eff5e5929f88925b35",
+    "docs/central_v2/arquitetura.md": "3f83c759ffc8be81062213db6237534c9c17466ce14fd39eafa1887386b9597b",
+    "docs/central_v2/interfaces/atalhos.md": "4b70cd19189fbe460ab651a2b8520a5973a5371ab401066e0a6232b0ab86eeb1",
+    "docs/central_v2/limpeza_baloes/README.md": "9fd456641c98c7cd32de60821e724ba8e93af3e2b4e4d19a1fb2980a00b2ddaf",
+    "docs/central_v2/limpeza_baloes/contratos_e_persistencia.md": "d7f8187792ec5cf9535af735911042ec68b14e2b2f3be8befc077e4cae66b89d",
+    "docs/central_v2/limpeza_baloes/etapas/auto_cleaner_check.md": "554f7415280ad5203b463ed2cc188c19dc47684f532cd5a9b6b59ef1b900ffe5",
+    "docs/central_v2/limpeza_baloes/etapas/bubble_sommelier.md": "197b68f6cea689bd62854696c9c333ea1a03e4dd9d94e643f00c9d1ac7fc66c3",
+    "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md": "e00a0d96eaf029c945664a23777e18a169ddce04e7ebc91c6a2f045493e0013c",
+    "docs/central_v2/limpeza_baloes/etapas/consolidacao.md": "3103931ebe034e8dac546179fe429e4926c1289f55784e225cb38fbdaa5f4607",
+    "docs/central_v2/limpeza_baloes/etapas/solidos.md": "c7a2405c10fc8ba26b3e4d4764fe96ee92af47875eb7bd1cf19d44942828b60b",
+    "docs/central_v2/limpeza_baloes/etapas/tratamentos_especiais.md": "5088ec0166657a47b9023d1e53cce7c6dd22c39fe99b3177f452af7bf1605618",
+    "docs/central_v2/limpeza_baloes/fluxo_completo.md": "0bc75b0a0d3986c6c533c0826cd5d528961dfdd8d83d42631ba95e404fb595a0",
+    "docs/central_v2/limpeza_baloes/laboratorio.md": "c2e9c442aa5d5e913853d5ecfbbddd0600b647ab1dae2b5935818d91626920d3",
+    "docs/central_v2_conformidade_enderecamentos.md": "ad2a30eb83d8510364b66745e10834e05067e0885f7bf243936bec41da5d271a",
+    "docs/central_v2_menus.html": "4ca524fdf9fbf9a2e1d79e4288d932cf40da55fc1fdcc9d1e0126a3010054df7",
+    "docs/fluxo_auto_merge_merge_manual.html": "a4ba2f4acec533a7394b9c3c29e63a30c3ad4568ddb7057f7b6eb2829fb86143",
+    "docs/gestao/README.md": "6861e608ae70a99aaa6b0162fbc321303b4d05273b681d0cf00f674435f342fc",
+    "docs/historico/README.md": "59fef7de02bbc1aec6f89616749a98105abe893176d70544ec404d9e633476fb",
+    "docs/organizacao_limpeza_baloes.md": "563071f7bf2d49a74e8311e1a5ba4e1e1efc95ed15d6a02383693b092221d057",
+    "docs/reconstrucao/README.md": "5a0f64094a47a2adbbcc415580fd580d86aba1feb9d8d58e205b6af1a8190a93",
+    "docs/textoff_merged_transparencia.html": "dd3faa1a5d030ef6cf9a74e8d3793fa20a29f5d4aab6f46e378bd5472b77d419"
+  },
+  "links": [
+    {
+      "source": "docs/README.md",
+      "target": "arquitetura/limpeza_baloes_v1_v2.md",
+      "resolved": "docs/arquitetura/limpeza_baloes_v1_v2.md"
+    },
+    {
+      "source": "docs/README.md",
+      "target": "central_v1/README.md",
+      "resolved": "docs/central_v1/README.md"
+    },
+    {
+      "source": "docs/README.md",
+      "target": "central_v2/README.md",
+      "resolved": "docs/central_v2/README.md"
+    },
+    {
+      "source": "docs/README.md",
+      "target": "arquitetura/modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/README.md",
+      "target": "reconstrucao/README.md",
+      "resolved": "docs/reconstrucao/README.md"
+    },
+    {
+      "source": "docs/README.md",
+      "target": "organizacao_limpeza_baloes.md",
+      "resolved": "docs/organizacao_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/README.md",
+      "target": "../README.md",
+      "resolved": "README.md"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/auto_merge/nivel_1/contrato.md",
+      "target": "plano_e_evidencias.md",
+      "resolved": "docs/Refatoracao/02_processamento/auto_merge/nivel_1/plano_e_evidencias.md"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/auto_merge/nivel_1/plano_e_evidencias.md",
+      "target": "contrato.md",
+      "resolved": "docs/Refatoracao/02_processamento/auto_merge/nivel_1/contrato.md"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/auto_merge/nivel_1/plano_e_evidencias.md",
+      "target": "estrategia_v2.md",
+      "resolved": "docs/Refatoracao/02_processamento/auto_merge/nivel_1/estrategia_v2.md"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/correcao_assistida/analise_correcao_assistida_e_tratamentos_especiais.md",
+      "target": "../especiais/inventario_e_contrato_v2.md",
+      "resolved": "docs/Refatoracao/02_processamento/text_off/especiais/inventario_e_contrato_v2.md"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "evidencias/2026-10-09/082_suave_antes_depois.png",
+      "resolved": "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-10-09/082_suave_antes_depois.png"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "evidencias/2026-10-09/078_degrade_estagios.png",
+      "resolved": "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-10-09/078_degrade_estagios.png"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/textoff_special_web.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_web.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../central_v2/backend/orchestration/textoff_merged/special_degrade_input.py",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/special_degrade_input.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/textoff_special_web.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_web.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../central_v2/backend/orchestration/textoff_special/domain.py",
+      "resolved": "central_v2/backend/orchestration/textoff_special/domain.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/patch_degrade_experimento.py",
+      "resolved": "processamento/limpeza_baloes/patch_degrade_experimento.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../central_v2/backend/orchestration/textoff_special/domain.py",
+      "resolved": "central_v2/backend/orchestration/textoff_special/domain.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/textoff_special_roi.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_roi.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/patch_degrade_experimento.py",
+      "resolved": "processamento/limpeza_baloes/patch_degrade_experimento.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../interface_web/textoff_special.js",
+      "resolved": "interface_web/textoff_special.js"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../central_v2/frontend/texto_off/especiais/view.js",
+      "resolved": "central_v2/frontend/texto_off/especiais/view.js"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/textoff_special_roi.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_roi.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/textoff_special_approval.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_approval.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/textoff_special_roi.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_roi.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/patch_degrade_experimento.py",
+      "resolved": "processamento/limpeza_baloes/patch_degrade_experimento.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/patch_degrade_experimento.py",
+      "resolved": "processamento/limpeza_baloes/patch_degrade_experimento.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/gradiente_suave/gradiente_suave.py",
+      "resolved": "processamento/limpeza_baloes/gradiente_suave/gradiente_suave.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../processamento/limpeza_baloes/textoff_special_roi.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_roi.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../central_v2/backend/orchestration/textoff_merged/special_degrade_output.py",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/special_degrade_output.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../central_v2/backend/orchestration/textoff_merged/final_consolidated.py",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/final_consolidated.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "../../../../../central_v2/backend/orchestration/textoff_merged/level2_manual_protection.py",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level2_manual_protection.py"
+    },
+    {
+      "source": "docs/Refatoracao/02_processamento/text_off/especiais/diagnostico_v1_v2_gazing_2026-10-09.md",
+      "target": "evidencias/2026-09-29/execucoes_v1.json",
+      "resolved": "docs/Refatoracao/02_processamento/text_off/especiais/evidencias/2026-09-29/execucoes_v1.json"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-UX-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-UX-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-02.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-UX-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-UX-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-UX-05.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-05.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-07.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-07.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-08.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-08.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-09.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-09.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-OBS-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-OBS-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-02.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-OBS-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-OBS-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-AM-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AM-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-02.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-05.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-05.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-06.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-06.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-12.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-12.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/BL-13.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-13.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-AC-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-AC-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-AC-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-AC-05.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-05.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-AC-06.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-06.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-PERF-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-PERF-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-AUD-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AUD-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-CAT-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-CAT-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.html",
+      "target": "tickets_pendencias/CV2-CAT-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-CAT-02.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-CAT-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-CAT-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-UX-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-UX-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-02.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-UX-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-UX-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-UX-05.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-UX-05.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-07.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-07.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-08.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-08.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-09.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-09.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-OBS-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-OBS-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-02.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-OBS-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-OBS-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-OBS-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-AM-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AM-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-02.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-05.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-05.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-06.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-06.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-12.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-12.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/BL-13.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/BL-13.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-AC-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-AC-03.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-03.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-AC-04.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-04.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-AC-05.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-05.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-AC-06.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AC-06.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-AUD-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-AUD-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-CAT-01.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-CAT-01.md"
+    },
+    {
+      "source": "docs/Refatoracao/pendencias_central_v2.md",
+      "target": "tickets_pendencias/CV2-CAT-02.md",
+      "resolved": "docs/Refatoracao/tickets_pendencias/CV2-CAT-02.md"
+    },
+    {
+      "source": "docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.html",
+      "target": "../../Refatoracao/sanitizacao_pendente_central_v2.md",
+      "resolved": "docs/Refatoracao/sanitizacao_pendente_central_v2.md"
+    },
+    {
+      "source": "docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.html",
+      "target": "../../central_v2_conformidade_enderecamentos.md",
+      "resolved": "docs/central_v2_conformidade_enderecamentos.md"
+    },
+    {
+      "source": "docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.md",
+      "target": "../../Refatoracao/sanitizacao_pendente_central_v2.md",
+      "resolved": "docs/Refatoracao/sanitizacao_pendente_central_v2.md"
+    },
+    {
+      "source": "docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.md",
+      "target": "../../central_v2_conformidade_enderecamentos.md",
+      "resolved": "docs/central_v2_conformidade_enderecamentos.md"
+    },
+    {
+      "source": "docs/arquitetura/README.md",
+      "target": "limpeza_baloes_v1_v2.md",
+      "resolved": "docs/arquitetura/limpeza_baloes_v1_v2.md"
+    },
+    {
+      "source": "docs/arquitetura/README.md",
+      "target": "modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/arquitetura/README.md",
+      "target": "algoritmos_especiais_compartilhados.md",
+      "resolved": "docs/arquitetura/algoritmos_especiais_compartilhados.md"
+    },
+    {
+      "source": "docs/arquitetura/README.md",
+      "target": "../reconstrucao/README.md",
+      "resolved": "docs/reconstrucao/README.md"
+    },
+    {
+      "source": "docs/arquitetura/limpeza_baloes_v1_v2.md",
+      "target": "modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/arquitetura/limpeza_baloes_v1_v2.md",
+      "target": "../central_v1/README.md",
+      "resolved": "docs/central_v1/README.md"
+    },
+    {
+      "source": "docs/arquitetura/limpeza_baloes_v1_v2.md",
+      "target": "../central_v2/README.md",
+      "resolved": "docs/central_v2/README.md"
+    },
+    {
+      "source": "docs/arquitetura/limpeza_baloes_v1_v2.md",
+      "target": "modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/arquitetura/limpeza_baloes_v1_v2.md",
+      "target": "../../interface_web/processing_web.py",
+      "resolved": "interface_web/processing_web.py"
+    },
+    {
+      "source": "docs/arquitetura/limpeza_baloes_v1_v2.md",
+      "target": "../../central_v2/backend/routes/textoff_merged.py",
+      "resolved": "central_v2/backend/routes/textoff_merged.py"
+    },
+    {
+      "source": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md",
+      "target": "../central_v2/limpeza_baloes/etapas/cleaner_v2.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../../interface_web/",
+      "resolved": "interface_web"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../../interface_web/processing_web.py",
+      "resolved": "interface_web/processing_web.py"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../../orquestracao/menu.py",
+      "resolved": "orquestracao/menu.py"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../../processamento/limpeza_baloes/",
+      "resolved": "processamento/limpeza_baloes"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../../orquestracao/textoff/merged.py",
+      "resolved": "orquestracao/textoff/merged.py"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "limpeza_baloes/visao_geral.md",
+      "resolved": "docs/central_v1/limpeza_baloes/visao_geral.md"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "limpeza_baloes/pipeline.md",
+      "resolved": "docs/central_v1/limpeza_baloes/pipeline.md"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../arquitetura/modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../arquitetura/algoritmos_especiais_compartilhados.md",
+      "resolved": "docs/arquitetura/algoritmos_especiais_compartilhados.md"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "arquitetura.md",
+      "resolved": "docs/central_v1/arquitetura.md"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../arquitetura/limpeza_baloes_v1_v2.md",
+      "resolved": "docs/arquitetura/limpeza_baloes_v1_v2.md"
+    },
+    {
+      "source": "docs/central_v1/README.md",
+      "target": "../arquitetura/modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md",
+      "target": "../../central_v2/limpeza_baloes/etapas/cleaner_v2.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md",
+      "target": "../../central_v2/limpeza_baloes/etapas/cleaner_v2.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md",
+      "target": "visao_geral.md",
+      "resolved": "docs/central_v1/limpeza_baloes/visao_geral.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md",
+      "target": "pipeline.md",
+      "resolved": "docs/central_v1/limpeza_baloes/pipeline.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md",
+      "target": "../../../interface_web/processing_web.py",
+      "resolved": "interface_web/processing_web.py"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md",
+      "target": "../../../processamento/limpeza_baloes/textoff_special_web.py",
+      "resolved": "processamento/limpeza_baloes/textoff_special_web.py"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/pipeline.md",
+      "target": "../../central_v2/limpeza_baloes/etapas/cleaner_v2.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/visao_geral.md",
+      "target": "../../central_v2/limpeza_baloes/etapas/cleaner_v2.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/visao_geral.md",
+      "target": "pipeline.md",
+      "resolved": "docs/central_v1/limpeza_baloes/pipeline.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/visao_geral.md",
+      "target": "algoritmos_e_parametros.md",
+      "resolved": "docs/central_v1/limpeza_baloes/algoritmos_e_parametros.md"
+    },
+    {
+      "source": "docs/central_v1/limpeza_baloes/visao_geral.md",
+      "target": "../../arquitetura/limpeza_baloes_v1_v2.md",
+      "resolved": "docs/arquitetura/limpeza_baloes_v1_v2.md"
+    },
+    {
+      "source": "docs/central_v2/README.md",
+      "target": "arquitetura.md",
+      "resolved": "docs/central_v2/arquitetura.md"
+    },
+    {
+      "source": "docs/central_v2/README.md",
+      "target": "limpeza_baloes/README.md",
+      "resolved": "docs/central_v2/limpeza_baloes/README.md"
+    },
+    {
+      "source": "docs/central_v2/README.md",
+      "target": "limpeza_baloes/fluxo_completo.md",
+      "resolved": "docs/central_v2/limpeza_baloes/fluxo_completo.md"
+    },
+    {
+      "source": "docs/central_v2/README.md",
+      "target": "limpeza_baloes/contratos_e_persistencia.md",
+      "resolved": "docs/central_v2/limpeza_baloes/contratos_e_persistencia.md"
+    },
+    {
+      "source": "docs/central_v2/README.md",
+      "target": "limpeza_baloes/laboratorio.md",
+      "resolved": "docs/central_v2/limpeza_baloes/laboratorio.md"
+    },
+    {
+      "source": "docs/central_v2/README.md",
+      "target": "interfaces/atalhos.md",
+      "resolved": "docs/central_v2/interfaces/atalhos.md"
+    },
+    {
+      "source": "docs/central_v2/README.md",
+      "target": "../arquitetura/modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/central_v2/arquitetura.md",
+      "target": "limpeza_baloes/contratos_e_persistencia.md",
+      "resolved": "docs/central_v2/limpeza_baloes/contratos_e_persistencia.md"
+    },
+    {
+      "source": "docs/central_v2/arquitetura.md",
+      "target": "../../central_v2/backend/http_handler.py",
+      "resolved": "central_v2/backend/http_handler.py"
+    },
+    {
+      "source": "docs/central_v2/arquitetura.md",
+      "target": "../../central_v2/backend/routes/get_dispatch.py",
+      "resolved": "central_v2/backend/routes/get_dispatch.py"
+    },
+    {
+      "source": "docs/central_v2/arquitetura.md",
+      "target": "../../central_v2/backend/routes/post_dispatch.py",
+      "resolved": "central_v2/backend/routes/post_dispatch.py"
+    },
+    {
+      "source": "docs/central_v2/arquitetura.md",
+      "target": "limpeza_baloes/fluxo_completo.md",
+      "resolved": "docs/central_v2/limpeza_baloes/fluxo_completo.md"
+    },
+    {
+      "source": "docs/central_v2/interfaces/atalhos.md",
+      "target": "../../../central_v2/frontend/texto_off/laboratorio/workspace_controls.js",
+      "resolved": "central_v2/frontend/texto_off/laboratorio/workspace_controls.js"
+    },
+    {
+      "source": "docs/central_v2/interfaces/atalhos.md",
+      "target": "../../../central_v2/frontend/texto_off/laboratorio/page_navigation.js",
+      "resolved": "central_v2/frontend/texto_off/laboratorio/page_navigation.js"
+    },
+    {
+      "source": "docs/central_v2/interfaces/atalhos.md",
+      "target": "../../../central_v2/frontend/_shared/pagination/pagination.js",
+      "resolved": "central_v2/frontend/_shared/pagination/pagination.js"
+    },
+    {
+      "source": "docs/central_v2/interfaces/atalhos.md",
+      "target": "../limpeza_baloes/laboratorio.md",
+      "resolved": "docs/central_v2/limpeza_baloes/laboratorio.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "fluxo_completo.md",
+      "resolved": "docs/central_v2/limpeza_baloes/fluxo_completo.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "contratos_e_persistencia.md",
+      "resolved": "docs/central_v2/limpeza_baloes/contratos_e_persistencia.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "laboratorio.md",
+      "resolved": "docs/central_v2/limpeza_baloes/laboratorio.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "etapas/cleaner_v2.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "etapas/bubble_sommelier.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/bubble_sommelier.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "etapas/auto_cleaner_check.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/auto_cleaner_check.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "etapas/solidos.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/solidos.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "etapas/tratamentos_especiais.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/tratamentos_especiais.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "etapas/consolidacao.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/consolidacao.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "../../arquitetura/algoritmos_especiais_compartilhados.md",
+      "resolved": "docs/arquitetura/algoritmos_especiais_compartilhados.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/README.md",
+      "target": "../interfaces/atalhos.md",
+      "resolved": "docs/central_v2/interfaces/atalhos.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/fluxo_completo.md",
+      "target": "../../arquitetura/modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/central_v2/limpeza_baloes/laboratorio.md",
+      "target": "../interfaces/atalhos.md",
+      "resolved": "docs/central_v2/interfaces/atalhos.md"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/stages.py#L4",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/stages.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/manifests.py#L10",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/manifests.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/execution.py#L8",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/execution.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/consolidated_artifacts.py#L12",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/consolidated_artifacts.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/consolidated.py#L86",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/consolidated.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/query.py#L1",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/query.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level2.py#L1",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level2.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level3_styled.py#L1",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level3_styled.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_special/inputs.py#L9",
+      "resolved": "central_v2/backend/orchestration/textoff_special/inputs.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/special_levels.py#L69",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/special_levels.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/manual_specials.py#L45",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/manual_specials.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/routes/merge_manual.py#L18",
+      "resolved": "central_v2/backend/routes/merge_manual.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/routes/balanceamento_media.py#L32",
+      "resolved": "central_v2/backend/routes/balanceamento_media.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/routes/auto_merge/folder.py#L29",
+      "resolved": "central_v2/backend/routes/auto_merge/folder.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/state/manga_state.py#L41",
+      "resolved": "central_v2/backend/state/manga_state.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/state/catalog.py#L22",
+      "resolved": "central_v2/backend/state/catalog.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/routes/merge_manual.py#L60",
+      "resolved": "central_v2/backend/routes/merge_manual.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/stages.py#L9",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/stages.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_textoff_consolidated.py#L20",
+      "resolved": "dev/tests/test_textoff_consolidated.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_central_v2_textoff_merged.py#L49",
+      "resolved": "dev/tests/test_central_v2_textoff_merged.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_textoff_special_inputs.py#L15",
+      "resolved": "dev/tests/test_textoff_special_inputs.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_textoff_special_execution.py#L17",
+      "resolved": "dev/tests/test_textoff_special_execution.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_central_v2_merge_manual.py#L20",
+      "resolved": "dev/tests/test_central_v2_merge_manual.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../README.md#L305",
+      "resolved": "README.md"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/runtime/textoff/README.md#L1",
+      "resolved": "central_v2/runtime/textoff/README.md"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "textoff_merged_transparencia.html",
+      "resolved": "docs/textoff_merged_transparencia.html"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "central_v2_menus.html",
+      "resolved": "docs/central_v2_menus.html"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/frontend/_shell/navigation.js#L88",
+      "resolved": "central_v2/frontend/_shell/navigation.js"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/stages.py#L4",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/stages.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/manifests.py#L10",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/manifests.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/execution.py#L12",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/execution.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/execution.py#L12",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/execution.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level2.py#L60",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level2.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/consolidated_artifacts.py#L13",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/consolidated_artifacts.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/consolidated.py#L95",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/consolidated.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level2.py#L138",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level2.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/query.py#L22",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/query.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level2.py#L63",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level2.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level3_styled.py#L27",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level3_styled.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_special/inputs.py#L10",
+      "resolved": "central_v2/backend/orchestration/textoff_special/inputs.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/special_levels.py#L69",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/special_levels.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/manual_specials.py#L45",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/manual_specials.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/routes/merge_manual.py#L19",
+      "resolved": "central_v2/backend/routes/merge_manual.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/routes/balanceamento_media.py#L32",
+      "resolved": "central_v2/backend/routes/balanceamento_media.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/routes/auto_merge/folder.py#L9",
+      "resolved": "central_v2/backend/routes/auto_merge/folder.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/state/manga_state.py#L14",
+      "resolved": "central_v2/backend/state/manga_state.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/state/catalog.py#L13",
+      "resolved": "central_v2/backend/state/catalog.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_textoff_consolidated.py#L12",
+      "resolved": "dev/tests/test_textoff_consolidated.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_textoff_special_inputs.py#L15",
+      "resolved": "dev/tests/test_textoff_special_inputs.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../dev/tests/test_central_v2_merge_manual.py#L20",
+      "resolved": "dev/tests/test_central_v2_merge_manual.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../README.md#L305",
+      "resolved": "README.md"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/runtime/textoff/README.md#L18",
+      "resolved": "central_v2/runtime/textoff/README.md"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "textoff_merged_transparencia.html",
+      "resolved": "docs/textoff_merged_transparencia.html"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "central_v2_menus.html",
+      "resolved": "docs/central_v2_menus.html"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/artifact_paths.py#L1",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/artifact_paths.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/bubble_sommelier/artifacts.py#L11",
+      "resolved": "central_v2/backend/orchestration/bubble_sommelier/artifacts.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level2.py#L60",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level2.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/orchestration/textoff_merged/level2_process.py#L159",
+      "resolved": "central_v2/backend/orchestration/textoff_merged/level2_process.py"
+    },
+    {
+      "source": "docs/central_v2_conformidade_enderecamentos.md",
+      "target": "../central_v2/backend/jobs/manager.py#L15",
+      "resolved": "central_v2/backend/jobs/manager.py"
+    },
+    {
+      "source": "docs/gestao/README.md",
+      "target": "../organizacao_limpeza_baloes.md",
+      "resolved": "docs/organizacao_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/historico/README.md",
+      "target": "../organizacao_limpeza_baloes.md",
+      "resolved": "docs/organizacao_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/reconstrucao/README.md",
+      "target": "../arquitetura/limpeza_baloes_v1_v2.md",
+      "resolved": "docs/arquitetura/limpeza_baloes_v1_v2.md"
+    },
+    {
+      "source": "docs/reconstrucao/README.md",
+      "target": "../arquitetura/modulos_compartilhados_limpeza_baloes.md",
+      "resolved": "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md"
+    },
+    {
+      "source": "docs/reconstrucao/README.md",
+      "target": "../central_v2/limpeza_baloes/fluxo_completo.md",
+      "resolved": "docs/central_v2/limpeza_baloes/fluxo_completo.md"
+    },
+    {
+      "source": "docs/reconstrucao/README.md",
+      "target": "../central_v1/limpeza_baloes/pipeline.md",
+      "resolved": "docs/central_v1/limpeza_baloes/pipeline.md"
+    },
+    {
+      "source": "docs/reconstrucao/README.md",
+      "target": "../central_v2/limpeza_baloes/contratos_e_persistencia.md",
+      "resolved": "docs/central_v2/limpeza_baloes/contratos_e_persistencia.md"
+    },
+    {
+      "source": "docs/reconstrucao/README.md",
+      "target": "../central_v2/limpeza_baloes/etapas/cleaner_v2.md",
+      "resolved": "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md"
+    },
+    {
+      "source": "docs/reconstrucao/README.md",
+      "target": "../organizacao_limpeza_baloes.md",
+      "resolved": "docs/organizacao_limpeza_baloes.md"
+    }
+  ]
+}

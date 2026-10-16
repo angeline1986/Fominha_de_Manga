@@ -1,0 +1,97 @@
+{
+  "docs/arquitetura/limpeza_baloes_v1_v2.md": {
+    "before_sha256": "b40a987e72aa3786cc42e04c5c0147e391cac597ec5d326bb4f62a8d83a790ec",
+    "after_sha256": "1d6827ba5381b66bd30922637e5883d653a7aa482d19cbe93b1bfb6e6250b2d9",
+    "reason": "Etapa 5: normalizados hard breaks Markdown para barra invertida, preservando a renderizacao e passando a verificacao de whitespace."
+  },
+  "docs/arquitetura/modulos_compartilhados_limpeza_baloes.md": {
+    "before_sha256": "5b23e27e203995eaea3ee553d771f2cb031ce00038d82de83c439aa38509db69",
+    "after_sha256": "54b72ea928c0fe9458b36340ffe5a60b25c634b298e3d75401c6af962b59f845",
+    "reason": "Etapa 5: normalizado hard break Markdown para barra invertida, preservando a renderizacao e passando a verificacao de whitespace."
+  },
+  "docs/central_v1/limpeza_baloes/visao_geral.md": {
+    "before_sha256": "33442e53e5147e936ebb012f4078fda9629ea6386dff798d69c3866ac4016a98",
+    "after_sha256": "3a09305fcb2f1b95e8e7ca741cc1f4735c5b1e377312ea6ca7ddc9cdec70f090",
+    "reason": "Etapa 5: revisao do manual e normalizacao do hard break Markdown para barra invertida, preservando a renderizacao."
+  },
+  "docs/central_v2/interfaces/atalhos.md": {
+    "before_sha256": "4b70cd19189fbe460ab651a2b8520a5973a5371ab401066e0a6232b0ab86eeb1",
+    "after_sha256": "d12beff7dacf0b26885307841ed6160b42807c0cb05e9bc55e4188319e1323ab",
+    "reason": "Etapa 5: normalizado hard break Markdown para barra invertida, preservando a renderizacao e passando a verificacao de whitespace."
+  },
+  "docs/central_v2/limpeza_baloes/README.md": {
+    "before_sha256": "9fd456641c98c7cd32de60821e724ba8e93af3e2b4e4d19a1fb2980a00b2ddaf",
+    "after_sha256": "2dea452abd65209b92909ece2f843a6be49fb72e53c12693b86287867ac74656",
+    "reason": "Etapa 5: referencia aos manuais e normalizacao do hard break Markdown para barra invertida, preservando a renderizacao."
+  },
+  "docs/central_v2/limpeza_baloes/etapas/cleaner_v2.md": {
+    "before_sha256": "e00a0d96eaf029c945664a23777e18a169ddce04e7ebc91c6a2f045493e0013c",
+    "after_sha256": "a48653ddfc91f5060cf54bbc30ee383ef8137ba42b0ee7f14ac9ab517886fc0e",
+    "reason": "Etapa 5: normalizado hard break Markdown para barra invertida, preservando a renderizacao e passando a verificacao de whitespace."
+  },
+  "docs/README.md": {
+    "before_sha256": "735e5a1bd6fa33117d68b0c7a60280223526b8cba0a1ee4b42f02f4d30332c64",
+    "after_sha256": "642775543782344f55a8bc30b85611cef4d4299a6bb2d6c60aea991a74d4d082",
+    "reason": "Etapa 5: adicionado link para o registro unico das pendencias tecnicas de reconstrucao."
+  },
+  "docs/arquitetura/README.md": {
+    "before_sha256": "4a60ff06fa211d0242bec515586d17014e73c6688125ad871047d3782022d0e0",
+    "after_sha256": "c57aaa6ed7851ec1cf3fc235152dd6e20de3cdaa8b5c2a5d6073911cbce65d00",
+    "reason": "Etapa 5: incluidos links cruzados aos tres manuais de reconstrucao."
+  },
+  "docs/central_v1/README.md": {
+    "before_sha256": "2637f4b6ff49dde27019a6ff158e22a08bea4075842a529bcccb00f70c30cd67",
+    "after_sha256": "97981240836fd92af2d125378a487bcc6f06feff995fea2848fa679cd5e4045d",
+    "reason": "Etapa 5: ligado ao manual V1 e delimitadas as lacunas de payloads e tratamentos."
+  },
+  "docs/central_v1/limpeza_baloes/pipeline.md": {
+    "before_sha256": "5817310da389cdbc7076f869a736aa85e051c91a7d442b77e79e2d6ad538c947",
+    "after_sha256": "56809c7ef99e6cbe6d011e6441880de5ee65b5942fce08bde3be845baf576eef",
+    "reason": "Etapa 5: atualizado o inventario de rotas e ligado ao manual de reconstrucao V1."
+  },
+  "docs/central_v2/README.md": {
+    "before_sha256": "9f5560af7359e707e380a95fcde1dd0772350ed8646611eff5e5929f88925b35",
+    "after_sha256": "d37df5b76a38f57a9c10695512a055f849c9ca16e3f9dabaa5d396253e4c05a3",
+    "reason": "Etapa 5: incluido acesso ao manual V2 e ao manual compartilhado."
+  },
+  "docs/reconstrucao/README.md": {
+    "before_sha256": "5a0f64094a47a2adbbcc415580fd580d86aba1feb9d8d58e205b6af1a8190a93",
+    "after_sha256": "4a50e65a2c4fdba7403f50b7708f48f707448e5a1b0a143124c674a6e0658a15",
+    "reason": "Etapa 5: estruturado indice dos tres manuais e preservados os seis links locais do inventario original."
+  },
+  "docs/central_v2/limpeza_baloes/correcao_assistida/analise_correcao_assistida_e_tratamentos_especiais.md": {
+    "before_sha256": "ec447f24e3055e1e6edf65a0f38ea331b1984b7bced09fcfd7c91997d2f903af",
+    "after_sha256": "68d404629681feaa345a46fb421627cdce5c78c0b667c049398953b49bb2561c",
+    "reason": "Atualizado o link relativo para inventario_e_contrato_v2.md apos o movimento autorizado para o historico no Lote 3."
+  },
+  "docs/organizacao_limpeza_baloes.md": {
+    "before_sha256": "563071f7bf2d49a74e8311e1a5ba4e1e1efc95ed15d6a02383693b092221d057",
+    "after_sha256": "6f5415453d130fc57003c62f64928026e56c2459d61f7b82c1d38dc80076ddd7",
+    "reason": "Lotes 1-4: resultados da migracao e justificativa da contagem de links. Etapa 5: hard breaks Markdown normalizados para barra invertida, preservando a renderizacao."
+  },
+  "docs/historico/limpeza_baloes/especiais/diagnostico_v1_v2_gazing_2026-10-09.md": {
+    "before_sha256": "4f0dbf7e890ac7b95d7d77b330579710b2b5131a82948df43cd71a00a7358aa1",
+    "after_sha256": "c0fcc548814a0ea1a6daecc22822d41179058934757fa91c693fef21d5b51d41",
+    "reason": "Corrigidos links relativos de codigo e evidencias depois dos movimentos dos Lotes 3 e 4."
+  },
+  "docs/Refatoracao/pendencias_central_v2.html": {
+    "before_sha256": "96e08d228aed9d4d2dd456dbe354311d41dfd00f7140ea0bf068acbe2b1c4d32",
+    "after_sha256": "0684b79a3bbd9561462352a74f647efcb3546eb21563aca8be03769b306ea961",
+    "reason": "Atualizados os hrefs para os tickets movidos, preservando HTML, scripts e navegacao."
+  },
+  "docs/gestao/backlog/central_v2/pendencias_central_v2.md": {
+    "before_sha256": "e4f7a16de092183d96e89ce5e190cfe006b0e0e51ebae843fa7a905779eafa9b",
+    "after_sha256": "b7ae39e26406914305a9e9d958763ca1f2dfab1f913b82ab57417d24819889ee",
+    "reason": "Atualizados links do indice de backlog para os destinos dos tickets movidos."
+  },
+  "docs/archive/backlog_legacy_2026_10_12/pendencias_central_v2_legacy.html": {
+    "before_sha256": "79144c365da2f338739ea2a8eefd594e2846bbf52cb53f65e81b7c1398dfd64d",
+    "after_sha256": "e6e765dac987f856e87d7a768d28ae5b9116ce7ae1e89f42d5f8a3a519290273",
+    "reason": "Atualizado link interno para o plano de sanitizacao movido; HTML mantido no caminho original."
+  },
+  "docs/gestao/backlog/arquivo_legado_2026-10-12/pendencias_central_v2_legacy.md": {
+    "before_sha256": "ed92bd8dcc447abf0d45d2c3ba1ed82954319c768cdd4c6c7426ec1ad016769f",
+    "after_sha256": "fd4f858f7bb95973d0a2a44cf2017ee0ba5108185e2bda6cd041c151cf982eec",
+    "reason": "Atualizados links internos para o plano movido e para a referencia mantida."
+  }
+}

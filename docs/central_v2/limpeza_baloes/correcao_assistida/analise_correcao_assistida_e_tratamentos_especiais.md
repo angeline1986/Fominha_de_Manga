@@ -166,7 +166,7 @@ As referências de baseline registram falta de testes automatizados específicos
 
 Atualização de 29/09/2026: o inventário dos dois tratamentos transparentes e
 o contrato inicial proposto para Casos Especiais V2 estão em
-[`../especiais/inventario_e_contrato_v2.md`](../especiais/inventario_e_contrato_v2.md).
+[`inventario_e_contrato_v2.md`](../../../../docs/historico/limpeza_baloes/especiais/inventario_e_contrato_v2.md).
 Esse levantamento também registra o efeito do gate atual de adiamento de
 balões transparentes, os runtimes efetivamente chamados e a integridade de
 34 resultados históricos. Não representa validação visual nem implementação

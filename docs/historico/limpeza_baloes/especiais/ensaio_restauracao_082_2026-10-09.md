@@ -35,7 +35,7 @@ As duas imagens têm 940 × 7306 pixels. Diferem em 108.126 pixels, na caixa `[2
 
 ## Revisão visual
 
-Abrir [comparador interativo](</private/tmp/fominha-restore-082-5sh9b16w/visual/comparador.html>). Ele usa cópias byte a byte das imagens reais atual e restaurada, lado a lado, com zoom e rolagem sincronizados e atalhos para a página completa e o balão rosado. As imagens também estão em [atual](</private/tmp/fominha-restore-082-5sh9b16w/visual/current.png>) e [restaurada](</private/tmp/fominha-restore-082-5sh9b16w/visual/restored.png>). [Evidências em JSON](</private/tmp/fominha-restore-082-5sh9b16w/evidence.json>) registram proposta, hashes, arquivos alterados e estados. `node --check` passou para o script do comparador; a inspeção visual humana na Central V2 ainda é necessária.
+Abrir comparador interativo (referência histórica: `/private/tmp/fominha-restore-082-5sh9b16w/visual/comparador.html`). Ele usa cópias byte a byte das imagens reais atual e restaurada, lado a lado, com zoom e rolagem sincronizados e atalhos para a página completa e o balão rosado. As imagens também estão em atual (referência histórica: `/private/tmp/fominha-restore-082-5sh9b16w/visual/current.png`) e restaurada (referência histórica: `/private/tmp/fominha-restore-082-5sh9b16w/visual/restored.png`). Evidências em JSON (referência histórica: `/private/tmp/fominha-restore-082-5sh9b16w/evidence.json`) registram proposta, hashes, arquivos alterados e estados. `node --check` passou para o script do comparador; a inspeção visual humana na Central V2 ainda é necessária.
 
 ## Conclusão e pendências antes da restauração real
 

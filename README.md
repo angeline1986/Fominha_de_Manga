@@ -74,6 +74,10 @@ Cada etapa trabalha sobre artefatos derivados. O conteúdo original deve permane
 
 O fluxo detalhado de Auto-Merge e Merge Manual também está disponível em [HTML](docs/fluxo_auto_merge_merge_manual.html).
 
+## Documentação técnica
+
+O [índice de documentação](docs/README.md) separa a Central V1, a Central V2 e os módulos compartilhados. A documentação de [Limpeza de Balões](docs/central_v2/limpeza_baloes/README.md) inclui o fluxo V2, contratos de persistência e o manual de reconstrução.
+
 ## Visão Geral
 
 A tela **Visão geral** apresenta o estado atual da obra selecionada e serve como ponto de acompanhamento do processamento.
