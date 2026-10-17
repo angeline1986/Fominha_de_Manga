@@ -1,7 +1,7 @@
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
-import { comboState, resultSummary, stageState, MAX_CHAPTERS } from "/texto_off/combo_turbo/model.js";
+import { comboState, resultSummary, stageState, summarizeRows, MAX_CHAPTERS } from "/texto_off/combo_turbo/model.js";
 import { canExecute, isSelectable, progressPresentation, resultVisible } from "/texto_off/combo_turbo/behavior.js";
 
 const labels = { REUSED: "Reutilizável", PLANNED: "Pendente", BLOCKED: "Bloqueado",
@@ -22,7 +22,7 @@ const cell = (status) => {
   return value;
 };
 
-export function createComboView(callbacks) {
+export function createComboView(callbacks, initial = {}) {
   const element = document.createElement("section");
   element.className = "auto-merge-page combo-turbo-page";
   element.innerHTML = `<header><h1>Combo Turbo</h1><p>Execução automática: Sólidos + Glass</p>
@@ -48,9 +48,14 @@ export function createComboView(callbacks) {
   const search = element.querySelector("[data-search]");
   const filter = element.querySelector("[data-filter]");
   const tableRoot = element.querySelector("[data-table]");
-  let pagination = createPagination();
-  const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
+  let pagination = createPagination(initial.pageSize);
+  const pageSize = createPageSizeControl((size) => {
+    pagination = createPagination(size); state.page = 1;
+    callbacks.onUiState?.({ page: 1, pageSize: size }); draw();
+  }, initial.pageSize);
   let state = { rows: [], selected: new Set(), page: 0, busy: false, planValid: false };
+  search.value = initial.search || "";
+  filter.value = initial.filter || "all";
 
   function visibleRows() {
     const term = search.value.trim().toLocaleLowerCase("pt-BR");
@@ -66,7 +71,11 @@ export function createComboView(callbacks) {
   function draw() {
     const selected = state.selected;
     const visible = visibleRows();
-    const selection = pagination.select(visible);
+    let selection = pagination.select(visible);
+    const targetPage = Math.min(state.page || initial.page || 1, selection.pages);
+    while (selection.page < targetPage) {
+      pagination.move(1); selection = pagination.select(visible);
+    }
     const current = selection.rows;
     const selectedEligible = current.filter((row) => comboState(row) === "PLANNED").map((row) => row.chapter);
     const columns = [
@@ -88,7 +97,10 @@ export function createComboView(callbacks) {
     ];
     tableRoot.replaceChildren(createTable(columns, current, "Elegibilidade do Combo Turbo", {
       emptyMessage: state.loading ? "Consultando elegibilidade…" : "Nenhum capítulo corresponde ao filtro.",
-    }), createPaginationControls(selection, (delta) => { pagination.move(delta); draw(); },
+    }), createPaginationControls(selection, (delta) => {
+      pagination.move(delta); state.page = pagination.select(visible).page;
+      callbacks.onUiState?.({ page: state.page }); draw();
+    },
       { leading: pageSize.element }));
     const summary = summarizeRows(state.rows);
     element.querySelector("[data-context]").textContent = state.provider && state.manga
@@ -155,9 +167,21 @@ export function createComboView(callbacks) {
   element.querySelector("[data-plan]").addEventListener("click", callbacks.plan);
   element.querySelector("[data-run]").addEventListener("click", callbacks.run);
   element.querySelector("[data-select-eligible]").addEventListener("click", callbacks.selectEligible);
-  search.addEventListener("input", () => { pagination.reset(); draw(); });
-  filter.addEventListener("change", () => { pagination.reset(); draw(); });
-  return { element, update(next) { state = { ...state, ...next }; draw(); }, draw };
+  search.addEventListener("input", () => {
+    pagination.reset(); state.page = 1;
+    callbacks.onUiState?.({ search: search.value, page: 1 }); draw();
+  });
+  filter.addEventListener("change", () => {
+    pagination.reset(); state.page = 1;
+    callbacks.onUiState?.({ filter: filter.value, page: 1 }); draw();
+  });
+  return { element, update(next) { state = { ...state, ...next }; draw(); }, draw,
+    restore(next) {
+      search.value = next.search || ""; filter.value = next.filter || "all";
+      pageSize.select.value = String(next.pageSize || pageSize.select.value);
+      pagination = createPagination(Number(pageSize.select.value));
+      state.page = next.page || 1; draw();
+    } };
 }
 
 function checkbox(label, checked, disabled, onChange) {
@@ -166,14 +190,4 @@ function checkbox(label, checked, disabled, onChange) {
   input.setAttribute("aria-label", label);
   input.addEventListener("change", () => onChange(input.checked));
   return input;
-}
-
-function summarizeRows(rows) {
-  const summary = { total: rows.length, eligible: 0, blocked: 0 };
-  rows.forEach((row) => {
-    const state = comboState(row);
-    if (state === "BLOCKED") summary.blocked++;
-    else if (state === "PLANNED") summary.eligible++;
-  });
-  return summary;
 }

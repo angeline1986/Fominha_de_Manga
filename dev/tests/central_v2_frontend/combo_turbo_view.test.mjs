@@ -41,19 +41,23 @@ class Element {
   walk() { return this.children.flatMap((node) => [node, ...node.walk()]); }
 }
 
-async function createView() {
+async function createView(initial = {}) {
   const document = { createElement: (tag) => new Element(tag) };
   const load = browserModules({ document }, {
     '/_shared/table/table.js': `export function createTable(columns, rows) { const table=document.createElement('table');
       columns[0].header(); for(const row of rows)table.append(columns[0].render(row)); return table; }`,
-    '/_shared/pagination/model.js': `export function createPagination(){return {select(rows){return {rows,page:1,pages:1,total:rows.length,start:1,end:rows.length}},move(){},reset(){}}}`,
+    '/_shared/pagination/model.js': `export function createPagination(){let page=1,pages=1;return {
+      select(rows){pages=Math.max(1,Math.ceil(rows.length/25));page=Math.min(page,pages);
+        return {rows,page,pages,total:rows.length,start:1,end:rows.length}},
+      move(delta){page=Math.max(1,Math.min(pages,page+delta))},reset(){page=1}}}`,
     '/_shared/pagination/pagination.js': `export function createPaginationControls(){return document.createElement('nav')}
-      export function createPageSizeControl(){return {element:document.createElement('label')}}`,
+      export function createPageSizeControl(onChange, selected){const select=document.createElement('select');
+        select.value=String(selected||25); return {element:document.createElement('label'),select}}`,
   });
   const { createComboView } = await load('/texto_off/combo_turbo/view.js');
   const actions = { selected: [], eligible: 0 };
   const view = createComboView({ select: (...args) => actions.selected.push(args),
-    selectMany() {}, selectEligible: () => actions.eligible++, refresh() {}, plan() {}, run() {} });
+    selectMany() {}, selectEligible: () => actions.eligible++, refresh() {}, plan() {}, run() {}, onUiState() {} }, initial);
   return { view, actions };
 }
 
@@ -96,4 +100,13 @@ test('rendered results wait for a terminal job status', async () => {
   assert.equal(view.element.querySelector('[data-results]').hidden, true);
   view.update({ job: { status: 'completed' } });
   assert.equal(view.element.querySelector('[data-results]').hidden, false);
+});
+
+test('screen state restores search, filter, page and page size', async () => {
+  const { view } = await createView({ search: 'chapter 4', filter: 'eligible', page: 3, pageSize: 50 });
+  assert.equal(view.element.querySelector('[data-search]').value, 'chapter 4');
+  assert.equal(view.element.querySelector('[data-filter]').value, 'eligible');
+  view.restore({ search: 'chapter 8', filter: 'blocked', page: 2, pageSize: 50 });
+  assert.equal(view.element.querySelector('[data-search]').value, 'chapter 8');
+  assert.equal(view.element.querySelector('[data-filter]').value, 'blocked');
 });

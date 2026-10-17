@@ -3,10 +3,13 @@ from contextlib import contextmanager
 from contextvars import ContextVar
 from datetime import datetime
 import json
+import os
 import re
 
 
 _operation = ContextVar("central_v2_operation_log", default=None)
+_LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
+_MIN_LEVEL = _LEVELS.get(os.getenv("CENTRAL_V2_LOG_LEVEL", "INFO").upper(), 20)
 
 
 @contextmanager
@@ -20,6 +23,9 @@ def bind_operation(component: str, job_id: str):
 
 def emit(level: str, message: str, *, component: str | None = None,
          job_id: str | None = None, **fields) -> str:
+    normalized_level = level.upper()
+    if _LEVELS.get(normalized_level, 20) < _MIN_LEVEL:
+        return ""
     bound = _operation.get()
     if bound:
         component = component or bound[0]
@@ -29,7 +35,7 @@ def emit(level: str, message: str, *, component: str | None = None,
     identity = f"[{component}]"
     if job_id:
         identity += f"[{job_id[:6]}]"
-    line = f"{stamp} {level.upper()} {identity} {_single_line(message)}"
+    line = f"{stamp} {normalized_level} {identity} {_single_line(message)}"
     if fields:
         values = " ".join(f"{key}={_value(value)}" for key, value in fields.items())
         line += f" · {values}"

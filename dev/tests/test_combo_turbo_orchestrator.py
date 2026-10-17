@@ -1,4 +1,6 @@
 import json
+import contextlib
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -8,6 +10,31 @@ from central_v2.backend.orchestration.combo_turbo import orchestrator, planner
 
 
 class ComboPlannerTests(unittest.TestCase):
+    def test_plan_only_info_volume_is_chapter_scoped_for_one_and_forty(self):
+        with tempfile.TemporaryDirectory() as temp:
+            root = Path(temp) / "Series"
+            root.mkdir()
+            report = root / "json" / "level1-balloon-report.json"
+            report.parent.mkdir()
+            report.write_text(json.dumps({"pages": [
+                {"source": "one.png", "transparent_balloons": [{}]}]}))
+            review = {"pages": ["one.png"], "results": {
+                stage: [{"page": "one.png", "status": "MISSING", "reasons": []}]
+                for stage in ("SOLIDOS", "GLASS")}}
+            runs = []
+            for chapters in (["01"], [f"{number:02}" for number in range(1, 41)]):
+                with (patch.object(planner, "validate_chapter", return_value=review),
+                      patch.object(planner, "rows_for", return_value=([{"page": "one.png"}], "hash")),
+                      patch.object(planner, "stage_chapter", return_value=report.parent.parent),
+                      contextlib.redirect_stdout(io.StringIO()) as output):
+                    planner.plan_combo(root, "comix", chapters)
+                lines = output.getvalue().splitlines()
+                runs.append(lines)
+                self.assertEqual(sum("INFO" in line for line in lines), len(chapters) + 2)
+                self.assertFalse(any("validando artefato" in line for line in lines))
+            self.assertEqual(len(runs[0]), 3)
+            self.assertEqual(len(runs[1]), 42)
+
     def test_plan_marks_reuse_pending_and_no_work_by_page(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp) / "Sample"

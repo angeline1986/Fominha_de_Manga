@@ -6,9 +6,29 @@ from pathlib import Path
 from unittest.mock import patch
 
 from central_v2.backend.orchestration.combo_turbo.validation import validate_chapter
+from central_v2.backend.orchestration.combo_turbo import validation
 
 
 class ComboValidationSummaryTests(unittest.TestCase):
+    def test_page_validation_is_debug_only_and_preserves_diagnostic_fields(self):
+        item = {"status": "UNVERIFIED", "reasons": ["CHECK_MANIFEST_MISSING"],
+                "integrity_ok": False, "check_verified": False,
+                "artifact_sha256": None, "mask_sha256": None, "manifest_sha256": "abc"}
+        with (patch.object(validation, "validate_solids_page", return_value=item),
+              patch("central_v2.backend.operational_log._MIN_LEVEL", 20),
+              contextlib.redirect_stdout(io.StringIO()) as output):
+            result = validation.validate_page(Path("/tmp/manga"), "comix", "12",
+                                              "page.png", "SOLIDOS")
+        self.assertEqual(result, item)
+        self.assertEqual(output.getvalue(), "")
+        with (patch.object(validation, "validate_solids_page", return_value=item),
+              patch("central_v2.backend.operational_log._MIN_LEVEL", 10),
+              contextlib.redirect_stdout(io.StringIO()) as output):
+            validation.validate_page(Path("/tmp/manga"), "comix", "12",
+                                     "page.png", "SOLIDOS")
+        self.assertEqual(output.getvalue().count("DEBUG"), 2)
+        self.assertIn("CHECK_MANIFEST_MISSING", output.getvalue())
+
     def test_partial_chapter_summary_is_page_scoped_and_deterministic(self):
         with tempfile.TemporaryDirectory() as temp:
             root = Path(temp)

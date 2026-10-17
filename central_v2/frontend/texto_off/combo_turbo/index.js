@@ -1,11 +1,12 @@
-import { getContext, subscribeContext } from "/_app/state/context.js";
-import { subscribeCleanerInvalidation } from "/_app/state/cleaner_revision.js";
-import { describeError, fetchChapterOverview, fetchComboJob, fetchComboResult, planCombo, startCombo } from "/texto_off/combo_turbo/api.js";
+import { getContext } from "/_app/state/context.js";
+import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";
+import { describeError, fetchComboJob, fetchComboResult, planCombo, startCombo } from "/texto_off/combo_turbo/api.js";
 import { comboState, MAX_CHAPTERS, TERMINAL, summarizePlan } from "/texto_off/combo_turbo/model.js";
 import { isConflict, reconcileSelection, selectChapter, selectChapters, selectEligible } from "/texto_off/combo_turbo/behavior.js";
-import { jobStorageKey, readStoredJob, saveStoredJob, watchJob } from "/texto_off/combo_turbo/jobs.js";
-import { preflightAll } from "/texto_off/combo_turbo/planning.js";
+import { readStoredJob, saveStoredJob, watchJob } from "/texto_off/combo_turbo/jobs.js";
 import { createComboView } from "/texto_off/combo_turbo/view.js";
+import { loadComboRows, markComboResultInvalidated, savedComboUiState, saveComboUiState } from "/texto_off/combo_turbo/cache.js";
+import { watchComboChanges } from "/texto_off/combo_turbo/lifecycle.js";
 
 const keyFor = (provider, manga) => `${provider}:${manga}`;
 
@@ -15,20 +16,20 @@ export function render(container) {
   stylesheet.rel = "stylesheet"; stylesheet.href = "/texto_off/combo_turbo/style.css";
   document.head.append(stylesheet);
   container.replaceChildren(element);
-  let disposed = false, generation = 0, busy = false, loading = false;
+  let disposed = false, generation = 0, busy = false, loading = false, reloadQueued = false;
   let contextKey = "", planToken = null, plannedSelection = "", planApproved = false;
   let selected = new Set(), rows = [], activeJob = null, conflict = false, planExpiresAt = 0;
   let planExpiryTimer = null, currentResult = null;
   const view = createComboView({
-    refresh: () => load(true), plan: planSelected, run: execute,
+    refresh: () => load(true, true), plan: planSelected, run: execute,
     select, selectMany, selectEligible: chooseEligible,
-  });
+    onUiState: (state) => saveComboUiState(getContext().provider, getContext().manga, state),
+  }, savedComboUiState(getContext().provider, getContext().manga));
   element.append(view.element);
 
   function update(extra = {}) {
     const context = getContext();
-    view.update({ provider: context.provider, manga: context.manga, rows, selected, busy, loading, conflict, job: activeJob, result: currentResult,
-      planValid: Boolean(planToken) && planApproved && Date.now() < planExpiresAt, ...extra });
+    view.update({ provider: context.provider, manga: context.manga, rows, selected, busy, loading, conflict, job: activeJob, result: currentResult, planValid: Boolean(planToken) && planApproved && Date.now() < planExpiresAt, ...extra });
   }
   function message(text) {
     const node = view.element.querySelector("[data-message]");
@@ -44,24 +45,28 @@ export function render(container) {
     const result = selectChapter(selected, rows, chapter, checked);
     if (result.reason) { message(result.reason); return; }
     if (!result.changed) return;
-    selected = result.selected; invalidatePlan(); update();
+    selected = result.selected; rememberSelection(); invalidatePlan(); update();
   }
   function selectMany(chapters, checked) {
     const result = selectChapters(selected, rows, chapters, checked);
     if (result.reason) { message(result.reason); return; }
     if (!result.changed) return;
-    selected = result.selected; invalidatePlan(); update();
+    selected = result.selected; rememberSelection(); invalidatePlan(); update();
   }
   function chooseEligible() {
     selected = selectEligible(rows);
+    rememberSelection();
     invalidatePlan();
     message(rows.filter((row) => comboState(row) === "PLANNED").length > MAX_CHAPTERS
       ? `Selecionados os primeiros ${MAX_CHAPTERS} capítulos elegíveis; esse é o limite por execução.` : "");
     update();
   }
+  function rememberSelection() {
+    saveComboUiState(getContext().provider, getContext().manga, { selected: [...selected] });
+  }
 
-  async function load(preserveSelection = true) {
-    if (loading && preserveSelection) return;
+  async function load(preserveSelection = true, refresh = false) {
+    if (loading && preserveSelection) { reloadQueued = true; return; }
     const { provider, manga } = getContext();
     const id = ++generation;
     loading = true;
@@ -72,23 +77,24 @@ export function render(container) {
     }
     const nextKey = keyFor(provider, manga);
     if (contextKey !== nextKey) {
-      selected.clear(); invalidatePlan(); activeJob = null; currentResult = null;
+      selected = new Set(savedComboUiState(provider, manga).selected || []);
+      view.restore(savedComboUiState(provider, manga));
+      invalidatePlan(); activeJob = null; currentResult = null;
       update({ job: null, result: null });
     }
     contextKey = nextKey; conflict = false; invalidatePlan();
     update({ loading: true }); message("Consultando capítulos e elegibilidade…");
     try {
-      const overview = await fetchChapterOverview(provider, manga);
+      const previous = preserveSelection ? selected
+        : new Set(savedComboUiState(provider, manga).selected || []);
+      rows = await loadComboRows(provider, manga, { refresh,
+        onBatch: (done, total) => { if (!disposed && id === generation) message(`Consultando elegibilidade: ${done} de ${total} capítulos…`); } });
       if (disposed || id !== generation) return;
-      const previous = preserveSelection ? selected : new Set();
-      rows = (overview.chapters || []).map((row) => ({ chapter: String(row.chapter), status: "UNKNOWN", pages: [] }));
-      selected = new Set([...previous].filter((chapter) => rows.some((row) => row.chapter === chapter)));
-      update({ loading: true });
-      rows = await preflightAll(provider, manga, rows.map((row) => row.chapter),
-        (done, total) => { message(`Consultando elegibilidade: ${done} de ${total} capítulos…`); },
-        () => !disposed && id === generation);
+      selected = new Set([...previous].filter((chapter) => rows.some((row) =>
+        row.chapter === chapter && comboState(row) === "PLANNED")));
       const reconciled = reconcileSelection(selected, rows);
       if (reconciled.changed) { selected = reconciled.selected; invalidatePlan(); }
+      saveComboUiState(provider, manga, { selected: [...selected] });
       update({ loading: false });
       if (disposed || id !== generation) return;
       message(rows.some((row) => comboState(row) === "PLANNED") ? "" : "Nenhum capítulo elegível para o Combo Turbo.");
@@ -96,7 +102,10 @@ export function render(container) {
     } catch (error) {
       if (!disposed && id === generation) { update({ loading: false }); message(describeError(error)); }
     } finally {
-      if (id === generation) { loading = false; update({ loading: false }); }
+      if (id === generation) {
+        loading = false; update({ loading: false });
+        if (reloadQueued) { reloadQueued = false; load(true); }
+      }
     }
   }
   async function planSelected() {
@@ -148,8 +157,7 @@ export function render(container) {
     } finally { busy = false; update(); }
   }
   async function restoreJob(provider, manga, id) {
-    let saved;
-    saved = readStoredJob(provider, manga);
+    const saved = readStoredJob(provider, manga);
     if (!saved?.status_url || disposed || id !== generation) return;
     try {
       const response = await fetchComboJob(saved.status_url);
@@ -171,6 +179,9 @@ export function render(container) {
   async function loadResult(job) {
     try {
       const response = await fetchComboResult(job.result_url);
+      if (markComboResultInvalidated(job.id)) {
+        invalidateCleanerOverview(job.provider || getContext().provider, job.manga || getContext().manga);
+      }
       currentResult = response.result || { status: response.status, results: [] };
       update({ result: currentResult });
       message(response.status === "STALE" || response.status === "INVALID"
@@ -178,21 +189,11 @@ export function render(container) {
         : "");
     } catch (error) { message(describeError(error)); }
   }
-  const unsubscribeContext = subscribeContext(() => load(false));
-  const unsubscribeInvalidation = subscribeCleanerInvalidation((provider, manga) => {
-    const context = getContext();
-    if (provider === context.provider && manga === context.manga) load(true);
-  });
-  const onStorage = (event) => {
-    const context = getContext();
-    if (event.key === jobStorageKey(context.provider, context.manga)) load(true);
-  };
-  window.addEventListener("storage", onStorage);
+  const unsubscribeChanges = watchComboChanges(load);
   load(false);
   return () => {
     disposed = true; generation++;
-    unsubscribeContext(); unsubscribeInvalidation();
-    window.removeEventListener("storage", onStorage);
+    unsubscribeChanges();
     clearTimeout(planExpiryTimer);
     stylesheet.remove(); element.remove();
   };

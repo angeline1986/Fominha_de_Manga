@@ -7,6 +7,7 @@ from central_v2.backend.jobs.manager import submit
 from central_v2.backend.operational_log import emit
 from .api_contract import request_context, summarize_plan, verify_plan_token
 from .execution import source_signature
+from .job_logging import log_page_outcome, log_progress
 from .orchestrator import run_combo
 from .job_store import (ensure_area, now, persisted_job, persisted_result,
                         run_root as workspace_for_job, save)
@@ -47,11 +48,13 @@ def start_job(payload, output_root):
         save(state)
         submit(lambda progress, identifier: _run_job(context, state, progress),
                total=len(context["chapters"]), job_id=job_id, component="COMBO")
-    except Exception:
+    except Exception as exc:
         with _reservation_lock:
             _reserved_manga.discard(source_key)
         state.update(status="FAILED", errors=[{"reason": "JOB_SUBMISSION_FAILED"}])
         save(state)
+        emit("ERROR", "falha ao iniciar Combo Turbo job", component="COMBO",
+             job_id=job_id, motivo="JOB_SUBMISSION_FAILED", detalhe=str(exc))
         raise
     emit("INFO", "Combo Turbo job aceito", component="COMBO", job_id=job_id,
          provider=context["provider"], obra=context["manga_name"],
@@ -78,6 +81,8 @@ def _resume_state(job_id, context, output_root):
 def _run_job(context, state, progress):
     job_id, source = state["id"], context["manga"]
     completed, blocked = set(), set()
+    emit("INFO", "Combo Turbo job iniciado", component="COMBO", job_id=job_id,
+         obra=context["manga_name"], capítulos=len(context["chapters"]))
     try:
         ensure_area("runs")
         run_root = workspace_for_job(job_id)
@@ -104,12 +109,10 @@ def _run_job(context, state, progress):
                     chapter_state["combo"] = "COMPOSING"
                 elif stage == "chapter_complete":
                     chapter_state.update(status=event.get("status"), combo=event.get("status"))
-            if state["stage"] != prior_stage or stage == "complete":
-                emit("INFO", "Combo Turbo progresso", component="COMBO", job_id=job_id,
-                     capítulo=state["chapter"], página=state["page"],
-                     etapa=state["stage"], estado=event.get("status"))
+            log_progress(job_id, stage, prior_stage, state, event)
             if stage == "complete" and event.get("page"):
                 key = (event.get("chapter"), event["page"])
+                log_page_outcome(job_id, event)
                 completed.add(key)
                 state["pages_completed"] = len(completed)
                 if event.get("status") in {"BLOCKED", "INVALID", "FAILED", "CONFLICT"}:
@@ -145,7 +148,7 @@ def _run_job(context, state, progress):
                      capítulo=row["chapter"], estado=row["status"],
                      páginas_compostas=sum(page.get("status") == "COMPOSED" for page in row["pages"]),
                      conflitos=sum(page.get("status") == "CONFLICT" for page in row["pages"]),
-                     reutilizáveis=sum(sum(item.get("reused", False)
+                     tratamentos_reutilizados=sum(sum(item.get("reused", False)
                          for item in page.get("treatments", {}).values()) for page in row["pages"]))
         else:
             state["status"] = record.get("status", "FAILED").lower()
@@ -163,7 +166,8 @@ def _run_job(context, state, progress):
     except Exception as exc:
         state.update(status="failed", stage="FAILED", errors=[{"reason": str(exc)}])
         save(state)
-        emit("ERROR", "Combo Turbo job falhou", component="COMBO", job_id=job_id, erro=str(exc))
+        emit("ERROR", "Combo Turbo job falhou", component="COMBO", job_id=job_id,
+             motivo="JOB_EXECUTION_FAILED", detalhe=str(exc))
         return [{"status": "failed", "error": str(exc)}]
     finally:
         with _reservation_lock:

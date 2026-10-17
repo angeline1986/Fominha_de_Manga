@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from central_v2.backend.operational_log import bind_operation, emit
+import central_v2.backend.operational_log as operational_log
 
 
 class OperationalLogTests(unittest.TestCase):
@@ -22,6 +23,15 @@ class OperationalLogTests(unittest.TestCase):
             emit("INFO", "sem job")
         self.assertIn("[CLEANER-I][123456]", output.call_args_list[0].args[0])
         self.assertIn("[CENTRAL]", output.call_args_list[1].args[0])
+
+    def test_debug_is_hidden_by_default_and_available_when_enabled(self):
+        with patch.object(operational_log, "_MIN_LEVEL", 20), patch("builtins.print") as output:
+            self.assertEqual(emit("DEBUG", "detalhe técnico"), "")
+            output.assert_not_called()
+        with patch.object(operational_log, "_MIN_LEVEL", 10), patch("builtins.print") as output:
+            line = emit("DEBUG", "detalhe técnico")
+        self.assertIn(" DEBUG [CENTRAL] detalhe técnico", line)
+        output.assert_called_once_with(line, flush=True)
 
 
 if __name__ == "__main__":

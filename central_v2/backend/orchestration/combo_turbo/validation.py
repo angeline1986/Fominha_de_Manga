@@ -16,8 +16,8 @@ def validate_page(manga: Path, provider: str, chapter: str,
                   page: str, stage: str) -> dict:
     """Validate one existing artifact; never execute or write operational data."""
     key = str(stage).upper() if isinstance(stage, str) else ""
-    emit("INFO", "validando artefato", component="COMBO",
-         capítulo=chapter, página=page, etapa=key)
+    emit("DEBUG", "validando artefato", component="COMBO",
+         obra=str(manga), capítulo=chapter, página=page, etapa=key)
     if not valid_chapter_id(chapter):
         item = result(key or "UNKNOWN", chapter, page, "INVALID", reasons=["INVALID_CHAPTER"])
     elif key == "SOLIDOS":
@@ -27,9 +27,13 @@ def validate_page(manga: Path, provider: str, chapter: str,
     else:
         item = result(key or "UNKNOWN", chapter, page, "INVALID",
                       reasons=["UNKNOWN_STAGE"])
-    emit("INFO", "resultado da validação", component="COMBO",
+    emit("DEBUG", "resultado da validação", component="COMBO",
          capítulo=chapter, página=page, etapa=key,
-         status=item["status"], motivos=",".join(item["reasons"]) or "—")
+         status=item["status"], motivos=",".join(item["reasons"]) or "—",
+         integridade=item.get("integrity_ok"), check=item.get("check_verified"),
+         artefato_sha256=item.get("artifact_sha256"),
+         mascara_sha256=item.get("mask_sha256"),
+         manifesto_sha256=item.get("manifest_sha256"))
     return item
 
 
@@ -77,12 +81,10 @@ def validate_chapter(manga: Path, provider: str, chapter: str) -> dict:
         "invalid": sum(counts[stage]["INVALID"] for stage in counts),
         "unverified": sum(counts[stage]["UNVERIFIED"] for stage in counts),
     }
-    emit("INFO", "resumo do capítulo", component="COMBO", capítulo=chapter,
+    emit("DEBUG", "validação do capítulo concluída", component="COMBO", capítulo=chapter,
          páginas=summary["pages_analyzed"],
-         solids_reusable=summary["solids"]["REUSABLE"],
-         glass_reusable=summary["glass"]["REUSABLE"],
-         missing=summary["without_artifact"], stale=summary["stale"],
-         invalid=summary["invalid"], unverified=summary["unverified"])
+         solids={key.lower(): value for key, value in counts["solidos"].items()},
+         glass={key.lower(): value for key, value in counts["glass"].items()})
     return {**summary, "pages": pages, "results": records}
 
 

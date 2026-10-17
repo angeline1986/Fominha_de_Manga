@@ -36,6 +36,16 @@ export function comboState(chapter) {
   return chapter?.status || "UNKNOWN";
 }
 
+export function summarizeRows(rows) {
+  const summary = { total: rows.length, eligible: 0, blocked: 0 };
+  rows.forEach((row) => {
+    const status = comboState(row);
+    if (status === "BLOCKED") summary.blocked++;
+    else if (status === "PLANNED") summary.eligible++;
+  });
+  return summary;
+}
+
 export function resultSummary(result) {
   const pages = (result?.results || []).flatMap((chapter) => chapter.pages || []);
   const counts = { COMPOSED: 0, NO_WORK: 0, CONFLICT: 0, BLOCKED: 0, FAILED: 0, INVALID: 0 };

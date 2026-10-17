@@ -1,7 +1,9 @@
 """Deterministic page-level planning for the isolated Combo Turbo runner."""
 import json
+import time
 from pathlib import Path
 
+from central_v2.backend.operational_log import emit
 from central_v2.backend.orchestration.textoff_merged.solid_stage import rows_for
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, stage_chapter
 
@@ -12,6 +14,8 @@ from .validation import validate_chapter
 def plan_chapter(manga, provider, chapter, *, repair_isolated_outputs=False):
     """Plan each candidate page without executing either cleaner."""
     if not valid_chapter_id(chapter):
+        emit("WARNING", "capítulo bloqueado", component="COMBO", capítulo=chapter,
+             motivo="INVALID_CHAPTER")
         return {"chapter": chapter, "status": "BLOCKED", "reasons": ["INVALID_CHAPTER"], "pages": []}
     root = Path(manga).resolve()
     try:
@@ -21,6 +25,8 @@ def plan_chapter(manga, provider, chapter, *, repair_isolated_outputs=False):
         solid_pages = {row.get("page") for row in solids_rows if valid_page_id(row.get("page"))}
         glass_pages = _glass_candidates(root, chapter)
     except (OSError, ValueError, TypeError, KeyError, RuntimeError) as exc:
+        emit("WARNING", "capítulo bloqueado", component="COMBO", capítulo=chapter,
+             motivo="AUTHORITY_UNAVAILABLE", detalhe=str(exc))
         return {"chapter": chapter, "status": "BLOCKED", "reasons": ["AUTHORITY_UNAVAILABLE"],
                 "error": str(exc), "pages": []}
     records = {stage: {item["page"]: item for item in review["results"][stage]}
@@ -37,25 +43,54 @@ def plan_chapter(manga, provider, chapter, *, repair_isolated_outputs=False):
     blocked = any(p["action"] == "BLOCKED" for p in pages)
     no_work = not pages or all(p["action"] == "NO_WORK" for p in pages)
     status = "BLOCKED" if blocked else "NO_WORK" if no_work else "PLANNED"
+    emit("INFO", "capítulo analisado", component="COMBO", capítulo=chapter,
+         paginas=len(pages), paginas_planejadas=sum(p["action"] == "PLANNED" for p in pages),
+         paginas_com_reuso=sum(any(stage["status"] == "REUSED"
+                                   for stage in p["stages"].values()) for p in pages),
+         paginas_bloqueadas=sum(p["action"] == "BLOCKED" for p in pages),
+         paginas_sem_trabalho=sum(p["action"] == "NO_WORK" for p in pages),
+         solids_reusable_artifacts=_status_count(records, "SOLIDOS", "REUSABLE"),
+         glass_reusable_artifacts=_status_count(records, "GLASS", "REUSABLE"),
+         solids_missing_artifacts=_status_count(records, "SOLIDOS", "MISSING"),
+         glass_missing_artifacts=_status_count(records, "GLASS", "MISSING"),
+         solids_unverified_artifacts=_status_count(records, "SOLIDOS", "UNVERIFIED"),
+         glass_unverified_artifacts=_status_count(records, "GLASS", "UNVERIFIED"))
+    if blocked:
+        reasons = sorted({reason for page in pages for stage in page["stages"].values()
+                          if stage["status"] == "BLOCKED" for reason in stage["reasons"]})
+        emit("WARNING", "capítulo bloqueado", component="COMBO", capítulo=chapter,
+             motivos=",".join(reasons) if reasons else "DEPENDENCIA_OBRIGATORIA")
     return {"chapter": chapter, "status": status, "pages": pages,
             "reasons": ["DEPENDENCY_REVIEW_REQUIRED"] if blocked else []}
 
 
 def plan_combo(manga, provider, chapters, *, repair_isolated_outputs=False):
     """Plan selected chapters in input order; duplicate or unsafe IDs block."""
+    started = time.monotonic()
+    emit("INFO", "planejamento iniciado", component="COMBO",
+         obra=Path(manga).name, capítulos=len(chapters) if isinstance(chapters, (list, tuple)) else 0)
     if not isinstance(chapters, (list, tuple)) or not chapters:
-        return {"status": "BLOCKED", "chapters": [], "reasons": ["CHAPTERS_REQUIRED"]}
+        return _finish_plan({"status": "BLOCKED", "chapters": [],
+                             "reasons": ["CHAPTERS_REQUIRED"]}, started)
     if any(not valid_chapter_id(c) for c in chapters):
-        return {"status": "BLOCKED", "chapters": [], "reasons": ["INVALID_CHAPTER_SELECTION"]}
+        return _finish_plan({"status": "BLOCKED", "chapters": [],
+                             "reasons": ["INVALID_CHAPTER_SELECTION"]}, started)
     if len(set(chapters)) != len(chapters):
-        return {"status": "BLOCKED", "chapters": [], "reasons": ["INVALID_CHAPTER_SELECTION"]}
+        return _finish_plan({"status": "BLOCKED", "chapters": [],
+                             "reasons": ["INVALID_CHAPTER_SELECTION"]}, started)
     planned = [plan_chapter(manga, provider, chapter,
                             repair_isolated_outputs=repair_isolated_outputs)
                for chapter in chapters]
     status = ("BLOCKED" if any(x["status"] == "BLOCKED" for x in planned) else
               "NO_WORK" if all(x["status"] == "NO_WORK" for x in planned) else "PLANNED")
-    return {"status": status,
-            "chapters": planned, "reasons": []}
+    return _finish_plan({"status": status, "chapters": planned, "reasons": []}, started)
+
+
+def _finish_plan(plan, started):
+    emit("INFO", "planejamento concluído", component="COMBO",
+         status=plan["status"], capítulos=len(plan.get("chapters", [])),
+         duração=f"{time.monotonic() - started:.1f}s")
+    return plan
 
 
 def _action(item, eligible, repair_isolated_outputs=False):
@@ -78,6 +113,10 @@ def _page_action(stages):
     if any(item["status"] == "BLOCKED" for item in stages.values()):
         return "BLOCKED"
     return "PLANNED" if any(item["needed"] for item in stages.values()) else "NO_WORK"
+
+
+def _status_count(records, stage, status):
+    return sum(item.get("status") == status for item in records[stage].values())
 
 
 def _glass_candidates(manga, chapter):

@@ -98,6 +98,8 @@ def run_combo(manga, provider, chapters, output_dir, *, mode="PLAN_ONLY", progre
                 row = {"chapter": chapter, "status": status,
                        "pages": list(page_rows.values()), "errors": raw.get("errors", [])}
             except (OSError, ValueError, TypeError, RuntimeError) as exc:
+                emit("ERROR", "falha de processamento do capítulo", component="COMBO",
+                     capítulo=chapter, motivo="CHAPTER_EXECUTION_FAILED", detalhe=str(exc))
                 row = {"chapter": chapter, "status": "FAILED", "pages": [],
                        "errors": [{"reason": "CHAPTER_EXECUTION_FAILED", "detail": str(exc)}]}
             row["counts"] = _count_states(row["pages"])
@@ -123,6 +125,13 @@ def run_combo(manga, provider, chapters, output_dir, *, mode="PLAN_ONLY", progre
             record["publication"] = [item for item in record["publication"]
                                      if item.get("chapter") != row["chapter"]]
             record["publication"].append({"chapter": row["chapter"], **outcome})
+            publication_level = ("ERROR" if outcome.get("status") in {"FAILED", "INVALID"}
+                                 else "WARNING" if outcome.get("status") in {"PARTIAL", "BLOCKED"}
+                                 else "INFO")
+            emit(publication_level, "publicação isolada concluída", component="COMBO",
+                 capítulo=row["chapter"], status=outcome.get("status"),
+                 **({"motivos": ",".join(outcome["reasons"])}
+                    if outcome.get("reasons") else {}))
             if outcome.get("status") in {"PARTIAL", "BLOCKED", "FAILED", "INVALID"}:
                 record["status"] = "PARTIAL"
                 if outcome.get("status") in {"FAILED", "INVALID"}:
@@ -133,7 +142,8 @@ def run_combo(manga, provider, chapters, output_dir, *, mode="PLAN_ONLY", progre
         _notify(progress, {"stage": "COMPLETED", "status": record["status"]})
         return record
     except (OSError, ValueError, TypeError, RuntimeError) as exc:
-        emit("ERROR", "Combo isolado bloqueado", component="COMBO", erro=str(exc))
+        emit("ERROR", "falha do Combo isolado", component="COMBO",
+             motivo="ISOLATION_OR_EXECUTION_FAILED", detalhe=str(exc))
         if isinstance(record, dict):
             record["status"] = "FAILED"
             record.setdefault("errors", []).append({
