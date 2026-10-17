@@ -43,11 +43,14 @@ def source_for(manga, chapter, page, expected_sha256=None):
     return current
 
 
-def execute_chapter(manga, document, chapter):
+def execute_chapter(manga, document, chapter, *, candidate_pages=None, output_dir=None):
     rows, check_hash = rows_for(manga, document, chapter)
     if not rows:
         raise ValueError("Capítulo sem ocorrências Sólidos aprovadas no Check")
-    target = stage_chapter(manga, STAGE, chapter, read_legacy=False)
+    target = Path(output_dir) if output_dir is not None else stage_chapter(
+        manga, STAGE, chapter, read_legacy=False)
+    if output_dir is not None and not _disposable_target(manga, target):
+        raise ValueError("Destino de staging deve estar em diretório temporário isolado")
     if target.exists():
         raise ValueError("Etapa Sólidos já possui resultados: " + chapter)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -59,6 +62,12 @@ def execute_chapter(manga, document, chapter):
             raise ValueError("Identificador de ocorrência inválido/repetido")
         seen.add(ident)
         grouped.setdefault(page, []).append(row)
+    if candidate_pages is not None:
+        if not isinstance(candidate_pages, (set, list, tuple)):
+            raise ValueError("Lista de páginas candidatas inválida")
+        grouped = {page: rows for page, rows in grouped.items() if page in candidate_pages}
+        if not grouped:
+            raise ValueError("Capítulo sem ocorrências Sólidos pendentes")
     sources = {page: source_for(manga, chapter, page) for page in grouped}
     hashes = {page: _sha(path) for page, path in sources.items()}
     scratch = Path(tempfile.mkdtemp(prefix=".solid-stage-", dir=target.parent))
@@ -110,3 +119,11 @@ def execute_chapter(manga, document, chapter):
     finally:
         if scratch.exists():
             shutil.rmtree(scratch, ignore_errors=True)
+
+
+def _disposable_target(manga, target):
+    resolved = Path(target).resolve()
+    temporary_roots = {Path(tempfile.gettempdir()).resolve(), Path("/tmp").resolve(),
+                       Path("/private/tmp").resolve()}
+    return (not resolved.is_relative_to(Path(manga).resolve())
+            and any(resolved.is_relative_to(root) for root in temporary_roots))

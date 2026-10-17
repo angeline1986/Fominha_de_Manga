@@ -18,9 +18,13 @@ from central_v2.backend.routes.textoff_merged_router import dispatch_textoff_mer
 from central_v2.backend.routes.balanceamento import balanceamento_job_response
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.laboratorio_dispatch import dispatch_laboratorio_post
+from central_v2.backend.routes.combo_turbo import dispatch_post as dispatch_combo_turbo_post
 
 
 def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
+    combo_response = dispatch_combo_turbo_post(path, payload, output_root)
+    if combo_response is not None:
+        return combo_response
     handled, response = dispatch_laboratorio_post(path, payload, output_root)
     if handled:
         return response

@@ -66,8 +66,7 @@ def discard_staging(folder: Path) -> None:
     if state == "staging":
         shutil.rmtree(folder, ignore_errors=True)
 
-
-def publish(manga: Path, folder: Path, entries: list[dict], validate) -> None:
+def publish(manga: Path, folder: Path, entries: list[dict], validate, validate_published=None) -> None:
     """Publish under the manga lock; participating readers must take that lock."""
     manga, folder = Path(manga).resolve(), Path(folder).resolve()
     if not folder.is_relative_to(manga / ROOT_NAME):
@@ -98,6 +97,7 @@ def publish(manga: Path, folder: Path, entries: list[dict], validate) -> None:
                 if item["had_previous"]:
                     durable_replace(target, backup)
                 durable_replace(staged, target)
+            if callable(validate_published): validate_published()
             journal["state"] = "committed"
             _write(journal_path, journal)
         except BaseException:

@@ -12,7 +12,9 @@ from processamento.unificacao_imagens import image_stitcher as v3
 from .artifact_migration import mirror_stage_chapter
 from .artifact_paths import artifact_ref
 from .manifests import _stage_manifest, _stage_manifest_sha256
-from .level2_manual_protection import load_level1_protection
+from .level2_manual_protection import load_level1_protection_context
+from .level2_provenance import (assert_report_artifacts_current, validate_report_provenance,
+                                validate_protection_provenance)
 from .query import query_merged_level2
 from .runtime import REPOSITORY_ROOT, python_for
 from .stages import LEVEL1, LEVEL2, stage_chapter
@@ -58,11 +60,13 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
         staged = work / "staged"
         staged.mkdir()
         report_file = staged / artifact_ref("json", "level2-transparent-report.json")
+        protections, protection_source = load_level1_protection_context(
+            manga, provider, manga_name, name)
         jobs.append({"chapter": name, "source_dir": str(source_dir), "level1_dir": str(level1_dir),
                      "output_dir": str(staged), "report": str(report_file),
                      "candidate_pages": sorted(candidate_names),
-                     "protected_occurrences": load_level1_protection(
-                         manga, provider, manga_name, name)})
+                     "protected_occurrences": protections,
+                     "protection_source": protection_source})
         records.append((name, source_dir, target, staged, candidate_names))
     if not jobs:
         return results
@@ -103,6 +107,8 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             if not report_file.is_file():
                 raise RuntimeError(f"Nível II não gerou relatório para Cap. {name}.")
             report = json.loads(report_file.read_text(encoding="utf-8"))
+            job = next(item for item in jobs if item["chapter"] == name)
+            _assert_protection_source_current(manga, job["protection_source"])
             images = v3.merge_artifact_files(source_dir)
             level1_manifest = _stage_manifest(manga, LEVEL1, name)
             if (report.get("merge_pages_total", report.get("pages_analyzed")) != len(images)
@@ -110,10 +116,17 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                     or report.get("pages_analyzed") != len(candidate_names)):
                 raise RuntimeError(f"Relatório Nível II incompleto ou inválido para Cap. {name}.")
             pages = _validated_candidate_pages(report, candidate_names, staged, level1_dir)
+            current_level1_hash = _stage_manifest_sha256(manga, LEVEL1, name)
+            validate_report_provenance(pages, current_level1_hash,
+                                       report.get("source_level1_manifest_sha256"), name)
+            validate_protection_provenance(report, pages, job["protection_source"],
+                                           job["protected_occurrences"], name)
             report["report_reference"] = artifact_ref("json", report_file.name)
+            if report.get("source_level1_manifest_sha256") != current_level1_hash:
+                raise RuntimeError(f"Manifesto do Nível I mudou durante o Cap. {name}.")
             output_manifest, clean_names = build_output_manifest(
                 report, pages, images, candidate_names, level1_manifest,
-                _stage_manifest_sha256(manga, LEVEL1, name))
+                report["source_level1_manifest_sha256"])
             (staged / artifact_ref("json", "clean-manifest.json")).write_text(
                 json.dumps(output_manifest, indent=2, ensure_ascii=False), encoding="utf-8")
             transparent_pages = [
@@ -122,6 +135,14 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             ]
             prepared.append((name, target, staged, report, len(images), clean_names,
                              transparent_pages, len(pages)))
+        for name, source_dir, _, staged, _ in records:
+            report = next(item[3] for item in prepared if item[0] == name)
+            level1_dir = stage_chapter(manga, LEVEL1, name)
+            assert_report_artifacts_current(report, source_dir, level1_dir, staged)
+            if report["source_level1_manifest_sha256"] != _stage_manifest_sha256(manga, LEVEL1, name):
+                raise RuntimeError(f"Manifesto do Nível I mudou antes da publicação do Cap. {name}.")
+            job = next(item for item in jobs if item["chapter"] == name)
+            _assert_protection_source_current(manga, job["protection_source"])
         for name, target, staged, report, image_count, clean_names, transparent_pages, analyzed_count in prepared:
             _promote_stage(staged, target)
             mirror_stage_chapter(manga, "auto_cleaner_transparencia_basica", name)
@@ -162,3 +183,11 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                         "completed": index, "total": len(chapters),
                         "message": message})
     return results
+
+
+def _assert_protection_source_current(manga, source):
+    from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+    path = manga / source["path"] if source.get("path") else None
+    current = sha256(path) if path and path.is_file() else None
+    if current != source.get("sha256"):
+        raise ValueError("A fonte de proteções mudou durante a execução do Nível II.")

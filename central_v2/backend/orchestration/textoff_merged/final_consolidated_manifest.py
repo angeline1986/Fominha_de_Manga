@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+from .stages import provider_name
 
 SCHEMA = "textoff_consolidado_final_manifest_v1"
 MANIFEST = "final-manifest.json"
@@ -11,7 +12,7 @@ MANIFEST = "final-manifest.json"
 def read_manifest(path, manga, chapter):
     payload = json.loads(path.read_text(encoding="utf-8"))
     if (payload.get("schema") != SCHEMA or payload.get("version") != 1
-            or payload.get("provider") != Path(manga).parent.name
+            or payload.get("provider") != provider_name(manga)
             or payload.get("manga") != Path(manga).name or payload.get("chapter") != chapter
             or not isinstance(payload.get("pages"), dict)):
         raise ValueError("Manifesto do Consolidado Final incompatível.")

@@ -120,6 +120,13 @@ export const navigation = [
         },
       },
       {
+        label: "EXECUÇÃO EM LOTE",
+        items: [
+          { id: "combo-turbo", label: "Combo Turbo", icon: "sparkles", variant: "primary",
+            tooltip: "Executar Sólidos + Glass em lote, na cópia isolada" },
+        ],
+      },
+      {
         label: "",
         items: [
           { id: "laboratorio", label: "Laboratório", icon: "highlighter", variant: "primary" },

@@ -13,7 +13,7 @@ from .consolidated import consolidated_is_current
 from .consolidated_artifacts import consolidated_image
 from .final_consolidated_manifest import read_manifest, write_manifest
 from .level2_validation import promote_stage
-from .stages import LEVEL1, LEVEL2, stage_chapter
+from .stages import LEVEL1, LEVEL2, provider_name, stage_chapter
 from .special_styled_transaction import transaction_lock
 
 STAGE = "CONSOLIDADO_FINAL"
@@ -22,7 +22,7 @@ MANIFEST = "final-manifest.json"
 PINCEL_STAGES = {"degrade": ("PINCEL_DEGRADE", "PINCEL_DEGRADE"),
                  "estilizado": ("PINCEL_ARTISTICO", "PINCEL_ARTISTICO"),
                  "gradiente_suave": ("PINCEL_SUAVE", "PINCEL_SUAVE")}
-AUTOMATIC_ORIGINS = {LEVEL1: "AUTO_CLEANER", LEVEL2: "AUTO_CLEANER_TRANSPARENCIA"}
+AUTOMATIC_ORIGINS = {LEVEL1: "AUTO_CLEANER", LEVEL2: "AUTO_CLEANER_TRANSPARENCIA", "COMBO_TURBO": "AUTO_CLEANER_COMBO_TURBO"}
 TREATMENT_ORIGINS = {key: value[1] for key, value in PINCEL_STAGES.items()}
 
 
@@ -193,7 +193,7 @@ def _load_existing(target, manga, chapter):
     return read_manifest(manifest, manga, chapter)
 
 def _payload(manga, chapter, pages, history, intermediate_hash):
-    return {"schema": SCHEMA, "version": 1, "provider": Path(manga).parent.name,
+    return {"schema": SCHEMA, "version": 1, "provider": provider_name(manga),
             "manga": Path(manga).name, "chapter": chapter,
             "source_intermediate_manifest_sha256": intermediate_hash,
             "updated_at": datetime.now(timezone.utc).isoformat(),

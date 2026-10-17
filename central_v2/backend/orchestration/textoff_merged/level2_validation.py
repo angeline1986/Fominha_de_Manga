@@ -99,9 +99,21 @@ def build_output_manifest(report, pages, images, candidate_names, level1, level1
         ("changed_pixels", 0), ("mask_pixels", 0), ("protected_occurrences", 0),
         ("protected_pixels", 0), ("mask_pixels_before_protection", 0),
         ("mask_pixels_after_protection", 0), ("protected_types", []),
-        ("no_change_reason", None))} for item in pages]
+        ("no_change_reason", None), ("source_sha256", None), ("level1_sha256", None),
+        ("result_sha256", None), ("mask_sha256", None),
+        ("level1_report_sha256", None), ("level1_mask_sha256", None),
+        ("deferred_mask_sha256", None), ("protection_source", None),
+        ("protected_occurrence_ids", []), ("protected_types_applied", []))}
+        for item in pages]
+    sources = [item.get("protection_source") for item in page_results]
+    protection_source = sources[0] if sources and all(item == sources[0] for item in sources) else None
+    check_source = (protection_source if isinstance(protection_source, dict)
+                    and protection_source.get("kind") == "CHECK" else None)
     return {
         "schema_version": 1, "algorithm": report.get("algorithm"),
+        "provenance_version": 1,
+        "source_check": check_source,
+        "source_check_manifest_sha256": check_source.get("sha256") if check_source else None,
         "source_stage": LEVEL1, "integrity_ok": True,
         "source_artifacts": [path.name for path in images],
         "candidate_source_artifacts": sorted(candidate_names),

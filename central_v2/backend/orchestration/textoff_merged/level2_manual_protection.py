@@ -8,6 +8,7 @@ from .auto_cleaner_check_manifest import _read_check_manifest, manifest_path
 from .occurrence_policy import protected_types_for_transparency_basic
 from .residue_occurrences import MANIFEST_NAME, occurrences_for, read_manifest
 from .stages import stage_chapter
+from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 
 LEVEL1_REVIEW_STEP = "1"
 PROTECTED_FROM_LEVEL2 = protected_types_for_transparency_basic()
@@ -41,11 +42,24 @@ def protected_occurrences_by_page(manifest: dict) -> dict[str, list[dict]]:
 
 def load_level1_protection(manga, provider: str, manga_name: str,
                            chapter: str) -> dict[str, list[dict]]:
-    """Use saved Check decisions, or the legacy catalog if Check is absent."""
+    """Use Check decisions, or the legacy catalog if Check is absent."""
+    return load_level1_protection_context(manga, provider, manga_name, chapter)[0]
+
+
+def load_level1_protection_context(manga, provider: str, manga_name: str,
+                                   chapter: str) -> tuple[dict, dict]:
+    """Return consumed protections and the exact authority used to load them."""
+    from pathlib import Path
+    root = Path(manga).resolve()
     document = {"provider": provider, "obra": manga_name, "capitulo": chapter}
     check_path = manifest_path(manga, chapter)
     if check_path.is_file():
-        approved = _read_check_manifest(check_path, document)["approved_occurrences"]
+        before = sha256(check_path)
+        check = _read_check_manifest(check_path, document)
+        approved = check["approved_occurrences"]
+        after = sha256(check_path)
+        if before != after:
+            raise ValueError("O manifesto do Check mudou durante a leitura das proteções.")
         result = {}
         for item in approved:
             if item.get("tipo") not in PROTECTED_FROM_LEVEL2:
@@ -54,11 +68,21 @@ def load_level1_protection(manga, provider: str, manga_name: str,
             if not isinstance(page, str) or not page or not isinstance(item.get("box_normalized"), dict):
                 raise ValueError("Ocorrência protegida inválida no manifesto do Check.")
             result.setdefault(page, []).append(item)
-        return result
+        return result, {"kind": "CHECK", "path": str(check_path.relative_to(root)),
+                        "sha256": before,
+                        "revision": check.get("revision", check.get("version"))}
     path = stage_chapter(manga, "RESIDUE_OCCURRENCES", chapter,
                          read_legacy=False) / MANIFEST_NAME
+    path = path.resolve()
+    before = sha256(path) if path.is_file() else None
     manifest = read_manifest(path, document)
-    return protected_occurrences_by_page(manifest)
+    after = sha256(path) if path.is_file() else None
+    if before != after:
+        raise ValueError("O catálogo legado mudou durante a leitura das proteções.")
+    return protected_occurrences_by_page(manifest), {
+        "kind": "RESIDUE_OCCURRENCES", "path": str(path.relative_to(root)),
+        "sha256": before, "revision": (manifest.get("meta", {}).get("atualizado_em")
+                                       if before else None)}
 
 
 def protection_mask(shape: tuple[int, int], occurrences: list[dict]) -> np.ndarray:

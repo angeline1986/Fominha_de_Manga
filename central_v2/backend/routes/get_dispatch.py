@@ -44,6 +44,7 @@ from central_v2.backend.routes.special_treatments import (
     styled_preview_image_response,
 )
 from central_v2.backend.routes.laboratorio_dispatch import dispatch_laboratorio_get
+from central_v2.backend.routes.combo_turbo import dispatch_get as dispatch_combo_turbo_get
 
 
 def dispatch_get(
@@ -83,6 +84,10 @@ def dispatch_get(
     handled, response = dispatch_laboratorio_get(request, output_root)
     if handled:
         return response
+
+    combo_response = dispatch_combo_turbo_get(request.path, output_root)
+    if combo_response is not None:
+        return combo_response
 
     if request.path == "/api/merge-manual":
         return merge_manual_response(parse_qs(request.query), output_root)

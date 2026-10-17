@@ -1,6 +1,7 @@
 """Canonical TextOff Merged output names and legacy read compatibility."""
 from pathlib import Path
 import os
+import json
 from contextlib import contextmanager
 from contextvars import ContextVar
 
@@ -8,6 +9,7 @@ LEVEL1 = "TO_MERGED_NIVEL_I"
 LEVEL2 = "TO_MERGED_NIVEL_II"
 LEVEL3 = "TO_MERGED_NIVEL_III"
 CONSOLIDATED = "TO_MERGED_CONSOLIDADO"
+COMBO_TURBO = "COMBO_TURBO"
 
 LEGACY_NAMES = {
     LEVEL1: "MERGED_NIVEL_I",
@@ -22,6 +24,20 @@ PINCEIS = {
     "CONSOLIDADO_FINAL": "07_CONSOLIDADO_FINAL",
 }
 _paths = ContextVar("textoff_stage_paths", default=None)
+
+
+def provider_name(manga: Path) -> str:
+    """Return the operational provider identity for a source or isolated copy."""
+    manga = Path(manga).resolve()
+    if manga.parent.name != ".combo-workspace":
+        return manga.parent.name
+    marker = manga.parent.parent / ".combo-workspace.json"
+    data = json.loads(marker.read_text(encoding="utf-8"))
+    provider = data.get("provider")
+    source = Path(data.get("source", "")).resolve()
+    if not isinstance(provider, str) or not provider or source.parent.name != provider:
+        raise ValueError("Identidade do provider no workspace isolado é inválida.")
+    return provider
 
 
 def _fingerprint(path: Path):

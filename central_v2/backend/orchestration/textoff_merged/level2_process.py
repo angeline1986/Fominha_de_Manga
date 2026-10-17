@@ -8,32 +8,37 @@ import time
 import cv2
 import numpy as np
 from PIL import Image
-
 from .artifact_paths import artifact_file, artifact_ref, prepare_artifact_dirs
 from .level2_vision import (
-    ALGORITHM, AUTHORIZED_DILATION, BASE_DILATION, LAMA_PADDING,
-    MAX_MPS_PAGES_PER_MODEL, REFERENCE_RECIPE,
+    MAX_MPS_PAGES_PER_MODEL,
     SUPPORTED, _atomic_json, _authorized_deferred_mask, _inpaint, _lama_model,
     _release_inference_cache,
 )
 from .level2_manual_protection import progress_detail, protect_level2_masks
-from .stages import LEVEL1
-
+from .level2_provenance import (
+    assert_unchanged, capture_sources, page_provenance, verify_sources,
+)
+from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+from .level2_report import build_report
 def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             report_path: Path, progress_path: Path | None = None,
             runtime: dict | None = None, candidate_pages: set[str] | None = None,
-            protected_occurrences: dict[str, list[dict]] | None = None) -> dict:
+            protected_occurrences: dict[str, list[dict]] | None = None,
+            protection_source: dict | None = None) -> dict:
     started = time.perf_counter()
     source_dir, level1_dir, output_dir = source_dir.resolve(), level1_dir.resolve(), output_dir.resolve()
     report_file = artifact_file(level1_dir, "json/level1-balloon-report.json", "json")
     manifest_file = artifact_file(level1_dir, "json/clean-manifest.json", "json")
     if report_file is None or manifest_file is None:
         raise FileNotFoundError("level1-balloon-report.json ou clean-manifest.json do Nível I ausente.")
+    level1_report_hash = sha256(report_file)
+    level1_manifest_hash = sha256(manifest_file)
     report = json.loads(report_file.read_text(encoding="utf-8"))
     manifest = json.loads(manifest_file.read_text(encoding="utf-8"))
+    if sha256(report_file) != level1_report_hash or sha256(manifest_file) != level1_manifest_hash:
+        raise ValueError("Autoridade do Nível I mudou durante sua leitura.")
     if manifest.get("integrity_ok") is not True or manifest.get("level1", {}).get("algorithm") != "textoff_level1_balloon_transparency_gate_v4":
         raise ValueError("Reexecute o Nível I para vincular cada balão transparente à sua máscara.")
-
     pages = {item.get("source"): item for item in report.get("pages", []) if isinstance(item, dict)}
     sources = sorted(path for path in source_dir.iterdir() if path.is_file() and path.suffix.lower() in SUPPORTED)
     if not sources:
@@ -49,21 +54,21 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             or {Path(str(name)).name for name in cleaner_names} != expected_names
             or any(artifact_file(level1_dir, name, "clean") is None for name in cleaner_names)):
         raise ValueError("As imagens do Nível I não correspondem ao MERGE oficial atual.")
-
     if runtime is None:
         runtime = {}
-
     model = runtime.get("model")
     model_path = runtime.get("model_path")
     device = runtime.get("device")
     prepare_artifact_dirs(output_dir)
     page_results = []
-    changed_total = mask_total = 0
     protection_totals = {key: 0 for key in ("protected_occurrences", "protected_pixels",
         "mask_pixels_before_protection", "mask_pixels_after_protection")}
     protected_types = set()
     analyzed_total = 0
+    provenance_records = []
     protected_occurrences = protected_occurrences or {}
+    protection_source = protection_source or {"kind": "UNKNOWN", "path": None,
+                                              "sha256": None, "revision": None}
     for index, source in enumerate(sources, 1):
         page = pages.get(source.name)
         if page is None:
@@ -77,22 +82,39 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         label_path = artifact_file(level1_dir, page.get("transparent_mask_artifact"), "mask")
         if clean_path is None or label_path is None:
             raise FileNotFoundError(f"Artefatos de Nível I ausentes para {source.name}.")
+        consumed_sources = capture_sources(source, clean_path)
         with Image.open(source) as image:
             original = np.asarray(image.convert("RGB"))
         with Image.open(clean_path) as image:
             level1 = np.asarray(image.convert("RGB"))
+        verify_paths = {"source": source, "level1": clean_path}
+        verify_sources(verify_paths, consumed_sources)
+        deferred_name = page.get("deferred_text_mask_artifact")
+        deferred_path = artifact_file(level1_dir, deferred_name, "mask") if deferred_name else None
+        if deferred_name and deferred_path is None:
+            raise ValueError(f"Máscara de texto adiado ausente ou inválida para {source.name}.")
+        lineage = {"level1_report_sha256": level1_report_hash,
+                   "level1_mask_sha256": sha256(label_path),
+                   "deferred_mask_sha256": sha256(deferred_path) if deferred_path else None}
+        lineage_paths = {"level1_report": (report_file, level1_report_hash),
+                         "level1_mask": (label_path, lineage["level1_mask_sha256"])}
+        if deferred_path:
+            lineage_paths["deferred_mask"] = (deferred_path, lineage["deferred_mask_sha256"])
         labels = cv2.imread(str(label_path), cv2.IMREAD_UNCHANGED)
         if labels is None or labels.ndim != 2 or labels.shape != original.shape[:2] or level1.shape != original.shape:
             raise ValueError(f"Dimensões inválidas nos artefatos de {source.name}.")
-        deferred_name = page.get("deferred_text_mask_artifact")
         deferred = np.zeros(labels.shape, dtype=np.uint8)
-        if deferred_name:
-            deferred_path = artifact_file(level1_dir, deferred_name, "mask")
-            deferred = cv2.imread(str(deferred_path), cv2.IMREAD_GRAYSCALE) if deferred_path else None
+        if deferred_path:
+            deferred = cv2.imread(str(deferred_path), cv2.IMREAD_GRAYSCALE)
             if deferred is None or deferred.shape != labels.shape:
                 raise ValueError(f"Máscara de texto adiado ausente ou inválida para {source.name}.")
         elif int(page.get("transparent_components_deferred") or 0):
             raise ValueError(f"Reexecute o Nível I para gerar as máscaras de texto adiado de {source.name}.")
+        if (sha256(report_file) != level1_report_hash
+                or sha256(label_path) != lineage["level1_mask_sha256"]):
+            raise ValueError(f"Proveniência do Nível I mudou durante a leitura de {source.name}.")
+        if deferred_path and sha256(deferred_path) != lineage["deferred_mask_sha256"]:
+            raise ValueError(f"Máscara adiada mudou durante a leitura de {source.name}.")
         balloons, balloon_masks = [], []
         mask = np.zeros(labels.shape, dtype=np.uint8)
         deferred_components = int(page.get("transparent_components_deferred") or 0)
@@ -153,45 +175,25 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         for key in protection_totals:
             protection_totals[key] += protection[key]
         protected_types.update(protection["protected_types"])
-        changed_total += changed
-        mask_total += mask_pixels
+        provenance, consumed = page_provenance(
+            source, clean_path, output_dir / clean_reference if changed else clean_path,
+            output_dir / mask_reference, protection_source, protected, consumed_sources,
+            lineage, lineage_paths)
+        provenance_records.append(consumed)
         page_results.append({"source": source.name, "clean": clean_reference if changed else None,
                              "level1_clean": clean_reference,
                              "mask": mask_reference, "transparent_balloons": balloons,
-                             "mask_pixels": mask_pixels, "changed_pixels": changed,
+                             "mask_pixels": mask_pixels, "changed_pixels": changed, **provenance,
                              "changed_outside_mask": outside, **protection})
         if progress_path:
             _atomic_json(progress_path, {"percent": round(index * 95 / len(sources)),
                 "detail": progress_detail(analyzed_total, len(candidate_pages), source.name, protection)})
-
-    result = {
-        "schema_version": 1,
-        "algorithm": ALGORITHM,
-        "mask_sources": ["Level I deferred Cleaner V2 components inside the matching transparent balloon"],
-        "base_dilation": [BASE_DILATION, BASE_DILATION],
-        "authorized_dilation": [AUTHORIZED_DILATION, AUTHORIZED_DILATION],
-        "lama_padding": LAMA_PADDING,
-        "reference_recipe": REFERENCE_RECIPE,
-        "source_stage": LEVEL1,
-        "text_detector": "Cleaner V2 deferred text mask",
-        "text_recognition": False,
-        "inpainter": "anime-manga-big-lama" if model else None,
-        "model_path": model_path,
-        "device": device,
-        "pages_analyzed": analyzed_total,
-        "merge_pages_total": len(sources),
-        "duration_seconds": round(time.perf_counter() - started, 3),
-        "pages_with_text": sum(page["mask_pixels"] > 0 for page in page_results),
-        "mask_pixels": mask_total,
-        **protection_totals,
-        "protected_types": sorted(protected_types),
-        "fully_protected_pages": sum(page["no_change_reason"] is not None for page in page_results),
-        "protection_pixel_semantics": "protected_pixels counts automatic mask pixels removed by manual protection",
-        "changed_pixels": changed_total,
-        "outcome": "visual_changes" if changed_total else "no_visual_change",
-        "integrity_ok": all(page["changed_outside_mask"] == 0 for page in page_results),
-        "pages": page_results,
-    }
+    result = build_report(started, model, model_path, device, analyzed_total,
+                          len(sources), page_results, protection_totals,
+                          protected_types, level1_manifest_hash)
+    assert_unchanged(provenance_records)
+    if sha256(report_file) != level1_report_hash or sha256(manifest_file) != level1_manifest_hash:
+        raise ValueError("Autoridade do Nível I mudou durante a execução.")
     _atomic_json(report_path, result)
     if progress_path:
         _atomic_json(progress_path, {"percent": 100, "detail": "Nível II validado"})

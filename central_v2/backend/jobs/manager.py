@@ -24,7 +24,7 @@ def _copy(job: dict) -> dict:
 
 
 def _run(job_id: str, operation, component: str | None = None) -> None:
-    component = component if component in {"SOMMELIER", "CLEANER-I"} else None
+    component = component if component in {"SOMMELIER", "CLEANER-I", "COMBO"} else None
     def update(chapter: str, progress: dict) -> None:
         with _lock:
             job = _jobs[job_id]
@@ -112,8 +112,11 @@ def _run(job_id: str, operation, component: str | None = None) -> None:
              resultado=summary, **summary_fields)
 
 
-def submit(operation, total: int = 0, component: str | None = None) -> dict:
-    job_id = uuid.uuid4().hex
+def submit(operation, total: int = 0, component: str | None = None, *, job_id=None) -> dict:
+    job_id = job_id or uuid.uuid4().hex
+    if (not isinstance(job_id, str) or len(job_id) != 32
+            or any(char not in "0123456789abcdef" for char in job_id)):
+        raise ValueError("Identificador de job inválido.")
     job = {
         "id": job_id, "status": "queued", "chapter": "",
         "progress": {"completed": 0, "total": total, "value": 0, "max": total,
@@ -122,6 +125,8 @@ def submit(operation, total: int = 0, component: str | None = None) -> dict:
         "_component": component,
     }
     with _lock:
+        if job_id in _jobs:
+            raise ValueError("Identificador de job já utilizado.")
         _jobs[job_id] = job
         _worker.submit(_run, job_id, operation, component)
     return _copy(job)

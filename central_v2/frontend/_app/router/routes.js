@@ -51,6 +51,10 @@ export const routes = {
     context: "texto-off",
     module: "/texto_off/check/index.js",
   },
+  "combo-turbo": {
+    context: "texto-off",
+    module: "/texto_off/combo_turbo/index.js",
+  },
   "laboratorio": {
     context: "texto-off",
     module: "/texto_off/laboratorio/index.js",
