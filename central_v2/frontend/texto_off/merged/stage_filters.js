@@ -1,6 +1,7 @@
 export const STAGES = [
-  ["all", "ALL"], ["ac1", "AC1"], ["ac2", "AC2"], ["ac3", "AC3"],
-  ["ac4", "AC4"], ["map", "MAPEAR"], ["retouch", "RETOQUE"],
+  ["all", "All"], ["ac1", "AC"], ["map", "Mapear"],
+  ["bubble", "Bubble"], ["check", "Check"], ["solids", "Sólidos"],
+  ["glass", "Glass"], ["retouch", "Retoque"],
 ];
 export const RETOUCH = [["degrade", "Degradê"], ["artistic", "Artístico"], ["soft", "Suave"]];
 
@@ -44,13 +45,14 @@ export function createStageFilters(container, onChange) {
       main.replaceChildren();
       secondary.replaceChildren();
       for (const [key, label] of STAGES) {
-        const count = loading ? "…" : rows.filter((row) => matchesStage(row, key)).length;
-        const filterLabel = key === "all" ? "All" : key === "map" ? "Mapear"
-          : key === "retouch" ? "Retoque" : label;
+        const count = key === "glass" ? "—" : loading ? "…"
+          : rows.filter((row) => matchesStage(row, key)).length;
+        const filterLabel = label;
         const control = button(`${filterLabel} (${count})`, active === key, () => {
           active = key; onChange();
         });
-        control.disabled = loading;
+        control.disabled = loading || key === "glass";
+        if (key === "glass") control.title = "Sem fonte oficial de execução identificada";
         main.append(control);
       }
       secondary.hidden = active !== "retouch";

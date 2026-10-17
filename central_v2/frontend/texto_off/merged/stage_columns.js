@@ -25,7 +25,7 @@ export function createStageColumns() {
         return value;
       }
       const done = row.stages?.[key] === true;
-      const detail = ["ac3", "ac4"].includes(key) ? "Prévia disponível" : "Realizado";
+      const detail = "Realizado";
       return booleanMark(done, `${label}: ${done ? detail : "Sem registro atual"}`);
     },
   }));

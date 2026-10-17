@@ -22,7 +22,7 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   element.innerHTML = `
     <header><h1${description ? ` class="textoff-page-title-hint" data-tooltip="${description}" tabindex="0" aria-description="${description}"` : ""}>${title}</h1></header>
     <div class="auto-merge-toolbar">
-      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Capítulo"></label>
+      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Cap."></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
       ${showExecute ? `<button class="auto-merge-execute" type="button" data-execute>${executeLabel ?? `Executar ${title.replace("Texto Off — ", "")}`}</button>` : ""}
     </div>

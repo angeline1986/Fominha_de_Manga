@@ -5,7 +5,10 @@ from .query import query_merged_level2
 from .level3_styled import query_level3
 from .artifact_migration import registry_snapshot
 from .manifests import manifest_snapshot
-from .stages import stage_path_snapshot
+from .stages import stage_path_snapshot, stage_chapter
+from .auto_cleaner_check_manifest import manifest_path, SCHEMA as CHECK_SCHEMA
+from central_v2.backend.orchestration.bubble_sommelier.query import _sommelier_state
+import json
 from central_v2.backend.orchestration.textoff_special.artifacts import (
     contained_file, read_json, sha256,
 )
@@ -35,9 +38,29 @@ def _query_cleaner_overview(manga: Path) -> dict:
             "ac4": "ac4" in flags,
             "map": mapped.get(row["chapter"], False),
         }
+        chapter = row["chapter"]
+        bubble = stage_chapter(manga, "BUBBLE_SOMMELIER", chapter) / "report.json"
+        check = manifest_path(manga, chapter)
+        solid = stage_chapter(manga, "05_AUTO_CLEANER_SOLIDOS", chapter,
+                              read_legacy=False) / "solid-white-manifest.json"
+        row["stages"].update({
+            "bubble": bool(_sommelier_state(bubble)),
+            "check": _verified_manifest(check, CHECK_SCHEMA, chapter),
+            "solids": _verified_manifest(solid, "textoff_solid_stage_v1", chapter),
+            "glass": False,  # Sem fonte oficial identificada: nao inferir de AC3/AC4.
+        })
         row["retouch"] = {key: key in flags for key in TREATMENTS.values()}
         row["selectable"] = row["merge_valid"]
     return result
+
+
+def _verified_manifest(path: Path, schema: str, chapter: str) -> bool:
+    try:
+        content = json.loads(path.read_text(encoding="utf-8"))
+        return (isinstance(content, dict) and content.get("schema") == schema
+                and content.get("chapter") == chapter)
+    except (OSError, ValueError, TypeError):
+        return False
 
 
 def current_previews(manga: Path, staging: Path = STAGING_ROOT) -> dict:
