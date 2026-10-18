@@ -12,8 +12,9 @@ from .auto_cleaner_check_extractors import (
     _manual_occurrences, _mapear_occurrences, _sommelier_occurrences,
 )
 from .auto_cleaner_check_geometry import _merge_automatic_sources
+from .transparent_check_adapter import load_suggestions
 
-SOURCE_NAMES = ("mapear", "sommelier", "residue_occurrences")
+SOURCE_NAMES = ("mapear", "sommelier", "residue_occurrences", "transparent_recognition")
 
 
 def source_snapshot(manga: Path, document: dict, chapter: str) -> dict:
@@ -54,6 +55,28 @@ def _initial_occurrences(manga: Path, document: dict, chapter: str,
         automatic_sources["mapear"], automatic_sources["sommelier"],
     )
 
+    transparent_status = snapshot.get(
+        "transparent_recognition", {}
+    ).get("status", "missing")
+    statuses["transparent_recognition"] = transparent_status
+    if transparent_status == "available":
+        try:
+            transparent_rows = load_suggestions(manga, chapter)
+            existing_ids = {item["id"] for item in automatic}
+            for item in transparent_rows:
+                if item["page"] not in pages:
+                    continue
+                if item["id"] in existing_ids:
+                    raise ValueError("ID de sugestão transparente duplicado.")
+                automatic.append(item)
+                existing_ids.add(item["id"])
+        except (OSError, ValueError, TypeError, json.JSONDecodeError):
+            automatic = [
+                item for item in automatic
+                if item.get("origin") != "TRANSPARENT_RECOGNITION"
+            ]
+            statuses["transparent_recognition"] = "invalid"
+
     manual_status = snapshot.get("residue_occurrences", {}).get("status", "missing")
     manual_rows = []
     if manual_status == "available":
@@ -76,11 +99,17 @@ def _initial_occurrences(manga: Path, document: dict, chapter: str,
 def _source_paths(manga: Path, chapter: str) -> dict[str, tuple[str, Path]]:
     mapear = stage_chapter(Path(manga), LEVEL3, chapter) / "json" / "styled-balloon-report.json"
     sommelier = sommelier_report_path(Path(manga), chapter)
+    transparent = (stage_chapter(
+        Path(manga), "02_RECONHECER_TRANSPARENTES", chapter,
+        read_legacy=False,
+    ) / "json" / "transparent-recognition.json")
     residue = (stage_chapter(Path(manga), "RESIDUE_OCCURRENCES", chapter,
                              read_legacy=False) / RESIDUE_MANIFEST_NAME)
     root = Path(manga).resolve()
     result = {}
     for name, path, relative in (
+        ("transparent_recognition", transparent,
+         f"02_RECONHECER_TRANSPARENTES/{chapter}/json/transparent-recognition.json"),
         ("mapear", mapear, f"TO_MERGED_NIVEL_III/{chapter}/json/styled-balloon-report.json"),
         ("sommelier", sommelier, f"BUBBLE_SOMMELIER/{chapter}/report.json"),
         ("residue_occurrences", residue, f"RESIDUE_OCCURRENCES/{chapter}/{RESIDUE_MANIFEST_NAME}"),

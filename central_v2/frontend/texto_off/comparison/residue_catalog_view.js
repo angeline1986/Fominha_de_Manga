@@ -50,7 +50,7 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options, 
 }
 
 function originLabel(origin) {
-  return ({ MAPEAR: "Mapear", SOMMELIER: "Sommelier", MANUAL: "Manual" })[origin] || "Manual";
+  return ({ MAPEAR: "Mapear", SOMMELIER: "Sommelier", MANUAL: "Manual", TRANSPARENT_RECOGNITION: "Reconhecer Transparentes" })[origin] || "Manual";
 }
 
 function appendNote(row, item, number) {

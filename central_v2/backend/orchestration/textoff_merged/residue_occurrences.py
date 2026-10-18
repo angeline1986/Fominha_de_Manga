@@ -10,6 +10,7 @@ SCHEMA = "textoff_residue_occurrence_manifest_v1"
 MANIFEST_NAME = "residue-occurrences-manifest.json"
 TYPE_LABELS = {
     "residuo_transparencia": "Resíduo de transparência",
+    "balao_transparente": "Balão transparente",
     "residuo_degrade": "Resíduo do degradê",
     "residuo_gradiente": "Resíduo do gradiente",
     "balao_estilizado": "Balão estilizado",
@@ -36,7 +37,7 @@ def validate_occurrences(raw, natural_width: int, natural_height: int,
         if type(number) is not int or number <= 0:
             raise ValueError("Número de ocorrência inválido.")
         origin = item.get("origin", "MANUAL")
-        if origin not in {"MAPEAR", "SOMMELIER", "MANUAL"}:
+        if origin not in {"MAPEAR", "SOMMELIER", "MANUAL", "TRANSPARENT_RECOGNITION"}:
             raise ValueError("Origem de ocorrência inválida.")
         source_classification = item.get("source_classification")
         if (source_classification is not None
@@ -55,7 +56,7 @@ def validate_occurrences(raw, natural_width: int, natural_height: int,
             raise ValueError("Tipo de ocorrência inválido.")
         raw_origins = item.get("origins", [origin])
         if (not isinstance(raw_origins, list) or not raw_origins
-                or any(value not in {"MAPEAR", "SOMMELIER", "MANUAL"} for value in raw_origins)):
+                or any(value not in {"MAPEAR", "SOMMELIER", "MANUAL", "TRANSPARENT_RECOGNITION"} for value in raw_origins)):
             raise ValueError("Origens de ocorrência inválidas.")
         origins = list(dict.fromkeys([origin, *raw_origins]))
         source_references = item.get("source_references", [])

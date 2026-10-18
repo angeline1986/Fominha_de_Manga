@@ -50,8 +50,10 @@ test('draft identity stays stable while visible numbering follows current list o
 
 test('residue types include canonical values and changing away from other clears its note', () => {
   assert.deepEqual(Array.from(model.RESIDUE_TYPES, ([value]) => value), [
-    'residuo_transparencia', 'residuo_degrade', 'residuo_gradiente',
-    'balao_estilizado', 'fragmento_balao', 'texto_residual', 'outro',
+    'residuo_transparencia', 'balao_transparente',
+    'residuo_degrade', 'residuo_gradiente',
+    'balao_estilizado', 'fragmento_balao', 'texto_residual',
+    'residuo_balao_solido_branco', 'outro',
   ]);
   const item = { type: 'outro', note: 'marca' };
   model.updateOccurrenceType(item, 'residuo_degrade');

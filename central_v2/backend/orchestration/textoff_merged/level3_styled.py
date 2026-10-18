@@ -37,7 +37,41 @@ def execute_level3(manga: Path, chapters: list[str], progress, preflight=None) -
             continue
         try:
             result = _analyze_chapter(manga, chapter)
-            results.append({"chapter": chapter, "status": "ok", **result})
+            from .transparent_publication import publish
+
+            recognition = {}
+            try:
+                source = stage_chapter(manga, LEVEL1, chapter)
+                target = (
+                    stage_chapter(
+                        manga, "02_RECONHECER_TRANSPARENTES",
+                        chapter, read_legacy=False,
+                    )
+                    / "json/transparent-recognition.json"
+                )
+                published = publish(source, target)
+                recognition = {
+                    "status": published["status"],
+                    "candidate_count": published["candidate_count"],
+                }
+                print(
+                    f"[TRANSPARENTES] cap={chapter} "
+                    f"status={published['status']} "
+                    f"candidatos={published['candidate_count']}",
+                    flush=True,
+                )
+            except Exception as exc:
+                recognition = {"status": "failed", "error": str(exc)}
+                print(
+                    f"[TRANSPARENTES] cap={chapter} "
+                    f"status=failed erro={exc}",
+                    flush=True,
+                )
+
+            results.append({
+                "chapter": chapter, "status": "ok", **result,
+                "transparent_recognition": recognition,
+            })
         except Exception as exc:
             results.append({"chapter": chapter, "status": "failed", "error": str(exc)})
         progress(chapter, {"stage": "level3", "percent": round(index * 100 / len(selected)),

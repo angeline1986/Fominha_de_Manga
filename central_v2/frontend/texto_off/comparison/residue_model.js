@@ -1,5 +1,6 @@
 export const RESIDUE_TYPES = [
   ["residuo_transparencia", "Resíduo de transparência"],
+  ["balao_transparente", "Balão transparente"],
   ["residuo_degrade", "Resíduo do degradê"],
   ["residuo_gradiente", "Resíduo do gradiente"],
   ["balao_estilizado", "Balão estilizado"],
