@@ -16,19 +16,50 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   const actionControls = `<button class="btn comparison-residue-action" type="button" data-signal aria-pressed="false">${isCheck ? "Sinalizar área" : "Sinalizar Resíduo"}</button>
     <button class="btn comparison-residue-action" type="button" data-draw aria-pressed="false" disabled>Selecionar área manual</button>
     <p data-hint aria-live="polite">Ative a sinalização para selecionar áreas.</p>`;
-  const actionPanel = isCheck
-    ? `<details class="comparison-check-actions"><summary>Adicionar áreas</summary><div class="comparison-check-actions-body">${actionControls}</div></details>`
+  // CHECK_BOTTOM_PANEL_V1: altera somente apresentacao; data-* preservam os handlers.
+  const checkTools = `<section class="check-bottom-tools" aria-label="Ferramentas de captura">
+    <div class="check-bottom-label">Ferramentas de Captura
+      <span class="check-bottom-info" tabindex="0" aria-label="Informação sobre a captura">ⓘ
+        <span class="check-bottom-tooltip">Ative a sinalização para selecionar áreas.</span>
+      </span>
+    </div>
+    <div class="check-bottom-grid">
+      <button class="btn check-bottom-tool" type="button" data-signal aria-pressed="false">Sinalizar</button>
+      <button class="btn check-bottom-tool" type="button" data-draw aria-pressed="false" disabled>Manual</button>
+    </div>
+    <p data-hint class="check-bottom-hint" aria-live="polite">Ative a sinalização para selecionar áreas.</p>
+    <button class="btn comparison-residue-catalog check-bottom-save" type="button" data-catalog disabled>Salvar Check</button>
+    <div class="comparison-residue-feedback"><p data-feedback role="status" aria-live="polite"></p>
+      <p data-source-status role="status" aria-live="polite" hidden></p>
+      <button class="btn comparison-residue-retry" type="button" data-retry hidden>Recarregar ocorrências</button></div>
+  </section>`;
+  const actionPanel = isCheck ? checkTools
     : `<section class="comparison-residue-step"><h3>Passo 1: identificar resíduo</h3>${actionControls}</section>`;
   const layers = `<section class="comparison-residue-layers"><header><h3>${isCheck ? "Áreas nesta página" : "Camadas / áreas"}</h3><output data-count>0</output></header>
       <div data-layers></div></section>`;
   panel.innerHTML = `<header class="comparison-residue-heading"><h2>${isCheck ? "Revisão do Auto-Cleaner Check" : "Catalogação de resíduos"}</h2>
       <button class="btn comparison-residue-close" type="button" data-close aria-label="Fechar painel">${iconMarkup("close")}</button></header>
     ${isCheck ? `${layers}${actionPanel}` : `${actionPanel}${layers}`}
-    <footer class="comparison-residue-step"><h3>${isCheck ? "Decisão do capítulo" : "Passo 2"}</h3>
-      <button class="btn comparison-residue-catalog" type="button" data-catalog disabled>${isCheck ? "Salvar decisão do Check" : "Catalogar Resíduo"}</button>
+    ${isCheck ? "" : `<footer class="comparison-residue-step"><h3>Passo 2</h3>
+      <button class="btn comparison-residue-catalog" type="button" data-catalog disabled>Catalogar Resíduo</button>
       <div class="comparison-residue-feedback"><p data-feedback role="status" aria-live="polite"></p>
         <p data-source-status role="status" aria-live="polite" hidden></p>
-        <button class="btn comparison-residue-retry" type="button" data-retry hidden>Recarregar ocorrências</button></div></footer>`;
+        <button class="btn comparison-residue-retry" type="button" data-retry hidden>Recarregar ocorrências</button></div></footer>`}`;
+  if (isCheck) {
+    const info = document.createElement("span");
+    info.className = "comparison-check-source-info";
+    info.dataset.checkSourceInfo = "";
+    info.textContent = "ⓘ";
+    info.setAttribute("role", "img");
+    info.setAttribute("tabindex", "0");
+    info.setAttribute("aria-label", "Status das fontes");
+    info.hidden = true;
+    querySourceInsert: {
+      const save = panel.querySelector("[data-catalog]");
+      if (!save) break querySourceInsert;
+      save.insertAdjacentElement("afterend", info);
+    }
+  }
   const overlay = document.createElement("div");
   overlay.className = "comparison-residue-overlay";
   overlay.setAttribute("aria-hidden", "true");
@@ -62,9 +93,28 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
     query("[data-catalog]").disabled = !catalogState.canSaveChapter();
     query("[data-retry]").hidden = item.loadState !== "error";
     query("[data-draw]").disabled = state === "idle" || item.loadState !== "ready";
-    query("[data-feedback]").textContent = status.feedback;
-    query("[data-source-status]").textContent = status.sourceStatus;
-    query("[data-source-status]").hidden = !status.sourceStatus;
+    const feedback = query("[data-feedback]");
+    const sourceInfo = query("[data-source-status]");
+    if (isCheck) {
+      const quiet = status.feedback === "Ocorrências catalogadas."
+        || status.feedback === "Nenhuma ocorrência catalogada nesta página.";
+      feedback.textContent = quiet ? "" : status.feedback;
+      feedback.hidden = quiet;
+      // Reaproveita o status original (sem mudar a deteccao nem o salvamento).
+      sourceInfo.textContent = status.sourceStatus;
+      sourceInfo.hidden = true;
+      const info = query("[data-check-source-info]");
+      if (info) {
+        info.hidden = !status.sourceStatus;
+        info.title = status.sourceStatus;
+        info.setAttribute("aria-label", status.sourceStatus || "Status das fontes");
+      }
+    } else {
+      feedback.textContent = status.feedback;
+      feedback.hidden = false;
+      sourceInfo.textContent = status.sourceStatus;
+      sourceInfo.hidden = !status.sourceStatus;
+    }
   }
   function setOpen(open) {
     workspace.classList.toggle("has-residue-panel", open);
