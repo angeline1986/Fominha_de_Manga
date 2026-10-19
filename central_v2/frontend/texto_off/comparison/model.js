@@ -34,6 +34,11 @@ export const COMPARISON_MODES = Object.freeze({
     sides: ["before", "after"], panels: [["before", "AUTO-CLEANER I"], ["after", "SÓLIDOS"]],
     catalogPanelIndex: 1,
   }),
+  mapear: Object.freeze({
+    layout: "pair", heading: "MAPEAR · BALÕES IDENTIFICADOS", title: "Mapear — Balões identificados",
+    sides: ["before", "after"], panels: [["before", "IMAGEM ANALISADA"], ["after", "MAPEAR · CANDIDATOS"]],
+    catalogPanelIndex: 1,
+  }),
   preview: Object.freeze({
     layout: "pair", heading: "COMPARAÇÃO EXPERIMENTAL", title: "Antes & Depois",
     sides: ["before", "after"], panels: [["before", "ORIGINAL"], ["after", "RESULTADO"]],

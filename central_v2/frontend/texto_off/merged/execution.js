@@ -20,6 +20,12 @@ function summary(results, level) {
         { label: level === "3" ? "Análise Nível III" : item.text_pages !== undefined ? "Resultado Nível II" : "Cleaner V2",
           value: item.status === "ok" ? "Concluído" : item.status === "no_change" ? "Nenhum pixel alterado; revise máscaras e resultado." : item.error || "Falha" },
         ...(level === "3" ? [{ label: "Candidatos a balão estilizado", value: String(Number(item.candidate_count || 0)) }] : []),
+        ...(level === "3" && item.transparent_recognition ? [{
+          label: "Reconhecimento de transparência",
+          value: item.transparent_recognition.status === "failed"
+            ? `Falhou: ${item.transparent_recognition.error || "erro não informado"}`
+            : `${Number(item.transparent_recognition.candidate_count || 0)} balão(ões) · ${item.transparent_recognition.status}`,
+        }] : []),
         ...(level === "3" ? Object.entries(item.candidate_types || {}).map(([kind, count]) => ({
           label: ({ soft_gradient: "Candidatos com gradiente", saturated_styled: "Candidatos com cor decorativa",
             irregular_outline: "Candidatos com contorno irregular" })[kind] || "Outros candidatos",

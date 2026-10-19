@@ -34,8 +34,8 @@ export function createMergedView(onExecute, { title = "Texto Off — Merged", ex
   const execute = element.querySelector("[data-execute]");
   const results = element.querySelector(".auto-merge-results");
   const filters = element.querySelector(".auto-merge-filters");
-  const comparison = mode === "overview" && comparisonMode
-    ? createComparisonLauncher(element, "1", comparisonMode, comparisonScope) : null;
+  const comparison = ["overview", "level3"].includes(mode) && comparisonMode
+    ? createComparisonLauncher(element, mode === "level3" ? "mapear" : "1", comparisonMode, comparisonScope) : null;
   let pagination = createPagination();
   const pageSize = createPageSizeControl((size) => { pagination = createPagination(size); draw(); });
   const selected = new Set();

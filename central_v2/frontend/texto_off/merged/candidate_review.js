@@ -4,6 +4,7 @@ const LABELS = {
   soft_gradient: "Gradiente",
   saturated_styled: "Cor decorativa",
   irregular_outline: "Contorno irregular",
+  transparent_balloon: "Balão transparente",
 };
 
 export function openCandidateReview({ provider, manga, chapter, pages }) {
@@ -51,19 +52,26 @@ export function openCandidateReview({ provider, manga, chapter, pages }) {
     overlay.replaceChildren();
     list.replaceChildren();
     page.candidates.forEach((candidate, index) => {
-      const [x, y, width, height] = candidate.bbox;
+      const boxData = candidate.box || {
+        left: candidate.bbox[0] / image.naturalWidth,
+        top: candidate.bbox[1] / image.naturalHeight,
+        width: candidate.bbox[2] / image.naturalWidth,
+        height: candidate.bbox[3] / image.naturalHeight,
+      };
       const box = document.createElement("span");
       box.className = `textoff-candidate-box is-${candidate.candidate_type}`;
       box.textContent = String(index + 1);
-      box.style.left = `${x / image.naturalWidth * 100}%`;
-      box.style.top = `${y / image.naturalHeight * 100}%`;
-      box.style.width = `${width / image.naturalWidth * 100}%`;
-      box.style.height = `${height / image.naturalHeight * 100}%`;
+      box.style.left = `${boxData.left * 100}%`;
+      box.style.top = `${boxData.top * 100}%`;
+      box.style.width = `${boxData.width * 100}%`;
+      box.style.height = `${boxData.height * 100}%`;
       box.title = `${LABELS[candidate.candidate_type] || candidate.candidate_type} ${index + 1}`;
       overlay.append(box);
       const item = document.createElement("li");
-      const confidence = Number(candidate.segmenter_confidence || 0);
-      item.textContent = `${LABELS[candidate.candidate_type] || candidate.candidate_type} · região ${index + 1} · confiança ${Math.round(confidence * 100)}%`;
+      const detail = candidate.candidate_type === "transparent_balloon"
+        ? `balão ${candidate.balloon} · reconhecimento Nível I`
+        : `região ${index + 1} · confiança ${Math.round(Number(candidate.segmenter_confidence || 0) * 100)}%`;
+      item.textContent = `${LABELS[candidate.candidate_type] || candidate.candidate_type} · ${detail}`;
       list.append(item);
     });
   }

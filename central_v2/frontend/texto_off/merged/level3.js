@@ -12,6 +12,7 @@ export function render(container) {
     title: "Pincel & Retoques — Mapear Balões",
     executeLabel: "Mapear selecionados",
     mode: "level3",
+    comparisonMode: "mapear",
     description: "Identificação de balões com degradê, arte e contornos complexos. Analisa os MERGES originais; candidatos requerem revisão e não acionam patches.",
     onInspect: (row) => {
       if (!row.candidate_pages?.length) return;

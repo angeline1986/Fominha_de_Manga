@@ -180,6 +180,7 @@
 .textoff-candidate-overlay { position: absolute; inset: 0; pointer-events: none; }
 .textoff-candidate-box { position: absolute; display: grid; place-items: start; border: 3px solid #e13c97; background: rgb(225 60 151 / 13%); color: #fff; font-weight: 700; text-shadow: 0 1px 3px #000; }
 .textoff-candidate-box.is-soft_gradient { border-color: #168bc0; background: rgb(22 139 192 / 12%); }
+.textoff-candidate-box.is-transparent_balloon { border-color: #08a9c4; background: rgb(8 169 196 / 14%); }
 .textoff-candidate-list { margin: 8px 0 0; padding-left: 28px; }
 .textoff-candidate-list li { padding: 4px 0; }
 @media (max-width: 700px) {

@@ -50,7 +50,7 @@ def _chapter_row(manga: Path, chapter: str, merge_rows: dict) -> dict:
                and manifest.get("source_merge_manifest_sha256") ==
                _file_sha256(v3.merge_manifest_path(manga / "IMG" / chapter))
                and bool(json_file(path.parent.parent, "styled-balloon-report.json").is_file()))
-    candidate_pages = _candidate_pages(path.parent.parent) if current else []
+    candidate_pages = _candidate_pages(path.parent.parent, manga, chapter) if current else []
     merge = merge_rows.get(chapter, {})
     return {
         "chapter": chapter, "merge_valid": bool(merge.get("merge_valid")),
@@ -63,23 +63,36 @@ def _chapter_row(manga: Path, chapter: str, merge_rows: dict) -> dict:
     }
 
 
-def _candidate_pages(chapter_dir: Path) -> list[dict]:
+def _candidate_pages(chapter_dir: Path, manga: Path, chapter: str) -> list[dict]:
     try:
         report = json.loads(json_file(chapter_dir, "styled-balloon-report.json").read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):
         return []
-    pages = []
+    pages = {}
     for page in report.get("pages", []):
         candidates = page.get("styled_balloon_candidates") if isinstance(page, dict) else None
         if not candidates or not isinstance(page.get("source"), str):
             continue
-        pages.append({"source": page["source"], "candidates": [
+        pages[page["source"]] = {"source": page["source"], "candidates": [
             {"bbox": item.get("bbox"), "candidate_type": item.get("candidate_type"),
              "segmenter_confidence": item.get("segmenter_confidence"),
              "features": item.get("features", {})}
             for item in candidates if isinstance(item, dict) and _valid_candidate(item)
-        ]})
-    return [page for page in pages if page["candidates"]]
+        ]}
+    try:
+        from .transparent_check_adapter import load_suggestions
+        transparent = load_suggestions(manga, chapter)
+    except (OSError, ValueError, TypeError, KeyError):
+        transparent = []
+    for item in transparent:
+        source = Path(item["page"])
+        image_name = f"{source.stem}_clean{source.suffix}"
+        page = pages.setdefault(image_name, {"source": image_name, "candidates": []})
+        page["candidates"].append({
+            "box": item["box"], "candidate_type": "transparent_balloon",
+            "balloon": item["source_references"][0]["balloon"],
+        })
+    return [page for page in pages.values() if page["candidates"]]
 
 
 def _valid_candidate(item: dict) -> bool:
