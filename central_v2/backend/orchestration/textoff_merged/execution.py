@@ -4,6 +4,8 @@ from pathlib import Path
 from processamento.unificacao_imagens import image_stitcher as v3
 from .cleaner import run_cleaner_v2
 from .artifact_migration import mirror_stage_chapter
+from .write_destination import planned_write_chapter
+from .level1_isolated_destination import isolated_level1_target
 from .stages import LEVEL1, stage_chapter
 from .special_styled_transaction import transaction_lock
 
@@ -66,13 +68,18 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
             }
             if target_stage == LEVEL1:
                 runner_args.update(diagnostics=diagnostics, provider=provider, manga_name=manga_name)
-            result = run_cleaner_v2(
-                images, stage_chapter(manga, target_stage, name, read_legacy=False),
-                **runner_args,
-            )
+            destination = stage_chapter(manga, target_stage, name, read_legacy=False)
             if target_stage == LEVEL1:
                 import os
                 if os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") != "1":
+                    destination = planned_write_chapter(manga, "auto_cleaner", name)
+            isolated_target = isolated_level1_target(manga, name) if target_stage == LEVEL1 else None
+            if isolated_target is not None:
+                destination = isolated_target
+            result = run_cleaner_v2(images, destination, **runner_args)
+            if target_stage == LEVEL1:
+                import os
+                if isolated_target is None and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") != "1":
                     mirror_stage_chapter(manga, "auto_cleaner", name)
             results.append({"chapter": name, **result})
         except Exception as exc:

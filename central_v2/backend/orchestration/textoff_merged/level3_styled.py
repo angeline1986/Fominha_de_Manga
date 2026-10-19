@@ -10,10 +10,12 @@ import tempfile
 from .artifact_paths import artifact_ref
 from .artifact_shadow_read import observe_shadow_read
 from .artifact_migration import mirror_stage_chapter
+from .mapear_isolated_destination import isolated_mapear_target
 from .execution import validate_selection
 from .manifests import _stage_manifest, _stage_manifest_sha256
 from .runtime import REPOSITORY_ROOT, python_for
 from .styled_balloon_detector import ALGORITHM
+from .styled_balloon_exclusions import regions_by_clean_image
 from .stages import CONSOLIDATED, LEVEL1, LEVEL3, stage_chapter
 from .level3_query import query_level3
 from .consolidated import consolidated_is_current, rebuild_consolidated
@@ -36,10 +38,10 @@ def execute_level3(manga: Path, chapters: list[str], progress, preflight=None) -
             results.append({"chapter": chapter, "status": "failed", "error": "Consolidado de Nível I/II ausente ou inválido."})
             continue
         try:
-            result = _analyze_chapter(manga, chapter)
             from .transparent_publication import publish
 
             recognition = {}
+            transparent_candidates = []
             try:
                 source = stage_chapter(manga, LEVEL1, chapter)
                 target = (
@@ -50,6 +52,7 @@ def execute_level3(manga: Path, chapters: list[str], progress, preflight=None) -
                     / "json/transparent-recognition.json"
                 )
                 published = publish(source, target)
+                transparent_candidates = published.get("candidates", [])
                 recognition = {
                     "status": published["status"],
                     "candidate_count": published["candidate_count"],
@@ -68,6 +71,7 @@ def execute_level3(manga: Path, chapters: list[str], progress, preflight=None) -
                     flush=True,
                 )
 
+            result = _analyze_chapter(manga, chapter, transparent_candidates)
             results.append({
                 "chapter": chapter, "status": "ok", **result,
                 "transparent_recognition": recognition,
@@ -80,7 +84,9 @@ def execute_level3(manga: Path, chapters: list[str], progress, preflight=None) -
     return results
 
 
-def _analyze_chapter(manga: Path, chapter: str) -> dict:
+def _analyze_chapter(
+    manga: Path, chapter: str, transparent_candidates: list[dict] | None = None,
+) -> dict:
     merge_chapter = manga / "IMG" / chapter
     merge_manifest = v3.merge_manifest_path(merge_chapter)
     level1 = _stage_manifest(manga, LEVEL1, chapter)
@@ -100,13 +106,20 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
         raise ValueError("Imagens consolidadas não correspondem às páginas limpas de Nível I/II.")
     source_hashes = [_sha256(path) for path in images]
     target = stage_chapter(manga, STAGE, chapter, read_legacy=False)
+    isolated_target = isolated_mapear_target(manga, chapter)
+    if isolated_target is not None:
+        target = isolated_target
     target.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f".level3-{chapter}-", dir=target.parent) as temp:
         staged = Path(temp) / "stage"
         report_path = staged / "json/styled-balloon-report.json"
         request_path = Path(temp) / "request.json"
-        request_path.write_text(json.dumps({"images": [str(path) for path in images],
-                                            "report": str(report_path)}), encoding="utf-8")
+        exclusions = regions_by_clean_image(transparent_candidates or [], images)
+        request_path.write_text(json.dumps({
+            "images": [str(path) for path in images],
+            "report": str(report_path),
+            "excluded_regions": exclusions,
+        }), encoding="utf-8")
         python = python_for("merged_nivel_i")
         command = [str(python), "-m", "central_v2.backend.orchestration.textoff_merged.level3_styled_worker",
                    str(request_path)]
@@ -137,9 +150,11 @@ def _analyze_chapter(manga: Path, chapter: str) -> dict:
         (staged / "json/clean-manifest.json").write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         promote_stage(staged, target)
-    mirror_stage_chapter(manga, "mapear", chapter)
+    if isolated_target is None:
+        mirror_stage_chapter(manga, "mapear", chapter)
     return {"pages": len(images), "candidate_count": int(report.get("candidate_count") or 0),
             "candidate_types": report.get("candidate_types", {}),
+            "suppressed_by_transparency": int(report.get("suppressed_by_transparency") or 0),
             "manifest": str(target / "json/clean-manifest.json")}
 
 

@@ -1,12 +1,13 @@
 """Experimental, review-only detector for strongly styled balloons."""
 from __future__ import annotations
 
-ALGORITHM = "textoff_level3_styled_balloon_candidates_v4"
+ALGORITHM = "textoff_level3_styled_balloon_candidates_v5"
 MODEL_REPO = "huyvux3005/manga109-segmentation-bubble"
 MODEL_FILE = "best.pt"
 MODEL_REVISION = "f9a4108c4955136a810e5e92207972f3fb3a65fd"
 CONFIDENCE = 0.15
 IOU = 0.45
+PRIOR_IDENTIFICATION_IOU = 0.55
 SATURATION_MIN = 70
 VALUE_MIN = 70
 MIN_SATURATED_RATIO = 0.35
@@ -82,12 +83,13 @@ def classify_shape(points, cv2) -> dict:
             "circularity": round(float(circularity), 5), "solidity": round(float(solidity), 5)}
 
 
-def detect_page(source, model, cv2, np) -> dict:
+def detect_page(source, model, cv2, np, excluded_bboxes=None) -> dict:
     image = cv2.imread(str(source))
     if image is None:
         raise RuntimeError(f"Imagem consolidada TextOff inválida: {source.name}")
     candidates = []
     detections = []
+    suppressed_regions = []
     for offset, tile in _tiles(image):
         result = model.predict(source=tile, conf=CONFIDENCE, iou=IOU, verbose=False)[0]
         masks = result.masks
@@ -103,6 +105,13 @@ def detect_page(source, model, cv2, np) -> dict:
             # Tile-edge fragments are incomplete and can produce false shape scores.
             if y <= 8 or y + height >= tile.shape[0] - 8:
                 continue
+            bbox = [int(x), int(y + offset), int(width), int(height)]
+            if any(_bbox_iou(bbox, excluded) >= PRIOR_IDENTIFICATION_IOU
+                   for excluded in (excluded_bboxes or [])):
+                if not any(_bbox_iou(bbox, previous) >= PRIOR_IDENTIFICATION_IOU
+                           for previous in suppressed_regions):
+                    suppressed_regions.append(bbox)
+                continue
             erode = max(1, min(5, int(round(min(width, height) * 0.025))))
             interior = cv2.erode(local_mask, cv2.getStructuringElement(
                 cv2.MORPH_ELLIPSE, (2 * erode + 1, 2 * erode + 1)))
@@ -113,7 +122,6 @@ def detect_page(source, model, cv2, np) -> dict:
                                 "shape": {"circularity": shape["circularity"],
                                           "solidity": shape["solidity"]}})
             confidence = float(result.boxes.conf[index - 1]) if result.boxes is not None else 0.0
-            bbox = [int(x), int(y + offset), int(width), int(height)]
             item = {"bbox": bbox, "segmenter_confidence": round(confidence, 5),
                     "features": metrics}
             if not any(_bbox_iou(bbox, previous["bbox"]) >= 0.55 for previous in detections):
@@ -125,6 +133,7 @@ def detect_page(source, model, cv2, np) -> dict:
                 item["candidate_type"] = metrics["candidate_type"]
                 candidates.append(item)
     return {"source": source.name, "segments_examined": len(detections),
+            "suppressed_by_prior_identification": len(suppressed_regions),
             "balloon_analysis": detections,
             "tiles_analyzed": len(_tiles(image)),
             "styled_balloon_candidates": candidates}

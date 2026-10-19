@@ -9,7 +9,9 @@ import tempfile
 import uuid
 
 from .artifact_paths import artifact_ref, prepare_artifact_dirs
-from .artifact_migration import mirror_stage_chapter
+from .artifact_migration import mirror_stage_chapter, ArtifactAuthorityUnavailable
+from .consolidated_isolated_destination import isolated_consolidated_target
+from .unexecuted_stage import both_absent
 from .consolidated_selection import (
     _artifact_map, _combo_selections, _select_artifacts, _selected_pages_match,
     _selection_is_current,
@@ -39,7 +41,8 @@ def rebuild_consolidated(manga: Path, chapter: str) -> dict:
     selected = [(combo_rows.get(name, (path, stage))[0],
                  COMBO_TURBO if name in combo_rows else stage)
                 for name, (path, stage) in zip(source_names, selected)]
-    target = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
+    isolated_target = isolated_consolidated_target(manga, chapter)
+    target = isolated_target or stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
     target.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f".consolidate-{chapter}-", dir=target.parent) as temp:
         staged = Path(temp) / "stage"
@@ -71,12 +74,15 @@ def rebuild_consolidated(manga: Path, chapter: str) -> dict:
         (staged / "json/clean-manifest.json").write_text(
             json.dumps(manifest, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
         promote_stage(staged, target)
-    mirror_stage_chapter(manga, "mapear_input_consolidado", chapter)
+    if isolated_target is None:
+        mirror_stage_chapter(manga, "mapear_input_consolidado", chapter)
     return {"chapter": chapter, "outputs": len(source_names),
             "level2_outputs_used": sum(item["selected_from"] == LEVEL2 for item in selections)}
 
 
 def consolidated_is_current(manga: Path, chapter: str) -> bool:
+    if both_absent(manga, "TO_MERGED_CONSOLIDADO", "02_MAPEAR/INPUT_CONSOLIDADO", chapter):
+        return False
     folder = stage_chapter(manga, CONSOLIDATED, chapter)
     try:
         manifest = json.loads((folder / "json/clean-manifest.json").read_text(encoding="utf-8"))

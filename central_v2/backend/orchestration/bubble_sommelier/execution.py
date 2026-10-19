@@ -5,10 +5,15 @@ import tempfile
 import time
 
 from .artifacts import (
-    execution_dir, merge_dir, replace_execution_artifacts, report_path, validate_report,
+    execution_write_dir, merge_dir, replace_execution_artifacts, report_path, validate_report,
 )
 from .runtime import run, validate_profile_id
+from .sommelier_isolated_destination import isolated_sommelier_target
 from .mapear_results import incorporate_mapear_results
+
+# Alias de compatibilidade para testes e integrações que substituem
+# execution_dir. A implementação efetiva publica somente no legado.
+execution_dir = execution_write_dir
 from central_v2.backend.orchestration.textoff_merged.artifact_migration import (
     mirror_stage_chapter,
 )
@@ -33,8 +38,9 @@ def execute(
             preflight()
 
         source = merge_dir(manga, chapter)
-        output_dir = execution_dir(manga, chapter)
-        path = report_path(manga, chapter)
+        isolated_target = isolated_sommelier_target(manga, chapter)
+        output_dir = isolated_target or execution_write_dir(manga, chapter)
+        path = output_dir / "report.json"
         runtime_started = time.monotonic()
         page_started = {}
 
@@ -93,7 +99,8 @@ def execute(
             report = validate_report(report, profile_id)
             report = incorporate_mapear_results(report, manga, chapter)
             _write_report_atomic(path, report)
-        mirror_stage_chapter(manga, "bubble_sommelier", chapter)
+        if isolated_target is None:
+            mirror_stage_chapter(manga, "bubble_sommelier", chapter)
         counts = report["checkpoints"]["result"]
         results.append({
             "chapter": chapter,

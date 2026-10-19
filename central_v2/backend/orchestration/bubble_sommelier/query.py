@@ -2,7 +2,9 @@ import json
 from pathlib import Path
 
 from .artifacts import images, merge_dir, validate_report
+from central_v2.backend.orchestration.textoff_merged.unexecuted_stage import both_absent
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
+from central_v2.backend.orchestration.textoff_merged.artifact_migration import ArtifactAuthorityUnavailable
 from central_v2.backend.orchestration.textoff_merged.artifact_shadow_read import (
     observe_shadow_read,
 )
@@ -41,7 +43,11 @@ def query(manga: Path) -> dict:
         )
         for chapter in chapter_names:
             imgs = images(merge_dir(manga, chapter))
-            state = _sommelier_state(stage_chapter(manga, "BUBBLE_SOMMELIER", chapter) / "report.json")
+            if both_absent(manga, "BUBBLE_SOMMELIER", "03_BUBBLE_SOMMELIER", chapter):
+                report_dir = None
+            else:
+                report_dir = stage_chapter(manga, "BUBBLE_SOMMELIER", chapter)
+            state = _sommelier_state(report_dir / "report.json") if report_dir else None
             observe_shadow_read(manga, "bubble_sommelier", chapter, debug_only=True)
             chapters.append({
                 "chapter": chapter,

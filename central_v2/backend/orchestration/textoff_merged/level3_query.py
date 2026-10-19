@@ -9,7 +9,9 @@ from processamento.unificacao_imagens import image_stitcher as v3
 from central_v2.backend.state.sorting import natural_sort_key
 
 from .artifact_paths import json_file
+from .unexecuted_stage import both_absent
 from .artifact_shadow_read import observe_shadow_read
+from .artifact_migration import ArtifactAuthorityUnavailable
 from .consolidated import consolidated_is_current
 from .manifests import _manifest_matches_merge, _stage_manifest
 from .stages import CONSOLIDATED, LEVEL1, LEVEL3, stage_chapter
@@ -34,10 +36,24 @@ def query_level3(manga: Path, merge_rows: dict | None = None) -> dict:
 
 
 def _chapter_row(manga: Path, chapter: str, merge_rows: dict) -> dict:
+    if all(both_absent(manga, legacy, target, chapter) for legacy, target in (
+        ("TO_MERGED_NIVEL_I", "01_AUTO_CLEANER"),
+        ("TO_MERGED_CONSOLIDADO", "02_MAPEAR/INPUT_CONSOLIDADO"),
+        ("TO_MERGED_NIVEL_III", "02_MAPEAR"),
+    )):
+        merge = merge_rows.get(chapter, {})
+        return {"chapter": chapter, "merge_valid": bool(merge.get("merge_valid")),
+                "merge_count": int(merge.get("merge_count") or 0),
+                "cleaned": False, "selectable": False,
+                "level3_status": "missing_level1", "pages_analyzed": 0,
+                "candidate_count": 0, "candidate_pages": []}
     consolidated_ready = consolidated_is_current(manga, chapter)
     ready = consolidated_ready or _manifest_matches_merge(
         _stage_manifest(manga, LEVEL1, chapter), manga, chapter)
-    path = stage_chapter(manga, LEVEL3, chapter) / "json/clean-manifest.json"
+    if both_absent(manga, "TO_MERGED_NIVEL_III", "02_MAPEAR", chapter):
+        path = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/02_MAPEAR" / chapter / "json/clean-manifest.json"
+    else:
+        path = stage_chapter(manga, LEVEL3, chapter) / "json/clean-manifest.json"
     try:
         manifest = json.loads(path.read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):

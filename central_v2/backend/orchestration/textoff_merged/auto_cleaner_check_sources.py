@@ -12,6 +12,9 @@ from .auto_cleaner_check_extractors import (
     _manual_occurrences, _mapear_occurrences, _sommelier_occurrences,
 )
 from .auto_cleaner_check_geometry import _merge_automatic_sources
+from .auto_cleaner_candidate_merge import (
+    consolidate_transparent, default_sommelier_solid,
+)
 from .transparent_check_adapter import load_suggestions
 
 SOURCE_NAMES = ("mapear", "sommelier", "residue_occurrences", "transparent_recognition")
@@ -59,6 +62,7 @@ def _initial_occurrences(manga: Path, document: dict, chapter: str,
         "transparent_recognition", {}
     ).get("status", "missing")
     statuses["transparent_recognition"] = transparent_status
+    transparent_ready = []
     if transparent_status == "available":
         try:
             transparent_rows = load_suggestions(manga, chapter)
@@ -68,7 +72,7 @@ def _initial_occurrences(manga: Path, document: dict, chapter: str,
                     continue
                 if item["id"] in existing_ids:
                     raise ValueError("ID de sugestão transparente duplicado.")
-                automatic.append(item)
+                transparent_ready.append(item)
                 existing_ids.add(item["id"])
         except (OSError, ValueError, TypeError, json.JSONDecodeError):
             automatic = [
@@ -76,6 +80,11 @@ def _initial_occurrences(manga: Path, document: dict, chapter: str,
                 if item.get("origin") != "TRANSPARENT_RECOGNITION"
             ]
             statuses["transparent_recognition"] = "invalid"
+
+    if statuses.get("transparent_recognition") == "invalid":
+        transparent_ready = []
+    automatic = consolidate_transparent(automatic, transparent_ready)
+    automatic = default_sommelier_solid(automatic)
 
     manual_status = snapshot.get("residue_occurrences", {}).get("status", "missing")
     manual_rows = []

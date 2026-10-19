@@ -23,8 +23,16 @@ def run(request: Path) -> None:
         str(value).strip().lower() for value in (model.names or {}).values()
     }:
         raise RuntimeError("O segmentador carregado não reconhece a classe balloon.")
-    pages = [detect_page(Path(path), model, cv2, np) for path in payload["images"]]
+    excluded_regions = payload.get("excluded_regions", {})
+    pages = [
+        detect_page(
+            Path(path), model, cv2, np,
+            excluded_bboxes=excluded_regions.get(Path(path).name, []),
+        )
+        for path in payload["images"]
+    ]
     candidates = [candidate for page in pages for candidate in page["styled_balloon_candidates"]]
+    suppressed = sum(page["suppressed_by_prior_identification"] for page in pages)
     candidate_types = {}
     for candidate in candidates:
         kind = candidate["candidate_type"]
@@ -34,6 +42,7 @@ def run(request: Path) -> None:
         "input_stage": "MERGE",
         "status": "experimental_review_only", "images_analyzed": len(pages),
         "candidate_count": len(candidates), "candidate_types": candidate_types,
+        "suppressed_by_transparency": suppressed,
         "model": {"repo": MODEL_REPO, "file": MODEL_FILE,
                   "revision": MODEL_REVISION, "task": "segment", "class": "balloon",
                   "confidence": CONFIDENCE, "iou": IOU},

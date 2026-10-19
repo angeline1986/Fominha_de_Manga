@@ -10,6 +10,7 @@ import time
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .artifact_migration import mirror_stage_chapter
+from .level2_isolated_destination import isolated_level2_target
 from .artifact_paths import artifact_ref
 from .manifests import _stage_manifest, _stage_manifest_sha256
 from .level2_manual_protection import load_level1_protection_context
@@ -51,7 +52,9 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
         chapter_row = next(row for row in query_merged_level2(manga)["chapters"]
                            if row["chapter"] == name)
         candidate_names = set(chapter_row.get("level2_candidate_pages", []))
-        target = stage_chapter(manga, LEVEL2, name, read_legacy=False)
+        isolated_target = isolated_level2_target(manga, name)
+        target = (isolated_target if isolated_target is not None
+                  else stage_chapter(manga, LEVEL2, name, read_legacy=False))
         target.parent.mkdir(parents=True, exist_ok=True)
         if batch_work is None:
             batch_work = Path(tempfile.mkdtemp(prefix=".textoff-level2-batch-", dir=target.parent))
@@ -145,7 +148,8 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             _assert_protection_source_current(manga, job["protection_source"])
         for name, target, staged, report, image_count, clean_names, transparent_pages, analyzed_count in prepared:
             _promote_stage(staged, target)
-            mirror_stage_chapter(manga, "auto_cleaner_transparencia_basica", name)
+            if isolated_level2_target(manga, name) is None:
+                mirror_stage_chapter(manga, "auto_cleaner_transparencia_basica", name)
             from .consolidated import rebuild_consolidated
             consolidated = rebuild_consolidated(manga, name)
             from .final_consolidated import rebuild_final_baseline

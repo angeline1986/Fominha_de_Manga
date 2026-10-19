@@ -6,6 +6,7 @@ import shutil
 import tempfile
 
 from central_v2.backend.orchestration.bubble_sommelier.runtime import validate_profile_id
+from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 
 
 STAGE = Path("FLUXO_SECUNDARIO") / "04_TEXTO_OFF" / "BUBBLE_SOMMELIER"
@@ -17,7 +18,12 @@ def merge_dir(manga: Path, chapter: str) -> Path:
 
 
 def execution_dir(manga: Path, chapter: str) -> Path:
-    return manga / STAGE / chapter
+    return stage_chapter(manga, "BUBBLE_SOMMELIER", chapter)
+
+
+def execution_write_dir(manga: Path, chapter: str) -> Path:
+    """Destino de publicação legado; leitura segue a autoridade do registry."""
+    return stage_chapter(manga, "BUBBLE_SOMMELIER", chapter, read_legacy=False)
 
 
 def report_path(manga: Path, chapter: str) -> Path:
@@ -104,7 +110,7 @@ def crop_path(manga: Path, chapter: str, identity: str, *, stage_dir: Path | Non
     identity = validate_crop_identity(identity)
 
     manga_root = manga.resolve(strict=True)
-    stage_root = (manga / STAGE).resolve(strict=True) if stage_dir is None else None
+    stage_root = execution_dir(manga, chapter).parent.resolve(strict=True) if stage_dir is None else None
     if stage_root is not None and not stage_root.is_relative_to(manga_root):
         raise ValueError("Diretório de crops fora da obra.")
     chapter_root = (Path(stage_dir) if stage_dir is not None else execution_dir(manga, chapter)).resolve(strict=True)
