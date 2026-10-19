@@ -18,8 +18,6 @@ export function createMapearComparisonScreen(context, onBack) {
           <input data-search type="search" placeholder="Buscar página"></label>
         <div class="comparison-page-list" data-pages role="listbox" aria-label="Páginas com balões mapeados"></div>
         <div class="comparison-pagination" data-pagination></div>
-        <h3 class="mapear-candidate-heading">Balões identificados na página</h3>
-        <div class="mapear-candidate-list" data-candidates></div>
       </aside>
       <main class="comparison-canvas-panel">
         <header class="comparison-canvas-toolbar">
@@ -29,7 +27,8 @@ export function createMapearComparisonScreen(context, onBack) {
             <output data-zoom-value aria-live="polite">40%</output>
             <button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button>
             <button type="button" data-zoom="one" aria-label="Visualizar em escala 1 para 1">1:1</button>
-          </div><button type="button" class="btn comparison-focus-toggle" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button></div>
+          </div><button type="button" class="btn comparison-focus-toggle" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button>
+            <button type="button" class="btn comparison-panel-toggle" data-panel-toggle aria-controls="mapear-candidate-panel" aria-expanded="false" aria-pressed="false">Painel</button></div>
         </header>
         <div class="comparison-canvas-viewport"><div class="comparison-state" data-state role="status" aria-live="polite">Carregando páginas do Mapear…</div><div data-viewport></div></div>
         <footer class="comparison-canvas-footer"><span>Zoom e rolagem sincronizados</span>
@@ -39,6 +38,12 @@ export function createMapearComparisonScreen(context, onBack) {
             <button type="button" data-next aria-label="Próxima página">${iconMarkup("next")}</button>
           </div><span>Atalho de foco: F</span></footer>
       </main>
+      <aside class="comparison-residue-panel mapear-candidate-panel" id="mapear-candidate-panel" aria-label="Balões identificados na página" aria-hidden="true" inert>
+        <header class="comparison-residue-heading"><h2>Balões identificados na página</h2>
+          <button class="btn comparison-residue-close" type="button" data-panel-close aria-label="Fechar painel">${iconMarkup("close")}</button></header>
+        <section class="comparison-residue-layers"><header><h3>Candidatos desta página</h3><output data-candidate-count>0</output></header>
+          <div class="mapear-candidate-list" data-candidates></div></section>
+      </aside>
     </div>`;
   const query = (selector) => element.querySelector(selector);
   const pages = (context.mapearPages || []).filter((page) => page?.source && page.candidates?.length)
@@ -46,7 +51,10 @@ export function createMapearComparisonScreen(context, onBack) {
   const state = query("[data-state]"), viewport = query("[data-viewport]");
   const layer = document.createElement("div");
   layer.className = "mapear-candidate-overlay comparison-after-overlay";
-  const candidates = createMapearOverlay(layer, query("[data-candidates]"));
+  const candidateList = query("[data-candidates]");
+  const candidates = createMapearOverlay(layer, candidateList);
+  const workspace = query(".comparison-workspace"), panel = query(".mapear-candidate-panel");
+  const panelButton = query("[data-panel-toggle]");
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet"; stylesheet.href = "/texto_off/comparison/mapear_overlay.css";
   element.append(stylesheet);
@@ -74,6 +82,7 @@ export function createMapearComparisonScreen(context, onBack) {
     state.textContent = "Carregando imagem analisada…"; state.hidden = false;
     candidates.clear();
     query("[data-summary]").textContent = `${page.source} · ${index + 1} de ${pages.length} · ${page.candidates.length} balões`;
+    query("[data-candidate-count]").value = String(page.candidates.length);
     query("[data-focus-count]").textContent = `${index + 1} / ${pages.length}`;
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index === pages.length - 1;
@@ -81,11 +90,20 @@ export function createMapearComparisonScreen(context, onBack) {
     slider.load([url, url]); slider.zoom(zoom / 100); updateZoom();
   }
   function updateZoom() { query("[data-zoom-value]").textContent = `${zoom}%`; }
+  function setPanelOpen(open) {
+    workspace.classList.toggle("has-residue-panel", open);
+    panel.classList.toggle("is-open", open);
+    panel.setAttribute("aria-hidden", String(!open)); panel.inert = !open;
+    panelButton.setAttribute("aria-expanded", String(open));
+    panelButton.setAttribute("aria-pressed", String(open));
+  }
   function onClick(event) {
     const action = event.target.closest("[data-zoom]")?.dataset.zoom;
     if (action) { zoom = clampZoom(zoom, action); slider.zoom(zoom / 100); updateZoom(); }
     if (event.target.closest("[data-prev]")) selectPage(index - 1);
     if (event.target.closest("[data-next]")) selectPage(index + 1);
+    if (event.target.closest("[data-panel-toggle]")) setPanelOpen(!panel.classList.contains("is-open"));
+    if (event.target.closest("[data-panel-close]")) setPanelOpen(false);
   }
   function onKeyDown(event) {
     if (event.key === "Escape" && !element.classList.contains("is-focus-mode")) { event.preventDefault(); onBack(); }

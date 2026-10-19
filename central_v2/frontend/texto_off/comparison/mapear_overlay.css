@@ -11,8 +11,8 @@
 .is-saturated_styled .mapear-candidate-number { background: #0891b2; }
 .is-irregular_outline .mapear-candidate-number { background: #7c3aed; }
 .is-transparent_balloon .mapear-candidate-number { background: #0891b2; }
-.mapear-candidate-list { display: grid; max-height: 36%; flex: none; gap: 5px; overflow: auto; padding-top: 10px; }
-.mapear-candidate-heading { flex: none; margin: 12px 0 0; color: var(--color-primary-hover); font-size: var(--font-size-control); }
+.mapear-candidate-panel .comparison-residue-layers { padding: 0 var(--space-md); }
+.mapear-candidate-list { display: grid; min-height: 0; flex: 1; align-content: start; gap: 6px; overflow: auto; padding: 8px 2px 2px; }
 .mapear-candidate-item { display: flex; align-items: center; gap: 8px; padding: 6px; border: 1px solid var(--color-border); border-radius: 7px; background: var(--color-surface); color: var(--color-text); text-align: left; cursor: pointer; }
 .mapear-candidate-item.is-soft_gradient { border-left: 3px solid #e11d8a; }
 .mapear-candidate-item.is-saturated_styled { border-left: 3px solid #0891b2; }
