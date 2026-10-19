@@ -120,10 +120,14 @@ export function createComparisonScreen(context, onBack) {
   const controller = new AbortController();
   let pages = [], index = 0, activeImageIndex = null, pageState = "loading", zoom = INITIAL_ZOOM, disposed = false;
   const checkTypes = new Map();
+  const checkImageRefreshRetries = new Set();
   const slider = createSlider(canvas, (nextState, error) => {
     canvas.setAttribute("aria-busy", String(nextState === "loading"));
     element.querySelectorAll("[data-zoom]").forEach((button) => { button.disabled = nextState !== "ready"; });
-    if (nextState === "error") { activeImageIndex = null; pageState = "error"; state.textContent = error; }
+    if (nextState === "error") {
+      activeImageIndex = null; pageState = "error"; state.textContent = error;
+      refreshCheckImagesOnce();
+    }
     else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; catalog.render?.(); }
     drawState();
   }, context.comparisonMode);
@@ -132,6 +136,7 @@ export function createComparisonScreen(context, onBack) {
     ? createDegradeContext : createResidueCatalog;
   if (context.comparisonMode === "solid") query("[data-panel-toggle]").hidden = true;
   const catalog = createCatalog({ workspace: query(".comparison-workspace"), slider, context,
+    onCheckSaved: () => load({ preserveSelection: true }),
     onPersistedCount: (pageName, count) => {
       const page = pages.find((item) => item.name === pageName);
       if (!page) return;
@@ -198,6 +203,12 @@ export function createComparisonScreen(context, onBack) {
     slider.load(mode.sides.map((side) => comparisonImageUrl(imageContext, page, side)), status);
     slider.zoom(zoom / 100); updateZoom();
   }
+  function refreshCheckImagesOnce() {
+    const page = pages[index];
+    if (context.comparisonMode !== "check" || !page || checkImageRefreshRetries.has(page.name)) return;
+    checkImageRefreshRetries.add(page.name);
+    void load({ preserveSelection: true });
+  }
   function drawPreviewPosition(button) {
     if (!button || preview.hidden) return;
     const rect = button.getBoundingClientRect();
@@ -252,8 +263,9 @@ export function createComparisonScreen(context, onBack) {
   element.addEventListener("click", onMove);
   element.addEventListener("click", onPanel);
   element.addEventListener("keydown", onKeyDown);
-  async function load() {
-    pageState = "loading"; drawState();
+  async function load({ preserveSelection = false } = {}) {
+    const selectedPage = preserveSelection ? pages[index]?.name : null;
+    pageState = "loading"; state.textContent = "Carregando imagens da comparação…"; drawState();
     try {
       const result = await fetchComparison({ ...context, layout: mode.layout }, controller.signal);
       if (disposed) return;
@@ -271,7 +283,9 @@ export function createComparisonScreen(context, onBack) {
       }
       catalog.setPages?.(pages);
       if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
-      if (context.initialPage) index = Math.max(0, pages.findIndex((page) =>
+      if (selectedPage && pages.some((page) => page.name === selectedPage)) {
+        index = pages.findIndex((page) => page.name === selectedPage);
+      } else if (context.initialPage) index = Math.max(0, pages.findIndex((page) =>
         page.name === context.initialPage && (!context.initialOccurrence ||
           page.occurrence_ids?.includes(context.initialOccurrence))));
       showPage();

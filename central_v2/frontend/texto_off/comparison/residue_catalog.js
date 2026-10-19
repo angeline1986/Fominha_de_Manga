@@ -5,7 +5,7 @@ import { residueCatalogStatus } from "/texto_off/comparison/residue_catalog_stat
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { showMessage } from "/_shared/messages/messages.js";
 
-export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {},
+export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {}, onCheckSaved = () => {},
   onPersistedCount = () => {}, onDraftState = () => {} }) {
   const isCheck = context.scope === "check";
   const panel = document.createElement("aside");
@@ -221,11 +221,15 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   }
   async function catalogOccurrences() {
     const result = await catalogState.saveChapter();
-    if (result.ok) await showMessage({ title: "Ocorrências catalogadas",
-      message: isCheck
-        ? "A decisão aprovada foi salva no estágio Auto-Cleaner Check."
-        : `As alterações de ${result.savedPages} página(s) foram salvas no manifesto do capítulo.` });
-    else if (result.error) await showMessage({ title: "Falha ao catalogar capítulo", message: result.error });
+    if (result.ok) {
+      if (isCheck) await onCheckSaved();
+      await showMessage({ title: "Ocorrências catalogadas",
+        message: isCheck
+          ? "A decisão aprovada foi salva no estágio Auto-Cleaner Check."
+          : `As alterações de ${result.savedPages} página(s) foram salvas no manifesto do capítulo.` });
+    } else if (result.error) {
+      await showMessage({ title: "Falha ao catalogar capítulo", message: result.error });
+    }
   }
   function dispose() {
     setState("idle"); catalogState.dispose();

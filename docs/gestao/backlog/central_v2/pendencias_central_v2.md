@@ -26,6 +26,7 @@
 | [BL-07](../../tickets/central_v2/BL-07.md) | Definir encerramento seguro para jobs longos | IN PROGRESS |
 | [BL-08](../../tickets/central_v2/BL-08.md) | Validar automaticamente o limite de 200 linhas | DO |
 | [BL-09](../../tickets/central_v2/BL-09.md) | Cobrir contratos visuais do Laboratório | DO |
+| [BL-14](../../tickets/central_v2/BL-14.md) | Inventariar arquivos da Central V2 acima de 200 linhas e planejar refactors | TODO |
 | [CV2-OBS-01](../../tickets/central_v2/CV2-OBS-01.md) | Padronizar logs do terminal da Central V2 | DONE |
 | [CV2-OBS-02](../../tickets/central_v2/CV2-OBS-02.md) | Reduzir logs rotineiros do SHADOW_READ | DONE |
 | [CV2-OBS-03](../../tickets/central_v2/CV2-OBS-03.md) | Instrumentar autorização automática do Degradê para diagnóstico de falhas de detecção de balão | TODO · P1 |
@@ -56,11 +57,14 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [BL-06](../../tickets/central_v2/BL-06.md) | Exibir feedback contextual dos tratamentos no Laboratório | DONE |
 | [BL-12](../../tickets/central_v2/BL-12.md) | Validar autorização Degradê com múltiplos componentes | IN PROGRESS |
 | [BL-13](../../tickets/central_v2/BL-13.md) | Sair do modo Foco com Esc | DONE |
+| [BL-15](../../tickets/central_v2/BL-15.md) | Definir MERGE como origem padrão no Laboratório | TODO |
+| [BL-16](../../tickets/central_v2/BL-16.md) | Exibir a data da última execução do Auto-Cleaner | TODO |
 | [CV2-AC-01](../../tickets/central_v2/CV2-AC-01.md) | Corrigir descarte de boxes pequenos `unknown` | DO |
 | [CV2-AC-03](../../tickets/central_v2/CV2-AC-03.md) | Diagnosticar o Auto-Cleaner Passo 3 | IN PROGRESS |
 | [CV2-AC-04](../../tickets/central_v2/CV2-AC-04.md) | Diagnosticar o Auto-Cleaner Passo 4 | IN PROGRESS |
 | [CV2-AC-05](../../tickets/central_v2/CV2-AC-05.md) | Investigar falha inicial no carregamento de imagens do Auto-Cleaner Check | TODO |
 | [CV2-AC-06](../../tickets/central_v2/CV2-AC-06.md) | Padronizar filtros de capítulo e página do Auto-Cleaner Check | TODO |
+| [CV2-AC-07](../../tickets/central_v2/CV2-AC-07.md) | Sincronizar a cor das caixas de seleção com os bullets do Auto-Cleaner Check | TODO |
 | [CV2-AUD-01](../../tickets/central_v2/CV2-AUD-01.md) | Validar visualmente a Auditoria Antes & Depois | DO |
 | [CV2-CAT-01](../../tickets/central_v2/CV2-CAT-01.md) | Validar o catálogo de resíduos por capítulo | DO |
 | [CV2-CAT-02](../../tickets/central_v2/CV2-CAT-02.md) | Validar a autoridade do catálogo no Auto-Cleaner Passo 2 | DO |
