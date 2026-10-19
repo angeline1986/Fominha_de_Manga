@@ -9,8 +9,9 @@ from central_v2.backend.routes.textoff_merged import _context, _value
 from central_v2.backend.state.manga_state import resolve_manga
 from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check_manifest import _validate_chapter
 from central_v2.backend.orchestration.textoff_merged.solid_stage import (
-    STAGE, execute_chapter, rows_for, source_for,
+    STAGE, decision_sha256, execute_chapter, rows_for, source_for,
 )
+from central_v2.backend.orchestration.textoff_merged.solid_reexecution import reexecute_page
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 from central_v2.backend.routes.laboratorio_solidos import _sha
 
@@ -37,13 +38,39 @@ def overview(query, output_root):
                     continue
                 chapter = folder.name
                 _validate_chapter(chapter)
-                selections, _ = rows_for(manga, {**document, "capitulo": chapter}, chapter)
-                if not selections:
-                    continue
+                selections, check_hash = rows_for(manga, {**document, "capitulo": chapter}, chapter)
                 result = stage_chapter(manga, STAGE, chapter, read_legacy=False)
-                pages = sorted({row.get("page") for row in selections if isinstance(row.get("page"), str)})
-                rows.append({"chapter": chapter, "regions": len(selections), "pages": pages,
-                             "processed": (result / "solid-white-manifest.json").is_file()})
+                manifest_path = result / "solid-white-manifest.json"
+                saved = json.loads(manifest_path.read_text(encoding="utf-8")) if manifest_path.is_file() else {}
+                saved_pages = {row.get("page"): row for row in saved.get("pages", [])
+                               if isinstance(row, dict) and isinstance(row.get("page"), str)}
+                if not selections and not saved_pages:
+                    continue
+                grouped = {}
+                for item in selections:
+                    grouped.setdefault(item.get("page"), []).append(item)
+                page_rows = []
+                for page in sorted(set(grouped) | set(saved_pages)):
+                    selected = grouped.get(page, [])
+                    previous = saved_pages.get(page)
+                    processed = isinstance(previous, dict)
+                    outdated = None
+                    if processed and isinstance(previous.get("decision_sha256"), str):
+                        outdated = previous["decision_sha256"] != decision_sha256(selected)
+                        try:
+                            outdated = outdated or previous.get("source_sha256") != _sha(
+                                source_for(manga, chapter, page))
+                        except (ValueError, OSError):
+                            outdated = True
+                    elif processed:
+                        outdated = previous.get("check_sha256", saved.get("check_sha256")) != check_hash
+                    page_rows.append({"name": page, "regions": len(selected),
+                        "processed": processed, "outdated": outdated,
+                        "run_id": previous.get("run_id") if processed else None,
+                        "result_sha256": previous.get("result_sha256") if processed else None,
+                        "check_sha256": check_hash})
+                rows.append({"chapter": chapter, "regions": len(selections), "pages": page_rows,
+                             "processed": bool(saved_pages)})
         return reply({"chapters": rows, **{"provider":document["provider"],"manga":document["obra"]}})
     except (ValueError, OSError, TypeError) as exc:
         return reply({"error": str(exc)}, 400)
@@ -56,15 +83,36 @@ def execute(payload, output_root):
         manga, document = context(payload, output_root)
         chapter = payload.get("chapter")
         _validate_chapter(chapter)
+        page = payload.get("page")
         rows, _ = rows_for(manga, {**document, "capitulo": chapter}, chapter)
-        if not rows:
+        if not rows and page is None:
             raise ValueError("Nenhuma área Sólidos aprovada")
-        if stage_chapter(manga, STAGE, chapter, read_legacy=False).exists():
+        if page is not None:
+            target = stage_chapter(manga, STAGE, chapter, read_legacy=False)
+            prior_path = target / "solid-white-manifest.json"
+            prior_pages = []
+            if prior_path.is_file():
+                prior = json.loads(prior_path.read_text(encoding="utf-8"))
+                prior_pages = [row.get("page") for row in prior.get("pages", [])
+                               if isinstance(row, dict)]
+            if (not isinstance(page, str) or Path(page).name != page
+                    or (not any(row.get("page") == page for row in rows)
+                        and page not in prior_pages)):
+                raise ValueError("Selecione uma página com áreas Sólidos aprovadas.")
+            expected = payload.get("expected_result_sha256")
+            if not isinstance(expected, str) or len(expected) != 64:
+                raise ValueError("Versão da prévia anterior ausente para reexecução.")
+            if not target.is_dir():
+                raise ValueError("A página ainda não possui uma prévia Sólidos para reexecutar.")
+        elif stage_chapter(manga, STAGE, chapter, read_legacy=False).exists():
             raise ValueError("Prévia já existente; resultados preservados")
         def run(update, _job_id):
-            result = execute_chapter(manga, {**document, "capitulo": chapter}, chapter)
+            result = (reexecute_page(manga, document, chapter, page, expected)
+                      if page is not None else
+                      execute_chapter(manga, {**document, "capitulo": chapter}, chapter))
             update(chapter, {"completed": 1, "total": 1, "percent": 100,
-                             "message": "Prévia Sólidos salva"})
+                             "message": (f"Prévia Sólidos atualizada: {page}" if page
+                                         else "Prévia Sólidos salva")})
             return [result]
         return reply({"job": submit(run, total=1)}, 202)
     except (ValueError, OSError) as exc:

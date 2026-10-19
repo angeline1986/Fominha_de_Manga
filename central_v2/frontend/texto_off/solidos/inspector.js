@@ -19,6 +19,7 @@ export function createSolidInspector(root) {
       screen = createComparisonScreen({
         provider: context.provider, manga: context.manga, chapter: row.chapter,
         step: "solid", comparisonMode: "solid", scope: "solid",
+        ...(row.rowType === "page" ? { initialPage: row.name } : {}),
       }, close);
       const back = document.createElement("button");
       back.className = "btn comparison-back";

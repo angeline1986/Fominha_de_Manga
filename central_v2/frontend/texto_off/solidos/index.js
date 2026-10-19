@@ -3,6 +3,9 @@ import { invalidateCleanerOverview } from "/_app/state/cleaner_revision.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { createSolidTable } from "/texto_off/solidos/table.js";
 import { createSolidInspector } from "/texto_off/solidos/inspector.js";
+import { confirmMessage } from "/_shared/messages/messages.js";
+import { createSolidAreaLoader } from "/texto_off/solidos/area_loader.js";
+import { filterSolidChapters } from "/texto_off/solidos/filter.js";
 
 const API = "/api/textoff/solidos";
 const endpoint = (path, params) => path + "?" + new URLSearchParams(params);
@@ -15,12 +18,13 @@ async function responseJson(url, options) {
 export function render(container) {
   const root = document.createElement("section");
   root.className = "auto-merge-page textoff-merged-page cleaner-overview";
-  root.innerHTML = `<header><h1 class="textoff-page-title-hint" tabindex="0"
+  root.innerHTML = `<header class="solid-page-heading"><h1 class="textoff-page-title-hint" tabindex="0"
     data-tooltip="Limpeza direcionada às áreas sólidas aprovadas no Check"
-    aria-description="Limpeza direcionada às áreas sólidas aprovadas no Check">Auto-Cleaner: Sólidos</h1></header>
+    aria-description="Limpeza direcionada às áreas sólidas aprovadas no Check">Auto-Cleaner · Sólidos</h1>
+    <span>3 níveis · Capítulo → Página → Área sólida</span></header>
     <div class="auto-merge-toolbar">
-      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span>
-      <input type="search" data-search placeholder="Capítulo"></label>
+      <label class="auto-merge-search solid-search"><span class="visually-hidden">Buscar capítulo ou página</span>
+      <input type="search" data-search placeholder="Buscar capítulo ou página"></label>
       <div class="auto-merge-filters" data-filters role="group" aria-label="Filtrar capítulos"></div>
       <button class="auto-merge-execute" data-run type="button">Executar Sólidos</button>
     </div>
@@ -40,6 +44,7 @@ export function render(container) {
   const inspector = createSolidInspector(root, API);
   let rows = [], selected = new Set(), filter = "all", page = 0;
   let busy = false, disposed = false, controller = null, generation = 0;
+  const areaLoader = createSolidAreaLoader(getContext, () => rows, draw);
   const table = createSolidTable(root.querySelector("[data-results]"), {
     onSelect(chapter, checked) { checked ? selected.add(chapter) : selected.delete(chapter); draw(); },
     onSelectPage(chapters, checked) {
@@ -47,16 +52,16 @@ export function render(container) {
     },
     inspect(row) { inspector.open(row, getContext()); },
     changePage(next) { page = next; draw(); },
+    redraw() { draw(); },
+    loadAreas(row) { areaLoader.load(row); },
+    reexecutePage(row) { reexecutePage(row); },
   });
   function matching() {
-    const term = search.value.trim().toLocaleLowerCase("pt-BR");
-    return rows.filter(row => row.chapter.toLocaleLowerCase("pt-BR").includes(term)
-      && (filter === "all" || filter === "pending" && !row.processed
-        || filter === "processed" && row.processed));
+    return filterSolidChapters(rows, search.value, filter);
   }
   function drawFilters() {
     filters.replaceChildren();
-    for (const [key, label] of [["all","All"],["pending","Pendentes"],["processed","Concluídos"]]) {
+    for (const [key, label] of [["all","All"],["pending","Do"],["processed","Done"]]) {
       const count = rows.filter(row => key === "all" || (key === "processed") === Boolean(row.processed)).length;
       const button = document.createElement("button");
       button.className = "auto-merge-filter-button";
@@ -81,6 +86,7 @@ export function render(container) {
     controller = new AbortController();
     const id = ++generation;
     const { provider, manga } = getContext();
+    areaLoader.beginLoad({ provider, manga });
     rows = []; selected.clear(); page = 0;
     if (!provider || !manga) {
       status.textContent = "Selecione uma obra."; draw(); return;
@@ -91,27 +97,29 @@ export function render(container) {
       const data = await responseJson(endpoint(API, { provider, manga }), { signal: controller.signal });
       if (disposed || id !== generation) return;
       rows = data.chapters || [];
+      areaLoader.attach(rows);
       status.textContent = rows.length ? "" : "Nenhuma área sólida aprovada no Check.";
       draw();
     } catch (error) {
       if (!disposed && id === generation && error.name !== "AbortError") status.textContent = error.message;
     }
   }
-  async function execute() {
-    if (busy || !selected.size) return;
+  async function runJobs(jobs) {
+    if (busy || !jobs.length) return;
     busy = true; draw();
     const context = getContext();
-    const chapters = [...selected];
     try {
-      for (let i = 0; i < chapters.length; i++) {
-        const chapter = chapters[i];
-        status.textContent = `Capítulo ${chapter} (${i+1}/${chapters.length})`;
+      for (let i = 0; i < jobs.length; i++) {
+        const { chapter, page: pageName, result_sha256 } = jobs[i];
+        status.textContent = `${pageName ? `Página ${pageName} · ` : ""}Capítulo ${chapter} (${i+1}/${jobs.length})`;
         progress.update({ busy:true, title:"Auto-Cleaner: Sólidos",
-          completed:i, total:chapters.length, percent:Math.floor(i*100/chapters.length),
+          completed:i, total:jobs.length, percent:Math.floor(i*100/jobs.length),
           message:`Executando capítulo ${chapter}` });
+        const payload = {provider:context.provider,manga:context.manga,chapter};
+        if (pageName) Object.assign(payload, {page:pageName,expected_result_sha256:result_sha256});
         const data = await responseJson(API+"/execute", {
           method:"POST", headers:{"Content-Type":"application/json"},
-          body: JSON.stringify({provider:context.provider,manga:context.manga,chapter}),
+          body: JSON.stringify(payload),
         });
         let job = data.job;
         while (!disposed && job?.status !== "completed" && job?.status !== "failed") {
@@ -122,8 +130,8 @@ export function render(container) {
         if (disposed) return;
         if (job?.status === "failed") throw new Error(`Capítulo ${chapter}: ${job.error || "falha"}`);
         progress.update({busy:true, title:"Auto-Cleaner: Sólidos",
-          completed:i+1, total:chapters.length, percent:Math.floor((i+1)*100/chapters.length),
-          message:`Capítulo ${chapter} concluído`});
+          completed:i+1, total:jobs.length, percent:Math.floor((i+1)*100/jobs.length),
+          message:pageName ? `${pageName} reexecutada` : `Capítulo ${chapter} concluído`});
       }
       await load();
     } catch (error) {
@@ -133,12 +141,26 @@ export function render(container) {
       busy = false; progress.update({busy:false}); if (!disposed) draw();
     }
   }
+  async function execute() {
+    if (!selected.size) return;
+    await runJobs([...selected].map((chapter) => ({chapter})));
+  }
+  async function reexecutePage(row) {
+    if (busy || !row.result_sha256) return;
+    const confirmed = await confirmMessage({
+      title: "Reexecutar página em Sólidos",
+      message: `Reexecutar somente ${row.name} do capítulo ${row.chapter} com as áreas aprovadas atualmente no Check? A prévia anterior dessa página será arquivada e continuará preservada. As outras páginas do capítulo não serão reexecutadas.`,
+      confirmText: "Reexecutar página",
+    });
+    if (!confirmed || busy) return;
+    await runJobs([{chapter:row.chapter,page:row.name,result_sha256:row.result_sha256}]);
+  }
   search.addEventListener("input", () => {page=0;draw();});
   runButton.addEventListener("click", execute);
   const unsubscribe = subscribeContext(load);
   load();
   return () => {
     disposed = true; generation++; controller?.abort(); unsubscribe();
-    inspector.dispose(); progress.element.remove(); stylesheet.remove(); root.remove();
+    areaLoader.dispose(); inspector.dispose(); progress.element.remove(); stylesheet.remove(); root.remove();
   };
 }

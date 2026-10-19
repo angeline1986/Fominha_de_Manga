@@ -1,10 +1,13 @@
 """Solid white stage: execute approved Check ROIs using Laboratory engine."""
 from __future__ import annotations
 import json
+import hashlib
 import os
 from pathlib import Path
 import shutil
 import tempfile
+from datetime import datetime, timezone
+from uuid import uuid4
 from PIL import Image
 from central_v2.backend.routes.laboratorio_solidos import _filter, _sha
 from .auto_cleaner_check_manifest import manifest_path, _read_check_manifest
@@ -23,6 +26,14 @@ def rows_for(manga, document, chapter):
     saved = _read_check_manifest(check, document)
     rows = [r for r in saved["approved_occurrences"] if r.get("tipo") == TYPE]
     return rows, _sha(check)
+
+
+def decision_sha256(rows):
+    selected = [{key: row.get(key) for key in ("id", "page", "tipo", "box_pixels")}
+                for row in rows]
+    selected.sort(key=lambda row: (row.get("page") or "", row.get("id") or ""))
+    payload = json.dumps(selected, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def source_for(manga, chapter, page, expected_sha256=None):
@@ -75,6 +86,8 @@ def execute_chapter(manga, document, chapter, *, candidate_pages=None, output_di
         (scratch / "clean").mkdir()
         (scratch / "mask").mkdir()
         audit, pages = [], []
+        run_id = uuid4().hex
+        created_at = datetime.now(timezone.utc).isoformat()
         for page, selections in sorted(grouped.items()):
             source = sources[page]
             with Image.open(source) as img:
@@ -98,7 +111,9 @@ def execute_chapter(manga, document, chapter, *, candidate_pages=None, output_di
             mask.save(scratch / "mask" / (Path(page).stem + "_mask.png"))
             for row, decision in zip(selections, decisions):
                 audit.append({"id": row["id"], "page": page, **decision})
-            pages.append({"page": page, "source_sha256": hashes[page],
+            pages.append({"page": page, "run_id": run_id, "created_at": created_at,
+                          "decision_sha256": decision_sha256(selections),
+                          "check_sha256": check_hash, "source_sha256": hashes[page],
                           "result_sha256": _sha(scratch / "clean" / filename),
                           "mask_sha256": _sha(scratch / "mask" / (Path(page).stem + "_mask.png"))})
         if any(_sha(path) != hashes[page] for page, path in sources.items()):
@@ -107,6 +122,7 @@ def execute_chapter(manga, document, chapter, *, candidate_pages=None, output_di
             raise ValueError("Check alterado antes da publicação")
         manifest = {"schema": "textoff_solid_stage_v1", "provider": document["provider"],
                     "manga": document["obra"], "chapter": chapter,
+                    "run_id": run_id, "created_at": created_at,
                     "motor": "laboratorio_solidos._filter", "check_sha256": check_hash,
                     "preview_only": True, "pages": pages, "regions": audit}
         (scratch / "solid-white-manifest.json").write_text(
