@@ -225,3 +225,52 @@
   display: inline-block; flex: none; width: 9px; height: 9px;
   border-radius: 50%; cursor: help;
 }
+
+/* CHECK_PAGINAS_LAB_HEADER_BEGIN */
+/* Cabecalho "Paginas" do Check acompanha o contrato visual do Laboratorio.
+   Somente o Check; os controles e a lista mantem a estrutura existente. */
+.comparison-check-filters .comparison-sidebar {
+  --check-pages-inset: var(--space-md);
+}
+.comparison-check-filters .comparison-sidebar .comparison-sidebar-heading {
+  box-sizing: border-box;
+  flex: none;
+  min-height: 44px;
+  margin: calc(-1 * var(--check-pages-inset))
+          calc(-1 * var(--check-pages-inset)) 12px;
+  padding: 12px;
+  border-bottom: 1px solid #d8eaf3;
+}
+.comparison-check-filters .comparison-sidebar .comparison-sidebar-heading h2 {
+  margin: 0;
+  font-size: 14px;
+  line-height: 20px;
+  font-weight: 700;
+}
+@media (max-width: 760px) {
+  .comparison-check-filters .comparison-sidebar {
+    --check-pages-inset: var(--space-sm);
+  }
+}
+/* CHECK_PAGINAS_LAB_HEADER_END */
+
+/* CHECK_SELECTS_COMPACTOS_V1 */
+/* Somente Auto-Cleaner Check: dimensões aprovadas para Cap. e Pág. */
+.comparison-check-filters .comparison-check-selects {
+  grid-template-columns: 78px minmax(0, 1fr) !important;
+  gap: 6px !important;
+}
+.comparison-check-filters .comparison-check-selects select {
+  height: 34px !important;
+  min-height: 34px !important;
+  border-radius: 6px !important;
+  padding: 5px 22px 5px 7px !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+}
+.comparison-check-filters .comparison-check-selects label::after {
+  right: 10px !important;
+  width: 6px !important;
+  height: 6px !important;
+  top: calc(50% - 5px) !important;
+}
