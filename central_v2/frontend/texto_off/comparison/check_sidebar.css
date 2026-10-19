@@ -1,0 +1,227 @@
+/* Check keeps its review controls while matching Mapear's compact candidate cards. */
+.comparison-residue-panel.is-check .comparison-residue-layers > div[data-layers] {
+  display: grid;
+  gap: 6px;
+}
+.comparison-residue-panel.is-check .comparison-residue-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 7px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--check-card-accent, var(--color-primary));
+  border-radius: 8px;
+  background: var(--color-surface);
+}
+.comparison-residue-panel.is-check .comparison-residue-row.is-transparent,
+.comparison-residue-panel.is-check .comparison-residue-row.is-styled {
+  --check-card-accent: #0891b2;
+}
+.comparison-residue-panel.is-check .comparison-residue-row.is-gradient {
+  --check-card-accent: #e11d8a;
+}
+.comparison-residue-panel.is-check .comparison-residue-row.is-solid {
+  --check-card-accent: #337ab7;
+}
+.comparison-residue-panel.is-check .comparison-residue-row.is-other {
+  --check-card-accent: var(--color-text-muted);
+}
+.comparison-residue-panel.is-check .comparison-residue-row.is-highlighted {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
+}
+.comparison-residue-panel.is-check .comparison-residue-title {
+  display: flex;
+  grid-column: 1;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-bold);
+}
+.comparison-residue-panel.is-check .comparison-residue-title-detail {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.comparison-residue-panel.is-check .comparison-residue-title-detail strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comparison-residue-panel.is-check .comparison-residue-title-detail [data-origin] {
+  overflow: hidden;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  font-weight: 400;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.comparison-residue-panel.is-check .comparison-residue-title .comparison-residue-number {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--check-card-accent, var(--color-primary));
+}
+.comparison-residue-panel.is-check .comparison-residue-row select[data-type] {
+  grid-column: 1;
+  grid-row: 2;
+  width: 100%;
+  min-width: 0;
+  min-height: 34px;
+  border: 1px solid var(--color-border-primary);
+  border-radius: 7px;
+  background: var(--color-surface);
+}
+.comparison-residue-panel.is-check .comparison-residue-row [data-source-classification] {
+  grid-column: 1;
+  grid-row: 3;
+  margin: 0 0 0 30px;
+  color: var(--color-text-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+.comparison-residue-panel.is-check .comparison-residue-row button[data-remove] {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  width: 26px;
+  height: 26px;
+  margin: 0;
+  align-self: center;
+  justify-self: center;
+  border-radius: 50%;
+}
+.comparison-residue-panel.is-check .comparison-residue-row input[data-note] {
+  grid-column: 1 / -1;
+}
+
+/* CHECK MINIMALISTA V2 - patch local */
+/* Cartao compacto: numero, select sempre aparente e excluir. */
+.comparison-residue-panel.is-check .comparison-residue-row {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr) 28px;
+  grid-template-rows: minmax(34px, auto);
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--color-border);
+  border-left: 3px solid var(--check-card-accent, var(--color-primary));
+  border-radius: 7px;
+  overflow: visible;
+}
+.comparison-residue-panel.is-check .comparison-residue-row > .comparison-residue-number {
+  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background: var(--check-card-accent, var(--color-primary));
+  outline-offset: 2px;
+  cursor: help;
+}
+/* Tooltip centralizado acima do numero, visivel por mouse e teclado. */
+.comparison-residue-panel.is-check .comparison-residue-row > .comparison-residue-number::after {
+  position: absolute;
+  z-index: 30;
+  bottom: calc(100% + 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  width: max-content;
+  max-width: 225px;
+  padding: 6px 9px;
+  border-radius: 6px;
+  background: #233547;
+  box-shadow: 0 3px 10px rgba(0,0,0,.15);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.3;
+  white-space: normal;
+  text-align: center;
+  pointer-events: none;
+  content: attr(data-origin-tooltip);
+}
+.comparison-residue-panel.is-check .comparison-residue-row > .comparison-residue-number::before {
+  position: absolute;
+  z-index: 30;
+  bottom: calc(100% + 3px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: none;
+  border: 5px solid transparent;
+  border-top-color: #233547;
+  content: "";
+  pointer-events: none;
+}
+.comparison-residue-panel.is-check .comparison-residue-row > .comparison-residue-number:is(:hover,:focus-visible)::after,
+.comparison-residue-panel.is-check .comparison-residue-row > .comparison-residue-number:is(:hover,:focus-visible)::before {
+  display: block;
+}
+.comparison-residue-panel.is-check .comparison-residue-row > [data-origin],
+.comparison-residue-panel.is-check .comparison-residue-row > .comparison-residue-title,
+.comparison-residue-panel.is-check .comparison-residue-row > [data-source-classification] {
+  display: none !important;
+}
+.comparison-residue-panel.is-check .comparison-residue-row > select[data-type] {
+  grid-column: 2;
+  grid-row: 1;
+  min-width: 0;
+  width: 100%;
+  min-height: 34px;
+}
+.comparison-residue-panel.is-check .comparison-residue-row > button[data-remove] {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  justify-self: center;
+}
+.comparison-residue-panel.is-check .comparison-residue-row > input[data-note] {
+  grid-column: 2 / -1;
+  grid-row: 2;
+  margin: 0;
+  width: 100%;
+}
+/* Permite mostrar o tooltip sem cortar o cartao. */
+.comparison-residue-panel.is-check .comparison-residue-layers > div[data-layers] {
+  padding-top: 34px;
+}
+
+/* Auto-Cleaner Check: posicionamento aprovado do tooltip */
+.comparison-residue-panel.is-check
+.comparison-residue-number::after,
+.comparison-residue-panel.is-check
+.comparison-residue-number::before {
+  margin-left: 80px !important;
+}
+
+/* CHECK PALETA FINAL V1 */
+/* Mesma cor no numero e na borda; classes derivadas da classificacao. */
+.comparison-residue-panel.is-check .comparison-residue-row.is-transparent { --check-card-accent: #0891B2; }
+.comparison-residue-panel.is-check .comparison-residue-row.is-degrade { --check-card-accent: #DB2777; }
+.comparison-residue-panel.is-check .comparison-residue-row.is-gradient { --check-card-accent: #7C3AED; }
+.comparison-residue-panel.is-check .comparison-residue-row.is-styled { --check-card-accent: #FAA307; }
+.comparison-residue-panel.is-check .comparison-residue-row.is-solid { --check-card-accent: #A7C957; }
+.comparison-residue-panel.is-check .comparison-residue-row.is-other,
+.comparison-residue-panel.is-check .comparison-residue-row.is-pending { --check-card-accent: #64748B; }
+/* O tooltip +80px aprovado e as interacoes existentes permanecem intactos. */
+
+/* Check: indicadores distintos por classificação, mantendo as demais telas. */
+.comparison-check-filters .comparison-page-item.has-check-type-dots {
+  display: flex; align-items: center; gap: 5px; padding-right: 8px;
+}
+.comparison-check-filters .comparison-page-item.has-check-type-dots::after { content: none; }
+.comparison-check-filters .comparison-check-dots {
+  display: inline-flex; flex: none; margin-left: auto; align-items: center;
+  justify-content: flex-end; gap: 4px; max-width: 75px; flex-wrap: wrap;
+}
+.comparison-check-filters .comparison-check-dot {
+  display: inline-block; flex: none; width: 9px; height: 9px;
+  border-radius: 50%; cursor: help;
+}

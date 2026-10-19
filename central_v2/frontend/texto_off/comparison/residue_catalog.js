@@ -10,16 +10,20 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   const isCheck = context.scope === "check";
   const panel = document.createElement("aside");
   panel.className = "comparison-residue-panel";
+  if (isCheck) panel.classList.add("is-check");
   panel.setAttribute("aria-label", isCheck ? "Revisão do Auto-Cleaner Check" : "Catalogação de resíduos");
   panel.setAttribute("aria-hidden", "true");
+  const actionControls = `<button class="btn comparison-residue-action" type="button" data-signal aria-pressed="false">${isCheck ? "Sinalizar área" : "Sinalizar Resíduo"}</button>
+    <button class="btn comparison-residue-action" type="button" data-draw aria-pressed="false" disabled>Selecionar área manual</button>
+    <p data-hint aria-live="polite">Ative a sinalização para selecionar áreas.</p>`;
+  const actionPanel = isCheck
+    ? `<details class="comparison-check-actions"><summary>Adicionar áreas</summary><div class="comparison-check-actions-body">${actionControls}</div></details>`
+    : `<section class="comparison-residue-step"><h3>Passo 1: identificar resíduo</h3>${actionControls}</section>`;
+  const layers = `<section class="comparison-residue-layers"><header><h3>${isCheck ? "Áreas nesta página" : "Camadas / áreas"}</h3><output data-count>0</output></header>
+      <div data-layers></div></section>`;
   panel.innerHTML = `<header class="comparison-residue-heading"><h2>${isCheck ? "Revisão do Auto-Cleaner Check" : "Catalogação de resíduos"}</h2>
       <button class="btn comparison-residue-close" type="button" data-close aria-label="Fechar painel">${iconMarkup("close")}</button></header>
-    <section class="comparison-residue-step"><h3>${isCheck ? "Revisar áreas aprovadas" : "Passo 1: identificar resíduo"}</h3>
-      <button class="btn comparison-residue-action" type="button" data-signal aria-pressed="false">${isCheck ? "Sinalizar área" : "Sinalizar Resíduo"}</button>
-      <button class="btn comparison-residue-action" type="button" data-draw aria-pressed="false" disabled>Selecionar área manual</button>
-      <p data-hint aria-live="polite">Ative a sinalização para selecionar áreas.</p></section>
-    <section class="comparison-residue-layers"><header><h3>Camadas / áreas</h3><output data-count>0</output></header>
-      <div data-layers></div></section>
+    ${isCheck ? `${layers}${actionPanel}` : `${actionPanel}${layers}`}
     <footer class="comparison-residue-step"><h3>${isCheck ? "Decisão do capítulo" : "Passo 2"}</h3>
       <button class="btn comparison-residue-catalog" type="button" data-catalog disabled>${isCheck ? "Salvar decisão do Check" : "Catalogar Resíduo"}</button>
       <div class="comparison-residue-feedback"><p data-feedback role="status" aria-live="polite"></p>
@@ -33,7 +37,10 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
 
   const query = (selector) => panel.querySelector(selector);
   let currentPage = "", state = "idle", drag = null, hoveredId = null;
-  const options = RESIDUE_TYPES.map(([value, label]) => `<option value="${value}">${label}</option>`).join("");
+  const CHECK_TYPES = new Set(["residuo_balao_solido_branco", "balao_transparente", "residuo_degrade", "residuo_gradiente", "balao_estilizado", "outro"]);
+  const checkNames = {residuo_balao_solido_branco: "Branco sólido", balao_transparente: "Transparente", residuo_degrade: "Degradê", residuo_gradiente: "Gradiente", balao_estilizado: "Estilizado", outro: "Outro / não identificado"};
+  const options = RESIDUE_TYPES.filter(([value]) => !isCheck || CHECK_TYPES.has(value))
+    .map(([value, label]) => `<option value="${value}">${isCheck ? checkNames[value] : label}</option>`).join("");
   const catalogState = createResidueCatalogState(context, render, onPersistedCount, onDraftState);
 
   function draft() { return catalogState.current(); }
@@ -79,7 +86,7 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   function render() {
     const occurrences = draft().occurrences;
     query("[data-count]").value = String(occurrences.length);
-    renderResidueOccurrences(overlay, query("[data-layers]"), occurrences, options);
+    renderResidueOccurrences(overlay, query("[data-layers]"), occurrences, options, { check: isCheck });
     if (hoveredId) highlight(hoveredId);
     syncStatus();
   }
@@ -184,5 +191,6 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   }
   return { element: panel, setPage, setOpen,
     draftOccurrenceCount: (pageName) => catalogState.draftOccurrenceCount(pageName),
+    draftOccurrenceTypes: (pageName) => catalogState.draftOccurrenceTypes(pageName),
     toggle: () => setOpen(!panel.classList.contains("is-open")), dispose };
 }

@@ -1,6 +1,14 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 
-export function renderResidueOccurrences(overlay, layers, occurrences, options, { readOnly = false } = {}) {
+const CHECK_STYLES = {
+  residuo_balao_solido_branco: "solid", balao_transparente: "transparent",
+  residuo_transparencia: "transparent",
+  residuo_degrade: "degrade", residuo_gradiente: "gradient",
+  balao_estilizado: "styled", outro: "other",
+};
+const CHECK_LABELS = { residuo_transparencia: "Transparente" };
+
+export function renderResidueOccurrences(overlay, layers, occurrences, options, { readOnly = false, check = false } = {}) {
   overlay.querySelectorAll("[data-box-id], [data-live-box]").forEach((box) => box.remove());
   const rows = [];
   occurrences.forEach((item, index) => {
@@ -13,6 +21,7 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options, 
     overlay.append(box);
     const row = document.createElement("div");
     row.className = "comparison-residue-row"; row.dataset.occurrenceId = item.id;
+    if (check) row.classList.add(`is-${CHECK_STYLES[item.type] || "pending"}`);
     if (readOnly) {
       const numberLabel = document.createElement("span");
       numberLabel.className = "comparison-residue-number";
@@ -24,6 +33,14 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options, 
       return;
     }
     row.innerHTML = `<span class="comparison-residue-number">${number}</span><span class="comparison-residue-origin" data-origin></span><select aria-label="Tipo da área ${number}" data-type="${item.id}">${options}</select><small class="comparison-residue-source-classification" data-source-classification></small><button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${number}">${iconMarkup("close")}</button>`;
+    if (check) {
+      const badge = row.querySelector(".comparison-residue-number");
+      const origins = [...new Set(item.origins || [item.origin || "MANUAL"])];
+      const originText = origins.map(originLabel).join(" + ");
+      badge.tabIndex = 0;
+      badge.dataset.originTooltip = originText;
+      badge.setAttribute("aria-label", `Área ${number}. Origem: ${originText}`);
+    }
     const origins = [...new Set(item.origins || [item.origin || "MANUAL"])];
     row.querySelector("[data-origin]").textContent = origins.map(originLabel).join(" + ");
     const sourceClasses = (item.source_classifications || [])
@@ -36,6 +53,11 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options, 
     const sourceElement = row.querySelector("[data-source-classification]");
     sourceElement.textContent = sourceLabel || (item.candidate === true ? "Candidato identificado" : "");
     sourceElement.hidden = !sourceElement.textContent;
+    if (check && item.type && !row.querySelector(`select option[value="${item.type}"]`)) {
+      const legacy = document.createElement("option");
+      legacy.value = item.type; legacy.textContent = `Tipo anterior: ${item.type}`;
+      row.querySelector("select").append(legacy);
+    }
     if (!item.type) {
       const pending = document.createElement("option");
       pending.value = "";
@@ -43,6 +65,7 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options, 
       row.querySelector("select").append(pending);
     }
     row.querySelector("select").value = item.type;
+
     if (item.type === "outro") appendNote(row, item, number);
     rows.push(row);
   });

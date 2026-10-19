@@ -2,7 +2,7 @@ import { createPagination } from "/_shared/pagination/model.js";
 import { COMPARISON_PAGE_SIZE, filterComparisonPages } from "/texto_off/comparison/model.js";
 
 export function createPageList({ list, search, paginationRoot, onSelect, onPreview, onPreviewPosition,
-  getDraftOccurrenceCount = () => null }) {
+  getDraftOccurrenceCount = () => null, getOccurrenceTypes = () => null }) {
   const pagination = createPagination(COMPARISON_PAGE_SIZE);
   function render(pages, selectedIndex) {
     const result = pagination.select(filterComparisonPages(pages, search?.value || ""));
@@ -15,6 +15,7 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
       button.setAttribute("role", "option"); button.setAttribute("aria-selected", String(originalIndex === selectedIndex));
       button.textContent = page.name;
       applyOccurrenceIndicator(button, getDraftOccurrenceCount(page.name), page.residue_occurrence_count);
+      applyTypeIndicators(button, getOccurrenceTypes(page.name));
       button.addEventListener("click", () => onSelect(originalIndex));
       list.append(button);
     }
@@ -44,14 +45,20 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
     if (page) page.residue_occurrence_count = count;
     const button = Array.from(list.querySelectorAll("[data-page-name]"))
       .find((item) => item.dataset.pageName === pageName);
-    if (button) applyOccurrenceIndicator(button, getDraftOccurrenceCount(pageName), count);
+    if (button) {
+      applyOccurrenceIndicator(button, getDraftOccurrenceCount(pageName), count);
+      applyTypeIndicators(button, getOccurrenceTypes(pageName));
+    }
   }
   function setDraftOccurrenceCount(pageName, count) {
     const page = currentPages.find((item) => item.name === pageName);
     if (!page) return;
     const button = Array.from(list.querySelectorAll("[data-page-name]"))
       .find((item) => item.dataset.pageName === pageName);
-    if (button) applyOccurrenceIndicator(button, count, page.residue_occurrence_count);
+    if (button) {
+      applyOccurrenceIndicator(button, count, page.residue_occurrence_count);
+      applyTypeIndicators(button, getOccurrenceTypes(pageName));
+    }
   }
   function onPointerOver(event) {
     const item = event.target.closest(".comparison-page-item");
@@ -63,9 +70,14 @@ export function createPageList({ list, search, paginationRoot, onSelect, onPrevi
   }
   list.addEventListener("pointerover", onPointerOver); list.addEventListener("pointerout", onPointerOut);
   search?.addEventListener("input", onSearch);
+  function setOccurrenceTypes(pageName) {
+    const button = [...list.querySelectorAll("[data-page-name]")]
+      .find((item) => item.dataset.pageName === pageName);
+    if (button) applyTypeIndicators(button, getOccurrenceTypes(pageName));
+  }
   return {
     render(pages, selectedIndex) { currentPages = pages; currentSelected = selectedIndex; renderCurrent(); },
-    setOccurrenceCount, setDraftOccurrenceCount,
+    setOccurrenceCount, setDraftOccurrenceCount, setOccurrenceTypes,
     dispose() {
       list.removeEventListener("pointerover", onPointerOver); list.removeEventListener("pointerout", onPointerOut);
       search?.removeEventListener("input", onSearch);
@@ -79,4 +91,38 @@ function applyOccurrenceIndicator(button, currentCount, persistedCount) {
   button.dataset.hasResidueOccurrences = String(hasOccurrences);
   if (hasOccurrences) button.title = "Possui ocorrência no estado atual da revisão";
   else button.removeAttribute("title");
+}
+
+// Exclusivo do Check; outras telas mantêm seu indicador de existência.
+const CHECK_DOTS = [
+  ["residuo_transparencia", "Transparente", "#0891B2"],
+  ["balao_transparente", "Transparente", "#0891B2"],
+  ["residuo_degrade", "Degradê", "#DB2777"],
+  ["residuo_gradiente", "Gradiente", "#7C3AED"],
+  ["balao_estilizado", "Estilizado", "#FAA307"],
+  ["residuo_balao_solido_branco", "Branco sólido", "#A7C957"],
+  ["outro", "Outro / não identificado", "#64748B"],
+];
+function applyTypeIndicators(button, types) {
+  button.querySelector(".comparison-check-dots")?.remove();
+  button.classList.remove("has-check-type-dots");
+  if (!Array.isArray(types)) return;
+  button.dataset.hasResidueOccurrences = "false"; // substitui o ponto azul antigo
+  button.removeAttribute("title");
+  const container = document.createElement("span");
+  container.className = "comparison-check-dots";
+  const shown = new Set();
+  for (const [type, label, color] of CHECK_DOTS) {
+    if (!types.includes(type) || shown.has(label)) continue;
+    shown.add(label);
+    const dot = document.createElement("span");
+    dot.className = "comparison-check-dot";
+    dot.style.backgroundColor = color;
+    dot.dataset.tooltip = label;
+    dot.title = label;
+    dot.setAttribute("aria-label", label);
+    container.append(dot);
+  }
+  if (container.childElementCount) button.append(container);
+  button.classList.add("has-check-type-dots");
 }

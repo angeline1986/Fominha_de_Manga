@@ -13,7 +13,8 @@ export function createResidueCatalogState(context, onChange = () => {},
   const notify = (page = currentPage) => {
     const draft = drafts.get(page);
     const validCount = draft.occurrences.filter((item) => isValidOccurrence(item, isCheck)).length;
-    onDraftState(page, draft.loaded ? validCount : null, draft.dirty);
+    onDraftState(page, draft.loaded ? validCount : null, draft.dirty,
+      draft.loaded ? draft.occurrences.map((item) => item.type) : null);
     onChange();
   };
 
@@ -134,6 +135,8 @@ export function createResidueCatalogState(context, onChange = () => {},
   return { current, setPage, add, remove, setType, setNote, canSaveChapter,
     hasDirtyPages: () => dirtyPages().length > 0, dirtyPageCount: () => dirtyPages().length,
     draftOccurrenceCount: (page) => countDraftOccurrences(drafts.peek(page), isCheck),
+    draftOccurrenceTypes: (page) => drafts.peek(page)?.loaded
+      ? drafts.peek(page).occurrences.map((item) => item.type) : null,
     isSaving: () => Boolean(saveController), saveChapter, dispose };
 }
 

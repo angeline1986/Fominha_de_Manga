@@ -1,3 +1,4 @@
+@import url("/texto_off/comparison/check_sidebar.css");
 /* Laboratorio: botao compacto, sem seta e sem sombra. */
 .drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"],
 .drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"]:hover,

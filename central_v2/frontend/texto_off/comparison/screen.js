@@ -6,6 +6,7 @@ import { createSolidCatalog } from "/texto_off/comparison/solid_catalog.js";
 import { comparisonModeConfig, INITIAL_ZOOM, clampZoom, level2StatusText } from "/texto_off/comparison/model.js";
 import { createPageList } from "/texto_off/comparison/page_list.js";
 import { createResidueCatalog } from "/texto_off/comparison/residue_catalog.js";
+import { fetchResidueOccurrences } from "/_app/api/residue_occurrences.js";
 import { createDegradeContext } from "/texto_off/comparison/degrade_context.js";
 import { bindDegradeViewTools } from "/texto_off/comparison/degrade_view_tools.js";
 import { bindRestoreMergePreview } from "/texto_off/comparison/restore_merge_preview.js";
@@ -118,6 +119,7 @@ export function createComparisonScreen(context, onBack) {
   const state = query("[data-state]"), preview = query("[data-preview]");
   const controller = new AbortController();
   let pages = [], index = 0, activeImageIndex = null, pageState = "loading", zoom = INITIAL_ZOOM, disposed = false;
+  const checkTypes = new Map();
   const slider = createSlider(canvas, (nextState, error) => {
     canvas.setAttribute("aria-busy", String(nextState === "loading"));
     element.querySelectorAll("[data-zoom]").forEach((button) => { button.disabled = nextState !== "ready"; });
@@ -136,7 +138,10 @@ export function createComparisonScreen(context, onBack) {
       page.residue_occurrence_count = count;
       pageList.setOccurrenceCount(pageName, count);
     },
-    onDraftState: (pageName, count) => pageList.setDraftOccurrenceCount(pageName, count),
+    onDraftState: (pageName, count, dirty, types) => {
+      if (context.comparisonMode === "check" && Array.isArray(types)) checkTypes.set(pageName, types);
+      pageList.setDraftOccurrenceCount(pageName, count);
+    },
     onOpenChange: (open) => {
       const button = query("[data-panel-toggle]");
       button.setAttribute("aria-expanded", String(open)); button.setAttribute("aria-pressed", String(open));
@@ -150,6 +155,9 @@ export function createComparisonScreen(context, onBack) {
     paginationRoot: query("[data-pagination]"), onSelect: selectPage,
     onPreview: showPreview, onPreviewPosition: drawPreviewPosition,
     getDraftOccurrenceCount: (pageName) => catalog.draftOccurrenceCount(pageName),
+    getOccurrenceTypes: context.comparisonMode === "check"
+      ? (pageName) => catalog.draftOccurrenceTypes(pageName) ?? checkTypes.get(pageName) ?? null
+      : () => null,
   });
   const restorePreview = context.comparisonMode === "check"
     ? bindRestoreMergePreview(query(".comparison-canvas-controls"), () => ({
@@ -250,6 +258,7 @@ export function createComparisonScreen(context, onBack) {
       const result = await fetchComparison({ ...context, layout: mode.layout }, controller.signal);
       if (disposed) return;
       pages = result.pages || [];
+      if (context.comparisonMode === "check") void loadCheckTypes(pages);
       if (pageSelect) {
         pageSelect.replaceChildren();
         pages.forEach((page, pageIndex) => {
@@ -269,6 +278,24 @@ export function createComparisonScreen(context, onBack) {
     } catch (error) {
       if (!disposed && error.name !== "AbortError") { pageState = "error"; state.textContent = error.message; drawState(); }
     }
+  }
+  async function loadCheckTypes(rows) {
+    // Até três requisições simultâneas; uma falha não cria classificação fictícia.
+    let cursor = 0;
+    async function worker() {
+      while (!disposed && cursor < rows.length) {
+        const page = rows[cursor++];
+        try {
+          const result = await fetchResidueOccurrences({ ...context, page: page.name }, controller.signal);
+          if (disposed) return;
+          checkTypes.set(page.name, (result.occurrences || []).map((item) => item.type ?? item.tipo ?? ""));
+          pageList.setOccurrenceTypes(page.name);
+        } catch (error) {
+          if (error.name !== "AbortError") console.warn("[Check] Falha ao consultar tipos:", page.name, error);
+        }
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(3, rows.length) }, worker));
   }
   function dispose() {
     disposed = true; controller.abort(); preview.hidden = true; preview.querySelector("img").removeAttribute("src"); preview.remove();
