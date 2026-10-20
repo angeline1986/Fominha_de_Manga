@@ -24,16 +24,29 @@ def rows_for(manga, document, chapter):
     if not check.is_file():
         return [], None
     saved = _read_check_manifest(check, document)
-    rows = [r for r in saved["approved_occurrences"] if r.get("tipo") == TYPE]
+    rows = [r for r in saved["approved_occurrences"]
+            if (r.get("tipo") or r.get("type")) == TYPE]
     return rows, _sha(check)
 
 
 def decision_sha256(rows):
-    selected = [{key: row.get(key) for key in ("id", "page", "tipo", "box_pixels")}
-                for row in rows]
+    selected = [{"id": row.get("id"), "page": row.get("page"),
+                 "tipo": row.get("tipo") or row.get("type"),
+                 "box_pixels": row.get("box_pixels")} for row in rows]
     selected.sort(key=lambda row: (row.get("page") or "", row.get("id") or ""))
     payload = json.dumps(selected, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def decision_sha256_matches(digest, rows):
+    if digest == decision_sha256(rows):
+        return True
+    # Previous Sólidos previews hashed type-only Check rows as tipo=null.
+    legacy = [{key: row.get(key) for key in ("id", "page", "tipo", "box_pixels")}
+              for row in rows]
+    legacy.sort(key=lambda row: (row.get("page") or "", row.get("id") or ""))
+    payload = json.dumps(legacy, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return digest == hashlib.sha256(payload.encode("utf-8")).hexdigest()
 
 
 def source_for(manga, chapter, page, expected_sha256=None):

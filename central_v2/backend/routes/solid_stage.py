@@ -9,7 +9,7 @@ from central_v2.backend.routes.textoff_merged import _context, _value
 from central_v2.backend.state.manga_state import resolve_manga
 from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check_manifest import _validate_chapter
 from central_v2.backend.orchestration.textoff_merged.solid_stage import (
-    STAGE, decision_sha256, execute_chapter, rows_for, source_for,
+    STAGE, decision_sha256_matches, execute_chapter, rows_for, source_for,
 )
 from central_v2.backend.orchestration.textoff_merged.solid_reexecution import reexecute_page
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
@@ -58,7 +58,8 @@ def overview(query, output_root):
                     processed = isinstance(previous, dict)
                     outdated = None
                     if processed and isinstance(previous.get("decision_sha256"), str):
-                        outdated = previous["decision_sha256"] != decision_sha256(selected)
+                        outdated = not decision_sha256_matches(
+                            previous["decision_sha256"], selected)
                         try:
                             outdated = outdated or previous.get("source_sha256") != _sha(
                                 source_for(manga, chapter, page))
