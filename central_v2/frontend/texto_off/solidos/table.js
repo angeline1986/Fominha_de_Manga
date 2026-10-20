@@ -12,7 +12,8 @@ function check(label, checked, disabled, onChange) {
 }
 
 function chapterName(row, expanded, toggle) {
-  const wrap = document.createElement("div"); wrap.className = "solid-chapter-name";
+  const wrap = document.createElement("div");
+  wrap.className = "artistico-name artistico-name--chapter solid-chapter-name";
   if (row.pages.length) {
     const button = document.createElement("button");
     button.type = "button"; button.className = "btn solid-expand";
@@ -21,35 +22,36 @@ function chapterName(row, expanded, toggle) {
     button.setAttribute("aria-label", `${expanded ? "Recolher" : "Expandir"} capítulo ${row.chapter}`);
     button.addEventListener("click", toggle); wrap.append(button);
   }
-  const label = document.createElement("strong"); label.textContent = row.chapter;
-  const detail = document.createElement("span"); detail.className = "solid-row-detail";
+  const label = document.createElement("strong"); label.className = "artistico-name-label"; label.textContent = row.chapter;
+  const detail = document.createElement("span"); detail.className = "artistico-meta solid-row-detail";
   detail.textContent = `${row.pages.length} pág. · ${row.regions} ocorrências`;
   const text = document.createElement("span"); text.className = "solid-row-label";
   text.append(label, detail); wrap.append(text); return wrap;
 }
 
 function pageName(row, expanded, toggle) {
-  const wrap = document.createElement("div"); wrap.className = "solid-page-name";
-  const indent = document.createElement("span"); indent.className = "solid-page-indent";
+  const wrap = document.createElement("div");
+  wrap.className = "artistico-name artistico-name--page solid-page-name";
   if (row.regions > 0) {
     const button = document.createElement("button");
     button.type = "button"; button.className = "btn solid-expand";
     button.innerHTML = iconMarkup(expanded ? "collapse" : "expand");
     button.setAttribute("aria-expanded", String(expanded));
     button.setAttribute("aria-label", `${expanded ? "Recolher" : "Expandir"} ${row.name}`);
-    button.addEventListener("click", toggle); wrap.append(indent, button);
-  } else wrap.append(indent);
-  const name = document.createElement("strong"); name.textContent = row.name;
-  const detail = document.createElement("span"); detail.className = "solid-row-detail";
+    button.addEventListener("click", toggle); wrap.append(button);
+  }
+  const name = document.createElement("strong"); name.className = "artistico-name-label"; name.textContent = row.name;
+  const detail = document.createElement("span"); detail.className = "artistico-meta solid-row-detail";
   detail.textContent = `${row.regions} ${row.regions === 1 ? "balão sólido" : "balões sólidos"}`;
   wrap.append(name, detail); return wrap;
 }
 
 function areaName(row) {
-  const wrap = document.createElement("div"); wrap.className = "solid-area-name";
+  const wrap = document.createElement("div");
+  wrap.className = "artistico-name artistico-name--occurrence solid-area-name";
   const number = Number.isInteger(row.number) && row.number > 0 ? row.number : row.ordinal;
   const name = document.createElement("button");
-  name.type = "button"; name.className = "solid-area-preview-trigger";
+  name.type = "button"; name.className = "artistico-balloon solid-area-preview-trigger";
   name.textContent = `Balão ${String(number).padStart(2, "0")}`;
   name.title = `Prévia do Balão ${String(number).padStart(2, "0")}`;
   name.setAttribute("aria-label", `Prévia do Balão ${number}`);
@@ -102,7 +104,7 @@ function pageActions(row, busy, inspect, run) {
   wrap.append(viewButton(row, inspect));
   if (!row.processed) return wrap;
   const button = document.createElement("button");
-  button.type = "button"; button.className = "btn solid-page-rerun";
+  button.type = "button"; button.className = "btn artistico-icon-button solid-page-rerun";
   button.innerHTML = iconMarkup("sync"); button.disabled = busy || !row.result_sha256;
   button.title = "Reexecutar somente esta página; a prévia anterior será arquivada.";
   button.setAttribute("aria-label", `Reexecutar Sólidos somente na página ${row.name}`);
@@ -183,7 +185,7 @@ function areaMessage(row, message) {
 
 function viewButton(row, inspect) {
   const button = document.createElement("button");
-  button.type = "button"; button.className = "btn comparison-open";
+  button.type = "button"; button.className = "btn comparison-open artistico-icon-button";
   const target = row.rowType === "page" ? `página ${row.name} do capítulo ${row.chapter}`
     : `capítulo ${row.chapter}`;
   button.title = `Visualizar ${target}`;
