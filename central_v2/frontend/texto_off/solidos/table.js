@@ -40,6 +40,7 @@ function pageName(row, expanded, toggle) {
     button.setAttribute("aria-label", `${expanded ? "Recolher" : "Expandir"} ${row.name}`);
     button.addEventListener("click", toggle); wrap.append(button);
   }
+  wrap.insertAdjacentHTML("beforeend", iconMarkup("crop-simple"));
   const name = document.createElement("strong"); name.className = "artistico-name-label"; name.textContent = row.name;
   const detail = document.createElement("span"); detail.className = "artistico-meta solid-row-detail";
   detail.textContent = `${row.regions} ${row.regions === 1 ? "balão sólido" : "balões sólidos"}`;
@@ -49,6 +50,7 @@ function pageName(row, expanded, toggle) {
 function areaName(row) {
   const wrap = document.createElement("div");
   wrap.className = "artistico-name artistico-name--occurrence solid-area-name";
+  wrap.insertAdjacentHTML("beforeend", iconMarkup("circle-dot"));
   const number = Number.isInteger(row.number) && row.number > 0 ? row.number : row.ordinal;
   const name = document.createElement("button");
   name.type = "button"; name.className = "artistico-balloon solid-area-preview-trigger";
