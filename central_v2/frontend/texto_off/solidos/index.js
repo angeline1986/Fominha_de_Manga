@@ -5,6 +5,7 @@ import { createSolidTable } from "/texto_off/solidos/table.js";
 import { createSolidInspector } from "/texto_off/solidos/inspector.js";
 import { confirmMessage } from "/_shared/messages/messages.js";
 import { createSolidAreaLoader } from "/texto_off/solidos/area_loader.js";
+import { createSolidAreaPreview } from "/texto_off/solidos/area_preview.js";
 import { filterSolidChapters } from "/texto_off/solidos/filter.js";
 
 const API = "/api/textoff/solidos";
@@ -21,7 +22,7 @@ export function render(container) {
   root.innerHTML = `<header class="solid-page-heading"><h1 class="textoff-page-title-hint" tabindex="0"
     data-tooltip="Limpeza direcionada às áreas sólidas aprovadas no Check"
     aria-description="Limpeza direcionada às áreas sólidas aprovadas no Check">Auto-Cleaner · Sólidos</h1>
-    <span>3 níveis · Capítulo → Página → Área sólida</span></header>
+    <span title="Exibe apenas áreas classificadas e salvas no Auto-Cleaner Check">Áreas aprovadas no Check · Capítulo → Página → Balão</span></header>
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search solid-search"><span class="visually-hidden">Buscar capítulo ou página</span>
       <input type="search" data-search placeholder="Buscar capítulo ou página"></label>
@@ -42,6 +43,7 @@ export function render(container) {
   const progress = createJobProgress("Auto-Cleaner: Sólidos");
   root.querySelector(".auto-merge-toolbar").after(progress.element);
   const inspector = createSolidInspector(root, API);
+  const areaPreview = createSolidAreaPreview(getContext);
   let rows = [], selected = new Set(), filter = "all", page = 0;
   let busy = false, disposed = false, controller = null, generation = 0;
   const areaLoader = createSolidAreaLoader(getContext, () => rows, draw);
@@ -54,6 +56,7 @@ export function render(container) {
     changePage(next) { page = next; draw(); },
     redraw() { draw(); },
     loadAreas(row) { areaLoader.load(row); },
+    preview: areaPreview,
     reexecutePage(row) { reexecutePage(row); },
   });
   function matching() {
@@ -161,6 +164,6 @@ export function render(container) {
   load();
   return () => {
     disposed = true; generation++; controller?.abort(); unsubscribe();
-    areaLoader.dispose(); inspector.dispose(); progress.element.remove(); stylesheet.remove(); root.remove();
+    areaLoader.dispose(); areaPreview.dispose(); inspector.dispose(); progress.element.remove(); stylesheet.remove(); root.remove();
   };
 }

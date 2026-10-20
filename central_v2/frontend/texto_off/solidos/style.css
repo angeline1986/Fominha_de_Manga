@@ -9,14 +9,19 @@
 .solid-chapter-name{display:flex;align-items:center;gap:8px}
 .solid-expand{display:grid;min-width:24px;min-height:24px;place-items:center;padding:2px;border:0;background:transparent;color:#14516c}
 .solid-page-heading{display:flex;align-items:center;justify-content:space-between;gap:16px}
-.solid-page-heading>span{color:#53748a;font-size:13px;white-space:nowrap}
+.solid-page-heading>span{color:#8290a2;font-size:12px;text-align:right}
+.solid-area-preview{position:fixed;z-index:55;width:min(268px,calc(100vw - 16px));padding:13px;border:1px solid #dce6f0;border-radius:12px;background:#fff;box-shadow:0 16px 42px #26384d25;color:#25334a;pointer-events:none}
+.solid-area-preview[hidden]{display:none}
+.solid-area-preview strong{display:block;margin-bottom:9px;font-size:13px}
+.solid-area-preview canvas{display:block;width:240px;max-width:100%;height:auto;border-radius:8px;background:#f6f8fb}
+.solid-area-preview small{display:block;margin-top:9px;color:#8b98a8;font-size:11px;overflow-wrap:anywhere}
 .auto-merge-page.cleaner-overview .solid-search{flex:1 1 380px;width:auto;min-width:220px;max-width:none}
-.auto-merge-page.cleaner-overview .solid-table{min-width:980px;table-layout:fixed}
-.auto-merge-page.cleaner-overview .solid-table [data-column="select"]{width:44px;text-align:center}
-.auto-merge-page.cleaner-overview .solid-table [data-column="chapter"]{width:40%}
-.auto-merge-page.cleaner-overview .solid-table [data-column="status"]{width:18%}
-.auto-merge-page.cleaner-overview .solid-table [data-column="progress"]{width:18%}
-.auto-merge-page.cleaner-overview .solid-table [data-column="actions"]{width:150px;text-align:center}
+.auto-merge-page.cleaner-overview .solid-table{width:100%;min-width:760px;table-layout:fixed}
+.auto-merge-page.cleaner-overview .solid-table [data-column="select"]{width:45px;text-align:center}
+.auto-merge-page.cleaner-overview .solid-table [data-column="chapter"]{width:34%}
+.auto-merge-page.cleaner-overview .solid-table [data-column="status"]{width:16%}
+.auto-merge-page.cleaner-overview .solid-table [data-column="progress"]{width:21%}
+.auto-merge-page.cleaner-overview .solid-table [data-column="actions"]{width:130px;text-align:center}
 .solid-chapter-row td,.solid-page-row td,.solid-area-row td,.solid-area-state-row td{vertical-align:middle}
 .solid-chapter-row{background:#fff}
 .solid-page-row{background:#f8fbfd}
@@ -28,6 +33,8 @@
 .solid-page-name{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:13px}
 .solid-page-indent{width:16px;flex:0 0 16px}
 .solid-area-name{display:flex;align-items:baseline;gap:9px;white-space:nowrap}
+.solid-area-preview-trigger{padding:4px 2px;border:0;border-radius:5px;background:transparent;color:inherit;font:inherit;font-weight:600;cursor:help}
+.solid-area-preview-trigger:hover,.solid-area-preview-trigger:focus-visible{background:#eef5fc;color:#316ab0}
 .solid-area-row td[data-column="chapter"]{padding-left:36px;text-align:left}
 .solid-status{display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
 .solid-status i{width:7px;height:7px;border-radius:50%;background:#d99740}

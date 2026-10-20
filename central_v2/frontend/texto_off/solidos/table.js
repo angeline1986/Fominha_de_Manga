@@ -23,7 +23,7 @@ function chapterName(row, expanded, toggle) {
   }
   const label = document.createElement("strong"); label.textContent = row.chapter;
   const detail = document.createElement("span"); detail.className = "solid-row-detail";
-  detail.textContent = `${row.pages.length} pág. · ${row.regions} áreas`;
+  detail.textContent = `${row.pages.length} pág. · ${row.regions} ocorrências`;
   const text = document.createElement("span"); text.className = "solid-row-label";
   text.append(label, detail); wrap.append(text); return wrap;
 }
@@ -41,16 +41,25 @@ function pageName(row, expanded, toggle) {
   } else wrap.append(indent);
   const name = document.createElement("strong"); name.textContent = row.name;
   const detail = document.createElement("span"); detail.className = "solid-row-detail";
-  detail.textContent = `${row.regions} ${row.regions === 1 ? "área" : "áreas"}`;
+  detail.textContent = `${row.regions} ${row.regions === 1 ? "balão sólido" : "balões sólidos"}`;
   wrap.append(name, detail); return wrap;
 }
 
 function areaName(row) {
   const wrap = document.createElement("div"); wrap.className = "solid-area-name";
-  const id = document.createElement("strong"); id.textContent = `Área sólida · ${row.id}`;
+  const number = Number.isInteger(row.number) && row.number > 0 ? row.number : row.ordinal;
+  const name = document.createElement("button");
+  name.type = "button"; name.className = "solid-area-preview-trigger";
+  name.textContent = `Balão ${String(number).padStart(2, "0")}`;
+  name.title = `Prévia do Balão ${String(number).padStart(2, "0")}`;
+  name.setAttribute("aria-label", `Prévia do Balão ${number}`);
+  name.addEventListener("pointerenter", () => row.preview?.show(name, row));
+  name.addEventListener("pointerleave", () => row.preview?.hide());
+  name.addEventListener("focus", () => row.preview?.show(name, row));
+  name.addEventListener("blur", () => row.preview?.hide());
   const label = document.createElement("span"); label.className = "solid-row-detail";
-  label.textContent = row.label || "Classificação indisponível";
-  wrap.append(id, label); return wrap;
+  label.textContent = "Branco sólido";
+  wrap.append(name, label); return wrap;
 }
 
 function rowStatus(row) {
@@ -121,9 +130,9 @@ export function createSolidTable(container, actions) {
         if (item.areasState === "loading") return [page, areaMessage(page, "Carregando áreas sólidas…")];
         if (item.areasState === "error") return [page, areaMessage(page,
           "Não foi possível carregar as áreas. Recolha e reabra a página para tentar novamente.")];
-        if (!item.areas?.length) return [page, areaMessage(page, "Nenhuma Área sólida aprovada no Check.")];
-        return [page, ...item.areas.map((area) => ({ ...area, chapter: chapter.chapter,
-          page: item.name, rowType: "area" }))];
+        if (!item.areas?.length) return [page, areaMessage(page, "Nenhum balão sólido aprovado no Check.")];
+        return [page, ...item.areas.map((area, index) => ({ ...area, ordinal: index + 1,
+          chapter: chapter.chapter, page: item.name, rowType: "area", preview: actions.preview }))];
       }) : [];
       return [{ ...chapter, rowType: "chapter" }, ...children];
     });
@@ -137,7 +146,7 @@ export function createSolidTable(container, actions) {
         render: (row) => row.rowType !== "chapter" ? "" : check(
           `Selecionar capítulo ${row.chapter}`, selected.has(row.chapter), busy || row.processed,
           (value) => actions.onSelect(row.chapter, value)) },
-      { id: "chapter", label: "CAPÍTULO / PÁGINA / ÁREA SÓLIDA", render: (row) => {
+      { id: "chapter", label: "CAP.", render: (row) => {
         if (row.rowType === "area") return areaName(row);
         if (row.rowType === "area-state") return row.message;
         if (row.rowType === "page") return pageName(row,
