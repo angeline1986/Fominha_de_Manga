@@ -35,7 +35,8 @@ export function createSolidAreaLoader(getContext, getRows, onChange) {
       if (disposed || controller.signal.aborted) return;
       const areas = (result.occurrences || []).filter((row) =>
         (row.tipo ?? row.type) === SOLID_TYPE).map((row) => ({
-          id: row.id, number: row.numero, label: row.label || row.tipo || row.type || "",
+          id: row.id, number: row.numero ?? row.number,
+          label: row.label || row.tipo || row.type || "", box_pixels: row.box_pixels,
         }));
       cache.set(id, { areas, areasState: "ready" });
       const current = findPage(getRows(), pageRow.chapter, pageRow.name);

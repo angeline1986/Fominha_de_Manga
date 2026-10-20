@@ -14,6 +14,7 @@ from central_v2.backend.orchestration.textoff_merged.solid_stage import (
 from central_v2.backend.orchestration.textoff_merged.solid_reexecution import reexecute_page
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 from central_v2.backend.routes.laboratorio_solidos import _sha
+from central_v2.backend.state.sorting import natural_sort_key
 
 ROUTE = "/api/textoff/solidos"
 
@@ -33,7 +34,8 @@ def overview(query, output_root):
         check_root = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/04_AUTO_CLEANER_CHECK"
         rows = []
         if check_root.is_dir():
-            for folder in sorted(check_root.iterdir(), key=lambda p: p.name):
+            for folder in sorted(check_root.iterdir(),
+                                 key=lambda p: (natural_sort_key(p.name), p.name.casefold(), p.name)):
                 if not folder.is_dir() or folder.is_symlink():
                     continue
                 chapter = folder.name

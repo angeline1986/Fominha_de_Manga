@@ -41,7 +41,10 @@ export function createSolidAreaPreview(getContext) {
       const result = await comparison({ ...context, chapter: area.chapter });
       if (current !== ticket) return;
       const page = result.pages?.find((item) => item.name === area.page);
-      if (!page || !area.box_pixels) { note.textContent = "Prévia indisponível para esta área."; return; }
+      if (!page) { note.textContent = "Imagem da página indisponível para a prévia."; return; }
+      if (!hasPixelBox(area.box_pixels)) {
+        note.textContent = "Coordenadas do balão ausentes; prévia indisponível."; return;
+      }
       const image = new Image();
       image.onload = () => {
         if (current !== ticket) return;
@@ -72,6 +75,11 @@ export function createSolidAreaPreview(getContext) {
     context.clearRect(0, 0, target.width, target.height);
     context.drawImage(image, left, top, cropWidth, cropHeight,
       (target.width - outWidth) / 2, (target.height - outHeight) / 2, outWidth, outHeight);
+  }
+  function hasPixelBox(box) {
+    return box && [box.x, box.y, box.width, box.height].every((value) =>
+      typeof value === "number" && Number.isFinite(value))
+      && box.width > 0 && box.height > 0;
   }
   const onScroll = () => hide();
   window.addEventListener("scroll", onScroll, true);
