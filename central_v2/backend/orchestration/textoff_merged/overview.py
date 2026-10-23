@@ -24,7 +24,7 @@ def query_cleaner_overview(manga: Path) -> dict:
 
 
 def _query_cleaner_overview(manga: Path) -> dict:
-    result = query_merged_level2(manga)
+    result = query_merged_level2(manga, check_resets=True)
     merge_rows = {row["chapter"]: row for row in result["chapters"]}
     mapped = {row["chapter"]: row["cleaned"]
               for row in query_level3(manga, merge_rows)["chapters"]}

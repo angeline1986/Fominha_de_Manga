@@ -47,7 +47,9 @@ def textoff_merged_level_response(level: str, query: dict, output_root: Path) ->
             lookup = lambda value: query_special_worklist(value, level)
         if lookup is None:
             raise ValueError("Nível Merged inválido.")
-        return RouteResponse(200, _json({"provider": provider, "manga": name, **lookup(manga)}))
+        result = (query_merged_level2(manga, check_resets=True) if level == "II"
+                  else lookup(manga))
+        return RouteResponse(200, _json({"provider": provider, "manga": name, **result}))
     except ValueError as exc:
         return RouteResponse(400, _json({"error": str(exc)}))
     except OSError:

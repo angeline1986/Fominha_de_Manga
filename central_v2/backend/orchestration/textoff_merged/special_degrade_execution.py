@@ -71,10 +71,14 @@ def _execute_degrade(manga, provider, chapters, progress, *, retry, reexecute):
                 progress(chapter, {"stage": "degrade", "percent": 0,
                                    "completed": index - 1, "total": len(chapters),
                                    "message": f"Tratando {page} com {len(rois)} ROI(s)."})
+                last_percent = 0
 
                 def report_worker(event):
+                    nonlocal last_percent
+                    if isinstance(event.get("percent"), (int, float)) and not isinstance(event["percent"], bool):
+                        last_percent = event["percent"]
                     progress(chapter, {
-                        "stage": event["stage"], "percent": event["percent"],
+                        "stage": event["stage"], "percent": last_percent,
                         "completed": index - 1, "total": len(chapters),
                         "message": f"{page}: {event['message']}",
                     })

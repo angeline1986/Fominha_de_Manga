@@ -3,175 +3,289 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TextOff Merged — preservação de balões transparentes</title>
+  <meta name="description" content="Fluxo TextOff Merged e Auto-Cleaner: Cleaner, Check, Glass, proteções, consolidação e tratamentos.">
+  <title>TextOff Merged — fluxo de limpeza e transparência</title>
   <style>
     :root{color-scheme:light;--ink:#153c50;--muted:#527286;--blue:#1683ad;--line:#bce5f3;--pale:#edf8fc;--green:#eaf7f0;--amber:#fff5df;--white:#fff}
     *{box-sizing:border-box}body{margin:0;background:#f4f9fb;color:var(--ink);font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
-    main{max-width:1120px;margin:36px auto;padding:0 22px 56px}header,.card{background:var(--white);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 10px #143e5010}
-    header{padding:28px 32px;margin-bottom:22px}h1{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.15;margin:.3rem 0 .7rem}h2{font-size:1.35rem;margin:0 0 12px}h3{font-size:1.05rem;margin:0 0 6px}
-    p{margin:.45rem 0 1rem}.eyebrow{color:var(--blue);font-size:.8rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.lede{font-size:1.08rem;color:var(--muted);max-width:850px}
-    section{margin:20px 0}.card{padding:22px 24px}.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:stretch}.step{background:var(--pale);border:1px solid var(--line);border-radius:10px;padding:15px;position:relative}.step:not(:last-child)::after{content:"›";position:absolute;right:-12px;top:34%;z-index:1;color:var(--blue);font-size:1.6rem;font-weight:800}.step b{display:block;color:var(--blue);margin-bottom:5px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;background:white}th,td{text-align:left;vertical-align:top;padding:11px 13px;border-bottom:1px solid var(--line)}th{background:var(--pale);font-size:.88rem;color:#245d77}code{font: .9em ui-monospace,SFMono-Regular,Menlo,monospace;background:#edf4f7;padding:.12em .35em;border-radius:4px;overflow-wrap:anywhere}.callout{border-left:4px solid var(--blue);padding:12px 16px;background:var(--pale);border-radius:0 8px 8px 0}.warning{background:var(--amber);border-left-color:#cb8b16}.success{background:var(--green);border-left-color:#278357}.pill{display:inline-block;padding:3px 9px;border-radius:99px;background:#dff1f8;color:#1a607e;font-size:.84rem;font-weight:700}
-    ul{padding-left:1.3rem}li{margin:.35rem 0}.small{font-size:.92rem;color:var(--muted)}footer{padding:12px 2px;color:var(--muted);font-size:.9rem}
-    .dependency-map{margin:14px 0;padding:20px;overflow:auto;border-radius:10px;background:#102f3e;color:#e9f7fc;font: .88rem/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre}
-    @media(max-width:850px){main{margin:18px auto}.flow{grid-template-columns:1fr}.step:not(:last-child)::after{content:"⌄";right:50%;top:auto;bottom:-20px}.grid{grid-template-columns:1fr}}
+    main{max-width:1180px;margin:30px auto;padding:0 22px 56px}header,.card{background:var(--white);border:1px solid var(--line);border-radius:14px;box-shadow:0 2px 10px #143e5010}
+    header{padding:28px 32px;margin-bottom:18px}h1{font-size:clamp(1.8rem,4vw,2.6rem);line-height:1.15;margin:.3rem 0 .7rem}h2{font-size:1.35rem;margin:0 0 12px}h3{font-size:1.05rem;margin:0 0 6px}
+    p{margin:.45rem 0 1rem}.eyebrow{color:var(--blue);font-size:.8rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.lede{font-size:1.08rem;color:var(--muted);max-width:950px}
+    section{margin:18px 0}.card{padding:22px 24px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;background:white}th,td{text-align:left;vertical-align:top;padding:10px 12px;border-bottom:1px solid var(--line)}th{background:var(--pale);font-size:.88rem;color:#245d77}
+    code{font:.9em ui-monospace,SFMono-Regular,Menlo,monospace;background:#edf4f7;padding:.12em .35em;border-radius:4px;overflow-wrap:anywhere}a{color:#075e86}a:hover{text-decoration-thickness:2px}.callout{border-left:4px solid var(--blue);padding:12px 16px;background:var(--pale);border-radius:0 8px 8px 0}.warning{background:var(--amber);border-left-color:#cb8b16}.success{background:var(--green);border-left-color:#278357}
+    ul,ol{padding-left:1.3rem}li{margin:.3rem 0}.small{font-size:.92rem;color:var(--muted)}nav{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0}nav a{display:inline-block;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:#fff;text-decoration:none;font-size:.9rem}
+    .flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px}.step{background:var(--pale);border:1px solid var(--line);border-radius:10px;padding:14px}.step b{display:block;color:var(--blue);margin-bottom:5px}.mono{padding:16px;overflow:auto;border-radius:10px;background:#102f3e;color:#e9f7fc;font:.86rem/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre}
+    details{border-top:1px solid var(--line);padding:12px 0}summary{cursor:pointer;font-weight:700;color:#245d77}footer{padding:12px 2px;color:var(--muted);font-size:.9rem}
+    @media(max-width:850px){main{margin:16px auto}.grid,.flow{grid-template-columns:1fr}header,.card{padding:18px}}
   </style>
 </head>
 <body>
 <main>
   <header>
-    <div class="eyebrow">Processamento · Cleaner V2</div>
-    <h1>TextOff Merged: preservação de balões transparentes</h1>
-    <p class="lede">A primeira rodada limpa balões opacos autorizados e deixa intactos os balões que deixam o desenho de fundo visível através de seu interior. Os casos protegidos ficam identificados para tratamento posterior.</p>
+    <div class="eyebrow">Documentação integrada · Central V2 e referências V1</div>
+    <h1>TextOff Merged: fluxo de limpeza e balões transparentes</h1>
+    <p class="lede">Este documento reúne o percurso desde as imagens MERGE até a publicação consolidada, explicando o papel do Cleaner, do Check, do Auto-Cleaner Glass, do Sommelier, de Sólidos e dos tratamentos. As etapas são independentes quando indicado; a interface não executa automaticamente todo o fluxo.</p>
+    <p class="small"><strong>Fonte de verdade:</strong> código e manifests vigentes. A documentação histórica registra experimentos e decisões passadas, sem substituir os contratos atuais. Revisão documental: 22/10/2026.</p>
   </header>
 
-  <section class="card" aria-labelledby="flow-title">
-    <h2 id="flow-title">Fluxo da primeira rodada</h2>
+  <nav aria-label="Navegação desta página">
+    <a href="#resumo">Visão geral</a><a href="#etapas">Etapas e autoridade</a><a href="#glass-reset">Glass e Check</a><a href="#reset-pagina">Como funciona o Reset</a><a href="#algoritmos">Algoritmos</a><a href="#persistencia">Pastas e manifests</a><a href="#versoes">V1 e V2</a><a href="#historico">Evidências e limites</a><a href="#fontes">Documentos-fonte</a>
+  </nav>
+
+  <section class="card" id="resumo">
+    <h2>Visão geral do fluxo</h2>
     <div class="flow">
-      <div class="step"><b>1 · Fonte</b><code>02_MERGE/&lt;capítulo&gt;</code><br>Imagens oficiais somente leitura.</div>
-      <div class="step"><b>2 · Cleaner V2</b>Gera <code>_clean</code> e <code>_mask</code> numa área temporária.</div>
-      <div class="step"><b>3 · Segmentação</b>Localiza os interiores de balão pelo modelo Manga109 fixado.</div>
-      <div class="step"><b>4 · Proteção</b>Classifica transparência e remove da máscara componentes que a intersectam.</div>
-      <div class="step"><b>5 · Publicação</b>Valida e publica em <code>04_TEXTO_OFF/TO_MERGED_NIVEL_I/&lt;capítulo&gt;</code>, separado por tipo.</div>
+      <div class="step"><b>1 · Fonte</b><code>02_MERGE/&lt;capítulo&gt;</code><br>Imagens oficiais usadas como entrada.</div>
+      <div class="step"><b>2 · Auto-Cleaner I</b>Panel Cleaner, autorização de pixels e identificação de transparência; gera imagem limpa, máscaras e relatório.</div>
+      <div class="step"><b>3 · Check e revisão</b>Reúne sugestões, decisões humanas e, quando solicitado, um Reset de imagem por página.</div>
+      <div class="step"><b>4 · Auto-Cleaner Glass</b>Nível II processa páginas candidatas usando máscaras do Nível I e as proteções aprovadas no Check.</div>
+      <div class="step"><b>5 · Consolidação</b>Seleciona por página a saída válida do Nível II ou do Nível I; etapas posteriores consomem essa seleção.</div>
     </div>
-    <p class="small">A saída temporária do Cleaner não é publicada diretamente. O Nível I recompõe a imagem a partir da fonte e copia apenas os pixels autorizados; os pixels dos componentes protegidos permanecem idênticos à fonte.</p>
+    <p class="callout"><strong>Não é uma transação única:</strong> Nível I, Glass, Check, Sommelier, Sólidos, tratamentos e consolidação têm consultas, executores e manifests próprios. Uma etapa concluída não significa que as seguintes foram executadas ou promovidas.</p>
+    <pre class="mono" aria-label="Diagrama resumido de dependências">02_MERGE ──> Auto-Cleaner I ──> Auto-Cleaner Glass (Nível II) ──┐
+    │                    │                                   │
+    │                    ├──> reconhecimento transparente   ├──> Consolidado I/II ──> Mapear
+    │                    └──> Check <── Sommelier / resíduos │                         │
+    │                           ├──> proteções do Glass      │                         └──> análise/revisão
+    │                           ├──> Sólidos (prévia)        │
+    │                           └──> tratamentos especiais   └──> Combo Turbo (fluxo distinto)
+    └──> Bubble Sommelier
+
+Consolidado I/II + tratamentos explicitamente promovidos ──> Consolidado Final</pre>
   </section>
 
-  <section class="grid">
+  <section class="card" id="etapas">
+    <h2>Etapas, entradas e responsabilidades</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Etapa</th><th>O que faz</th><th>Entrada/saída principal</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Auto-Cleaner I / Nível I</strong></td><td>Executa Panel Cleaner em lote e aplica autorização conservadora de componentes de máscara em relação aos balões.</td><td>MERGE → imagem limpa, máscaras, relatórios e <code>clean-manifest.json</code>.</td></tr>
+        <tr><td><strong>Bubble Sommelier</strong></td><td>Detector/análise exclusivos da V2; aponta candidatos e informa revisão, mas não limpa pixels nem autoriza tratamento por si só.</td><td>MERGE e resultados Mapear → relatório, estados de revisão e recortes.</td></tr>
+        <tr><td><strong>Auto-Cleaner Check</strong></td><td>Reúne sugestões de Mapear, Sommelier e ocorrências; permite revisar, alterar tipo, aprovar ou remover.</td><td>Manifesto próprio em <code>04_AUTO_CLEANER_CHECK</code>; decisões aprovadas são consumidas por etapas específicas.</td></tr>
+        <tr><td><strong>Auto-Cleaner Glass / Nível II</strong></td><td>Refina somente componentes de texto adiados e autorizados pelo Nível I, respeitando proteções do Check.</td><td>MERGE + máscaras/relatórios do Nível I + proteções e Reset aplicável do Check → saídas candidatas e relatório Nível II.</td></tr>
+        <tr><td><strong>Sólidos</strong></td><td>Opera em regiões aprovadas no Check como <code>residuo_balao_solido_branco</code>. Não faz uma detecção geral.</td><td>Imagem do Nível I ou snapshot do Check → prévia <code>preview_only</code>; não promove ao Consolidado Final.</td></tr>
+        <tr><td><strong>Tratamentos especiais</strong></td><td>Executam algoritmos próprios (por exemplo Degradê, Artístico/Estilizado e Gradiente Suave). Execução, revisão e promoção são ações distintas.</td><td>Fonte e regiões aprovadas → artefatos/proposta com hashes; promoção depende do tratamento e de validação.</td></tr>
+        <tr><td><strong>Consolidado I/II</strong></td><td>Resolve a imagem vigente por página a partir das etapas válidas.</td><td>Usa Nível II para página alterada e válida; mantém Nível I para as demais.</td></tr>
+        <tr><td><strong>Mapear / Nível III</strong></td><td>Analisa imagens consolidadas e cataloga candidatos; análise não altera a imagem.</td><td>Consolidado → relatórios de análise; pode contribuir sugestões para o Check e Sommelier.</td></tr>
+        <tr><td><strong>Consolidado Final e restauração</strong></td><td>Publica imagens por página com histórico. Restauração é explícita e revalida hashes antes de promover.</td><td>Consolidado I/II + tratamentos promovidos → <code>final-manifest.json</code> e conjunto final.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">O Sommelier usa runtime Node/RT-DETR. Parâmetros globais documentados incluem confiança ≥ 0,30, NMS em IoU ≤ 0,50, tiles com pelo menos 200 px de altura e análise de grade 12×12; candidatos podem ser classificados como <code>SPECIAL</code> quando cobertura ≥ 0,75 e MAD de luminância &gt; 1,0. Perfis podem alterar o detector. Esses indicadores continuam sendo candidatos, não autorização de limpeza.</p>
+  </section>
+
+  <section class="grid" id="glass-reset">
     <article class="card">
-      <h2>Como a transparência é estimada</h2>
-      <p>O classificador trabalha sobre o interior erodido do polígono de balão. A erosão reduz influência da borda; pixels escuros são excluídos para que as letras não sejam confundidas com a textura de fundo.</p>
-      <div class="table-wrap"><table>
-        <thead><tr><th>Métrica</th><th>Regra atual</th><th>Interpretação</th></tr></thead>
-        <tbody>
-          <tr><td>Amostra válida</td><td><code>gray ≥ 200</code> e pelo menos 500 pixels</td><td>Usa a região clara do interior, ignorando a maior parte da tinta escura.</td></tr>
-          <tr><td>Variação tonal</td><td>Desvio-padrão de cinza <code>≥ 9.0</code></td><td>Variação persistente pode indicar ilustração visível sob o balão.</td></tr>
-          <tr><td>Cor residual</td><td>Saturação HSV <code>&gt; 5</code> em pelo menos <code>5%</code> da amostra</td><td>Cor visível no interior reforça a hipótese de transparência.</td></tr>
-          <tr><td>Decisão</td><td>Variação tonal <strong>ou</strong> cor residual</td><td>Política conservadora: falso positivo preserva conteúdo para revisão.</td></tr>
-        </tbody>
-      </table></div>
-    </article>
-    <article class="card">
-      <h2>Autorização de pixels no Nível I</h2>
+      <h2>Glass direto: imagem-base e máscara</h2>
       <ol>
-        <li>Segmenta os balões e registra caixa e métricas dos que parecem transparentes.</li>
-        <li>Se qualquer componente da máscara intersecta um interior transparente, preserva o componente inteiro com motivo <code>transparent_balloon_deferred</code>.</li>
-        <li>Para os demais, autoriza remoção somente quando pelo menos 90% dos pixels do componente estão dentro de um único interior de balão.</li>
-        <li>Componentes pequenos, externos ou ambíguos permanecem sem alteração.</li>
+        <li>O Nível II valida MERGE, manifests, imagens e máscaras do Nível I antes do processamento.</li>
+        <li>O Nível I fornece a geometria autorizada e a máscara de texto adiado. A imagem MERGE fornece a região/contexto ao LaMa.</li>
+        <li>As proteções aprovadas no Check são aplicadas à máscara do Nível II antes da reconstrução. Ocorrências do tipo <code>outro</code> também protegem a região aprovada.</li>
+        <li>O resultado do Glass é aplicado somente aos pixels da máscara restante. A imagem-base da saída é o Reset salvo para aquela página, se existir; sem Reset, é a imagem limpa do Nível I.</li>
+        <li>O relatório registra as origens e hashes usados. A execução é recusada se a proteção ou o Reset mudar durante o processamento/publicação.</li>
       </ol>
-      <p class="callout success"><strong>Garantia observada:</strong> em componentes adiados, a máscara final fica zerada e a saída é idêntica à fonte dentro das caixas transparentes detectadas.</p>
+      <p class="callout success"><strong>Invariante espacial:</strong> pixels fora da máscara ativa permanecem iguais à imagem-base escolhida. Um Reset é por página e não altera MERGE, Nível I nem outras páginas.</p>
+    </article>
+    <article class="card">
+      <h2>Check, decisão “Outro” e Reset</h2>
+      <p>O Check é revisão e persistência de decisões, não é o detector original nem o executor Glass. Consolida sugestões de Mapear, Sommelier, reconhecimento transparente e ocorrências de resíduos. Associa caixas por geometria sem fundir sobreposições ambíguas; sugestão e classe de origem permanecem como evidência.</p>
+      <p>A revisão permite aprovar, editar o tipo ou remover ocorrências. Entre os tipos da interface estão Branco sólido, Transparente, Degradê, Gradiente, Estilizado e Outro/não identificado. Uma caixa que cobre vários balões não comprova que cada balão seja transparente. Tipos genéricos seguem política de extração; tipo sugerido não equivale a aprovação nem execução.</p>
+      <p>A opção <strong>Outro / não identificado</strong> não significa “limpar”: quando aprovada, sua caixa é uma proteção para o Nível II. A proteção é associada à identidade da ocorrência, à fonte do Check e ao hash do manifesto.</p>
+      <p>O botão Reset restaura a imagem exibida no Check para a imagem original do MERGE. O processo, o backup e o efeito no Glass estão descritos em <a href="#reset-pagina">Como funciona o Reset de página</a>.</p>
+      <p class="callout warning"><strong>Combo Turbo é outro executor:</strong> não deve ser confundido com a rota direta do Glass. O contrato de Reset descrito aqui vale para o Auto-Cleaner Glass/Nível II direto; não implica que Combo Turbo consuma o Reset.</p>
     </article>
   </section>
 
-  <section class="card">
-    <h2>Pastas dos artefatos por capítulo</h2>
-    <p>Nível I e Nível II mantêm uma pasta por capítulo e separam os arquivos pelo tipo. O Nível II contém somente saídas candidatas com pixels alterados. O consolidado é um manifesto de referências por página e evita duplicar a composição completa.</p>
+  <section class="card" id="reset-pagina">
+    <h2>Como funciona o Reset de página</h2>
+    <p>O Reset é uma restauração manual e isolada de uma página no Auto-Cleaner Check. Ele troca a imagem efetiva apresentada no Check pela imagem correspondente do MERGE. Não apaga a página, não modifica o arquivo oficial em <code>02_MERGE</code> e não executa Cleaner nem Glass.</p>
+    <ol>
+      <li><strong>Pré-validação (somente leitura):</strong> ao abrir o diálogo, a interface consulta <code>/api/textoff/check/reset-merge/preflight</code>. O backend valida obra, capítulo e página, resolve MERGE e imagem atual do Check e calcula seus SHA-256. A versão calculada vincula os dois hashes.</li>
+      <li><strong>Confirmação explícita:</strong> a interface mostra que somente o Check será afetado. O Reset só é enviado após confirmação; o POST exige <code>confirmed: true</code> e a versão retornada pelo preflight.</li>
+      <li><strong>Revalidação e proteção contra concorrência:</strong> sob lock da obra, o backend refaz a pré-validação. Se a página mudou desde que o diálogo foi aberto, cancela e pede atualização. Se já corresponde ao MERGE, retorna <code>already_restored</code> sem gravar um novo Reset.</li>
+      <li><strong>Backup da versão anterior:</strong> antes da troca, copia a imagem efetiva que estava no Check para <code>reset_merge/backups/&lt;id&gt;/&lt;página&gt;</code> e confere o hash do backup.</li>
+      <li><strong>Cópia restaurada e registro:</strong> copia o MERGE para <code>reset_merge/&lt;página&gt;</code> usando arquivo temporário, valida o SHA e faz substituição atômica. Atualiza <code>reset-merge-manifest.json</code> com fonte <code>MERGE</code>, hash, id e caminho do backup; acrescenta ao histórico a ação <code>manual_reset</code>, hash anterior e data.</li>
+      <li><strong>Atualização da revisão:</strong> a comparação do Check passa a resolver a cópia registrada como imagem efetiva da página. O manifesto de decisões aprovadas do Check não é reescrito pelo Reset. A interface atualiza a comparação e invalida o resumo em cache.</li>
+    </ol>
     <div class="table-wrap"><table>
-      <thead><tr><th>Pasta</th><th>Conteúdo</th><th>Exemplos</th></tr></thead>
+      <thead><tr><th>Estado/artefato</th><th>Efeito do Reset</th></tr></thead>
       <tbody>
-        <tr><td><code>clean/</code></td><td>Nível I: capítulo completo; Nível II: somente imagens transparentes candidatas alteradas</td><td><code>page-051-059_clean.png</code></td></tr>
-        <tr><td><code>mask/</code></td><td>Máscaras Cleaner, balões transparentes, texto adiado e máscara autorizada do Nível II</td><td><code>page-051-059_deferred_text.png</code></td></tr>
-        <tr><td><code>json/</code></td><td>Manifestos e relatórios da execução</td><td><code>clean-manifest.json</code>, <code>level1-balloon-report.json</code></td></tr>
+        <tr><td>Imagem da página no Check</td><td>Passa a mostrar a cópia do MERGE salva e verificada no estágio Check.</td></tr>
+        <tr><td>Imagem anterior do Check</td><td>Preservada no backup vinculado ao evento do Reset; não é descartada.</td></tr>
+        <tr><td>Decisões aprovadas e caixas</td><td>Continuam no manifesto do Check; Reset não as aprova, edita ou remove.</td></tr>
+        <tr><td>MERGE, Nível I e demais páginas</td><td>Não são alterados pelo Reset.</td></tr>
+        <tr><td>Glass direto / Nível II</td><td>Em uma execução posterior, se houver registro válido de Reset para a página, usa essa imagem como base de saída. Mantém máscara do Nível I e aplica proteções aprovadas do Check.</td></tr>
+        <tr><td>Combo Turbo</td><td>É um executor separado e não recebe este contrato de Reset.</td></tr>
       </tbody>
     </table></div>
-    <p class="small">Os leitores da Central V2 aceitam também artefatos antigos que ainda estejam diretamente na pasta do capítulo. Novas execuções publicam a estrutura organizada.</p>
+    <p class="callout warning"><strong>Estado já restaurado:</strong> se a comparação mostra que o Check já está idêntico ao MERGE, o endpoint retorna <code>already_restored</code> e não cria registro novo. Esse retorno, sozinho, não prova que exista uma base Reset persistida para o Glass; para isso, deve haver uma entrada da página no <code>reset-merge-manifest.json</code>, e o relatório Glass deve apresentar <code>reset_base_source</code>.</p>
+    <p class="small">Arquivos e contratos do processo: <code>reset_check_override.py</code>, rotas <code>reset_merge_preflight_route.py</code>/<code>reset_check_route.py</code>, interface <code>restore_merge_preview.js</code>. O esquema do manifest é <code>check_manual_merge_reset_v1</code>.</p>
+  </section>
+
+  <section class="card" id="algoritmos">
+    <h2>Regras de autorização e parâmetros documentados</h2>
+    <p>Os valores abaixo pertencem a operações diferentes. Não os combinar como se fossem um único limiar.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Parte</th><th>Regra confirmada</th><th>Comportamento quando há dúvida</th></tr></thead>
+      <tbody>
+        <tr><td>Transparência no Nível I</td><td>Interior do balão; amostra com cinza ≥ 200 e pelo menos 500 pixels. Classifica por desvio-padrão de cinza ≥ 9,0 ou saturação HSV &gt; 5 em pelo menos 5% da amostra.</td><td>Amostra insuficiente fica inconclusiva. Gate secundário pode usar distância Lab ≥ 8,0 e razão não branca ≥ 0,01.</td></tr>
+        <tr><td>Segmentação/autorização Nível I</td><td>Modelo Manga109 fixado; confiança 0,25, IoU 0,45, erosão do interior proporcional ao menor lado (2–8 px). Componentes menores que 20 px são preservados; autorização exige ≥ 90% dentro de um único interior.</td><td>Interseção com balão transparente, região externa ou associação ambígua preserva/adia o componente.</td></tr>
+        <tr><td>Máscara do Glass</td><td>Máscara adiada é combinada ao rótulo do balão; dilatações elípticas 3×3 e 9×9 são recortadas ao interior autorizado. A máscara ativa final também considera as proteções aprovadas do Check.</td><td>Não amplia a máscara para fora do balão nem da área autorizada.</td></tr>
+        <tr><td>Reconstrução Glass</td><td>LaMa <code>anime-manga-big-lama.pt</code>, contexto de 120 px e MPS quando disponível (senão CPU). Só pixels ativos da máscara são copiados para a imagem-base. CRAFT não é usado neste caminho.</td><td>Sem modelo, proveniência ou dimensões válidas, a execução falha antes da publicação.</td></tr>
+        <tr><td>Classificador do motor N2 compartilhado/legado</td><td>Máscara > 8; componente ≥ 20.000 px e retangularidade ≥ 0,85. TYPE_A: desvio interno ≥ 2,5. TYPE_B: desvio ≤ 1,5, diferença de bandas ≥ 25, média interna ≤ 245 e pelo menos três lados de contexto.</td><td>Componentes fora dos critérios não viram candidatos elegíveis.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">Os limiares TYPE_A/TYPE_B acima pertencem ao classificador do motor N2 compartilhado/legado; não descrevem a seleção do Glass direto da V2. No Glass direto, as páginas candidatas vêm do relatório Nível I, e a máscara deriva dos componentes adiados associados aos balões transparentes.</p>
+    <p class="small">O Panel Cleaner usa perfil <code>outlined-text.ini</code>, modo offline e timeout de integração de 900 s. O Nível I não publica saída parcial: valida o lote e os manifests. O Nível II executa em subprocesso, limita o processamento às páginas candidatas e só grava imagens com alteração visual. No MPS, libera a cache entre regiões e recicla o modelo após três inferências.</p>
+    <p class="callout warning"><strong>Limite do classificador:</strong> os limiares são empíricos. Fundos muito claros, texturas, baixa opacidade e estilos incomuns precisam de validação visual; se a segmentação não localizar o balão, a proteção não pode ser presumida.</p>
+  </section>
+
+  <section class="card" id="persistencia">
+    <h2>Pastas, manifests e autoridade</h2>
+    <p>As pastas ficam usualmente sob <code>FLUXO_SECUNDARIO/04_TEXTO_OFF/</code>; <code>02_MERGE</code> fica fora dela. O layout organizado separa imagens em <code>clean/</code>, máscaras em <code>mask/</code> e manifests/relatórios em <code>json/</code>. Referências relativas, contexto e hashes ligam uma etapa às suas fontes.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Etapa</th><th>Caminho principal / espelho declarado</th><th>Artefato ou contrato</th></tr></thead>
+      <tbody>
+        <tr><td>Auto-Cleaner I</td><td><code>TO_MERGED_NIVEL_I</code> / <code>01_AUTO_CLEANER</code></td><td><code>clean-manifest.json</code>, <code>level1-balloon-report.json</code>, imagens e máscaras.</td></tr>
+        <tr><td>Auto-Cleaner Glass</td><td><code>TO_MERGED_NIVEL_II</code> / <code>05_AUTO_CLEANER_TRANSPARENCIA/BASICA</code></td><td>Relatório Nível II com origem MERGE, Nível I, máscaras, proteção e, para Reset, contrato <code>check_reset_v1</code> e registro <code>reset_base_source</code>.</td></tr>
+        <tr><td>Check / Reset</td><td><code>04_AUTO_CLEANER_CHECK/&lt;capítulo&gt;</code></td><td><code>auto-cleaner-check-manifest.json</code>, decisões aprovadas, snapshots de revisão e <code>reset_merge/&lt;página&gt;</code> com manifesto de Reset.</td></tr>
+        <tr><td>Mapear / Nível III</td><td><code>TO_MERGED_NIVEL_III</code> / <code>02_MAPEAR</code></td><td>Relatórios de análise; não são imagem limpa.</td></tr>
+        <tr><td>Consolidado I/II</td><td><code>TO_MERGED_CONSOLIDADO</code> / <code>02_MAPEAR/INPUT_CONSOLIDADO</code></td><td><code>json/clean-manifest.json</code>, seleção e SHA por página.</td></tr>
+        <tr><td>Sommelier</td><td><code>BUBBLE_SOMMELIER</code> / <code>03_BUBBLE_SOMMELIER</code></td><td>Relatório, revisão e recortes.</td></tr>
+        <tr><td>Sólidos</td><td><code>05_AUTO_CLEANER_SOLIDOS</code></td><td><code>solid-white-manifest.json</code>, <code>preview_only: true</code>.</td></tr>
+        <tr><td>Tratamentos especiais</td><td>Estágio próprio por tratamento, incluindo <code>06_PINCEL</code></td><td>Execução/proposta, revisão e promoção separadas.</td></tr>
+        <tr><td>Consolidado Final</td><td><code>07_CONSOLIDADO_FINAL</code></td><td><code>json/final-manifest.json</code>, SHA por página e histórico.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="callout warning"><strong>Migração de artefatos:</strong> o registry consultado declara dual-write, autoridade de leitura legada e pares ainda não validados. Os caminhos novos são espelhos onde declarados; não renomear ou remover pastas sem verificar leitores, manifests e o registry vigente.</p>
+    <p class="small">A leitura organizada também mantém compatibilidade com artefatos antigos diretamente na pasta do capítulo, conforme o resolvedor. A referência declarada pelo manifest continua sendo necessária para validar origem e atualidade.</p>
   </section>
 
   <section class="card">
-    <h2>Consolidação e análise Nível III</h2>
-    <p><code>TO_MERGED_CONSOLIDADO/&lt;capítulo&gt;/json/clean-manifest.json</code> registra a imagem selecionada para cada página. Em geral, páginas sem saída alterada no Nível II apontam para o Nível I; páginas alteradas no Nível II são copiadas para o diretório <code>clean/</code> do consolidado. Seleções publicadas pelo Combo Turbo também podem ser usadas. O manifesto registra origem e hash.</p>
-    <p>O Mapear analisa as imagens resolvidas do consolidado, sem modificá-las. Gera relatórios de balões estilizados em <code>TO_MERGED_NIVEL_III/&lt;capítulo&gt;/json/</code>. O relatório do Mapear também pode ser incorporado ao relatório do Bubble Sommelier. A revisão visual continua necessária para candidatos experimentais.</p>
-  </section>
-
-  <section class="card" aria-labelledby="dependency-title">
-    <h2 id="dependency-title">Mapa de consumo entre as pastas</h2>
-    <p>As setas mostram entradas usadas pelos processos. O diretório <code>02_MERGE</code> fica fora de <code>04_TEXTO_OFF</code> e é a fonte das imagens MERGE.</p>
-    <pre class="dependency-map" aria-label="Diagrama textual das dependências entre os estágios">02_MERGE (imagens oficiais)
-  ├──> Nível I: TO_MERGED_NIVEL_I
-  │       ├──> Nível II: TO_MERGED_NIVEL_II  &lt;── 02_MERGE
-  │       │                 ↑ RESIDUE_OCCURRENCES (proteções manuais)
-  │       ├──> Reconhecimento transparente: 02_RECONHECER_TRANSPARENTES
-  │       └──┐
-  └──────────┴──> Consolidação: TO_MERGED_CONSOLIDADO
-                   ↑ Nível II e, quando aplicável, Combo Turbo
-                   └──> Mapear: TO_MERGED_NIVEL_III
-
-02_MERGE ───────────────────────────────> Bubble Sommelier
-Mapear ─────────────────────────────────> Bubble Sommelier (enriquece o relatório)
-
-Mapear ────────────────┐
-Bubble Sommelier ──────┤
-Reconhecimento ────────┼──> Auto-Cleaner Check
-RESIDUE_OCCURRENCES ───┘       ├──> Sólidos (com imagem do Nível I ou snapshot do Check)
-                               └──> SPECIAL_TREATMENTS
-                                        └──> 06_PINCEL
-
-TO_MERGED_CONSOLIDADO + tratamentos promovidos de 06_PINCEL
-  └──> 07_CONSOLIDADO_FINAL</pre>
-    <p class="callout">Na configuração atual, os caminhos <code>TO_MERGED_*</code> são a autoridade de leitura para esses estágios. As pastas novas são espelhos de migração: Nível I em <code>01_AUTO_CLEANER</code>, Mapear em <code>02_MAPEAR</code>, entrada consolidada em <code>02_MAPEAR/INPUT_CONSOLIDADO</code> e Nível II em <code>05_AUTO_CLEANER_TRANSPARENCIA/BASICA</code>.</p>
+    <h2>Correção Assistida e tratamentos especiais</h2>
+    <p>Correção Assistida e tratamentos especiais não são o Glass direto. Na Correção Assistida, a análise residual localiza componentes escuros e fundos uniformes para desenhar sugestões; ela não lê semanticamente o texto, não altera pixels e não preenche a seleção manual. A pessoa escolhe a ROI, a prévia usa OCR regional e máscara para delimitar os pixels, e a aprovação revalida hashes antes de promover.</p>
+    <p>Tratamentos especiais recebem imagem escolhida ou enviada e, em geral, ROIs manuais em pixels. Cada execução gera resultado separado; revisão e promoção são distintas. Resumo dos algoritmos documentados:</p>
     <div class="table-wrap"><table>
-      <thead><tr><th>Pasta em <code>04_TEXTO_OFF</code></th><th>Consome</th><th>Observação</th></tr></thead>
+      <thead><tr><th>Tratamento</th><th>Processamento e limite importante</th></tr></thead>
       <tbody>
-        <tr><td><code>TO_MERGED_NIVEL_I</code><br><code>01_AUTO_CLEANER</code></td><td>Imagens e manifesto de <code>02_MERGE</code>.</td><td>Saída do Nível I; <code>01_AUTO_CLEANER</code> é o espelho do caminho legado.</td></tr>
-        <tr><td><code>TO_MERGED_NIVEL_II</code><br><code>05_AUTO_CLEANER_TRANSPARENCIA/BASICA</code></td><td><code>02_MERGE</code>, resultados e máscaras do Nível I e proteções registradas em <code>RESIDUE_OCCURRENCES</code>.</td><td>Guarda apenas páginas candidatas alteradas; o segundo caminho é espelho.</td></tr>
-        <tr><td><code>TO_MERGED_CONSOLIDADO</code><br><code>02_MAPEAR/INPUT_CONSOLIDADO</code></td><td>Nível I, Nível II e seleções elegíveis do Combo Turbo.</td><td>Manifesto seleciona a imagem vigente por página; saídas selecionadas do Nível II são copiadas para <code>clean/</code>. Segundo caminho é espelho.</td></tr>
-        <tr><td><code>TO_MERGED_NIVEL_III</code><br><code>02_MAPEAR</code></td><td>Imagens do consolidado; valida também manifests de origem.</td><td>Relatórios do Mapear; o segundo caminho é espelho.</td></tr>
-        <tr><td><code>02_RECONHECER_TRANSPARENTES</code></td><td>Saídas do Nível I.</td><td>Publica o relatório de reconhecimento para consumo pelo Check.</td></tr>
-        <tr><td><code>BUBBLE_SOMMELIER</code><br><code>03_BUBBLE_SOMMELIER</code></td><td>Imagens de <code>02_MERGE</code> e resultados do Mapear para enriquecer o relatório.</td><td>Relatórios e recortes; <code>03_BUBBLE_SOMMELIER</code> é o caminho espelhado.</td></tr>
-        <tr><td><code>04_AUTO_CLEANER_CHECK</code></td><td>Relatórios do Mapear e Sommelier, reconhecimento transparente e ocorrências de resíduos; imagens apresentadas na revisão.</td><td>Consolida sugestões sobrepostas, reúne referências das fontes e persiste decisões humanas e snapshots das imagens revisadas. A revisão permite ajustar o tipo e remover ocorrências.</td></tr>
-        <tr><td><code>RESIDUE_OCCURRENCES</code></td><td>Registros de ocorrências manuais ou referenciadas a fontes como Mapear e Sommelier.</td><td>Fonte auxiliar para o Check e para proteções do Nível II; não concede autorização de limpeza por si só.</td></tr>
-        <tr><td><code>05_AUTO_CLEANER_SOLIDOS</code></td><td>Aprovações de Sólidos no Check e imagem do Nível I; pode usar snapshot de imagem do Check.</td><td>Gera prévia; não é publicação automática no consolidado.</td></tr>
-        <tr><td><code>SPECIAL_TREATMENTS</code></td><td>Decisões aprovadas no Check.</td><td>Organiza solicitações de degradê, estilizado e gradiente suave.</td></tr>
-        <tr><td><code>06_PINCEL</code></td><td>Tratamentos aprovados e imagens de entrada validadas.</td><td>Guarda resultados de degradê, artístico e suave; resultados promovidos podem atualizar o Consolidado Final.</td></tr>
-        <tr><td><code>07_CONSOLIDADO_FINAL</code></td><td>Seleções do consolidado intermediário e tratamentos promovidos de <code>06_PINCEL</code>.</td><td>Conjunto final de imagens por página, com manifesto e histórico.</td></tr>
-        <tr><td><code>BACKUP_PREVIAS_SOLIDOS</code></td><td>Não determinado no código atual.</td><td>Não foi identificado gravador atual para esta pasta.</td></tr>
+        <tr><td>Patch Degradê</td><td>Cleaner, autorização de balões, gate de superfície e local heal. ROI pode selecionar um componente inteiro; não significa necessariamente recorte rígido à caixa.</td></tr>
+        <tr><td>Patch Estilizado / Artístico</td><td>Combina classificação de cor LAB, densidade de bordas Canny, ROI e gate de superfície. O adaptador documentado marca prova e bloqueia promoção.</td></tr>
+        <tr><td>Transparência especial</td><td>Cleaner, autorização, dilatações e LaMa com verificação fora da máscara. Não confundir com Auto-Cleaner Glass. O adaptador declara fase de prova e promoção desabilitada; a documentação registra divergência na rota genérica de promoção.</td></tr>
+        <tr><td>Transparência legada</td><td>Seleciona componentes inteiros pela interseção de suas caixas com ROI, sem o mesmo gate de autorização da variante atual; promoção explicitamente bloqueada.</td></tr>
+        <tr><td>Gradiente Suave</td><td>Não usa Cleaner, OCR ou LaMa. Expande verticalmente a ROI, estima cores de superfície em LAB e interpola entre bordas; reescreve o retângulo expandido e rejeita expansões sobrepostas.</td></tr>
       </tbody>
     </table></div>
-    <p class="callout"><strong>Consolidação e revisão no Check:</strong> sugestões transparentes são associadas a candidatos existentes apenas quando a geometria permite identificar o mesmo alvo; as referências de todas as fontes são preservadas e duplicatas muito semelhantes são consolidadas. Se uma caixa transparente cobre vários balões separados, o envelope não classifica cada balão individual como transparente. Candidatos do Mapear/Sommelier sem tipo específico recebem o padrão “Branco sólido”, exceto quando sua classificação indica gradiente/degradê. A interface permite revisar, editar ou remover ocorrências e oferece os tipos Branco sólido, Transparente, Degradê, Gradiente, Estilizado e Outro/não identificado; classificações de origem permanecem como evidência. Sugestões e tipos não equivalem a autorização de limpeza: somente a decisão aprovada persistida no Check habilita os consumidores correspondentes.</p>
-    <p class="small">As pastas legadas e os espelhos fazem parte de uma migração em dual-write. Não remover nem renomear esses diretórios sem validar leitores, manifests e a configuração de autoridade de artefatos.</p>
-  </section>
-
-  <section class="card">
-    <h2>Teste de referência · capítulo 3</h2>
-    <p>Obra: <em>Things that deserve to die</em>. O teste executou o Cleaner nas duas imagens listadas e usou uma saída isolada, sem substituir o resultado oficial.</p>
-    <div class="table-wrap"><table>
-      <thead><tr><th>Imagem</th><th>Balões transparentes detectados</th><th>Componentes adiados</th><th>Pixels diferentes na caixa protegida</th><th>Pixels de máscara na caixa</th></tr></thead>
-      <tbody>
-        <tr><td><code>page-156-163.png</code></td><td>2</td><td>2</td><td><span class="pill">0</span></td><td><span class="pill">0</span></td></tr>
-        <tr><td><code>page-179-187.png</code></td><td>2</td><td>3</td><td><span class="pill">0</span></td><td><span class="pill">0</span></td></tr>
-      </tbody>
-    </table></div>
-    <p class="small">As saídas isoladas e relatórios daquele teste foram escritos em <code>/private/tmp/textoff-transparent-round1-cap3</code>. Os valores acima são evidência destas duas imagens, não uma garantia de classificação perfeita para todo estilo de balão.</p>
+    <p class="small">Os limites de promoção e parâmetros devem ser conferidos no adapter ativo. A existência de um botão “Salvar” ou uma prévia concluída não substitui validação do contrato daquele tratamento.</p>
   </section>
 
   <section class="grid">
     <article class="card">
-      <h2>Observabilidade</h2>
-      <p><code>level1-balloon-report.json</code> contém as caixas, caixas delimitadoras, desvio-padrão, razão de cromaticidade, motivo, componentes adiados e pixels protegidos por página.</p>
-      <p><code>clean-manifest.json</code> resume <code>transparent_balloons_total</code> e <code>transparent_components_deferred</code> dentro de <code>level1</code>. O objeto <code>ocr</code> registra perfil, idioma configurado e motor efetivo.</p>
+      <h2>Integridade, publicação e falhas</h2>
+      <ul>
+        <li>Antes de publicar, cada etapa revalida as entradas e manifests dos quais depende; hashes identificam imagem, máscara, proteção e manifest.</li>
+        <li>Os escritores que usam staging só promovem artefatos após suas validações. Garantias de rollback são locais ao escritor, não universais.</li>
+        <li>Consulta não deve substituir uma imagem nem completar uma etapa ausente. Leitores resolvem artefatos declarados em manifests e verificam sua atualidade.</li>
+        <li>Uma execução sem pixels alterados não prova qualidade visual. O resultado precisa ser interpretado pelo status do relatório e, quando necessário, revisado visualmente.</li>
+        <li>Restauração de página exige proposta e validação dos hashes atuais imediatamente antes da publicação; pode invalidar etapas dependentes.</li>
+      </ul>
     </article>
     <article class="card">
-      <h2>OCR efetivo do perfil atual</h2>
-      <p>O perfil informa <code>ocr_language=detect_box</code> e <code>ocr_engine=auto</code>, mas define <code>ocr_use_tesseract=False</code>. Com Tesseract desligado, o Panel Cleaner força MangaOCR.</p>
-      <p>O manifesto registra o idioma efetivo <code>jpn</code>; os rótulos de idioma por caixa são <code>ja</code>/<code>eng</code>. Este perfil não habilita OCR coreano nem chinês, mesmo quando o balão é preservado pelo classificador visual.</p>
+      <h2>Diagnóstico de uma execução Glass com Reset</h2>
+      <ol>
+        <li>Confirme que existe Reset para a página no manifesto de <code>04_AUTO_CLEANER_CHECK</code> e que o arquivo referenciado tem o mesmo SHA.</li>
+        <li>Abra a linha da página no relatório <code>TO_MERGED_NIVEL_II/&lt;capítulo&gt;/json/level2-transparent-report.json</code>.</li>
+        <li>Confira <code>reset_base_contract: check_reset_v1</code> no relatório e <code>reset_base_source</code> na página, incluindo o id/hash do Reset esperado.</li>
+        <li>Confira também <code>protected_occurrence_ids</code>, <code>protected_types_applied</code> e a origem/hash de proteção para validar o “Outro”.</li>
+        <li>Se o contrato não estiver presente, trate o relatório como execução anterior ao contrato/reset-aware e não o use para afirmar que o Reset serviu de base.</li>
+      </ol>
+      <p class="small">O relatório ainda registra <code>source_sha256</code> do MERGE e <code>level1_sha256</code> como proveniência do Nível I. Esses campos não substituem o campo específico da imagem-base Reset.</p>
     </article>
   </section>
 
-  <section class="card">
-    <h2>Limites e próxima etapa</h2>
-    <ul>
-      <li>A proteção depende da segmentação localizar o balão. Regiões não segmentadas precisam de melhor detecção e instrumentação.</li>
-      <li>Os limiares são empíricos e precisam de validação em fundos claros, texturas variadas, baixa opacidade e estilos diferentes.</li>
-      <li>No Nível I, preservar o texto evita resíduos da limpeza e deixa o componente disponível para a segunda rodada do Nível II.</li>
-      <li>O refinamento antigo segue isolado em Legado. O Nível II usa os componentes Cleaner adiados pelo Nível I, aplica dilatações 3×3 e 9×9 dentro do balão correspondente e usa LaMa com 120 px de contexto. Cada balão é reconstruído em seu próprio ROI; CRAFT não é usado nesta versão.</li>
-      <li>Para limitar o uso de memória no MPS, a inferência carrega uma página por vez, libera a cache entre regiões e recicla o modelo a cada três balões processados.</li>
-      <li>O Cap. 3 levou 207,947 s no Nível I e 100,448 s no teste integral Nível II anterior. Essa medição do Nível II processava o capítulo inteiro; a implementação atual limita a seleção às páginas candidatas transparentes do manifesto, guarda somente saídas com alteração visual e mantém as páginas inalteradas por referência ao Nível I.</li>
-      <li>O vínculo entre cada balão transparente e o rótulo de sua máscara é versionado no manifesto. Ausência ou divergência cancela a execução; zero pixels alterados aparece como “Sem alteração — revisar resultado”, nunca como conclusão visual positiva.</li>
-    </ul>
-    <p class="callout success"><strong>Teste integral do Cap. 3:</strong> 31 páginas, 10 candidatas, 8 com máscara de texto, 1.689.843 pixels de máscara e 1.654.872 pixels alterados. Nenhum pixel foi alterado fora das máscaras; duração do Nível II de 100,448 s. A revisão visual ainda encontrou marcas residuais nas quatro páginas prioritárias. Dilatações 15×15 e 31×31 ampliaram a área alterada sem melhora visual relevante; 3×3 + 9×9 fica como referência enquanto se testa outra técnica de reconstrução. Resultado publicado no estágio isolado Merged Nível II, sem alterar o MERGE oficial.</p>
-    <p class="callout warning"><strong>Política de segurança:</strong> na dúvida, não aplicar a máscara. Registrar o caso e manter os pixels originais para revisão ou tratamento posterior.</p>
+  <section class="card" id="versoes">
+    <h2>Central V1 e Central V2</h2>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Aspecto</th><th>Central V1</th><th>Central V2</th></tr></thead>
+      <tbody>
+        <tr><td>Interface e orquestração</td><td><code>interface_web/</code>, <code>orquestracao/textoff/</code>.</td><td>Frontend, rotas, jobs e orquestração próprios em <code>central_v2/</code>.</td></tr>
+        <tr><td>Motor de lote</td><td>Chama Cleaner pela integração compartilhada.</td><td>Adaptadores próprios chamam o domínio compartilhado; rotas, estado e publicação são V2.</td></tr>
+        <tr><td>Nível I/II</td><td>Fluxo legado pode executar a integração comum N1+N2.</td><td>Execuções explícitas e separadas de Nível I e Nível II, com validações e manifests V2.</td></tr>
+        <tr><td>Check, Sommelier e Reset</td><td>Não há contrato V1 equivalente confirmado para o Check atual.</td><td>Etapas próprias da V2; Reset de Check tem registro e imagem por página.</td></tr>
+        <tr><td>Correção assistida e especiais</td><td>Propostas, ROI e promoção variam por operação.</td><td>Etapas/adaptadores e runtimes próprios; executar, revisar e promover não são sinônimos.</td></tr>
+      </tbody>
+    </table></div>
+    <p>O motor comum não torna as aplicações iguais. Correção Assistida também é distinta de tratamentos especiais: a análise residual gera sugestões; a seleção manual define as ROIs da prévia. Essas sugestões não preenchem a seleção nem autorizam pixels automaticamente.</p>
   </section>
-  <footer>Documentação técnica do fluxo TextOff Merged · inclui a consolidação virtual e o contrato atual de seleção do Nível II.</footer>
+
+  <section class="card" id="historico">
+    <h2>Evidências históricas e limites</h2>
+    <p>Os registros históricos incluem testes isolados do capítulo 3 de <em>Things that deserve to die</em> (31 páginas, 10 candidatas) e comparações de tratamentos especiais em <em>Gazing at you</em>. São medições de versões, imagens e condições específicas; resultados antigos não comprovam o comportamento de uma execução atual.</p>
+    <p>O ensaio de transparência do capítulo 3 registrou zero pixels alterados fora das máscaras nas imagens examinadas, mas a revisão visual ainda encontrou resíduos em páginas prioritárias. Isso demonstra que integridade espacial e qualidade visual são verificações diferentes.</p>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Ensaio histórico isolado</th><th>Balões detectados</th><th>Componentes adiados</th><th>Diferença e máscara na caixa protegida</th></tr></thead>
+      <tbody>
+        <tr><td><code>page-156-163.png</code></td><td>2</td><td>2</td><td>0 pixels alterados; 0 pixels de máscara.</td></tr>
+        <tr><td><code>page-179-187.png</code></td><td>2</td><td>3</td><td>0 pixels alterados; 0 pixels de máscara.</td></tr>
+      </tbody>
+    </table></div>
+    <p class="small">Nesse conjunto antigo, o Nível I levou 207,947 s. Uma execução integral anterior do Nível II analisou 10 candidatas, 8 com máscara de texto, alterou 1.654.872 de 1.689.843 pixels de máscara e levou 100,448 s; não houve alteração fora da máscara. A revisão visual ainda achou marcas residuais em quatro páginas prioritárias. Dilatações 15×15 e 31×31 aumentaram a área sem melhora visual relevante. A execução atual seleciona páginas candidatas e grava somente saídas alteradas; não compare os tempos diretamente.</p>
+    <p><strong>Observabilidade:</strong> <code>level1-balloon-report.json</code> registra caixas, métricas, motivos, componentes adiados e pixels protegidos; <code>clean-manifest.json</code> resume transparências e adiamentos. O OCR efetivo depende do perfil: a referência documentada tinha Tesseract desativado, MangaOCR efetivo e idioma <code>jpn</code>; esses valores são do perfil/run e precisam ser confirmados no manifest da execução atual.</p>
+    <p class="callout warning"><strong>Lacunas documentais:</strong> contratos de payload e estados de job não estão reunidos em um schema global; faltam inventários fechados de todos os thresholds do Check, Sommelier, Sólidos e de cada tratamento; retries e efeitos de falhas variam por escritor. Detalhes ainda não confirmados devem permanecer identificados como não verificados.</p>
+    <details>
+      <summary>Como interpretar os documentos históricos</summary>
+      <p>Investigações V1/V2, ensaios de restauração, comparações de transparência, inventários de tratamentos e relatórios de casos especiais ajudam a explicar divergências e decisões. Confirme algoritmos, parâmetros, entradas e autoridade contra os módulos ativos antes de reutilizar seus números como contrato.</p>
+    </details>
+  </section>
+
+  <section class="card" id="fontes">
+    <h2>Documentos consolidados nesta página</h2>
+    <p>Os documentos abaixo são as fontes de conteúdo agrupadas aqui. Os manuais detalhados continuam disponíveis para consulta especializada; esta página resume o percurso sem repetir todos os parâmetros e contratos locais.</p>
+    <div class="grid">
+      <article>
+        <h3>Fluxo atual V2</h3>
+        <ul>
+          <li><a href="central_v2/limpeza_baloes/README.md">Índice de Limpeza de Balões V2</a></li>
+          <li><a href="central_v2/limpeza_baloes/fluxo_completo.md">Fluxo completo</a></li>
+          <li><a href="central_v2/limpeza_baloes/contratos_e_persistencia.md">Contratos e persistência</a></li>
+          <li><a href="central_v2/limpeza_baloes/laboratorio.md">Laboratório</a></li>
+          <li><a href="central_v2/limpeza_baloes/etapas/cleaner_v2.md">Cleaner V2</a></li>
+          <li><a href="central_v2/limpeza_baloes/etapas/auto_cleaner_check.md">Auto-Cleaner Check</a></li>
+          <li><a href="central_v2/limpeza_baloes/etapas/bubble_sommelier.md">Bubble Sommelier</a></li>
+          <li><a href="central_v2/limpeza_baloes/etapas/solidos.md">Sólidos</a> · <a href="central_v2/limpeza_baloes/solidos/README.md">índice detalhado</a> · <a href="central_v2/limpeza_baloes/solidos/01_Solidos_Parametros_Contrato_Tecnico.md">parâmetros/contrato</a> · <a href="central_v2/limpeza_baloes/solidos/02_UI_Comparacao_Curadoria_Selecao.md">UI e curadoria</a> · <a href="central_v2/limpeza_baloes/solidos/03_Runbook_Incidentes_Evidencias.md">runbook</a></li>
+          <li><a href="central_v2/limpeza_baloes/etapas/tratamentos_especiais.md">Tratamentos especiais</a></li>
+          <li><a href="central_v2/limpeza_baloes/etapas/consolidacao.md">Consolidação e restauração</a></li>
+          <li><a href="central_v2/limpeza_baloes/correcao_assistida/analise_correcao_assistida_e_tratamentos_especiais.md">Correção Assistida e tratamentos</a></li>
+        </ul>
+      </article>
+      <article>
+        <h3>V1, arquitetura e reconstrução</h3>
+        <ul>
+          <li><a href="central_v1/limpeza_baloes/visao_geral.md">Visão geral V1</a> · <a href="central_v1/limpeza_baloes/pipeline.md">Pipeline V1</a> · <a href="central_v1/limpeza_baloes/algoritmos_e_parametros.md">Algoritmos V1</a></li>
+          <li><a href="arquitetura/limpeza_baloes_v1_v2.md">Fronteiras V1/V2</a> · <a href="arquitetura/modulos_compartilhados_limpeza_baloes.md">Módulos compartilhados</a></li>
+          <li><a href="reconstrucao/README.md">Índice de reconstrução</a> · <a href="reconstrucao/central_v1.md">Manual V1</a> · <a href="reconstrucao/central_v2.md">Manual V2</a></li>
+          <li><a href="reconstrucao/componentes_compartilhados.md">Componentes compartilhados</a> · <a href="reconstrucao/pendencias_tecnicas.md">Pendências técnicas</a></li>
+          <li><a href="arquitetura/catalogo_fluxos_criticos.md">Catálogo de fluxos críticos</a> · <a href="arquitetura/04a_mapa_metro_fluxos_manifestos.md">Mapa de fluxos/manifests</a> · <a href="arquitetura/04b_mapa_metro_auditoria_proveniencia.md">Auditoria de proveniência</a></li>
+          <li><a href="arquitetura/mapa_componentes_e_dependencias.md">Mapa de componentes</a> · <a href="arquitetura/estado_atual_e_inventario_estrutural.md">Inventário estrutural</a> · <a href="README.md">Índice geral da documentação</a></li>
+          <li><a href="auditoria_migracao_definitiva_pastas_textoff.md">Auditoria de migração de pastas</a> · <a href="organizacao_limpeza_baloes.md">Organização documental</a></li>
+        </ul>
+      </article>
+    </div>
+    <details>
+      <summary>Registros históricos relacionados</summary>
+      <ul>
+        <li><a href="historico/limpeza_baloes/merged/niveis_iii_a_v.md">Níveis III a V e fluxo Merged</a></li>
+        <li><a href="historico/limpeza_baloes/merged/consolidacao_nivel_iii_e_reducao_armazenamento_2026-09-30.md">Consolidação Nível III e armazenamento</a></li>
+        <li><a href="historico/limpeza_baloes/investigacao_cleaner_v1_v2_parcial_2026-10-09.md">Investigação parcial do Cleaner V1/V2</a> · <a href="historico/documentacao_legada/investigacao_cleaner_v1_v2_parcial_2026-10-09.md">cópia no arquivo legado</a></li>
+        <li><a href="historico/limpeza_baloes/especiais/inventario_e_contrato_v2.md">Inventário e contrato inicial de especiais</a></li>
+        <li><a href="historico/limpeza_baloes/especiais/executor_e_comparacao_v2.md">Executor e comparação V2</a></li>
+        <li><a href="historico/limpeza_baloes/especiais/continuidade_2026-09-29.md">Continuidade de especiais</a></li>
+        <li><a href="historico/limpeza_baloes/especiais/comparacao_transparencia_candy_ch1_ch3.md">Comparação de transparência — Candy</a></li>
+        <li><a href="historico/limpeza_baloes/especiais/diagnostico_v1_v2_gazing_2026-10-09.md">Diagnóstico V1/V2 — Gazing</a></li>
+        <li><a href="historico/limpeza_baloes/especiais/ensaio_restauracao_082_2026-10-09.md">Ensaio de restauração 082</a> · <a href="historico/limpeza_baloes/especiais/finalizacao_restauracao_082_2026-10-09.md">finalização da restauração</a></li>
+        <li><a href="historico/limpeza_baloes/especiais/correcao_entrada_artistico_082_2026-10-09.md">Correção de entrada Artístico 082</a></li>
+      </ul>
+    </details>
+  </section>
+  <footer>Documentação integrada do fluxo TextOff Merged e Auto-Cleaner. Consulte os manifests e o código da etapa antes de executar, promover, restaurar ou alterar imagens.</footer>
 </main>
 </body>
 </html>

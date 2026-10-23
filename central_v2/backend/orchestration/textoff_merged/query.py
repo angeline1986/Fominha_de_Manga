@@ -83,7 +83,7 @@ def query_merged_level1(manga: Path) -> dict:
     return result
 
 
-def query_merged_level2(manga: Path) -> dict:
+def query_merged_level2(manga: Path, *, check_resets: bool = False) -> dict:
     """List Nível I chapters and report which have deferred transparent cases."""
     result = query_merged_level1(manga)
     for row in result["chapters"]:
@@ -108,6 +108,10 @@ def query_merged_level2(manga: Path) -> dict:
                 manga, row["chapter"], level1,
                 _stage_manifest_sha256(manga, LEVEL1, row["chapter"]),
             )
+            if check_resets and valid_previous is not None:
+                from .level2_reset_base import reset_base_contract_current
+                valid_previous = (valid_previous if reset_base_contract_current(
+                    manga, row["chapter"], valid_previous, candidate_pages) else None)
             previous_valid = (
                 valid_previous is not None
                 and previous.get("algorithm") == ALGORITHM

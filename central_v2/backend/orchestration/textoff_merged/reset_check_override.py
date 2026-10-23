@@ -79,6 +79,21 @@ def effective(manga,chapter,page,fallback):
     return path
 
 
+def current_reset_base(manga, chapter, page):
+    """Return the current Check Reset image authority for a page, if present."""
+    root = Path(manga).resolve()
+    folder = manifest_path(root, chapter).parent
+    row = _read(folder)['pages'].get(page)
+    if row is None:
+        return None
+    path = effective(manga, chapter, page, None)
+    ident = row.get('id')
+    if not isinstance(ident, str) or not ident:
+        raise ValueError('Identificador do Reset do Check inválido.')
+    return {'kind': 'CHECK_RESET', 'path': str(path.relative_to(root)),
+            'sha256': digest(path), 'reset_id': ident, 'source': 'MERGE'}
+
+
 def inspect(manga,chapter,page):
     from .comparison import comparison_pairs
     folder, source = _paths(manga,chapter,page)

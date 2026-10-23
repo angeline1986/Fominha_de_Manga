@@ -16,6 +16,9 @@ from .manifests import _stage_manifest, _stage_manifest_sha256
 from .level2_manual_protection import load_level1_protection_context
 from .level2_provenance import (assert_report_artifacts_current, validate_report_provenance,
                                 validate_protection_provenance)
+from .level2_reset_base import (assert_execution_authorities_current,
+                                assert_protection_source_current as _assert_protection_source_current,
+                                capture_reset_bases)
 from .query import query_merged_level2
 from .runtime import REPOSITORY_ROOT, python_for
 from .stages import LEVEL1, LEVEL2, stage_chapter
@@ -65,11 +68,13 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
         report_file = staged / artifact_ref("json", "level2-transparent-report.json")
         protections, protection_source = load_level1_protection_context(
             manga, provider, manga_name, name)
+        reset_bases = capture_reset_bases(manga, name, candidate_names)
         jobs.append({"chapter": name, "source_dir": str(source_dir), "level1_dir": str(level1_dir),
                      "output_dir": str(staged), "report": str(report_file),
                      "candidate_pages": sorted(candidate_names),
                      "protected_occurrences": protections,
-                     "protection_source": protection_source})
+                     "protection_source": protection_source,
+                     "reset_bases": reset_bases})
         records.append((name, source_dir, target, staged, candidate_names))
     if not jobs:
         return results
@@ -111,13 +116,14 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                 raise RuntimeError(f"Nível II não gerou relatório para Cap. {name}.")
             report = json.loads(report_file.read_text(encoding="utf-8"))
             job = next(item for item in jobs if item["chapter"] == name)
-            _assert_protection_source_current(manga, job["protection_source"])
+            assert_execution_authorities_current(manga, job)
             images = v3.merge_artifact_files(source_dir)
             level1_manifest = _stage_manifest(manga, LEVEL1, name)
             if (report.get("merge_pages_total", report.get("pages_analyzed")) != len(images)
                     or report.get("integrity_ok") is not True
                     or report.get("pages_analyzed") != len(candidate_names)):
                 raise RuntimeError(f"Relatório Nível II incompleto ou inválido para Cap. {name}.")
+            level1_dir = stage_chapter(manga, LEVEL1, name)
             pages = _validated_candidate_pages(report, candidate_names, staged, level1_dir)
             current_level1_hash = _stage_manifest_sha256(manga, LEVEL1, name)
             validate_report_provenance(pages, current_level1_hash,
@@ -145,7 +151,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             if report["source_level1_manifest_sha256"] != _stage_manifest_sha256(manga, LEVEL1, name):
                 raise RuntimeError(f"Manifesto do Nível I mudou antes da publicação do Cap. {name}.")
             job = next(item for item in jobs if item["chapter"] == name)
-            _assert_protection_source_current(manga, job["protection_source"])
+            assert_execution_authorities_current(manga, job)
         for name, target, staged, report, image_count, clean_names, transparent_pages, analyzed_count in prepared:
             _promote_stage(staged, target)
             if isolated_level2_target(manga, name) is None:
@@ -187,11 +193,3 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                         "completed": index, "total": len(chapters),
                         "message": message})
     return results
-
-
-def _assert_protection_source_current(manga, source):
-    from central_v2.backend.orchestration.textoff_special.artifacts import sha256
-    path = manga / source["path"] if source.get("path") else None
-    current = sha256(path) if path and path.is_file() else None
-    if current != source.get("sha256"):
-        raise ValueError("A fonte de proteções mudou durante a execução do Nível II.")

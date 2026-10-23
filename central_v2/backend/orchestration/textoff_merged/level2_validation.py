@@ -16,7 +16,8 @@ def validate_level2_selection(manga: Path, chapters: object,
     if type(reprocess) is not bool:
         raise ValueError("Reprocessamento do Nível II inválido.")
     selected = validate_selection(manga, chapters)
-    rows = {row["chapter"]: row for row in query_merged_level2(manga)["chapters"]}
+    rows = {row["chapter"]: row for row in
+            query_merged_level2(manga, check_resets=True)["chapters"]}
     allowed = {"pending", "processed", "no_change"} if reprocess else {"pending"}
     for name in selected:
         row = rows.get(name)
@@ -105,6 +106,9 @@ def build_output_manifest(report, pages, images, candidate_names, level1, level1
         ("deferred_mask_sha256", None), ("protection_source", None),
         ("protected_occurrence_ids", []), ("protected_types_applied", []))}
         for item in pages]
+    if report.get("reset_base_contract"):
+        for item, row in zip(pages, page_results):
+            row["reset_base_source"] = item.get("reset_base_source")
     sources = [item.get("protection_source") for item in page_results]
     protection_source = sources[0] if sources and all(item == sources[0] for item in sources) else None
     check_source = (protection_source if isinstance(protection_source, dict)
@@ -123,6 +127,8 @@ def build_output_manifest(report, pages, images, candidate_names, level1, level1
         "source_level1_artifacts": [item for item in level1.get("clean_artifacts", [])
                                     if Path(item).name.replace("_clean", "") in candidate_names],
         "source_level1_manifest_sha256": level1_hash,
+        **({"reset_base_contract": report["reset_base_contract"]}
+           if report.get("reset_base_contract") else {}),
         "clean_artifacts": clean_names, "outputs_total": len(clean_names),
         "pages_total": len(candidate_names), "analyzed_pages_total": len(pages),
         "changed_pages_total": len(changed), "changed_artifacts": clean_names,

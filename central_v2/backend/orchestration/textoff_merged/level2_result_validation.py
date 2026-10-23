@@ -3,10 +3,12 @@ import json
 from pathlib import Path
 
 from .artifact_paths import artifact_file, artifact_ref
+from .reset_check_override import current_reset_base
 
 
 def _valid_level2_page_results(folder, level1_folder, manifest, page_results,
-                               candidates, changed_sources, unchanged_sources, clean_names):
+                               candidates, changed_sources, unchanged_sources, clean_names,
+                               manga, chapter):
     rows = {item.get("source"): item for item in page_results}
     clean_by_source = {
         Path(source).stem + Path(source).suffix:
@@ -71,7 +73,12 @@ def _valid_level2_page_results(folder, level1_folder, manifest, page_results,
                        "level1_report_sha256", "level1_mask_sha256", "deferred_mask_sha256",
                        "protection_source", "protected_occurrence_ids", "protected_types_applied",
                        "protected_occurrences", "protected_types")
+            if manifest.get("reset_base_contract") == "check_reset_v1":
+                fields += ("reset_base_source",)
         if any(report_row.get(key) != row.get(key) for key in fields):
+            return False
+        if (manifest.get("reset_base_contract") == "check_reset_v1"
+                and row.get("reset_base_source") != current_reset_base(manga, chapter, source)):
             return False
         if report_row.get("changed_outside_mask") != 0:
             return False

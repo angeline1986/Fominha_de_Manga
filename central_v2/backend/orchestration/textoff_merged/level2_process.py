@@ -15,16 +15,19 @@ from .level2_vision import (
     _release_inference_cache,
 )
 from .level2_manual_protection import progress_detail, protect_level2_masks
-from .level2_provenance import (
-    assert_unchanged, capture_sources, page_provenance, verify_sources,
-)
+from .level2_provenance import assert_unchanged, page_provenance
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from .level2_report import build_report
+from .level2_page_output import compose_output, load_page_inputs, verify_reset_input
+from .level2_reset_base import RESET_BASE_CONTRACT
+
+
 def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             report_path: Path, progress_path: Path | None = None,
             runtime: dict | None = None, candidate_pages: set[str] | None = None,
             protected_occurrences: dict[str, list[dict]] | None = None,
-            protection_source: dict | None = None) -> dict:
+            protection_source: dict | None = None,
+            reset_bases: dict | None = None) -> dict:
     started = time.perf_counter()
     source_dir, level1_dir, output_dir = source_dir.resolve(), level1_dir.resolve(), output_dir.resolve()
     report_file = artifact_file(level1_dir, "json/level1-balloon-report.json", "json")
@@ -82,13 +85,8 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
         label_path = artifact_file(level1_dir, page.get("transparent_mask_artifact"), "mask")
         if clean_path is None or label_path is None:
             raise FileNotFoundError(f"Artefatos de Nível I ausentes para {source.name}.")
-        consumed_sources = capture_sources(source, clean_path)
-        with Image.open(source) as image:
-            original = np.asarray(image.convert("RGB"))
-        with Image.open(clean_path) as image:
-            level1 = np.asarray(image.convert("RGB"))
-        verify_paths = {"source": source, "level1": clean_path}
-        verify_sources(verify_paths, consumed_sources)
+        (original, level1, output_base, reset_source, reset_input,
+         consumed_sources) = load_page_inputs(source, clean_path, reset_bases)
         deferred_name = page.get("deferred_text_mask_artifact")
         deferred_path = artifact_file(level1_dir, deferred_name, "mask") if deferred_name else None
         if deferred_name and deferred_path is None:
@@ -159,15 +157,11 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             final = _inpaint(final, balloon_mask, model)
             runtime["model_inferences"] = runtime.get("model_inferences", 0) + 1
             _release_inference_cache(device)
-        result = level1.copy()
-        active = mask > 0
-        result[active] = final[active]
-        outside = int(np.count_nonzero(np.any(result != level1, axis=2) & ~active))
+        result, outside, changed = compose_output(level1, output_base, final, mask)
         if outside:
             raise RuntimeError(f"Integridade do Nível II violada fora da máscara em {source.name}.")
         clean_reference = artifact_ref("clean", clean_name)
         mask_reference = artifact_ref("mask", f"{source.stem}_text_mask.png")
-        changed = int(np.count_nonzero(np.any(result != level1, axis=2)))
         if changed:
             Image.fromarray(result).save(output_dir / clean_reference)
         Image.fromarray(mask, mode="L").save(output_dir / mask_reference)
@@ -179,6 +173,10 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
             source, clean_path, output_dir / clean_reference if changed else clean_path,
             output_dir / mask_reference, protection_source, protected, consumed_sources,
             lineage, lineage_paths)
+        if reset_input:
+            provenance["reset_base_source"] = reset_source
+            consumed["reset_base"] = reset_input
+            verify_reset_input(reset_input)
         provenance_records.append(consumed)
         page_results.append({"source": source.name, "clean": clean_reference if changed else None,
                              "level1_clean": clean_reference,
@@ -191,6 +189,8 @@ def process(source_dir: Path, level1_dir: Path, output_dir: Path,
     result = build_report(started, model, model_path, device, analyzed_total,
                           len(sources), page_results, protection_totals,
                           protected_types, level1_manifest_hash)
+    if reset_bases is not None:
+        result["reset_base_contract"] = RESET_BASE_CONTRACT
     assert_unchanged(provenance_records)
     if sha256(report_file) != level1_report_hash or sha256(manifest_file) != level1_manifest_hash:
         raise ValueError("Autoridade do Nível I mudou durante a execução.")

@@ -12,8 +12,12 @@ original_hashes.json
 # Local runtime caches
 .cache/
 
-# Local patch backups
+# Local patch backups (files and hidden backup directories)
+*.bak
+*.bak.*
 *.bak_*
+.*_backup/
+.*_backups/
 
 # Bubble Cleaner generated outputs
 bubble_cleaner_output/

@@ -67,5 +67,6 @@ def _valid_level2_unchecked(manga, chapter, level1, level1_hash):
              and {Path(name).name for name in names}.issubset(expected)
              and all(artifact_file(folder, name, "clean") is not None for name in names)
              and _valid_level2_page_results(folder, level1_folder, manifest, page_results,
-                                            candidate_names, changed_sources, unchanged_sources, names))
+                                            candidate_names, changed_sources, unchanged_sources,
+                                            names, manga, chapter))
     return (manifest if valid else None, folder if valid else None, digest if valid else None)

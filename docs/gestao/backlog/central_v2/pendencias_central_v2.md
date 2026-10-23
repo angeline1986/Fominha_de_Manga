@@ -18,6 +18,8 @@
 | [CV2-UX-03](../../tickets/central_v2/CV2-UX-03.md) | Padronizar tabelas e cabeçalhos no estilo Artístico | DONE |
 | [CV2-UX-04](../../tickets/central_v2/CV2-UX-04.md) | Corrigir alinhamento da barra de progresso global | TODO |
 | [CV2-UX-05](../../tickets/central_v2/CV2-UX-05.md) | Padronizar o nome Bubble Sommelier na tela de curadoria | TODO |
+| [CV2-UX-06](../../tickets/central_v2/CV2-UX-06.md) | Avaliar navegação por teclado nas telas de comparação | TODO |
+| [CV2-UX-07](../../tickets/central_v2/CV2-UX-07.md) | Unificar nomenclaturas dos tratamentos especiais | TODO |
 
 ### Saúde Arquitetural
 
@@ -65,6 +67,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [CV2-AC-05](../../tickets/central_v2/CV2-AC-05.md) | Investigar falha inicial no carregamento de imagens do Auto-Cleaner Check | TODO |
 | [CV2-AC-06](../../tickets/central_v2/CV2-AC-06.md) | Padronizar filtros de capítulo e página do Auto-Cleaner Check | TODO |
 | [CV2-AC-07](../../tickets/central_v2/CV2-AC-07.md) | Sincronizar a cor das caixas de seleção com os bullets do Auto-Cleaner Check | TODO |
+| [CV2-AC-08](../../tickets/central_v2/CV2-AC-08.md) | Avaliar preenchimento uniforme no Auto-Cleaner · Sólidos | TODO |
 | [CV2-AUD-01](../../tickets/central_v2/CV2-AUD-01.md) | Validar visualmente a Auditoria Antes & Depois | DO |
 | [CV2-CAT-01](../../tickets/central_v2/CV2-CAT-01.md) | Validar o catálogo de resíduos por capítulo | DO |
 | [CV2-CAT-02](../../tickets/central_v2/CV2-CAT-02.md) | Validar a autoridade do catálogo no Auto-Cleaner Passo 2 | DO |

@@ -106,6 +106,25 @@ class DegradeExecutionTests(unittest.TestCase):
         self.assertEqual(calls[0]["expected_sha256"], input_hash)
         return outcome, json.loads(self.special.read_text(encoding="utf-8"))
 
+    def test_progress_without_percent_keeps_last_known_value(self):
+        self.select()
+        events = []
+        def mock_preview(*args, **kwargs):
+            callback = kwargs["on_progress"]
+            callback({"stage": "snapshot", "message": "Entrada preparada"})
+            callback({"stage": "ocr", "percent": 37, "message": "OCR"})
+            callback({"stage": "worker", "message": "Worker finalizado"})
+            callback({"stage": "validated", "message": "Resultado validado"})
+            return {"execution_status": "failed", "error": "parada simulada"}
+        with patch("central_v2.backend.orchestration.textoff_merged.special_degrade_execution.preview",
+                   side_effect=mock_preview):
+            result = execute_degrade(self.manga, "comix", ["1"],
+                                     lambda chapter, progress: events.append(progress))
+        self.assertEqual(result[0]["error"], "parada simulada")
+        worker_events = [e for e in events if e["stage"] in
+                         {"snapshot", "ocr", "worker", "validated"}]
+        self.assertEqual([e["percent"] for e in worker_events], [0, 37, 37, 37])
+
     def test_worker_progress_is_mapped_to_job_progress(self):
         image, _ = self.select()
         progress = []

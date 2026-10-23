@@ -110,6 +110,7 @@ class TextoffMergedLevel2Tests(unittest.TestCase):
                        return_value=(IdentityLama(), "test-model", "cpu")):
                 report = process(source_dir, level1_dir, output_dir, output_dir / "json" / "report.json")
             self.assertEqual(report["outcome"], "no_visual_change")
+            self.assertNotIn("reset_base_contract", report)
             self.assertGreater(report["mask_pixels"], 0)
             self.assertEqual(report["changed_pixels"], 0)
 
