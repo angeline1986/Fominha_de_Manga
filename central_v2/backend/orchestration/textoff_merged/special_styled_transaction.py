@@ -15,8 +15,16 @@ LOCK_NAME = ".central_v2_special_transactions.lock"
 _held = local()
 
 
-@contextmanager
 def transaction_lock(manga: Path):
+    return _locked(manga, recover=True)
+
+
+def _lock_only(manga: Path):
+    return _locked(manga, recover=False)
+
+
+@contextmanager
+def _locked(manga: Path, *, recover: bool):
     manga = Path(manga).resolve()
     manga.mkdir(parents=True, exist_ok=True)
     held = getattr(_held, "paths", set())
@@ -27,7 +35,8 @@ def transaction_lock(manga: Path):
         fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
         _held.paths = {*held, manga}
         try:
-            recover_locked(manga)
+            if recover:
+                recover_locked(manga)
             yield
         finally:
             _held.paths = held
@@ -126,16 +135,6 @@ def recover_locked(manga: Path, skip: Path | None = None) -> None:
             shutil.rmtree(folder, ignore_errors=True)
         elif journal.get("state") != "staging":
             shutil.rmtree(folder)
-
-
-@contextmanager
-def _lock_only(manga: Path):
-    with (manga / LOCK_NAME).open("a+b") as stream:
-        fcntl.flock(stream.fileno(), fcntl.LOCK_EX)
-        try:
-            yield
-        finally:
-            fcntl.flock(stream.fileno(), fcntl.LOCK_UN)
 
 
 def _rollback(manga: Path, folder: Path, entries: list[dict]) -> None:
