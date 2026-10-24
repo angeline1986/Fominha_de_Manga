@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LAB-APPLY-FINAL | Backlog Central V2</title>
+  <style>
+    :root { color-scheme:light; --ink:#172126; --muted:#53636a; --line:#d7e0e3; --paper:#fff; --wash:#f3f7f8; --accent:#176b63; --priority:#97520b; }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--wash); color:var(--ink); font:16px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif; }
+    main { width:min(100% - 32px, 940px); margin:36px auto; }
+    header,section,footer { margin:16px 0; padding:24px; background:var(--paper); border:1px solid var(--line); border-radius:12px; }
+    h1,h2 { line-height:1.25; }
+    h1 { margin:0 0 12px; font-size:clamp(1.6rem,4vw,2.25rem); }
+    h2 { margin-top:0; }
+    .eyebrow { margin:0 0 6px; color:var(--accent); font-weight:750; letter-spacing:.06em; text-transform:uppercase; }
+    .badge { display:inline-block; margin:3px 6px 3px 0; padding:4px 11px; border-radius:999px; color:#fff; background:var(--priority); font-weight:750; }
+    .status { background:#46565d; }
+    .muted { color:var(--muted); }
+    .callout { border-left:4px solid var(--priority); background:#fff8ed; padding:12px 16px; }
+    li { margin:6px 0; }
+    code { overflow-wrap:anywhere; }
+    @media (max-width:600px) { main { width:min(100% - 20px, 940px); margin:10px auto; } header,section,footer { padding:17px; } }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">Fominha de Manga · Central V2 · Laboratório</p>
+    <h1>LAB-APPLY-FINAL | Aplicar resultado do Laboratório ao Consolidado Final</h1>
+    <p><span class="badge">PRIORIDADE ALTA</span><span class="badge status">BACKLOG · NÃO INICIADO · NÃO AUTORIZADO</span></p>
+    <p class="muted">Alvo limitado: página selecionada em <code>07_CONSOLIDADO_FINAL</code> e seus metadados oficiais.</p>
+    <p class="callout">A proposta é criar um fluxo oficial e rastreável na Central V2 para promover um resultado do Laboratório aprovado visualmente, sem substituição manual por Terminal. Este item é somente backlog: não autoriza implementação nem escrita em dados operacionais.</p>
+  </header>
+
+  <section>
+    <h2>Contexto e problema atual</h2>
+    <p>Quando uma imagem do Laboratório supera a versão oficial vigente, hoje a substituição é feita manualmente no disco. Isso pode desalinhar imagem, manifesto e hash, perder o histórico anterior ou deixar a origem do artefato sem reconhecimento nos leitores futuros.</p>
+    <h2>Objetivo</h2>
+    <p>Definir uma ação controlada para aplicar somente a página escolhida ao Consolidado Final, preservando proveniência, consistência dos metadados e possibilidade de restauração.</p>
+  </section>
+
+  <section>
+    <h2>Escopo funcional futuro</h2>
+    <ul>
+      <li>Exibir <strong>“Aplicar no Consolidado Final”</strong> somente quando houver resultado válido e aprovado visualmente.</li>
+      <li>Validar provider, obra, capítulo, página, artefato existente, dimensões, integridade/hash e destino.</li>
+      <li>Comparar lado a lado a imagem atual do Consolidado Final e a proposta do Laboratório.</li>
+      <li>Detectar se a página final mudou desde a comparação aberta; em conflito, bloquear e solicitar nova comparação, sem sobrescrever silenciosamente.</li>
+      <li>Promover apenas a página selecionada e atualizar imagem, manifesto e hash como operação logicamente atômica.</li>
+      <li>Preservar versão anterior recuperável e registrar run_id, artefato de origem, tratamento, página e data/hora.</li>
+      <li>Aprovar uma origem oficial reconhecida pelos leitores antes de gravá-la; falhas não podem deixar imagem e metadados parciais.</li>
+      <li>Limitar alterações a <code>07_CONSOLIDADO_FINAL</code> e metadados oficiais; não tocar na pasta original de Artistico, Degrade, Suave etc.</li>
+      <li>Manter compatibilidade com comparador, reset/restauração, leitores do Consolidado Final, manifestos e tratamentos posteriores.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Fora de escopo</h2>
+    <ul>
+      <li>Alterar algoritmos, thresholds ou parâmetros dos tratamentos.</li>
+      <li>Modificar Central V1 ou reorganizar/migrar armazenamento de experimentos.</li>
+      <li>Implementar agora, substituir arquivos manualmente ou afetar outras páginas e pastas de tratamento.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Critérios de aceite futuros</h2>
+    <ul>
+      <li>A ação só aparece para resultado válido e visualmente aprovado.</li>
+      <li>Identidade, artefato, dimensões, hash, destino e versão final esperada são validados; comparação lado a lado e conflito concorrente funcionam.</li>
+      <li>Publicação afeta só a página selecionada e atualiza imagem, manifesto e hash sem estado parcial.</li>
+      <li>Versão anterior é preservada e restaurável; proveniência inclui run_id, artefato, tratamento, página e data/hora.</li>
+      <li>Origem registrada é reconhecida pelos leitores. Tratamento original e outras páginas permanecem inalterados.</li>
+      <li>Comparador, Reset/restauração, Consolidado Final, manifestos e leitores são compatíveis.</li>
+      <li>Fluxo dispensa substituição por Terminal e não causa regressão nos tratamentos oficiais.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Riscos e dependências</h2>
+    <ul>
+      <li>Imagem, manifesto e hash podem divergir se a publicação não for recuperável como uma unidade.</li>
+      <li>Concorrência pode substituir uma versão que mudou depois da comparação; exigir versão/hash esperado e conflito explícito.</li>
+      <li>Uma origem nova pode quebrar leitores, comparadores, Reset ou tratamentos posteriores; mapear contratos antes de aprová-la.</li>
+      <li>Hash sem os bytes anteriores não oferece rollback. Confirmar retenção recuperável e auditoria.</li>
+      <li>Aprovação visual precisa ficar vinculada ao artefato exato publicado; IDs/caminhos precisam ser validados para evitar alteração de página errada.</li>
+      <li>Dependências: mapear produtores, leitores, manifesto, comparação, origem oficial, concorrência, publicação e recuperação.</li>
+    </ul>
+  </section>
+
+  <section>
+    <h2>Prioridade e status</h2>
+    <p><strong>Prioridade ALTA.</strong> A funcionalidade pode alterar conteúdo oficial e requer revisão de arquitetura e compatibilidade.</p>
+    <p><strong>BACKLOG — PRIORIDADE ALTA — NÃO INICIADO — NÃO AUTORIZADO.</strong> Este registro não aprova implementação nem escrita no Consolidado Final.</p>
+  </section>
+
+  <section>
+    <h2>Próxima recomendação</h2>
+    <p>Antes de desenvolver, mapear contratos e leitores do Consolidado Final, manifesto/hash, proveniência, comparador e Reset/restauração. Aprovar a origem oficial, o controle de concorrência e uma publicação/rollback recuperável. Demonstrar falhas parciais, conflito de versão e restauração em fixture sintética; solicitar autorização específica para implementar.</p>
+  </section>
+
+  <footer>
+    <a href="central_v2_laboratorio_aplicar_final.md">Abrir versão Markdown completa</a>
+  </footer>
+</main>
+</body>
+</html>

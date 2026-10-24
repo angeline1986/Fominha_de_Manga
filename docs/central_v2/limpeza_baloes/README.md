@@ -8,6 +8,7 @@
 - [Fluxo completo](fluxo_completo.md): ordem, precondições e fronteiras das etapas.
 - [Contratos, artefatos e persistência](contratos_e_persistencia.md): caminhos, vínculos e mecanismos verificados.
 - [Laboratório](laboratorio.md): arquitetura, ferramentas, navegação, seleção e foco.
+- [Funcionalidades fora do sidebar](funcionalidades_fora_sidebar.md): registro do Combo Turbo e do Texto Off Legado; código preservado.
 - [Cleaner V2](etapas/cleaner_v2.md): motor, integrações, parâmetros confirmados e manifest.
 - [Bubble Sommelier](etapas/bubble_sommelier.md): detecção e candidato.
 - [Auto-Cleaner Check](etapas/auto_cleaner_check.md): propostas e decisões persistidas.
