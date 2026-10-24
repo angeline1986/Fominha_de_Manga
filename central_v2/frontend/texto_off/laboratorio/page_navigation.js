@@ -1,4 +1,5 @@
 import { positionPreview, previewNearElement } from "/texto_off/laboratorio/preview_position.js";
+import { getContext, subscribeContext } from "/_app/state/context.js";
 
 /** Seleção de origem, capítulo, página e navegação paginada do Laboratório. */
 export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw = () => {} } = {}) {
@@ -15,8 +16,16 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
   let currentPage = 0;
   let selectedName = "";
   let currentSource = "img";
+  let selectedFile = null;
 
-  function chapterPages() { return pagesByChapter[chapterSelect.value] || []; }
+  function chapterPages() { return selectedFile ? [selectedFile] : pagesByChapter[chapterSelect.value] || []; }
+  function syncSourceButtons() {
+    root.querySelectorAll("[data-lab-source]").forEach((button) => {
+      const active = button.dataset.labSource === currentSource;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", String(active));
+    });
+  }
   function hidePreview() {
     preview.hidden = true;
     previewImage.removeAttribute("src");
@@ -76,6 +85,7 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
   }
 
   function loadPages(event) {
+    if (selectedFile) return;
     const chapters = event.detail?.chapters;
     if (!chapters || typeof chapters !== "object" || Array.isArray(chapters)) return;
     pagesByChapter = {};
@@ -94,14 +104,29 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
   }
   function setSource(source, notify = true) {
     if (!["img", "merge"].includes(source)) return;
+    const wasFile = Boolean(selectedFile);
+    selectedFile = null;
+    if (wasFile) {
+      chapterSelect.replaceChildren(new Option("Cap.", ""));
+      selectedName = "";
+      currentPage = 0;
+    }
     currentSource = source;
-    root.querySelectorAll("[data-lab-source]").forEach((button) => {
-      const active = button.dataset.labSource === source;
-      button.classList.toggle("is-active", active);
-      button.setAttribute("aria-pressed", String(active));
-    });
+    syncSourceButtons();
+    if (wasFile) draw();
     if (notify) root.dispatchEvent(new CustomEvent("laboratorio:source", { detail: { source } }));
   }
+
+  const unsubscribeContext = subscribeContext(({ provider, manga }) => {
+    if (!selectedFile || (selectedFile.provider === provider && selectedFile.manga === manga)) return;
+    currentSource = selectedFile.previousSource;
+    selectedFile = null;
+    pagesByChapter = {};
+    selectedName = "";
+    chapterSelect.replaceChildren(new Option("Cap.", ""));
+    syncSourceButtons();
+    draw();
+  });
 
   chapterSelect.addEventListener("change", () => { currentPage = 0; selectedName = ""; draw(); });
   pageSelect.addEventListener("change", () => {
@@ -138,10 +163,25 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
   return {
     draw,
     getSelection() {
+      if (selectedFile) return { source: "file", chapter: selectedFile.chapter,
+        page: selectedName, path: selectedName ? selectedFile.path : "",
+        pages: [{ name: selectedFile.name, previewUrl: selectedFile.previewUrl }] };
       return { source: currentSource, chapter: chapterSelect.value,
         page: selectedName, pages: chapterPages() };
     },
     setSource,
+    selectFile(file) {
+      const { provider, manga } = getContext();
+      const previousSource = selectedFile?.previousSource || currentSource;
+      selectedFile = { ...file, provider, manga, previousSource };
+      currentSource = "file";
+      chapterSelect.replaceChildren(new Option(file.folderLabel, file.chapter));
+      chapterSelect.value = file.chapter;
+      selectedName = file.name;
+      currentPage = 0;
+      syncSourceButtons();
+      draw();
+    },
     selectPage(chapter, page) {
       if (!pagesByChapter[chapter]?.some((item) => item.name === page)) return false;
       chapterSelect.value = chapter;
@@ -151,6 +191,7 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
       return true;
     },
     dispose() {
+      unsubscribeContext();
       root.removeEventListener("laboratorio:pages", loadPages);
       document.removeEventListener('keydown', onPaginationKey);
     },

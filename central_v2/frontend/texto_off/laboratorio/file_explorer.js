@@ -59,16 +59,30 @@ export function connectFileExplorer(root, navigation) {
     const button = document.createElement("button");
     button.type = "button";
     button.className = "lab-explorer-item";
-    button.textContent = `${item.type === "directory" ? "📁" : "🖼"} ${item.name}`;
+    button.textContent = item.type === "directory" ? `📁 ${item.name}` : `🖼 ${item.name} · Selecionar`;
+    if (item.type === "file") button.setAttribute("aria-label", `Selecionar imagem ${item.name}`);
     button.addEventListener("click", () => {
+      const active = getContext();
+      if (active.provider !== provider || active.manga !== manga) {
+        list.textContent = "A obra mudou. Reabra o explorador.";
+        return;
+      }
       if (item.type === "directory") { browse(item.path); return; }
       const segments = item.path.split("/");
       const isImg = segments.length === 3 && segments[0] === "IMG";
       const isMerge = segments.length === 4 && segments[0] === "FLUXO_SECUNDARIO" && segments[1] === "02_MERGE";
-      if (!isImg && !isMerge) return;
+      const selectFile = () => {
+        const params = new URLSearchParams({ provider, manga, browse_image: "1", path: item.path });
+        navigation.selectFile({ path: item.path, name: item.name,
+          chapter: segments.at(-2) || manga,
+          folderLabel: segments.slice(0, -1).join("/") || "Raiz da obra",
+          previewUrl: `/api/textoff/laboratorio/pages/image?${params}` });
+        dialog.close();
+      };
+      if (!isImg && !isMerge) { selectFile(); return; }
       const source = isImg ? "img" : "merge";
       const chapter = segments.at(-2), page = segments.at(-1);
-      const choose = () => navigation.selectPage(chapter, page);
+      const choose = () => { if (!navigation.selectPage(chapter, page)) selectFile(); };
       if (source === navigation.getSelection().source) {
         choose();
         dialog.close();
@@ -77,7 +91,8 @@ export function connectFileExplorer(root, navigation) {
         pendingSelection = () => {
           root.removeEventListener("laboratorio:pages", pendingSelection);
           pendingSelection = null;
-          choose();
+          const current = getContext();
+          if (current.provider === provider && current.manga === manga) choose();
           dialog.close();
         };
         root.addEventListener("laboratorio:pages", pendingSelection, { once: true });
@@ -107,7 +122,12 @@ export function connectFileExplorer(root, navigation) {
 
   explorerButton.addEventListener("click", () => { dialog.showModal(); browse(""); });
   root.querySelector("[data-lab-explorer-close]").addEventListener("click", () => dialog.close());
-  dialog.addEventListener("close", () => { controller?.abort(); hidePreview(); });
+  dialog.addEventListener("close", () => {
+    controller?.abort();
+    if (pendingSelection) root.removeEventListener("laboratorio:pages", pendingSelection);
+    pendingSelection = null;
+    hidePreview();
+  });
   return {
     dispose() {
       serial++;

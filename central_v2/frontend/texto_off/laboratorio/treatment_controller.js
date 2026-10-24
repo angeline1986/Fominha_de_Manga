@@ -23,7 +23,7 @@ export function connectTreatmentController({ root, navigation, workspace, image,
     const { provider, manga } = getContext();
     if (!provider || !manga || !selected.chapter) return null;
     return { provider, manga, source: selected.source, chapter: selected.chapter,
-      page: selected.page, selections };
+      page: selected.page, ...(selected.path ? { path: selected.path } : {}), selections };
   }
   let progressSequence = 0;
   let progressDisposed = false;
@@ -85,7 +85,7 @@ export function connectTreatmentController({ root, navigation, workspace, image,
   function displayOriginal() {
     const { provider, manga } = getContext();
     const selected = navigation.getSelection();
-    const identity = `${provider}|${manga}|${selected.source}|${selected.chapter}|${selected.page}`;
+    const identity = `${provider}|${manga}|${selected.source}|${selected.path || ""}|${selected.chapter}|${selected.page}`;
     degrade.reset(identity);
     stylized.reset(identity);
     smooth.reset(identity);

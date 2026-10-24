@@ -4,7 +4,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 from central_v2.backend.routes.response import RouteResponse
-from central_v2.backend.routes.laboratorio_pages import _directory, _chapter, _images
+from central_v2.backend.routes.laboratorio_source import resolve_source
 from central_v2.backend.orchestration.textoff_special.artifacts import (
     sha256, contained_file, read_json,
 )
@@ -35,21 +35,8 @@ def _field(value, name):
 
 
 def _resolve(payload, output_root):
-    provider = _field(payload.get('provider'), 'Provider')
-    manga_name = _field(payload.get('manga'), 'Obra')
-    chapter = _field(payload.get('chapter'), 'Capítulo')
-    filename = _field(payload.get('page'), 'Página')
-    source_kind = payload.get('source')
-    if source_kind not in ('img', 'merge'):
-        raise ValueError('Origem inválida.')
     boxes = validate_selections(payload.get('selections'))
-    image_root = _directory(output_root, provider, manga_name, source_kind)
-    chapter_dir = _chapter(image_root, chapter)
-    candidates = {p.name: p.resolve() for p in _images(chapter_dir)}
-    if filename not in candidates:
-        raise ValueError('Página fora do catálogo autorizado.')
-    path = candidates[filename]
-    manga = (image_root.parent if source_kind == 'img' else image_root.parents[1]).resolve()
+    manga, path, chapter, filename = resolve_source(payload, output_root)
     digest = sha256(path)
     source = {'path': str(path), 'sha256': digest, 'level': 'LAB',
               'chapter': chapter, 'filename': filename, 'manga': str(manga),

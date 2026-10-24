@@ -8,7 +8,7 @@ import uuid
 from urllib.parse import urlencode
 from PIL import Image
 from central_v2.backend.routes.response import RouteResponse
-from central_v2.backend.routes.laboratorio_pages import _directory, _chapter, _images
+from central_v2.backend.routes.laboratorio_source import resolve_source
 from central_v2.backend.orchestration.textoff_special.inputs import validate_selections
 
 PREVIEWS = "_laboratorio_solidos_previews"
@@ -78,18 +78,11 @@ def _filter(image, selections):
 def execute(payload, output_root):
     try:
         if not isinstance(payload, dict): raise ValueError("Requisição inválida")
-        provider, manga, chapter, page = [payload.get(k) for k in
-                                          ("provider", "manga", "chapter", "page")]
-        if any(not isinstance(v,str) or not v for v in (provider,manga,chapter,page)):
-            raise ValueError("Contexto incompleto")
-        kind = payload.get("source")
-        if kind not in {"img", "merge"}: raise ValueError("Origem inválida")
+        provider, manga = payload.get("provider"), payload.get("manga")
         selections = validate_selections(payload.get("selections"))
         if len(selections) > 30: raise ValueError("Limite de 30 áreas por prévia")
-        directory = _chapter(_directory(output_root,provider,manga,kind),chapter)
-        images = {p.name:p for p in _images(directory)}
-        if page not in images: raise ValueError("Página não autorizada")
-        source = images[page]; source_hash = _sha(source)
+        _, source, chapter, page = resolve_source(payload, output_root)
+        source_hash = _sha(source)
         with Image.open(source) as inp: original = inp.convert("RGB")
         if original.width*original.height > 100_000_000:
             raise ValueError("Imagem excede o limite operacional")

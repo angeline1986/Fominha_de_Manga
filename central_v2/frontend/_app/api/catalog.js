@@ -1,5 +1,6 @@
-export async function fetchCatalog() {
+export async function fetchCatalog(signal) {
   const response = await fetch("/api/catalog", {
+    signal,
     headers: {
       Accept: "application/json",
     },

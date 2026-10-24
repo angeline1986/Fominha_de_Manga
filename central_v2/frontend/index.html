@@ -23,6 +23,7 @@
   <link rel="stylesheet" href="/_shell/context.css">
   <link rel="stylesheet" href="/_shell/actions.css">
   <link rel="stylesheet" href="/_shell/shutdown.css">
+  <link rel="stylesheet" href="/_app/startup.css">
   <link rel="stylesheet" href="/processamento/auto_merge/nivel1/style.css">
   <link rel="stylesheet" href="/processamento/auto_merge/nivel3/style.css">
   <link rel="stylesheet" href="/processamento/auto_merge/nivel4/style.css">
@@ -45,7 +46,14 @@
 </head>
 
 <body>
-  <div id="app"></div>
+  <div id="app">
+    <main class="startup-screen" role="status" aria-live="polite">
+      <div class="startup-card">
+        <h1>Central V2</h1>
+        <p>Carregando a Central…</p>
+      </div>
+    </main>
+  </div>
 
   <script type="module" src="/_app/app.js"></script>
 </body>

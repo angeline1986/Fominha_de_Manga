@@ -18,8 +18,8 @@ let mangaRequestSequence = 0;
 let mangaStateRequest = null;
 let synchronizationRequest = null;
 
-export async function initializeContext() {
-  const catalog = await fetchCatalog();
+export async function initializeContext(signal) {
+  const catalog = await fetchCatalog(signal);
 
   clearMangaState();
   setCatalog(catalog);
