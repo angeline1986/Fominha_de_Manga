@@ -34,7 +34,8 @@ export function createSlider(viewport, onState, comparisonMode) {
     frame.classList.toggle("has-rulers", rulers);
   }
   function clearImages() {
-    images.forEach((image) => { image.removeAttribute("src"); image.remove(); });
+    images.forEach((image) => { if (image) { image.removeAttribute("src"); image.remove(); } });
+    holders.forEach((holder) => holder.replaceChildren());
     images = [];
   }
   function mountOverlay() {
@@ -46,20 +47,40 @@ export function createSlider(viewport, onState, comparisonMode) {
       const id = ++revision;
       const canvas = viewport.closest?.(".comparison-canvas-viewport");
       ready = false; frame.hidden = true; onState("loading"); clearImages();
-      images = urls.map(() => new Image());
+      images = urls.map((url) => url ? new Image() : null);
       const batch = images;
-      batch.forEach((image, index) => { image.alt = `Imagem ${panelsConfig[index][1]}`; image.draggable = false; image.src = urls[index]; });
+      batch.forEach((image, index) => {
+        if (!image) return;
+        image.alt = `Imagem ${panelsConfig[index][1]}`;
+        image.draggable = false;
+        image.src = urls[index];
+      });
       try {
-      if (batch.length !== panels.length) throw new Error(`A comparação exige ${panels.length} imagens.`);
-        await Promise.all(batch.map((image) => image.decode()));
+        if (batch.length !== panels.length || !batch[0]
+            || batch.some((image, index) => !image && panelsConfig[index][0] !== "final")) {
+          throw new Error(`A comparação exige ${panels.length} estágios.`);
+        }
+        await Promise.all(batch.filter(Boolean).map((image) => image.decode()));
         if (disposed || revision !== id) return;
-        if (!batch[0].naturalWidth || batch.some((image) => image.naturalWidth !== batch[0].naturalWidth
+        if (!batch[0].naturalWidth || batch.filter(Boolean).some((image) => image.naturalWidth !== batch[0].naturalWidth
             || image.naturalHeight !== batch[0].naturalHeight)) {
           throw new Error("As imagens têm dimensões diferentes. A comparação foi bloqueada para evitar desalinhamento.");
         }
         width = batch[0].naturalWidth; height = batch[0].naturalHeight;
-        batch.forEach((image, index) => { image.className = "comparison-image"; holders[index].replaceChildren(image); });
-        panels.at(-1).querySelector("[data-stage-status]").textContent = status;
+        batch.forEach((image, index) => {
+          if (image) {
+            image.className = "comparison-image";
+            holders[index].replaceChildren(image);
+          } else {
+            const placeholder = document.createElement("div");
+            placeholder.className = "comparison-image-unavailable";
+            placeholder.textContent = "Consolidado Final ainda não disponível para este capítulo.";
+            holders[index].replaceChildren(placeholder);
+          }
+        });
+        const statusIndex = panelsConfig.findIndex(([key]) => key === "level2");
+        panels[statusIndex < 0 ? panels.length - 1 : statusIndex]
+          .querySelector("[data-stage-status]").textContent = status;
         ready = true; layout(); mountOverlay(); frame.hidden = false;
         if (canvas) { canvas.scrollTop = 0; canvas.scrollLeft = 0; }
         onState("ready");

@@ -21,6 +21,7 @@ export async function fetchComparison(context, signal) {
 }
 
 export function comparisonImageUrl(context, page, side) {
+  if (side === "final" && !page.final_available) return null;
   const query = comparisonParams(context, { page: page.id, version: page.version, side });
   return `/api/textoff/comparison/image?${query}`;
 }

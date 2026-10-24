@@ -8,6 +8,7 @@ from central_v2.backend.state.manga_state import resolve_manga
 from central_v2.backend.orchestration.textoff_merged.comparison import (
     comparison_pairs, comparison_triplets, pair_version, triplet_version,
 )
+from central_v2.backend.orchestration.textoff_merged.final_comparison import comparison_quads, quad_version
 from central_v2.backend.orchestration.textoff_merged.residue_occurrences import (
     MANIFEST_NAME, occurrence_counts_for_step, read_manifest,
 )
@@ -40,9 +41,12 @@ def comparison_response(query: dict, output_root: Path, *, image=False) -> Route
         provider, name = _context(query, output_root)
         manga = resolve_manga(output_root, provider, name)
         chapter, step = _value(query, "chapter"), _value(query, "step")
-        triptych = _value(query, "layout") == "triptych" and step in {"1", "2"}
+        layout = _value(query, "layout")
+        triptych = layout == "triptych" and step in {"1", "2"}
+        quad = layout == "quad" and step == "1" and _value(query, "comparisonMode") == "before_after"
         check_mode = step == "1" and _value(query, "comparisonMode") == "check"
-        pairs = (comparison_triplets(manga, chapter) if triptych else
+        pairs = (comparison_quads(manga, chapter) if quad else
+                 comparison_triplets(manga, chapter) if triptych else
                  comparison_pairs(manga, chapter, step, check=check_mode))
         if not image:
             document = {"provider": provider, "obra": name, "capitulo": chapter}
@@ -53,18 +57,19 @@ def comparison_response(query: dict, output_root: Path, *, image=False) -> Route
                                               read_legacy=False) / MANIFEST_NAME
                 counts = occurrence_counts_for_step(read_manifest(manifest_path, document), step)
             return RouteResponse(200, _json({
-                "pages": [_page_response(index, pair, counts, triptych)
+                "pages": [_page_response(index, pair, counts, triptych, quad)
                           for index, pair in enumerate(pairs)],
                 "experimental": step in {"3", "4"},
             }))
         side, index = _value(query, "side"), _value(query, "page")
-        allowed_sides = {"original", "level1", "level2"} if triptych else {"before", "after"}
+        allowed_sides = ({"original", "level1", "level2", "final"} if quad else
+                         {"original", "level1", "level2"} if triptych else {"before", "after"})
         if side not in allowed_sides or not isinstance(index, str) or not index.isdecimal():
             raise ValueError("Imagem de comparação inválida.")
         number = int(index)
         version = _value(query, "version")
         pair = None
-        version_for = triplet_version if triptych else pair_version
+        version_for = quad_version if quad else triplet_version if triptych else pair_version
         if number < len(pairs) and version == version_for(pairs[number]):
             pair = pairs[number]
         else:
@@ -78,6 +83,8 @@ def comparison_response(query: dict, output_root: Path, *, image=False) -> Route
             if number != ordinal + 1:
                 raise ValueError("Resultado indisponível ou desatualizado.")
         path = pair[side]
+        if path is None:
+            raise ValueError("Consolidado Final indisponível.")
         return RouteResponse(200, path.read_bytes(), mimetypes.guess_type(path.name)[0] or "image/png")
     except (ValueError, TypeError):
         return RouteResponse(404, _json({"error": "Comparação indisponível para este capítulo e passo."}))
@@ -85,11 +92,13 @@ def comparison_response(query: dict, output_root: Path, *, image=False) -> Route
         return RouteResponse(500, _json({"error": "Não foi possível carregar a comparação."}))
 
 
-def _page_response(index: int, page: dict, counts: dict, triptych: bool) -> dict:
-    version = triplet_version(page) if triptych else pair_version(page)
+def _page_response(index: int, page: dict, counts: dict, triptych: bool, quad: bool) -> dict:
+    version = quad_version(page) if quad else triplet_version(page) if triptych else pair_version(page)
     result = {"id": str(index), "name": page["name"], "version": version,
               "residue_occurrence_count": counts.get(page["name"], 0)}
-    if triptych:
+    if triptych or quad:
         result.update({"level2_status": page["level2_status"],
                        "level2_chapter_status": page["level2_chapter_status"]})
+    if quad:
+        result["final_available"] = page["final"] is not None
     return result

@@ -107,6 +107,7 @@
 .comparison-frame { position: relative; flex: none; }
 .comparison-frame[hidden] { display: none; }
 .comparison-triptych { display: grid; grid-template-columns: repeat(3, var(--comparison-image-width)); gap: var(--comparison-panel-gap); }
+.comparison-quad { display: grid; grid-template-columns: repeat(4, var(--comparison-image-width)); gap: var(--comparison-panel-gap); }
 .comparison-pair { display: grid; grid-template-columns: repeat(2, var(--comparison-image-width)); gap: var(--comparison-panel-gap); }
 .comparison-image-panel[hidden] { display: none; }
 .comparison-degrade-tools { display: flex; align-items: center; gap: var(--space-xs); }
@@ -121,6 +122,7 @@
 .comparison-image-panel figcaption { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 6px; padding: 0 9px; border-bottom: 1px solid var(--color-border); color: var(--color-primary-hover); font-size: var(--font-size-small); }
 .comparison-image-panel figcaption small { overflow: hidden; color: var(--color-text-muted); font-weight: 400; text-overflow: ellipsis; white-space: nowrap; }
 .comparison-image-holder { position: relative; min-width: 0; min-height: 0; }
+.comparison-image-unavailable { display: grid; width: 100%; height: 100%; box-sizing: border-box; place-items: center; padding: var(--space-lg); color: var(--color-text-muted); text-align: center; }
 .comparison-after-overlay { position: absolute; z-index: 4; inset: 0; pointer-events: none; }
 .comparison-after-overlay.is-drawing { pointer-events: auto; cursor: crosshair; touch-action: none; }
 .comparison-image { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; user-select: none; }

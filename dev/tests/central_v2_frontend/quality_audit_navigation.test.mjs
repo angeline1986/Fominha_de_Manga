@@ -21,7 +21,7 @@ class Element {
   remove() { this.removed = true; }
 }
 
-test('Antes & Depois menu action resolves to the read-only triptych audit screen', async () => {
+test('Antes & Depois menu action resolves to the read-only quality audit screen', async () => {
   const audit = {};
   const sources = {
     '/_app/state/context.js': 'export const getContext = () => ({ provider: "comix", manga: "Gazing at you" }); export const subscribeContext = () => () => {};',

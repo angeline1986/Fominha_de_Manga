@@ -48,7 +48,7 @@ class Element {
   remove() { this.removed = true; }
 }
 
-async function setup(mode = 'before_after', sizes = Array.from({ length: mode === 'before_after' ? 3 : 2 }, () => [400, 600])) {
+async function setup(mode = 'before_after', sizes = Array.from({ length: mode === 'before_after' ? 4 : 2 }, () => [400, 600])) {
   const states = [];
   let image = 0;
   class Image extends Element {
@@ -65,28 +65,28 @@ async function setup(mode = 'before_after', sizes = Array.from({ length: mode ==
   return { slider, viewport, canvas: viewport.canvas, states };
 }
 
-test('triptych loads three aligned images and applies one zoom to all columns', async () => {
+test('quality audit loads four aligned images and applies one zoom to all columns', async () => {
   const env = await setup();
-  await env.slider.load(['original', 'level1', 'level2'], 'Nível II: com alterações');
+  await env.slider.load(['original', 'level1', 'level2', 'final'], 'Nível II: com alterações');
   assert.equal(env.states.at(-1)[0], 'ready');
   assert.equal(env.canvas.scrollTop, 0);
   assert.equal(env.canvas.scrollLeft, 0);
   const stage = env.viewport.child;
   const frame = stage.child;
-  assert.equal(frame.style.width, '516px');
+  assert.equal(frame.style.width, '694px');
   assert.equal(frame.style.height, '284px');
   env.slider.zoom(1);
-  assert.equal(frame.style.width, '1236px');
+  assert.equal(frame.style.width, '1654px');
   assert.equal(frame.style.height, '644px');
-  assert.deepEqual(frame.panels.map((panel) => panel.style.width), ['400px', '400px', '400px']);
-  assert.deepEqual(frame.panels.map((panel) => panel.style.width), ['400px', '400px', '400px']);
+  assert.deepEqual(frame.panels.map((panel) => panel.style.width), ['400px', '400px', '400px', '400px']);
+  assert.equal(frame.panels[2].nodes.get('[data-stage-status]').textContent, 'Nível II: com alterações');
   assert.equal(env.slider.getImageMetrics().zoom, 1);
   env.slider.dispose();
 });
 
 test('comparison refuses mismatched dimensions before enabling interaction', async () => {
-  const env = await setup('before_after', [[400, 600], [400, 600], [400, 601]]);
-  await env.slider.load(['original', 'level1', 'level2']);
+  const env = await setup('before_after', [[400, 600], [400, 600], [400, 600], [400, 601]]);
+  await env.slider.load(['original', 'level1', 'level2', 'final']);
   assert.equal(env.states.at(-1)[0], 'error');
   assert.match(env.states.at(-1)[1], /dimensões diferentes/);
   assert.equal(env.viewport.child.child.hidden, true);
@@ -95,9 +95,9 @@ test('comparison refuses mismatched dimensions before enabling interaction', asy
   env.slider.dispose();
 });
 
-test('triptych exposes metrics and mounts residue selection on the middle N1 stage', async () => {
+test('audit exposes metrics and mounts residue selection on the N1 stage', async () => {
   const env = await setup('before_after');
-  await env.slider.load(['original', 'level1', 'level2']);
+  await env.slider.load(['original', 'level1', 'level2', 'final']);
   const metrics = env.slider.getImageMetrics();
   assert.equal(metrics.naturalWidth, 400); assert.equal(metrics.naturalHeight, 600);
   assert.equal(metrics.zoom, 0.4); assert.equal(metrics.mode, 'before_after');
@@ -128,13 +128,13 @@ test('Auto-Cleaner Passos 1 e 2 render exactly their two contract panels', async
   }
 });
 
-test('Before & Depois retains exactly the three audit panels', async () => {
+test('Antes & Depois shows the four stages, including an unavailable final', async () => {
   const env = await setup('before_after');
-  await env.slider.load(['original', 'level1', 'level2']);
+  await env.slider.load(['original', 'level1', 'level2', null]);
   const frame = env.viewport.child.child;
-  assert.equal(frame.panels.length, 3);
-  assert.ok(frame.className.includes('comparison-triptych'));
-  for (const label of ['ORIGINAL', 'AUTO-CLEANER I', 'AUTO-CLEANER II']) {
+  assert.equal(frame.panels.length, 4); assert.ok(frame.className.includes('comparison-quad'));
+  assert.equal(env.states.at(-1)[0], 'ready'); assert.match(frame.panels[3].nodes.get('.comparison-image-holder').children[0].textContent, /ainda não disponível/);
+  for (const label of ['ORIGINAL', 'AUTO-CLEANER I', 'AUTO-CLEANER II', 'CONSOLIDADO FINAL']) {
     assert.ok(frame.innerHTML.includes(label));
   }
   env.slider.dispose();

@@ -24,9 +24,10 @@ export const COMPARISON_MODES = Object.freeze({
     catalogPanelIndex: 1,
   }),
   before_after: Object.freeze({
-    layout: "triptych", heading: "AUDITORIA DE QUALIDADE · ANTES & DEPOIS", title: "Antes & Depois",
-    sides: ["original", "level1", "level2"],
-    panels: [["original", "ORIGINAL"], ["level1", "AUTO-CLEANER I"], ["level2", "AUTO-CLEANER II"]],
+    layout: "quad", heading: "AUDITORIA DE QUALIDADE · ANTES & DEPOIS", title: "Antes & Depois",
+    sides: ["original", "level1", "level2", "final"],
+    panels: [["original", "ORIGINAL"], ["level1", "AUTO-CLEANER I"],
+      ["level2", "AUTO-CLEANER II"], ["final", "CONSOLIDADO FINAL"]],
     catalogPanelIndex: 1,
   }),
   solid: Object.freeze({

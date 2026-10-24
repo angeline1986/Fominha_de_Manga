@@ -25,7 +25,8 @@ test('comparison modes preserve pair/triptych provenance and shared navigation c
   assert.deepEqual(Array.from(COMPARISON_MODES.level1.panels, (panel) => panel[1]), ['ORIGINAL', 'AUTO-CLEANER I']);
   assert.deepEqual(Array.from(COMPARISON_MODES.level2.panels, (panel) => panel[1]), ['AUTO-CLEANER I', 'AUTO-CLEANER II']);
   assert.deepEqual(Array.from(COMPARISON_MODES.before_after.panels, (panel) => panel[1]),
-    ['ORIGINAL', 'AUTO-CLEANER I', 'AUTO-CLEANER II']);
+    ['ORIGINAL', 'AUTO-CLEANER I', 'AUTO-CLEANER II', 'CONSOLIDADO FINAL']);
+  assert.equal(COMPARISON_MODES.before_after.layout, 'quad');
   assert.equal(comparisonModeForStep('1'), 'level1');
   assert.equal(comparisonModeForStep('2'), 'level2');
 });
@@ -67,6 +68,7 @@ test('pair and triptych preserve image semantics, equal columns and page alignme
   assert.match(source, /batch\.length !== panels\.length/);
   assert.match(source, /image\.naturalWidth !== batch\[0\]\.naturalWidth/);
   assert.match(css, /grid-template-columns: repeat\(3, var\(--comparison-image-width\)\)/);
+  assert.match(css, /\.comparison-quad \{ display: grid; grid-template-columns: repeat\(4, var\(--comparison-image-width\)\)/);
   assert.match(css, /\.comparison-pair \{ display: grid; grid-template-columns: repeat\(2, var\(--comparison-image-width\)\)/);
   assert.match(css, /\.comparison-image-panel \{[^}]*grid-template-rows: 44px/);
   assert.match(css, /\.is-focus-mode \.comparison-focus-navigation \{ display: flex/);
