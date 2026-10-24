@@ -1,4 +1,5 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
+import { checkColor } from "/texto_off/comparison/check_palette.js";
 
 const CHECK_STYLES = {
   residuo_balao_solido_branco: "solid", balao_transparente: "transparent",
@@ -17,11 +18,20 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options, 
     box.className = "comparison-residue-box"; box.dataset.boxId = item.id;
     box.style.left = `${item.box.left * 100}%`; box.style.top = `${item.box.top * 100}%`;
     box.style.width = `${item.box.width * 100}%`; box.style.height = `${item.box.height * 100}%`;
+    if (check) {
+      const color = checkColor(item.type);
+      box.style.setProperty("--check-box-color", color);
+      box.style.setProperty("--check-box-fill", `${color}14`);
+      box.style.setProperty("--check-box-fill-highlight", `${color}2B`);
+    }
     box.innerHTML = `<span class="comparison-residue-number">${number}</span>${readOnly ? "" : `<button class="btn comparison-residue-delete" type="button" data-remove="${item.id}" aria-label="Remover área ${number}">${iconMarkup("close")}</button>`}`;
     overlay.append(box);
     const row = document.createElement("div");
     row.className = "comparison-residue-row"; row.dataset.occurrenceId = item.id;
-    if (check) row.classList.add(`is-${CHECK_STYLES[item.type] || "pending"}`);
+    if (check) {
+      row.classList.add(`is-${CHECK_STYLES[item.type] || "pending"}`);
+      row.style.setProperty("--check-card-accent", checkColor(item.type));
+    }
     if (readOnly) {
       const numberLabel = document.createElement("span");
       numberLabel.className = "comparison-residue-number";

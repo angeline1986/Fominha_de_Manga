@@ -1,12 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { browserModules } from './modules.mjs';
 
 class Element {
-  constructor() { this.dataset = {}; this.style = {}; this.children = []; this.innerHTML = ''; this.parent = null; }
+  constructor() {
+    this.dataset = {}; this.children = []; this.innerHTML = ''; this.parent = null;
+    this.style = { setProperty: (name, value) => { this.style[name] = value; } };
+    this.classList = { add: (name) => { this.className = `${this.className || ''} ${name}`; } };
+  }
   append(child) { child.parent = this; this.children.push(child); }
   replaceChildren(...children) { this.children = children; children.forEach((child) => { child.parent = this; }); }
-  querySelector() { return { value: '' }; }
+  querySelector() { return new Element(); }
   querySelectorAll(selector) {
     return this.children.filter((child) => child.dataset.boxId || child.dataset.liveBox !== undefined);
   }
@@ -54,4 +59,32 @@ test('a merged Mapear and Sommelier occurrence renders one ROI with shared X ide
   assert.equal(layers.children.length, 1);
   assert.equal((layers.children[0].innerHTML.match(/data-remove="mapear-1"/g) || []).length, 1);
   assert.equal((overlay.children[0].innerHTML.match(/data-remove="mapear-1"/g) || []).length, 1);
+});
+
+test('Check boxes, numbers and bullets use the exact classification palette after reclassification', async () => {
+  const document = { createElement: () => new Element() };
+  const load = browserModules({ document }, {
+    '/_shared/icons/icons.js': 'export function iconMarkup() { return ""; }',
+  });
+  const { renderResidueOccurrences } = await load('/texto_off/comparison/residue_catalog_view.js');
+  const { checkColor } = await load('/texto_off/comparison/check_palette.js');
+  const overlay = new Element(), layers = new Element();
+  const areas = ['residuo_gradiente', 'residuo_balao_solido_branco'].map((type, index) => ({
+    id: `area-${index}`, type, box: { left: .1, top: .1, width: .2, height: .2 },
+  }));
+  renderResidueOccurrences(overlay, layers, areas, '', { check: true });
+  assert.equal(checkColor('residuo_gradiente'), '#7C3AED');
+  assert.equal(checkColor('residuo_balao_solido_branco'), '#A7C957');
+  assert.deepEqual(overlay.children.map((box) => box.style['--check-box-color']),
+    ['#7C3AED', '#A7C957']);
+  assert.deepEqual(layers.children.map((row) => row.style['--check-card-accent']),
+    ['#7C3AED', '#A7C957']);
+  areas[0].type = 'balao_transparente';
+  renderResidueOccurrences(overlay, layers, areas, '', { check: true });
+  assert.equal(overlay.children[0].dataset.boxId, 'area-0');
+  assert.equal(overlay.children[0].style['--check-box-color'], '#0891B2');
+  assert.equal(layers.children[0].style['--check-card-accent'], '#0891B2');
+  const css = await readFile(new URL('../../../central_v2/frontend/texto_off/comparison/style.css', import.meta.url), 'utf8');
+  assert.match(css, /border: 2px solid var\(--check-box-color/);
+  assert.match(css, /\.comparison-residue-box \.comparison-residue-number \{[^}]*var\(--check-box-color/);
 });

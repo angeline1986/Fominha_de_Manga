@@ -4,9 +4,10 @@ import { browserModules } from './modules.mjs';
 
 class Element {
   constructor() {
-    this.children = []; this.dataset = {}; this.attrs = {}; this.events = new Map(); this.className = '';
-    this.classList = { toggle() {} };
+    this.children = []; this.dataset = {}; this.attrs = {}; this.events = new Map(); this.className = ''; this.style = {};
+    this.classList = { toggle() {}, remove() {}, add() {} };
   }
+  get childElementCount() { return this.children.length; }
   append(...items) { this.children.push(...items); }
   replaceChildren(...items) { this.children = items; }
   setAttribute(name, value) { this.attrs[name] = value; }
@@ -14,6 +15,7 @@ class Element {
   addEventListener(name, handler) { this.events.set(name, handler); }
   removeEventListener(name) { this.events.delete(name); }
   querySelectorAll() { return this.children; }
+  querySelector() { return null; }
 }
 
 test('persisted counts render/update the page dot and zero removes it without changing selection', async () => {
@@ -62,5 +64,28 @@ test('persisted counts render/update the page dot and zero removes it without ch
   pageList.setDraftOccurrenceCount('page-cataloged.png', null);
   pageList.setOccurrenceCount('page-cataloged.png', 3);
   assert.equal(cataloged.dataset.hasResidueOccurrences, 'true');
+  pageList.dispose();
+});
+
+test('Check page bullets use the Gradiente and Branco sólido palette colors', async () => {
+  const document = { createElement: () => new Element() };
+  const load = browserModules({ document }, {
+    '/_shared/pagination/model.js': `export function createPagination() { return {
+      select(pages) { return { rows: pages.map((page, originalIndex) => ({ page, originalIndex })),
+        start: 1, end: pages.length, total: pages.length, page: 1, pages: 1 }; },
+      move() {}, reset() {},
+    }; }`,
+    '/texto_off/comparison/model.js': `export const COMPARISON_PAGE_SIZE = 20;
+      export function filterComparisonPages(pages) { return pages; }`,
+  });
+  const { createPageList } = await load('/texto_off/comparison/page_list.js');
+  const list = new Element(), search = new Element(), paginationRoot = new Element();
+  search.value = '';
+  const pageList = createPageList({ list, search, paginationRoot, onSelect() {},
+    onPreview() {}, onPreviewPosition() {},
+    getOccurrenceTypes: () => ['residuo_gradiente', 'residuo_balao_solido_branco'] });
+  pageList.render([{ name: 'page.png', residue_occurrence_count: 2 }], 0);
+  const dots = list.children[0].children[0].children;
+  assert.deepEqual(dots.map((dot) => dot.style.backgroundColor), ['#7C3AED', '#A7C957']);
   pageList.dispose();
 });

@@ -8,10 +8,12 @@ class Element {
     this.style = {}; this.className = ''; this.textContent = ''; this.hidden = false;
     this.classList = {
       add: (name) => { this.className = `${this.className} ${name}`.trim(); },
+      remove: (name) => { this.className = this.className.split(' ').filter((item) => item !== name).join(' '); },
       toggle: () => {}, contains: (name) => this.className.split(' ').includes(name),
     };
   }
   querySelector(selector) {
+    if (selector === '.comparison-check-dots') return null;
     if (!this.nodes.has(selector)) this.nodes.set(selector, new Element());
     return this.nodes.get(selector);
   }

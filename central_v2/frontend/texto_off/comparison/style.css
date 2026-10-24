@@ -63,10 +63,11 @@
 .comparison-residue-delete { display: grid; width: 28px; height: 28px; min-width: 28px; min-height: 28px; flex: none; aspect-ratio: 1; place-items: center; padding: 0; border-radius: 50%; background: #337ab7; color: #fff; line-height: 0; }
 .comparison-residue-delete .ui-icon { width: 12px; height: 12px; }
 .comparison-residue-delete:hover { transform: scale(1.06); background: #dc2626; }
-.comparison-residue-box { position: absolute; box-sizing: border-box; border: 2px solid #337ab7; background: rgba(51, 122, 183, .08); }
-.comparison-residue-box.is-highlighted { border-color: #1d4ed8; background: rgba(51, 122, 183, .17); }
-.comparison-residue-box .comparison-residue-number { position: absolute; top: -2px; left: -2px; }
+.comparison-residue-box { position: absolute; box-sizing: border-box; border: 2px solid var(--check-box-color, #337ab7); background: var(--check-box-fill, rgba(51, 122, 183, .08)); }
+.comparison-residue-box.is-highlighted { border-color: var(--check-box-color, #1d4ed8); background: var(--check-box-fill-highlight, rgba(51, 122, 183, .17)); }
+.comparison-residue-box .comparison-residue-number { position: absolute; top: -2px; left: -2px; background: var(--check-box-color, #337ab7); }
 .comparison-residue-box .comparison-residue-delete { position: absolute; top: -13px; right: -13px; border: 2px solid #fff; pointer-events: auto; }
+.comparison-residue-box .comparison-residue-delete:not(:hover) { background: var(--check-box-color, #337ab7); }
 .comparison-residue-overlay { position: absolute; z-index: 4; inset: 0; pointer-events: none; }
 .comparison-residue-overlay.is-drawing { pointer-events: auto; cursor: crosshair; touch-action: none; }
 .comparison-residue-overlay.is-drawing .comparison-residue-box { pointer-events: none; }

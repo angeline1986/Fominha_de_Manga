@@ -1,5 +1,6 @@
 import { createPagination } from "/_shared/pagination/model.js";
 import { COMPARISON_PAGE_SIZE, filterComparisonPages } from "/texto_off/comparison/model.js";
+import { checkColor } from "/texto_off/comparison/check_palette.js";
 
 export function createPageList({ list, search, paginationRoot, onSelect, onPreview, onPreviewPosition,
   getDraftOccurrenceCount = () => null, getOccurrenceTypes = () => null }) {
@@ -95,13 +96,13 @@ function applyOccurrenceIndicator(button, currentCount, persistedCount) {
 
 // Exclusivo do Check; outras telas mantêm seu indicador de existência.
 const CHECK_DOTS = [
-  ["residuo_transparencia", "Transparente", "#0891B2"],
-  ["balao_transparente", "Transparente", "#0891B2"],
-  ["residuo_degrade", "Degradê", "#DB2777"],
-  ["residuo_gradiente", "Gradiente", "#7C3AED"],
-  ["balao_estilizado", "Estilizado", "#FAA307"],
-  ["residuo_balao_solido_branco", "Branco sólido", "#A7C957"],
-  ["outro", "Outro / não identificado", "#64748B"],
+  ["residuo_transparencia", "Transparente"],
+  ["balao_transparente", "Transparente"],
+  ["residuo_degrade", "Degradê"],
+  ["residuo_gradiente", "Gradiente"],
+  ["balao_estilizado", "Estilizado"],
+  ["residuo_balao_solido_branco", "Branco sólido"],
+  ["outro", "Outro / não identificado"],
 ];
 function applyTypeIndicators(button, types) {
   button.querySelector(".comparison-check-dots")?.remove();
@@ -112,12 +113,12 @@ function applyTypeIndicators(button, types) {
   const container = document.createElement("span");
   container.className = "comparison-check-dots";
   const shown = new Set();
-  for (const [type, label, color] of CHECK_DOTS) {
+  for (const [type, label] of CHECK_DOTS) {
     if (!types.includes(type) || shown.has(label)) continue;
     shown.add(label);
     const dot = document.createElement("span");
     dot.className = "comparison-check-dot";
-    dot.style.backgroundColor = color;
+    dot.style.backgroundColor = checkColor(type);
     dot.dataset.tooltip = label;
     dot.title = label;
     dot.setAttribute("aria-label", label);
