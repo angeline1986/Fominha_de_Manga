@@ -16,6 +16,7 @@ from .special_styled_occurrence_input import occurrence_input
 from .special_styled_source import detection_input
 from .special_page_restore_check import restored_block_reason
 from .final_consolidated import read_final_page
+from .final_consolidated_validation import require_official_paint_source
 from .special_styled_transaction import transaction_lock
 
 
@@ -124,8 +125,9 @@ def _query_special_treatments(manga: Path, provider: str, treatment: str) -> dic
                             if isinstance(filt, str):
                                 detail["current_filter"] = filt
                                 detail["requested_filter"] = filt
-                            _record, current, _digest = read_final_page(
+                            record, current, _digest = read_final_page(
                                 manga, folder.name, item["page"])
+                            require_official_paint_source(record)
                             from central_v2.backend.orchestration.textoff_special.artifacts import sha256
                             detail["expected_sha256"] = sha256(current)
                         except (OSError, ValueError, TypeError, KeyError) as exc:

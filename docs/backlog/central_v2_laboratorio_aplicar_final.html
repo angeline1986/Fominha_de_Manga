@@ -28,9 +28,9 @@
   <header>
     <p class="eyebrow">Fominha de Manga · Central V2 · Laboratório</p>
     <h1>LAB-APPLY-FINAL | Aplicar resultado do Laboratório ao Consolidado Final</h1>
-    <p><span class="badge">PRIORIDADE ALTA</span><span class="badge status">BACKLOG · NÃO INICIADO · NÃO AUTORIZADO</span></p>
+    <p><span class="badge">PRIORIDADE ALTA</span><span class="badge status">ETAPAS 1 A 5 IMPLEMENTADAS</span></p>
     <p class="muted">Alvo limitado: página selecionada em <code>07_CONSOLIDADO_FINAL</code> e seus metadados oficiais.</p>
-    <p class="callout">A proposta é criar um fluxo oficial e rastreável na Central V2 para promover um resultado do Laboratório aprovado visualmente, sem substituição manual por Terminal. Este item é somente backlog: não autoriza implementação nem escrita em dados operacionais.</p>
+    <p class="callout">A interface permite comparar, aplicar e restaurar uma versão arquivada. Publicação e restauração preservam a imagem anterior em transação recuperável. Reset e Artístico seguem a linhagem vigente após a restauração.</p>
   </header>
 
   <section>
@@ -60,7 +60,7 @@
     <ul>
       <li>Alterar algoritmos, thresholds ou parâmetros dos tratamentos.</li>
       <li>Modificar Central V1 ou reorganizar/migrar armazenamento de experimentos.</li>
-      <li>Implementar agora, substituir arquivos manualmente ou afetar outras páginas e pastas de tratamento.</li>
+      <li>Substituir arquivos manualmente ou afetar outras páginas e pastas de tratamento.</li>
     </ul>
   </section>
 
@@ -91,13 +91,19 @@
 
   <section>
     <h2>Prioridade e status</h2>
-    <p><strong>Prioridade ALTA.</strong> A funcionalidade pode alterar conteúdo oficial e requer revisão de arquitetura e compatibilidade.</p>
-    <p><strong>BACKLOG — PRIORIDADE ALTA — NÃO INICIADO — NÃO AUTORIZADO.</strong> Este registro não aprova implementação nem escrita no Consolidado Final.</p>
+    <p><strong>Prioridade ALTA.</strong> A funcionalidade pode alterar conteúdo oficial; cada etapa deve ser verificada antes de habilitar a escrita.</p>
+    <p><strong>Etapas 1 a 5 implementadas.</strong> A proposta é verificada, os quatro cartões permitem comparar e selecionar uma prévia, a publicação confirmada substitui uma página, o histórico permite restaurar versões verificáveis e os leitores usam a linhagem vigente.</p>
   </section>
 
   <section>
-    <h2>Próxima recomendação</h2>
-    <p>Antes de desenvolver, mapear contratos e leitores do Consolidado Final, manifesto/hash, proveniência, comparador e Reset/restauração. Aprovar a origem oficial, o controle de concorrência e uma publicação/rollback recuperável. Demonstrar falhas parciais, conflito de versão e restauração em fixture sintética; solicitar autorização específica para implementar.</p>
+    <h2>Etapas controladas</h2>
+    <ol>
+      <li><strong>Proposta somente leitura — concluída:</strong> validar execução, página, hashes e dimensões; comparar versões com token de revisão.</li>
+      <li><strong>Interface de revisão — concluída:</strong> escolher a prévia concluída e comparar com o Consolidado Final antes de selecionar o resultado; invalidar a seleção local quando a prévia ou a página muda.</li>
+      <li><strong>Publicação segura — concluída:</strong> arquivar a imagem anterior, registrar procedência, verificar a versão esperada e publicar imagem e manifesto por transação recuperável.</li>
+      <li><strong>Histórico e restauração — concluída:</strong> listar versões com PNG e hash verificáveis, comparar com a atual e restaurar uma delas sem apagar as demais; exigir confirmação e versão vigente.</li>
+      <li><strong>Compatibilidade — concluída:</strong> reconstrução e Combo Turbo preservam a origem Laboratório; Reset, composição e recuperação do Artístico usam a linhagem vigente após restauração. Pincéis bloqueiam a origem Laboratório antes da execução.</li>
+    </ol>
   </section>
 
   <footer>

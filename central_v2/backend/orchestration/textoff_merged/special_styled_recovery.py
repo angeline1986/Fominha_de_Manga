@@ -7,6 +7,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from .artifact_paths import artifact_ref
 from .final_consolidated import final_manifest_path
 from .final_consolidated_manifest import read_manifest
+from .final_active_lineage import active_page_rows
 from .stages import LEVEL1, LEVEL2, stage_chapter
 
 ORIGINS = {
@@ -21,9 +22,7 @@ def recover_from_final_history(manga: Path, chapter: str, page: str) -> dict:
     path = final_manifest_path(manga, chapter).resolve()
     digest = sha256(path)
     payload = read_manifest(path, manga, chapter)
-    history = payload.get("history", [])
-    records = [item.get("superseded") for item in history
-               if isinstance(item, dict) and item.get("page") == page]
+    records = active_page_rows(payload, page, path.parent.parent)
     art_position = next((index for index in range(len(records) - 1, -1, -1)
                          if isinstance(records[index], dict)
                          and records[index].get("origin") == "PINCEL_ARTISTICO"), None)

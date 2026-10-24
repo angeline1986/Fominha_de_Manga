@@ -4,7 +4,8 @@ import {
   executeStylizedLaboratoryJob,
 } from "/_app/api/laboratorio.js";
 
-function connectTreatment({ root, button, getRequest, cardIndex, label, execute, progress }) {
+function connectTreatment({ root, button, getRequest, cardIndex, label, treatment,
+  execute, progress, review }) {
   const panel = root.querySelector(`.lab-cards > .lab-image:nth-child(${cardIndex})`);
   const placeholder = panel.querySelector(".lab-placeholder");
   const image = document.createElement("img");
@@ -24,6 +25,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute,
 
   function clear() {
     serial++;
+    review?.clear(treatment);
     image.hidden = true;
     image.removeAttribute("src");
     setState("waiting", "Aguardando execução");
@@ -46,6 +48,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute,
     const snapshot = JSON.stringify(payload);
     const active = new AbortController();
     controllers.add(active);
+    review?.clear(treatment);
     button.disabled = true;
     image.hidden = true;
     image.removeAttribute("src");
@@ -60,6 +63,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute,
         if (!isCurrent(id, snapshot)) return;
         image.hidden = false;
         setState("completed", "Concluído");
+        review?.ready(treatment, payload, result.run_id);
       };
       image.onerror = () => {
         if (!isCurrent(id, snapshot)) return;
@@ -97,17 +101,17 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, execute,
 
 export function connectStylized(options) {
   return connectTreatment({ ...options, cardIndex: 3,
-    label: "Artístico",
+    label: "Artístico", treatment: "estilizado",
     execute: executeStylizedLaboratoryJob });
 }
 
 export function connectSolid(options) {
   return connectTreatment({ ...options, cardIndex: 5,
-    label: "Sólidos", execute: executeSolidLaboratory });
+    label: "Sólidos", treatment: "solidos", execute: executeSolidLaboratory });
 }
 
 export function connectSmooth(options) {
   return connectTreatment({ ...options, cardIndex: 4,
-    label: "Suave",
+    label: "Suave", treatment: "gradiente_suave",
     execute: executeSmoothLaboratoryJob });
 }

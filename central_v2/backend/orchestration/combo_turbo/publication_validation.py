@@ -5,7 +5,7 @@ import tempfile
 
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check_manifest import manifest_path
-from central_v2.backend.orchestration.textoff_merged.final_consolidated import final_manifest_path
+from central_v2.backend.orchestration.textoff_merged.final_consolidated import final_manifest_path, TREATMENT_ORIGINS
 from central_v2.backend.orchestration.textoff_merged.final_consolidated_manifest import read_manifest
 from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest_sha256
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, provider_name, stage_chapter
@@ -51,7 +51,7 @@ def validate_run(manga, run_root, chapter, result):
     final_payload = read_manifest(final_manifest, manga, chapter) if final_hash else None
     for page, row in pages.items():
         old = (final_payload or {}).get("pages", {}).get(page)
-        if old and old.get("origin") in {"PINCEL_ARTISTICO", "PINCEL_DEGRADE", "PINCEL_SUAVE"}:
+        if old and old.get("origin") in TREATMENT_ORIGINS.values():
             row["status"] = "BLOCKED"
             row["reasons"] = ["SPECIAL_TREATMENT_PRESENT"]
             row["preserved_final_sha256"] = old.get("sha256")
@@ -178,7 +178,7 @@ def validate_published_page(manga, chapter, page, expected_sha256=None):
         if final_path.is_file():
             final = read_manifest(final_path, manga, chapter)
             current = final.get("pages", {}).get(page, {})
-            if current.get("origin") in {"PINCEL_ARTISTICO", "PINCEL_DEGRADE", "PINCEL_SUAVE"}:
+            if current.get("origin") in TREATMENT_ORIGINS.values():
                 return None
         _validate_sources(manga, provider_name(manga), chapter, page, row)
         level1_image = stage_chapter(manga, LEVEL1, chapter) / "clean" / f"{Path(page).stem}_clean.png"

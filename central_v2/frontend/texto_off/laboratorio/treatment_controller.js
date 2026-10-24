@@ -2,10 +2,18 @@ import { getContext } from "/_app/state/context.js";
 import { connectRoiSelection } from "/texto_off/laboratorio/roi_selection.js";
 import { connectDegrade } from "/texto_off/laboratorio/degrade.js";
 import { connectSmooth, connectStylized, connectSolid } from "/texto_off/laboratorio/tratamentos.js";
+import { connectFinalReview } from "/texto_off/laboratorio/final_review.js";
+import { connectFinalHistory } from "/texto_off/laboratorio/final_history.js";
 
 /** Integra imagem original, ROIs e os três estados experimentais independentes. */
 export function connectTreatmentController({ root, navigation, workspace, image, progress }) {
   const panel = root.querySelector(".lab-actions");
+  const review = connectFinalReview(root);
+  const history = connectFinalHistory(root, () => {
+    const { provider, manga } = getContext();
+    const { chapter, page } = navigation.getSelection();
+    return { provider, manga, chapter, page };
+  });
   const originalPanel = root.querySelector(".lab-cards > .lab-image:first-child");
   const placeholder = originalPanel.querySelector(".lab-placeholder");
   image.className = "lab-original-image";
@@ -61,16 +69,20 @@ export function connectTreatmentController({ root, navigation, workspace, image,
     },
   };
   const degrade = connectDegrade({
-    root, button: panel.querySelector("[data-lab-degrade]"), getRequest, progress: treatmentProgress,
+    root, button: panel.querySelector("[data-lab-degrade]"), getRequest,
+    progress: treatmentProgress, review,
   });
   const stylized = connectStylized({
-    root, button: panel.querySelector("[data-lab-stylized]"), getRequest, progress: treatmentProgress,
+    root, button: panel.querySelector("[data-lab-stylized]"), getRequest,
+    progress: treatmentProgress, review,
   });
   const smooth = connectSmooth({
-    root, button: panel.querySelector("[data-lab-smooth]"), getRequest, progress: treatmentProgress,
+    root, button: panel.querySelector("[data-lab-smooth]"), getRequest,
+    progress: treatmentProgress, review,
   });
   const solid = connectSolid({
-    root, button: panel.querySelector("[data-lab-solid]"), getRequest, progress: treatmentProgress,
+    root, button: panel.querySelector("[data-lab-solid]"), getRequest,
+    progress: treatmentProgress, review,
   });
   const roiObserver = new MutationObserver(() => {
     degrade.invalidate();
@@ -83,6 +95,7 @@ export function connectTreatmentController({ root, navigation, workspace, image,
   let disposed = false;
 
   function displayOriginal() {
+    history.pageChanged();
     const { provider, manga } = getContext();
     const selected = navigation.getSelection();
     const identity = `${provider}|${manga}|${selected.source}|${selected.path || ""}|${selected.chapter}|${selected.page}`;
@@ -139,6 +152,8 @@ export function connectTreatmentController({ root, navigation, workspace, image,
       stylized.dispose();
       smooth.dispose();
       solid.dispose();
+      review.dispose();
+      history.dispose();
       roi.dispose();
     },
   };

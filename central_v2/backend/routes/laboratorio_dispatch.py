@@ -21,11 +21,25 @@ from central_v2.backend.routes.laboratorio_tratamentos import (
 from central_v2.backend.routes.laboratorio_solidos import (
     execute as lab_solidos_execute, image_response as lab_solidos_image,
 )
+from central_v2.backend.routes.laboratorio_final_review import (
+    image_response as lab_final_image, proposal_response as lab_final_proposal,
+    apply_response as lab_final_apply,
+)
+from central_v2.backend.routes.laboratorio_final_history import (
+    history_response as lab_final_history, image_response as lab_final_history_image,
+    restore_response as lab_final_restore,
+)
 from central_v2.backend.routes.response import RouteResponse
 from config.data_paths import OUTPUT_ROOT
 
 
 def dispatch_laboratorio_get(request, output_root: Path = OUTPUT_ROOT) -> tuple[bool, RouteResponse | None]:
+    if request.path == "/api/textoff/laboratorio/final/history":
+        return True, lab_final_history(parse_qs(request.query), output_root)
+    if request.path == "/api/textoff/laboratorio/final/history/image":
+        return True, lab_final_history_image(parse_qs(request.query), output_root)
+    if request.path == "/api/textoff/laboratorio/final/image":
+        return True, lab_final_image(parse_qs(request.query), output_root)
     if request.path in {"/api/textoff/laboratorio/pages", "/api/textoff/laboratorio/pages/image"}:
         response = laboratorio_pages_response(
             parse_qs(request.query), output_root,
@@ -48,6 +62,12 @@ def dispatch_laboratorio_post(
     path: str, payload: object, output_root: Path = OUTPUT_ROOT,
 ) -> tuple[bool, RouteResponse | None]:
     route = urlparse(path).path
+    if route == "/api/textoff/laboratorio/final/proposal":
+        return True, lab_final_proposal(payload, output_root)
+    if route == "/api/textoff/laboratorio/final/apply":
+        return True, lab_final_apply(payload, output_root)
+    if route == "/api/textoff/laboratorio/final/restore":
+        return True, lab_final_restore(payload, output_root)
     if route == "/api/textoff/laboratorio/solidos/execute":
         return True, lab_solidos_execute(payload, output_root)
     if route == "/api/textoff/laboratorio/degrade/job":

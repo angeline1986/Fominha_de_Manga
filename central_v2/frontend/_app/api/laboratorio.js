@@ -12,7 +12,8 @@ async function requestJson(url, options) {
     }
     return body;
   } finally {
-    if (options?.method === "POST" && !url.endsWith("authorization-candidates")) {
+    if (options?.method === "POST" && !url.endsWith("authorization-candidates")
+      && !url.endsWith("/final/proposal")) {
       const { provider, manga } = JSON.parse(options.body);
       invalidateCleanerOverview(provider, manga);
     }
@@ -27,6 +28,23 @@ function post(url, payload, signal) {
 
 export function executeDegradeLaboratory(payload, signal) {
   return post("/api/textoff/laboratorio/degrade/execute", payload, signal);
+}
+
+export function getFinalLaboratoryProposal(payload, signal) {
+  return post("/api/textoff/laboratorio/final/proposal", payload, signal);
+}
+
+export function applyFinalLaboratory(payload) {
+  return post("/api/textoff/laboratorio/final/apply", payload);
+}
+
+export function getFinalLaboratoryHistory(identity, signal) {
+  const query = new URLSearchParams(identity);
+  return requestJson(`/api/textoff/laboratorio/final/history?${query}`, { signal, cache: "no-store" });
+}
+
+export function restoreFinalLaboratory(payload) {
+  return post("/api/textoff/laboratorio/final/restore", payload);
 }
 
 export function getDegradeAuthorizationCandidates(runId, signal) {

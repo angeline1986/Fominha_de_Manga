@@ -66,6 +66,9 @@ def restored_block_reason(manga: Path, provider: str, chapter: str, page: str) -
     import json
 
     record, image, _digest = read_final_page(manga, chapter, page)
+    from .final_consolidated_validation import LABORATORY_RESTORE_REQUIRED
+    if record.get("origin") == "LABORATORIO":
+        return LABORATORY_RESTORE_REQUIRED
     if not record.get("restoration_id"):
         return None
     special = json.loads(manifest_path(manga, chapter).read_text(encoding="utf-8"))

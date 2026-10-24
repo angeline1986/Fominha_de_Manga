@@ -7,6 +7,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 
 from . import final_consolidated as final
 from .final_consolidated_manifest import write_manifest
+from .final_consolidated_validation import require_official_paint_source
 from .stages import stage_chapter
 
 
@@ -24,6 +25,7 @@ def prepare_final(manga: Path, chapter: str, page_runs: list[dict],
         current = pages.get(page)
         if not record or not current or current.get("sha256") != source["sha256"]:
             raise ValueError(f"Base vigente divergente para a página {page}.")
+        require_official_paint_source(current)
         output_ref = record["output"]["artifact"]
         output = (art_stage / output_ref).resolve()
         if not output.is_file() or sha256(output) != record["output"]["sha256"]:

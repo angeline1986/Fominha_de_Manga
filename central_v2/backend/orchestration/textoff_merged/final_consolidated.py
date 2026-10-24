@@ -12,6 +12,9 @@ from .artifact_paths import artifact_ref, prepare_artifact_dirs
 from .consolidated import consolidated_is_current
 from .consolidated_artifacts import consolidated_image
 from .final_consolidated_manifest import read_manifest, write_manifest
+from .final_consolidated_validation import (
+    assert_input_unchanged as _assert_input_unchanged, require_official_paint_source,
+)
 from .level2_validation import promote_stage
 from .stages import LEVEL1, LEVEL2, provider_name, stage_chapter
 from .special_styled_transaction import transaction_lock
@@ -23,7 +26,7 @@ PINCEL_STAGES = {"degrade": ("PINCEL_DEGRADE", "PINCEL_DEGRADE"),
                  "estilizado": ("PINCEL_ARTISTICO", "PINCEL_ARTISTICO"),
                  "gradiente_suave": ("PINCEL_SUAVE", "PINCEL_SUAVE")}
 AUTOMATIC_ORIGINS = {LEVEL1: "AUTO_CLEANER", LEVEL2: "AUTO_CLEANER_TRANSPARENCIA", "COMBO_TURBO": "AUTO_CLEANER_COMBO_TURBO"}
-TREATMENT_ORIGINS = {key: value[1] for key, value in PINCEL_STAGES.items()}
+TREATMENT_ORIGINS = {**{key: value[1] for key, value in PINCEL_STAGES.items()}, "laboratorio": "LABORATORIO"}
 
 
 def final_manifest_path(manga: Path, chapter: str) -> Path:
@@ -142,7 +145,7 @@ def _promote_treatment_pages(manga: Path, chapter: str, treatment: str,
             record = records.get(page)
             if not isinstance(record, dict) or record.get("status") not in {"processed", "no_change"}:
                 continue
-            _assert_input_unchanged(manga, chapter, source, target_manifest, target_hash)
+            _assert_input_unchanged(manga, source, target_manifest, target_hash)
             stage_name, origin = PINCEL_STAGES[treatment]
             operational = stage_chapter(manga, stage_name, chapter, read_legacy=False)
             output_ref = (record.get("output") or {}).get("artifact")
@@ -151,6 +154,8 @@ def _promote_treatment_pages(manga: Path, chapter: str, treatment: str,
                     or not output.is_file() or sha256(output) != record["output"].get("sha256")):
                 raise ValueError(f"Output persistido inválido para {page}.")
             old = pages.get(page)
+            if old:
+                require_official_paint_source(old)
             if old:
                 history.append({"page": page, "superseded": old,
                                 "superseded_at": datetime.now(timezone.utc).isoformat()})
@@ -173,15 +178,6 @@ def _promote_treatment_pages(manga: Path, chapter: str, treatment: str,
                                              previous["source_intermediate_manifest_sha256"]))
             promote_stage(staged, target)
     return {"chapter": chapter, "pages_promoted": promoted}
-
-def _assert_input_unchanged(manga, chapter, source, manifest_path, manifest_hash):
-    path = Path(source["path"]).resolve()
-    if (not path.is_relative_to(Path(manga).resolve()) or not path.is_file()
-            or sha256(path) != source["sha256"]
-            or Path(source["consolidated_manifest"]).resolve() != manifest_path.resolve()
-            or sha256(manifest_path) != manifest_hash
-            or source.get("consolidated_manifest_sha256") != manifest_hash):
-        raise ValueError("Versão vigente mudou durante a execução do Pincel.")
 
 
 def _load_existing(target, manga, chapter):

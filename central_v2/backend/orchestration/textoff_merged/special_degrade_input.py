@@ -11,6 +11,7 @@ from .auto_cleaner_check_manifest import (
     _read_check_manifest, manifest_path as check_manifest_path,
 )
 from .final_consolidated import final_manifest_path, read_final_page
+from .final_consolidated_validation import require_official_paint_source
 from .special_treatments_manifest import SCHEMA, manifest_path as special_manifest_path
 
 
@@ -65,6 +66,7 @@ def pending_pages(manga: Path, provider: str, chapter: str,
 def selected_input(manga: Path, chapter: str, page: str) -> dict:
     manga = Path(manga).resolve()
     record, image, digest = read_final_page(manga, chapter, page)
+    require_official_paint_source(record)
     manifest = final_manifest_path(manga, chapter).resolve()
     return {"page": page, "selected_from": record["origin"], "path": str(image),
             "filename": page, "sha256": record["sha256"], "level": "CONSOLIDADO_FINAL",

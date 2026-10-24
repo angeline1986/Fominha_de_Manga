@@ -35,10 +35,10 @@ export function createLaboratorioView(container) {
         <div class="lab-stage">
           <div class="lab-cards">
             <section class="lab-image"><header>ORIGINAL</header><div class="lab-placeholder">Aguardando seleção da página</div></section>
-            <section class="lab-image lab-treatment-card"><header>DEGRADÊ</header><div class="lab-placeholder" data-treatment-status="degrade" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
-            <section class="lab-image lab-treatment-card"><header>ARTÍSTICO</header><div class="lab-placeholder" data-treatment-status="stylized" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
-            <section class="lab-image lab-treatment-card"><header>SUAVE</header><div class="lab-placeholder" data-treatment-status="smooth" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
-            <section class="lab-image lab-treatment-card"><header>SÓLIDOS</header><div class="lab-placeholder" data-treatment-status="solid" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div></section>
+            <section class="lab-image lab-treatment-card"><header>DEGRADÊ</header><div class="lab-placeholder" data-treatment-status="degrade" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-review-button btn" data-lab-review="degrade" hidden>Comparar com Consolidado Final</button></section>
+            <section class="lab-image lab-treatment-card"><header>ARTÍSTICO</header><div class="lab-placeholder" data-treatment-status="stylized" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-review-button btn" data-lab-review="estilizado" hidden>Comparar com Consolidado Final</button></section>
+            <section class="lab-image lab-treatment-card"><header>SUAVE</header><div class="lab-placeholder" data-treatment-status="smooth" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-review-button btn" data-lab-review="gradiente_suave" hidden>Comparar com Consolidado Final</button></section>
+            <section class="lab-image lab-treatment-card"><header>SÓLIDOS</header><div class="lab-placeholder" data-treatment-status="solid" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-review-button btn" data-lab-review="solidos" hidden>Comparar com Consolidado Final</button></section>
           </div>
         </div>
       </main>
@@ -51,6 +51,9 @@ export function createLaboratorioView(container) {
             <button type="button" class="lab-wide" data-lab-smooth>Executar Suave</button>
             <button type="button" class="lab-wide" data-lab-solid>Executar Sólidos</button>
           </div>
+          <p class="lab-final-selection" data-lab-final-selection role="status" aria-live="polite" hidden></p>
+          <button type="button" class="lab-final-apply btn" data-lab-final-apply hidden>Aplicar no Consolidado Final</button>
+          <button type="button" class="lab-final-history btn" data-lab-final-history hidden>Histórico do Consolidado Final</button>
         </div>
       </aside>
     </div>`;

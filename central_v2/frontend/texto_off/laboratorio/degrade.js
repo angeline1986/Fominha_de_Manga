@@ -1,7 +1,7 @@
 /** Degradê experimental: o clique autoriza componentes elegíveis nas ROIs. */
 import { executeDegradeLaboratoryJob } from "/_app/api/laboratorio.js";
 
-export function connectDegrade({ root, button, getRequest, progress }) {
+export function connectDegrade({ root, button, getRequest, progress, review }) {
   const panel = root.querySelector('.lab-cards > .lab-image:nth-child(2)');
   const placeholder = panel.querySelector('.lab-placeholder');
   const image = document.createElement('img');
@@ -25,6 +25,7 @@ export function connectDegrade({ root, button, getRequest, progress }) {
   }
   function invalidate() {
     serial++;
+    review?.clear('degrade');
     clearResult();
     button.disabled = false;
   }
@@ -41,6 +42,7 @@ export function connectDegrade({ root, button, getRequest, progress }) {
       if (!current(id, snapshot)) return;
       image.hidden = false;
       setState('completed', 'Concluído');
+      review?.ready('degrade', getRequest(), result.run_id);
     };
     image.onerror = () => {
       if (current(id, snapshot)) clearResult('Falha ao abrir a prévia experimental.', 'failed');
@@ -57,6 +59,7 @@ export function connectDegrade({ root, button, getRequest, progress }) {
     const snapshot = JSON.stringify(payload);
     const active = new AbortController();
     controllers.add(active);
+    review?.clear('degrade');
     clearResult('Executando Degradê…', 'running');
     const progressRun = progress?.start('Executando Degradê');
     button.disabled = true;

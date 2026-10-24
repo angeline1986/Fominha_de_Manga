@@ -8,6 +8,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from .auto_cleaner_check_manifest import _validate_chapter, manifest_path as check_path
 from .final_consolidated import final_manifest_path
 from .final_consolidated_manifest import read_manifest
+from .final_active_lineage import active_page_rows
 from .special_page_restore_check import compare_check
 from .special_page_restore_prepare import prepare as _prepare
 from .special_page_restore_source import restoration_source
@@ -39,9 +40,7 @@ def _context(manga: Path, provider: str, chapter: str, page: str) -> dict:
     current_path = final_path.parent.parent / page
     if not isinstance(current, dict) or sha256(current_path) != current.get("sha256"):
         raise ValueError("Página atual sem SHA verificável no Consolidado Final.")
-    chain = [item.get("superseded") for item in final.get("history", [])
-             if isinstance(item, dict) and item.get("page") == page]
-    chain.append(current)
+    chain = active_page_rows(final, page, final_path.parent.parent)
     baseline = max((i for i, row in enumerate(chain)
                     if isinstance(row, dict) and row.get("origin") in AUTOMATIC), default=-1)
     if baseline < 0 or baseline == len(chain) - 1:

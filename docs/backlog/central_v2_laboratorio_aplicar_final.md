@@ -1,7 +1,7 @@
 # LAB-APPLY-FINAL | Aplicar resultado do Laboratório ao Consolidado Final
 
 **Prioridade:** ALTA
-**Status:** **BACKLOG — NÃO INICIADO — NÃO AUTORIZADO**
+**Status:** **ETAPAS 1 A 5 IMPLEMENTADAS**
 **Área:** Laboratório da Central V2
 **Alvo limitado:** página selecionada em `07_CONSOLIDADO_FINAL` e seus metadados oficiais
 
@@ -46,7 +46,7 @@ Definir um fluxo controlado na Central V2 para aplicar, mediante confirmação, 
 - Alterar algoritmos, thresholds ou parâmetros dos tratamentos.
 - Modificar a Central V1.
 - Migrar ou reorganizar o armazenamento dos experimentos neste item.
-- Implementar a funcionalidade agora ou substituir arquivos manualmente.
+- Substituir arquivos manualmente.
 - Alterar páginas além da selecionada ou pastas de tratamentos originais.
 
 ## Critérios de aceite futuros
@@ -76,10 +76,16 @@ Definir um fluxo controlado na Central V2 para aplicar, mediante confirmação, 
 
 ## Prioridade e status
 
-**Prioridade ALTA.** A ação pode substituir conteúdo oficial, portanto requer revisão arquitetural e de compatibilidade antes da implementação.
+**Prioridade ALTA.** A ação pode substituir conteúdo oficial, portanto cada etapa deve ser verificada antes de habilitar a escrita.
 
-**BACKLOG — PRIORIDADE ALTA — NÃO INICIADO — NÃO AUTORIZADO.** O registro não concede autorização para código, escrita no Consolidado Final ou alteração de dados operacionais.
+**ETAPAS 1 A 5 IMPLEMENTADAS:** proposta verificada, comparação lado a lado, publicação confirmada e restauração de versões arquivadas pela interface. A linhagem vigente após uma restauração é usada pelo Reset e pela composição e recuperação do Artístico. Pincéis bloqueiam a origem Laboratório até que a página seja restaurada.
 
-## Próxima recomendação
+## Etapas controladas
 
-Antes de iniciar desenvolvimento, mapear os contratos e leitores do Consolidado Final, manifesto, hash, proveniência, comparador e Reset/restauração. Em seguida, aprovar a origem oficial, o controle de concorrência e a estratégia de publicação/rollback atomicamente recuperável. Demonstrar o fluxo em fixture sintética, incluindo falha entre atualização de imagem e manifesto, conflito de versão e restauração; solicitar autorização própria antes de implementar.
+1. **Proposta somente leitura — concluída:** validar execução, página, hashes e dimensões; comparar versões com token de revisão.
+2. **Interface de revisão — concluída:** escolher a prévia concluída e comparar com o Consolidado Final antes de selecionar o resultado. A seleção local é invalidada quando a prévia ou a página muda.
+3. **Publicação segura — concluída:** arquivar os bytes anteriores, registrar procedência, verificar versão esperada e publicar imagem e manifesto por transação recuperável. Reconstrução e Combo Turbo preservam a origem Laboratório; novos Pincéis são bloqueados até a restauração dessa página.
+4. **Histórico e restauração — concluída:** listar apenas versões com PNG e hash verificáveis, comparar com a versão atual e restaurar uma delas sem apagar as demais; exigir confirmação e versão vigente.
+5. **Compatibilidade — concluída:** reconstrução e Combo Turbo preservam a origem Laboratório; Reset, composição e recuperação do Artístico seguem a linhagem ativa após restaurações; novos Pincéis são bloqueados antes da execução enquanto a versão Laboratório estiver vigente. Fluxos integrados e falhas foram verificados em fixtures sintéticas.
+
+Cada etapa deve manter arquivos de código com até 200 linhas e passar pelos testes focados antes de avançar.

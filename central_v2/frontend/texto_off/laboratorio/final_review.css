@@ -1,0 +1,41 @@
+.lab-page .lab-review-button {
+  width: calc(100% - 16px); margin: 8px; background: var(--color-primary-soft);
+  color: var(--color-text); font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.lab-page .lab-review-button[hidden], .lab-page .lab-final-selection[hidden] { display: none; }
+.lab-page .lab-final-apply { width: 100%; margin-top: 8px; background: var(--color-primary); color: var(--color-surface); font-weight: 700; cursor: pointer; }
+.lab-page .lab-final-apply[hidden] { display: none; }
+.lab-page .lab-final-selection {
+  margin: 14px 0 0; padding: 10px; border: 1px solid var(--color-border-primary);
+  border-radius: 7px; background: var(--color-primary-soft); color: var(--color-text);
+  font-size: 12px; line-height: 1.5;
+}
+.lab-final-review {
+  width: min(1100px, calc(100vw - 32px)); max-height: calc(100dvh - 32px);
+  padding: 0; border: 1px solid var(--color-border-primary); border-radius: 10px;
+  background: var(--color-surface); color: var(--color-text); overflow: auto;
+}
+.lab-final-review::backdrop { background: rgb(11 40 60 / 55%); }
+.lab-final-review-head, .lab-final-review-actions {
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 12px 16px; border-bottom: 1px solid var(--color-border);
+}
+.lab-final-review-head h2 { margin: 0; font-size: 18px; }
+.lab-final-review-head p { margin: 4px 0 0; overflow-wrap: anywhere; font-size: 12px; }
+.lab-final-review-status { min-height: 20px; margin: 10px 16px; font-size: 12px; }
+.lab-final-review-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px;
+  padding: 0 16px 16px;
+}
+.lab-final-review-grid figure { min-width: 0; margin: 0; border: 1px solid var(--color-border-primary); }
+.lab-final-review-grid figcaption { padding: 8px 10px; background: var(--color-primary-soft); font-size: 11px; font-weight: 750; }
+.lab-final-review-grid img { display: block; width: 100%; max-height: 62dvh; object-fit: contain; }
+.lab-final-review-grid img:not([src]) { min-height: 180px; }
+.lab-final-review-actions { justify-content: flex-end; border-top: 1px solid var(--color-border); border-bottom: 0; }
+.lab-final-review button { padding: 8px 12px; border: 1px solid var(--color-border-primary); border-radius: 7px; background: var(--color-surface); color: var(--color-text); font: inherit; cursor: pointer; }
+.lab-final-review button:disabled { opacity: .55; cursor: not-allowed; }
+.lab-final-review .lab-final-review-select { background: var(--color-primary); color: var(--color-surface); }
+@media (max-width: 650px) {
+  .lab-final-review-grid { grid-template-columns: 1fr; }
+  .lab-final-review-grid img { max-height: 35dvh; }
+}

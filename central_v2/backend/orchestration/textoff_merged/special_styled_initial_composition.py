@@ -9,6 +9,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import contained
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
 
 from .artifact_paths import artifact_ref
+from .final_active_lineage import active_page_rows
 from .stages import stage_chapter
 
 STAGES = {"PINCEL_DEGRADE": ("PINCEL_DEGRADE", "degrade-manifest.json"),
@@ -95,9 +96,10 @@ def compose_initial(manga, chapter, page, detection, current_path, current_recor
     final_manifest = stage_chapter(manga, "CONSOLIDADO_FINAL", chapter) / "json/final-manifest.json"
     final_hash = sha256(final_manifest)
     final = json.loads(final_manifest.read_text(encoding="utf-8"))
-    rows = [item["superseded"] for item in final.get("history", [])
-            if item.get("page") == page and isinstance(item.get("superseded"), dict)]
-    rows.append(current_record)
+    rows = active_page_rows(final, page, final_manifest.parent.parent)
+    if (rows[-1].get("sha256") != current_record.get("sha256")
+            or rows[-1].get("origin") != current_record.get("origin")):
+        raise ValueError("Linhagem ativa diverge da página atual.")
     positions = [i for i, row in enumerate(rows) if row.get("sha256") == detection["sha256"]]
     candidate_rows = rows[positions[-1] + 1:] if positions else rows
     masks, proofs = [], []
