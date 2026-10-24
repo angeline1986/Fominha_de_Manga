@@ -10,7 +10,6 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
   const timeline = menu.groups.find((group) => group.type === 'timeline');
   const brush = menu.groups.find((group) => group.label === 'PINCEL & RETOQUES DE ARTE');
   const audit = menu.groups.find((group) => group.label === 'AUDITORIA DE QUALIDADE');
-  const legacy = menu.groups.find((group) => group.label === 'LEGADO');
 
   assert.equal(menu.defaultAction, 'texto-off-merged-i');
   assert.equal(timeline.label, 'FLUXO DE LIMPEZA');
@@ -20,8 +19,9 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
     ['02', 'Mapear', 'texto-off-merged-iii'],
     ['03', 'Bubble Sommelier', 'bubble-sommelier'],
     ['04', 'Auto-Cleaner Check', 'auto-cleaner-check'],
+    ['05', 'Auto-Cleaner: Sólidos', 'auto-cleaner-solidos'],
   ]);
-  assert.equal(timeline.control.number, '05');
+  assert.equal(timeline.control.number, '06');
   assert.equal(timeline.control.label, 'Auto-Cleaner: Glass');
   assert.deepEqual(JSON.parse(JSON.stringify(timeline.control.options.map((option) => [option.label, option.action]))), [
     ['Básica', 'texto-off-merged-ii'],
@@ -63,6 +63,7 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
   assert.match(auditMarkup, /ui-icon--compare/);
   assert.match(auditMarkup, /ui-icon--highlighter/);
   assert.equal(audit.items.map((item) => item.label).join('|'), 'Antes & Depois|Correção Assistida');
-  assert.equal(legacy.label, 'LEGADO');
-  assert.match(groupMarkup(legacy), /Texto Off Legado/);
+  assert.equal(menu.groups.some((group) => group.label === 'LEGADO'), false);
+  assert.equal(menu.groups.some((group) => group.items?.some((item) =>
+    ['texto-off-legacy', 'combo-turbo'].includes(item.id))), false);
 });

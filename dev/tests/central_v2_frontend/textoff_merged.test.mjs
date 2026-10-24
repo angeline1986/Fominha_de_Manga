@@ -7,7 +7,9 @@ import { browserModules } from './modules.mjs';
 const frontend = fileURLToPath(new URL('../../../central_v2/frontend/', import.meta.url));
 
 test('Limpeza de Balões keeps each flow and brush action on its existing route', async () => {
-  const load = browserModules();
+  const load = browserModules({
+    document: { addEventListener() {} },
+  });
   const { resolveRoute, routes } = await load('/_app/router/routes.js');
   const level1 = resolveRoute('texto-off-merged-i');
   const level2 = resolveRoute('texto-off-merged-ii');
@@ -56,9 +58,11 @@ test('Limpeza de Balões keeps each flow and brush action on its existing route'
   assert.equal(auditAction, 'texto-off-quality-audit');
   assert.notEqual(auditAction, 'texto-off-merged-i');
   assert.equal(resolveRoute(auditAction).module, '/texto_off/comparison/audit.js');
-  assert.equal(menu.groups.find((group) => group.items?.[0]?.id === 'texto-off-legacy').label, 'LEGADO');
+  assert.equal(menu.groups.some((group) => group.items?.some((item) =>
+    ['texto-off-legacy', 'combo-turbo'].includes(item.id))), false);
   assert.equal(legacy.context, 'texto-off');
   assert.equal(legacy.module, '/texto_off/merged/index.js');
+  assert.equal(resolveRoute('combo-turbo').module, '/texto_off/combo_turbo/index.js');
   await load(level1.module);
   await load(level2.module);
 });

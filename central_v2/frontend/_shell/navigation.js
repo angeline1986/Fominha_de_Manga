@@ -120,13 +120,6 @@ export const navigation = [
         },
       },
       {
-        label: "EXECUÇÃO EM LOTE",
-        items: [
-          { id: "combo-turbo", label: "Combo Turbo", icon: "sparkles", variant: "primary",
-            tooltip: "Executar Sólidos + Glass em lote, na cópia isolada" },
-        ],
-      },
-      {
         label: "",
         items: [
           { id: "laboratorio", label: "Laboratório", icon: "highlighter", variant: "primary" },
@@ -156,12 +149,6 @@ export const navigation = [
         items: [
           { id: "texto-off-quality-audit", label: "Antes & Depois", variant: "primary", icon: "compare" },
           { id: "correcao-assistida", label: "Correção Assistida", variant: "secondary", icon: "highlighter" },
-        ],
-      },
-      {
-        label: "LEGADO",
-        items: [
-          { id: "texto-off-legacy", label: "Texto Off Legado", variant: "muted", icon: "sync" },
         ],
       },
     ],
