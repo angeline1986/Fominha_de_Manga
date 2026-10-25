@@ -3,6 +3,7 @@ import { KINDS, mb, invalidate, api, post } from "/exportar_arquivos/state.js";
 import { confirmMessage, showMessage } from "/_shared/messages/messages.js";
 import { createDirectoryBrowser } from "/exportar_arquivos/browser.js";
 import { createFilePicker } from "/exportar_arquivos/file_picker.js";
+import { chapterCatalog, createChapterSelection } from "/exportar_arquivos/chapter_selection.js";
 
 export function createExportView(container) {
   const style = document.createElement("link");
@@ -23,8 +24,8 @@ export function createExportView(container) {
         </div>
         <fieldset class="export-contents"><legend>Conteúdo para exportar</legend>
           ${KINDS.map(k => `<label class="export-content"><input type="checkbox" data-kind="${k.key}" checked />
-            <span class="export-content-body"><strong>${k.label}</strong><small>Destino: <code>${k.dest}/</code></small></span>
-            <span class="export-item-count" data-count="${k.key}">—</span>
+            <span class="export-content-body"><strong>${k.label}</strong><small>Destino: <code>${k.dest}/</code></small>
+              <span class="export-item-count" data-count="${k.key}">Todos</span></span>
             <button type="button" class="export-secondary export-icon-button" data-pick="${k.key}" title="Escolher arquivos" aria-label="Escolher arquivos de ${k.label}"><svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7a2 2 0 0 1 2-2h5l2 2h7a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg></button></label>`).join("")}
         </fieldset>
         <div class="export-exclusions"><strong>Exclusões automáticas</strong><div><code>*_mask.png</code><code>*.json</code><code>.DS_Store</code></div></div>
@@ -34,6 +35,7 @@ export function createExportView(container) {
       <aside class="export-inspector" aria-label="Inspeção da exportação">
         <header><strong>Inspeção da exportação</strong><span data-total>Sem simulação</span></header>
         <div class="export-tree" data-tree></div>
+        <section class="export-chapters" data-chapters></section>
         <div class="export-summary" data-summary></div>
         <div class="export-state" data-state role="status" aria-live="polite">Escolha um destino e simule para conferir arquivos e conflitos.</div>
         <button type="button" class="export-primary export-execute" data-execute disabled>Exportar arquivos</button>
@@ -43,7 +45,9 @@ export function createExportView(container) {
   container.replaceChildren(root);
   const browser = createDirectoryBrowser(root, path => { state.destination = path; changed(); });
   const $ = q => root.querySelector(q);
-  const state = { destination: "", plan: null, result: null, busy: false, disposed: false, fileSelection: {} };
+  const state = { destination: "", plan: null, result: null, busy: false, disposed: false,
+    fileSelection: {}, sourceFiles: null, requestId: 0 };
+  const chapters = createChapterSelection($("[data-chapters]"), () => simulate(false));
   const picker = createFilePicker(root, (kind, selection) => {
     state.fileSelection[kind] = selection; changed();
   });
@@ -85,19 +89,29 @@ export function createExportView(container) {
     if (!selected.length) { const blank = document.createElement("small"); blank.textContent = "Nenhum conteúdo selecionado."; tree.append(blank); }
     $("[data-total]").textContent = plan ? `${plan.total_files} arq · ${mb(plan.total_bytes)}` : "Sem simulação";
     const metrics = $("[data-summary]"); metrics.replaceChildren();
-    if (plan) for (const [title, count] of [["Novos", plan.new_files], ["Idênticos", plan.identical_files], ["Conflitos", plan.conflicts]]) {
+    for (const [title, count] of [["Novos", plan?.new_files], ["Idênticos", plan?.identical_files], ["Conflitos", plan?.conflicts]]) {
       const cell = document.createElement("div"); const value = document.createElement("strong");
-      value.textContent = String(count); const label = document.createElement("span"); label.textContent = title;
+      value.textContent = count == null ? "—" : String(count);
+      const label = document.createElement("span"); label.textContent = title;
       cell.append(value, label); metrics.append(cell);
     }
     $("[data-simulate]").disabled = state.busy || !ctx.manga || !state.destination || !selected.length;
     $("[data-browse]").disabled = state.busy;
     root.querySelectorAll("[data-kind]").forEach(box => { box.disabled = state.busy; });
     root.querySelectorAll("[data-pick]").forEach(button => { button.disabled = state.busy || !ctx.manga; });
+    chapters.setBusy(state.busy);
     $("[data-execute]").disabled = state.busy || !plan?.can_export || !plan.plan_id;
     $("[data-available]").textContent = `${selected.length} conteúdo(s) selecionado(s)`;
   }
-  function changed() { invalidate(state); status("Configuração alterada. Simule novamente antes de exportar."); render(); }
+  function changed() {
+    state.requestId++; state.busy = false; state.sourceFiles = null; chapters.clear(); invalidate(state);
+    status("Configuração alterada. Simule novamente antes de exportar."); render();
+  }
+  function lockControls() {
+    root.querySelectorAll("[data-kind], [data-pick], [data-simulate], [data-browse], [data-execute]")
+      .forEach(control => { control.disabled = true; });
+    chapters.setBusy(true);
+  }
   root.querySelectorAll("[data-kind]").forEach(box => box.addEventListener("change", changed));
   const unsubscribe = subscribeContext(() => { state.fileSelection = {}; picker.close(); changed(); });
   root.querySelectorAll("[data-pick]").forEach(button => button.addEventListener("click", () => {
@@ -105,16 +119,37 @@ export function createExportView(container) {
     picker.open(provider,manga,button.dataset.pick,state.fileSelection[button.dataset.pick]);
   }));
   $("[data-browse]").addEventListener("click", () => browser.open(state.destination));
-  $("[data-simulate]").addEventListener("click", async () => {
+  async function simulate(refreshSources = true) {
     const { provider, manga } = getContext(); const selected = kinds();
-    state.busy = true; invalidate(state); status("Simulando exportação e conferindo os arquivos…"); render();
+    const requestId = ++state.requestId;
+    const hasPreview = !!state.plan;
+    state.busy = true; invalidate(state); status("Simulando exportação e conferindo os arquivos…");
+    if (hasPreview) lockControls(); else render();
     try {
-      state.plan = await post("/api/export/simulate", { provider, manga, destination: state.destination, contents: selected, file_selection: state.fileSelection });
+      if (refreshSources || !state.sourceFiles) {
+        const rows = await Promise.all(selected.map(kind =>
+          post("/api/export/files", { provider, manga, kind })));
+        if (requestId !== state.requestId || state.disposed) return;
+        const preserve = !!state.sourceFiles;
+        state.sourceFiles = Object.fromEntries(rows.map((row, index) => [selected[index], row.files]));
+        chapters.show(chapterCatalog(state.sourceFiles, state.fileSelection), preserve);
+        chapters.setBusy(true);
+      }
+      if (!chapters.hasSelection()) {
+        status(!chapters.hasChapters() ? "Nenhum arquivo elegível encontrado." :
+          "Selecione pelo menos um capítulo para exportar.");
+        return;
+      }
+      const plan = await post("/api/export/simulate", { provider, manga, destination: state.destination,
+        contents: selected, file_selection: chapters.fileSelection() });
+      if (requestId !== state.requestId || state.disposed) return;
+      state.plan = plan;
       status(state.plan.conflicts ? `${state.plan.conflicts} conflito(s). A exportação está bloqueada.` :
         state.plan.can_export ? `${state.plan.new_files} arquivo(s) novo(s). Pronto para exportar.` : "Arquivos já exportados. Nenhuma cópia necessária.");
-    } catch (e) { status(`Falha na simulação: ${e.message}`); }
-    finally { state.busy = false; render(); }
-  });
+    } catch (e) { if (requestId === state.requestId) status(`Falha na simulação: ${e.message}`); }
+    finally { if (requestId === state.requestId && !state.disposed) { state.busy = false; render(); } }
+  }
+  $("[data-simulate]").addEventListener("click", () => simulate());
   async function confirmExport() {
     return confirmMessage({ title: "Confirmar exportação",
       message: `Copiar ${state.plan?.new_files || 0} arquivo(s) para a pasta da obra? Arquivos existentes serão preservados.`,
@@ -151,5 +186,6 @@ export function createExportView(container) {
   }
   loadDefaultDestination();
   render();
-  return () => { defaultRequest.abort(); state.disposed = true; unsubscribe(); browser.dispose(); picker.dispose(); style.remove(); root.remove(); };
+  return () => { defaultRequest.abort(); state.disposed = true; state.requestId++;
+    unsubscribe(); browser.dispose(); picker.dispose(); style.remove(); root.remove(); };
 }

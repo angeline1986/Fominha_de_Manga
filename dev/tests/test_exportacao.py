@@ -124,6 +124,22 @@ class ExportacaoTest(unittest.TestCase):
                     {"textoff_merged": ["1/history/old-hash/page-001.png"]},
                 )
 
+    def test_chapter_selection_can_leave_one_category_empty(self):
+        with tempfile.TemporaryDirectory() as td:
+            root = Path(td)
+            manga = self.manga(root)
+            dest = root / "dest"
+            dest.mkdir()
+            plan = exportador.simulate_export(
+                manga, str(dest), ["textoff_merged", "pdf_merge"],
+                {"textoff_merged": ["1/page-001.png"], "pdf_merge": []},
+            )
+            self.assertEqual(plan["total_files"], 1)
+            self.assertEqual(plan["summary"]["pdf_merge"]["files"], 0)
+            result = exportador.execute_plan(manga, plan["plan_id"])
+            self.assertEqual(result["copied"], 1)
+            self.assertFalse((dest / "obra/Traducoes").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -81,8 +81,8 @@ def _normalize_selection(selections, keys):
     for key in keys:
         values=selections.get(key)
         if values is None: continue  # Omitting a category preserves export-all.
-        if not isinstance(values,list) or not values or len(values)>10000:
-            raise ValueError("Selecione pelo menos um arquivo na categoria.")
+        if not isinstance(values,list) or len(values)>10000:
+            raise ValueError("Seleção de arquivos inválida na categoria.")
         valid=[]
         for value in values:
             if not isinstance(value,str) or not value or "\\" in value or value.startswith("/"):
