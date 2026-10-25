@@ -32,7 +32,7 @@ function fixture() {
   return { cards, root };
 }
 
-test('quatro cartões só oferecem comparação após carregamento e revogam ao invalidar', async () => {
+test('quatro cartões só oferecem seleção após carregamento e revogam ao invalidar', async () => {
   const { cards, root } = fixture();
   const calls = { ready: [], clear: [] };
   const review = { ready: (...args) => calls.ready.push(args),
@@ -65,7 +65,7 @@ test('quatro cartões só oferecem comparação após carregamento e revogam ao 
   for (const item of connectors) item.controller.dispose();
 });
 
-test('resposta tardia não volta a habilitar a comparação', async () => {
+test('resposta tardia não volta a habilitar a seleção', async () => {
   const { cards, root } = fixture();
   const pending = deferred();
   const calls = [];
@@ -87,5 +87,32 @@ test('resposta tardia não volta a habilitar a comparação', async () => {
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(cards[1].children[0].src, '');
   assert.equal(calls.length, 0);
+  controller.dispose();
+});
+
+test('Artístico recuperado reaparece no cartão e volta a oferecer seleção', async () => {
+  const { cards, root } = fixture();
+  const calls = [];
+  const review = { ready: (...args) => calls.push(args), clear() {} };
+  const load = browserModules({ document: { createElement: () => new Element() } }, {
+    '/_app/api/laboratorio.js': `export async function executeStylizedLaboratoryJob() {}
+      export async function executeSmoothLaboratoryJob() {}
+      export async function executeSolidLaboratory() {}`,
+  });
+  const { connectStylized } = await load('/texto_off/laboratorio/tratamentos.js');
+  const controller = connectStylized({ root, button: new Element(),
+    getRequest: () => null, review });
+  const identity = { provider: 'comix', manga: 'obra', chapter: 'images',
+    page: 'page.png', source: 'file', path: 'check/4/images/page.png' };
+  const result = { treatment: 'estilizado', run_id: 'a'.repeat(32),
+    image_url: '/api/textoff/laboratorio/estilizado/image?run_id=' + 'a'.repeat(32) };
+  const revision = controller.revision();
+  assert.equal(controller.restore(result, identity, revision), true);
+  cards[1].children[0].onload();
+  assert.equal(cards[1].placeholder.textContent, 'Resultado recuperado');
+  assert.equal(calls[0][0], 'estilizado');
+  assert.equal(calls[0][2], result.run_id);
+  controller.invalidate();
+  assert.equal(controller.restore(result, identity, revision), false);
   controller.dispose();
 });

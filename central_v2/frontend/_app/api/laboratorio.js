@@ -34,6 +34,11 @@ export function getFinalLaboratoryProposal(payload, signal) {
   return post("/api/textoff/laboratorio/final/proposal", payload, signal);
 }
 
+export function getRecentLaboratoryResult(identity, signal) {
+  return requestJson(`/api/textoff/laboratorio/recent?${new URLSearchParams(identity)}`,
+    { signal, cache: "no-store" });
+}
+
 export function applyFinalLaboratory(payload) {
   return post("/api/textoff/laboratorio/final/apply", payload);
 }

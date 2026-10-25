@@ -1,191 +1,163 @@
 import { applyFinalLaboratory, getFinalLaboratoryProposal } from "/_app/api/laboratorio.js";
 import { confirmMessage } from "/_shared/messages/messages.js";
-import { createFinalReviewView } from "/texto_off/laboratorio/final_review_view.js";
 
 const TREATMENTS = ["degrade", "estilizado", "gradiente_suave", "solidos"];
 const LABELS = { degrade: "Degradê", estilizado: "Artístico",
   gradiente_suave: "Suave", solidos: "Sólidos" };
 
-/** Review selection stays local; publication will revalidate the exact version. */
-export function connectFinalReview(root) {
-  const view = createFinalReviewView();
+/** Select a completed card; the backend binds its result to one final-page version. */
+export function connectFinalReview(root, revealPanel = () => {}) {
   const note = root.querySelector("[data-lab-final-selection]");
   const applyButton = root.querySelector("[data-lab-final-apply]");
   const buttons = new Map(TREATMENTS.map((name) =>
-    [name, root.querySelector(`[data-lab-review="${name}"]`)]));
+    [name, root.querySelector(`[data-lab-final-select="${name}"]`)]));
   const candidates = new Map();
   const handlers = new Map();
   let selected = null;
-  let active = null;
-  let disposed = false;
+  let pending = null;
   let applying = false;
+  let disposed = false;
 
-  function closeReview() { if (view.dialog.open) view.dialog.close(); }
+  function message(value) {
+    note.textContent = value;
+    note.hidden = !value;
+  }
+
+  function render() {
+    for (const [treatment, button] of buttons) {
+      const chosen = selected?.treatment === treatment;
+      button.hidden = !candidates.has(treatment);
+      button.disabled = applying;
+      button.setAttribute("aria-pressed", String(chosen));
+      button.textContent = chosen ? "Selecionado para o Consolidado Final"
+        : "Selecionar para o Consolidado Final";
+    }
+    applyButton.hidden = !selected;
+    applyButton.disabled = applying;
+  }
+
+  function discard() {
+    pending?.controller.abort();
+    pending = null;
+    selected = null;
+    render();
+  }
 
   function clear(treatment) {
     if (!TREATMENTS.includes(treatment)) return;
+    const wasSelected = selected?.treatment === treatment;
+    const wasPending = pending?.candidate.treatment === treatment;
     candidates.delete(treatment);
-    buttons.get(treatment).hidden = true;
-    if (selected?.treatment === treatment) {
-      selected = null;
-      note.hidden = true;
-      note.textContent = "";
-      applyButton.hidden = true;
+    if (wasSelected || wasPending) {
+      discard();
+      message("");
     }
-    if (active?.treatment === treatment) closeReview();
+    render();
   }
 
   function ready(treatment, request, runId) {
     clear(treatment);
     if (disposed || !TREATMENTS.includes(treatment) || typeof runId !== "string" || !runId) return;
     const { provider, manga, chapter, page } = request;
-    if (![provider, manga, chapter, page].every((item) => typeof item === "string" && item)) return;
-    candidates.set(treatment, { provider, manga, chapter, page,
-      treatment, run_id: runId });
-    buttons.get(treatment).hidden = false;
+    if (![provider, manga, chapter, page].every((value) => typeof value === "string" && value)) return;
+    candidates.set(treatment, { provider, manga, chapter, page, treatment, run_id: runId });
+    render();
   }
 
-  function prepareView(candidate) {
-    view.page.textContent = `Cap. ${candidate.chapter} · ${candidate.page} · ${LABELS[candidate.treatment]}`;
-    view.status.textContent = "Validando as imagens e a versão final…";
-    view.select.disabled = true;
-    for (const image of [view.current, view.candidate]) {
-      image.onload = null;
-      image.onerror = null;
-      image.removeAttribute("src");
-    }
-    view.dialog.showModal();
+  function validProposal(proposal, candidate) {
+    return proposal && proposal.provider === candidate.provider
+      && proposal.manga === candidate.manga && proposal.treatment === candidate.treatment
+      && proposal.run_id === candidate.run_id
+      && ["chapter", "page", "version", "current_sha256", "candidate_sha256"]
+        .every((key) => typeof proposal[key] === "string" && proposal[key]);
   }
 
-  async function open(treatment) {
+  async function select(treatment) {
     const candidate = candidates.get(treatment);
-    if (!candidate || disposed || view.dialog.open) return;
-    selected = null;
-    note.textContent = "";
-    note.hidden = true;
-    applyButton.hidden = true;
-    const controller = new AbortController();
-    const review = { treatment, candidate, controller, proposal: null, loaded: 0 };
-    active = review;
-    prepareView(candidate);
-    try {
-      const proposal = await getFinalLaboratoryProposal(candidate, controller.signal);
-      if (active !== review || candidates.get(treatment) !== candidate || disposed) return;
-      if (proposal.run_id !== candidate.run_id || proposal.treatment !== treatment
-          || !proposal.version || !proposal.current_image_url || !proposal.candidate_image_url) {
-        throw new Error("Resposta de comparação incompleta.");
-      }
-      review.proposal = proposal;
-      view.page.textContent = `Cap. ${proposal.chapter} · ${proposal.page} · ${LABELS[treatment]}`;
-      view.status.textContent = "Carregando comparação…";
-      for (const [image, url] of [[view.current, proposal.current_image_url],
-        [view.candidate, proposal.candidate_image_url]]) {
-        image.onload = () => {
-          if (active !== review || disposed) return;
-          review.loaded++;
-          if (review.loaded === 2) {
-            view.status.textContent = "Compare a página inteira antes de selecionar.";
-            view.select.disabled = false;
-          }
-        };
-        image.onerror = () => {
-          if (active !== review || disposed) return;
-          view.select.disabled = true;
-          view.status.textContent = "A prévia mudou ou não pôde ser carregada. Reabra a comparação.";
-        };
-        image.src = url;
-      }
-    } catch (error) {
-      if (active !== review || disposed || error.name === "AbortError") return;
-      view.status.textContent = error.message || "Não foi possível comparar as imagens.";
+    if (!candidate || disposed || applying) return;
+    if (selected?.candidate === candidate) {
+      discard();
+      message("");
+      return;
     }
-  }
-
-  async function choose() {
-    if (!active?.proposal || active.loaded !== 2 || view.select.disabled) return;
-    const review = active;
-    view.select.disabled = true;
-    view.status.textContent = "Conferindo se o Consolidado Final ainda é o mesmo…";
+    discard();
+    const session = { candidate, controller: new AbortController() };
+    pending = session;
+    revealPanel();
+    message(`Conferindo o destino de ${LABELS[treatment]} no Consolidado Final…`);
+    note.scrollIntoView?.({ block: "nearest" });
     try {
-      const latest = await getFinalLaboratoryProposal(review.candidate, review.controller.signal);
-      if (active !== review || disposed) return;
-      if (latest.version !== review.proposal.version) {
-        view.status.textContent = "A versão final mudou. Reabra a comparação.";
-        return;
-      }
-      selected = { ...review.proposal };
-      note.textContent = `${LABELS[selected.treatment]} selecionado após comparação · Cap. ${selected.chapter} · ${selected.page}`;
-      note.hidden = false;
-      applyButton.hidden = false;
-      closeReview();
+      const proposal = await getFinalLaboratoryProposal(candidate, session.controller.signal);
+      if (pending !== session || candidates.get(treatment) !== candidate || disposed) return;
+      if (!validProposal(proposal, candidate)) throw new Error("Proposta incompleta ou divergente.");
+      selected = { ...proposal, candidate };
+      message(`${LABELS[treatment]} selecionado · Cap. ${proposal.chapter} · ${proposal.page}. A versão anterior será preservada.`);
     } catch (error) {
-      if (active === review && !disposed && error.name !== "AbortError") {
-        view.status.textContent = error.message || "A versão final não pôde ser conferida.";
+      if (pending === session && !disposed && error.name !== "AbortError") {
+        message(`Não foi possível selecionar: ${error.message}`);
       }
+    } finally {
+      if (pending === session) pending = null;
+      render();
     }
-  }
-
-  function onClose() {
-    if (view.dialog.open) return;
-    active?.controller.abort();
-    active = null;
   }
 
   async function applySelection() {
-    if (!selected || applying || disposed) return;
-    const review = selected;
+    const choice = selected;
+    if (!choice || applying || disposed) return;
     applying = true;
-    applyButton.disabled = true;
+    render();
     try {
+      message("Conferindo se a versão final ainda é a mesma…");
+      const latest = await getFinalLaboratoryProposal(choice.candidate);
+      if (selected !== choice || disposed) return;
+      if (!validProposal(latest, choice.candidate) || latest.version !== choice.version
+          || latest.current_sha256 !== choice.current_sha256
+          || latest.candidate_sha256 !== choice.candidate_sha256) {
+        discard();
+        message("O Consolidado Final ou o resultado mudou. Selecione o tratamento novamente.");
+        return;
+      }
       const confirmed = await confirmMessage({ title: "Aplicar no Consolidado Final",
-        message: `Substituir a página inteira ${review.page} (Cap. ${review.chapter}) pelo resultado ${LABELS[review.treatment]}? A versão anterior será arquivada.`,
+        message: `Substituir a página inteira ${choice.page} (Cap. ${choice.chapter}) pelo resultado ${LABELS[choice.treatment]}? A versão anterior será arquivada.`,
         confirmText: "Aplicar imagem" });
-      if (!confirmed || selected !== review || disposed) return;
-      note.textContent = "Aplicando a imagem e registrando o histórico…";
+      if (selected !== choice || disposed) return;
+      if (!confirmed) {
+        message(`${LABELS[choice.treatment]} selecionado · Cap. ${choice.chapter} · ${choice.page}.`);
+        return;
+      }
+      message("Aplicando a imagem e registrando o histórico…");
       const fields = Object.fromEntries(["provider", "manga", "chapter", "page", "treatment", "run_id"]
-        .map((key) => [key, review[key]]));
-      await applyFinalLaboratory({ ...fields, version: review.version, confirmed: true });
-      if (disposed || selected !== review) return;
+        .map((key) => [key, choice[key]]));
+      await applyFinalLaboratory({ ...fields, version: choice.version, confirmed: true });
+      if (selected !== choice || disposed) return;
       selected = null;
-      applyButton.hidden = true;
-      note.textContent = `${LABELS[review.treatment]} aplicado ao Consolidado Final · Cap. ${review.chapter} · ${review.page}`;
+      candidates.delete(choice.treatment);
+      message(`${LABELS[choice.treatment]} aplicado ao Consolidado Final · Cap. ${choice.chapter} · ${choice.page}.`);
     } catch (error) {
-      if (disposed || selected !== review) return;
-      selected = null;
-      applyButton.hidden = true;
-      note.textContent = error.status === 409
-        ? "O Consolidado Final mudou. Compare as imagens novamente."
-        : `Não foi possível aplicar: ${error.message}`;
+      if (selected !== choice || disposed) return;
+      discard();
+      message(error.status === 409 || /PROPOSTA_OBSOLETA/.test(error.message)
+        ? "O Consolidado Final mudou. Selecione o tratamento novamente."
+        : `Não foi possível aplicar: ${error.message}`);
     } finally {
       applying = false;
-      applyButton.disabled = false;
+      render();
     }
   }
 
   for (const [treatment, button] of buttons) {
-    const handler = () => open(treatment);
+    const handler = () => select(treatment);
     handlers.set(button, handler);
     button.addEventListener("click", handler);
   }
-  view.select.addEventListener("click", choose);
-  view.close.addEventListener("click", closeReview);
-  view.cancel.addEventListener("click", closeReview);
-  view.dialog.addEventListener("close", onClose);
   applyButton.addEventListener("click", applySelection);
-
-  return {
-    ready, clear,
-    getSelection: () => selected && { ...selected },
+  render();
+  return { ready, clear, getSelection: () => selected && { ...selected },
     dispose() {
       disposed = true;
-      active?.controller.abort();
+      discard();
       for (const [button, handler] of handlers) button.removeEventListener("click", handler);
-      view.select.removeEventListener("click", choose);
-      view.close.removeEventListener("click", closeReview);
-      view.cancel.removeEventListener("click", closeReview);
-      view.dialog.removeEventListener("close", onClose);
       applyButton.removeEventListener("click", applySelection);
-      view.dispose();
-    },
-  };
+    } };
 }

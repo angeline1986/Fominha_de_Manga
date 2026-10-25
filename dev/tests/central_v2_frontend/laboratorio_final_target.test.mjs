@@ -12,6 +12,14 @@ test('arquivo clean do Glass aponta para a página oficial no histórico', () =>
   { chapter: '1', page: 'page-050-057.png' });
 });
 
+test('arquivo images do Check aponta para a página oficial no histórico', () => {
+  const selection = { source: 'file', chapter: 'images', page: 'page-060-068.png',
+    path: 'FLUXO_SECUNDARIO/04_TEXTO_OFF/'
+      + '04_AUTO_CLEANER_CHECK/3/images/page-060-068.png' };
+  assert.deepEqual(JSON.parse(JSON.stringify(finalPageSelection(selection))),
+    { chapter: '3', page: 'page-060-068.png' });
+});
+
 test('arquivo fora do Glass não recebe destino presumido', () => {
   const selection = { source: 'file', chapter: 'clean', page: 'page_clean.png',
     path: 'outra_pasta/1/clean/page_clean.png' };

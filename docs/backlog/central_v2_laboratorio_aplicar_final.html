@@ -30,12 +30,12 @@
     <h1>LAB-APPLY-FINAL | Aplicar resultado do Laboratório ao Consolidado Final</h1>
     <p><span class="badge">PRIORIDADE ALTA</span><span class="badge status">ETAPAS 1 A 5 IMPLEMENTADAS</span></p>
     <p class="muted">Alvo limitado: página selecionada em <code>07_CONSOLIDADO_FINAL</code> e seus metadados oficiais.</p>
-    <p class="callout">A interface permite comparar, aplicar e restaurar uma versão arquivada. Publicação e restauração preservam a imagem anterior em transação recuperável. Reset e Artístico seguem a linhagem vigente após a restauração.</p>
+    <p class="callout">A interface permite selecionar um resultado no cartão, aplicá-lo pelo painel e restaurar uma versão arquivada. Publicação e restauração preservam a imagem anterior em transação recuperável.</p>
   </header>
 
   <section>
     <h2>Contexto e problema resolvido</h2>
-    <p>Quando uma imagem do Laboratório supera a versão oficial vigente, a Central V2 permite compará-la, aplicá-la e restaurar a versão anterior. A antiga substituição manual no disco podia desalinhar imagem, manifesto e hash ou perder histórico e procedência.</p>
+    <p>Quando uma imagem do Laboratório supera a versão oficial vigente, a Central V2 permite selecioná-la no cartão, aplicá-la pelo painel e restaurar a versão anterior. A antiga substituição manual no disco podia desalinhar imagem, manifesto e hash ou perder histórico e procedência.</p>
     <h2>Objetivo</h2>
     <p>Definir uma ação controlada para aplicar somente a página escolhida ao Consolidado Final, preservando proveniência, consistência dos metadados e possibilidade de restauração.</p>
   </section>
@@ -43,10 +43,10 @@
   <section>
     <h2>Escopo funcional implementado</h2>
     <ul>
-      <li>Exibir <strong>“Aplicar no Consolidado Final”</strong> após comparação válida e seleção explícita da prévia.</li>
+      <li>Exibir <strong>“Aplicar no Consolidado Final”</strong> no painel após seleção de um tratamento concluído no cartão e validação da proposta.</li>
       <li>Validar provider, obra, capítulo, página, artefato existente, dimensões, integridade/hash e destino.</li>
-      <li>Comparar lado a lado a imagem atual do Consolidado Final e a proposta do Laboratório.</li>
-      <li>Detectar se a página final mudou desde a comparação aberta; em conflito, bloquear e solicitar nova comparação, sem sobrescrever silenciosamente.</li>
+      <li>Destacar o cartão selecionado e mostrar tratamento, capítulo e página oficiais no painel. O original e o resultado tratado seguem visíveis no Laboratório.</li>
+      <li>Detectar se a página final ou o resultado mudou desde a seleção; em conflito, bloquear e solicitar nova seleção.</li>
       <li>Promover apenas a página selecionada e atualizar imagem, manifesto e hash como operação logicamente atômica.</li>
       <li>Preservar versão anterior recuperável e registrar run_id, artefato de origem, tratamento, página e data/hora.</li>
       <li>Registrar a origem <code>LABORATORIO</code> reconhecida pelos leitores; falhas não podem deixar imagem e metadados parciais.</li>
@@ -67,13 +67,13 @@
   <section>
     <h2>Critérios de aceite e validação</h2>
     <ul>
-      <li>A ação aparece após comparação válida e seleção explícita do resultado pela pessoa.</li>
-      <li>Identidade, artefato, dimensões, hash, destino e versão final esperada são validados; comparação lado a lado e conflito concorrente funcionam.</li>
+      <li>A ação aparece no painel após seleção explícita de um cartão de resultado concluído.</li>
+      <li>Identidade, artefato, dimensões, hash, destino e versão final esperada são validados; mudanças concorrentes bloqueiam a publicação.</li>
       <li>Publicação afeta só a página selecionada e atualiza imagem, manifesto e hash sem estado parcial.</li>
       <li>Versão anterior é preservada e restaurável; proveniência inclui run_id, artefato, tratamento, página e data/hora.</li>
       <li>Origem registrada é reconhecida pelos leitores. Tratamento original e outras páginas permanecem inalterados.</li>
       <li>Comparador, Reset/restauração, Consolidado Final, manifestos e leitores são compatíveis.</li>
-      <li>Fluxo dispensa substituição por Terminal. A comparação, aplicação e restauração em uma obra real ainda aguardam confirmação visual após reinício da Central V2.</li>
+      <li>Fluxo dispensa substituição por Terminal. A seleção no cartão, aplicação e restauração em uma obra real ainda aguardam confirmação visual após reinício da Central V2.</li>
     </ul>
   </section>
 
@@ -81,7 +81,7 @@
     <h2>Riscos e dependências</h2>
     <ul>
       <li>Imagem, manifesto e hash podem divergir se a publicação não for recuperável como uma unidade.</li>
-      <li>Concorrência pode substituir uma versão que mudou depois da comparação; exigir versão/hash esperado e conflito explícito.</li>
+      <li>Concorrência pode substituir uma versão que mudou depois da seleção; exigir versão/hash esperado e conflito explícito.</li>
       <li>Uma origem nova pode quebrar leitores, comparadores, Reset ou tratamentos posteriores; mapear contratos antes de aprová-la.</li>
       <li>Hash sem os bytes anteriores não oferece rollback. Confirmar retenção recuperável e auditoria.</li>
       <li>Aprovação visual precisa ficar vinculada ao artefato exato publicado; IDs/caminhos precisam ser validados para evitar alteração de página errada.</li>
@@ -92,14 +92,14 @@
   <section>
     <h2>Prioridade e status</h2>
     <p><strong>Prioridade ALTA.</strong> A funcionalidade pode alterar conteúdo oficial; cada etapa deve ser verificada antes de habilitar a escrita.</p>
-    <p><strong>Etapas 1 a 5 implementadas.</strong> A proposta é verificada, os quatro cartões permitem comparar e selecionar uma prévia, a publicação confirmada substitui uma página, o histórico permite restaurar versões verificáveis e os leitores usam a linhagem vigente.</p>
+    <p><strong>Etapas 1 a 5 implementadas.</strong> A proposta é verificada, os quatro cartões permitem selecionar uma prévia concluída, o painel confirma a publicação, o histórico permite restaurar versões verificáveis e os leitores usam a linhagem vigente.</p>
   </section>
 
   <section>
     <h2>Etapas controladas</h2>
     <ol>
       <li><strong>Proposta somente leitura — concluída:</strong> validar execução, página, hashes e dimensões; comparar versões com token de revisão.</li>
-      <li><strong>Interface de revisão — concluída:</strong> escolher a prévia concluída e comparar com o Consolidado Final antes de selecionar o resultado; invalidar a seleção local quando a prévia ou a página muda.</li>
+      <li><strong>Interface de revisão — concluída:</strong> selecionar a prévia concluída no cartão, mostrar o destino oficial no painel e confirmar antes de aplicar; invalidar a seleção local quando a prévia ou a página muda.</li>
       <li><strong>Publicação segura — concluída:</strong> arquivar a imagem anterior, registrar procedência, verificar a versão esperada e publicar imagem e manifesto por transação recuperável.</li>
       <li><strong>Histórico e restauração — concluída:</strong> listar versões com PNG e hash verificáveis, comparar com a atual e restaurar uma delas sem apagar as demais; exigir confirmação e versão vigente.</li>
       <li><strong>Compatibilidade — concluída:</strong> reconstrução e Combo Turbo preservam a origem Laboratório; Reset, composição e recuperação do Artístico usam a linhagem vigente após restauração. Pincéis bloqueiam a origem Laboratório antes da execução.</li>
@@ -116,8 +116,20 @@
     <h3>Arquivo clean do Glass selecionado pelo explorador</h3>
     <p><strong>Sintoma:</strong> a comparação mostrava <code>Cap. clean · page-050-057_clean.png</code>, “Consolidado Final indisponível” e imagens vazias.</p>
     <p><strong>Causa:</strong> o explorador usava a pasta e o nome físico da imagem tratada como identidade da página final; o Final usa o capítulo <code>1</code> e <code>page-050-057.png</code>.</p>
-    <p><strong>Correção:</strong> arquivos da estrutura conhecida do Auto-Cleaner Glass resolvem o capítulo e a página oficiais, mantendo o vínculo verificado com a execução. O histórico usa o mesmo destino; outras pastas não recebem destino presumido.</p>
+    <p><strong>Correção inicial:</strong> arquivos da estrutura conhecida do Auto-Cleaner Glass resolvem o capítulo e a página oficiais, mantendo o vínculo verificado com a execução. O histórico usa o mesmo destino.</p>
     <p><strong>Verificação:</strong> a proposta real do Artístico retornou <code>Cap. 1 · page-050-057.png</code> e as duas imagens responderam HTTP 200, sem publicação. Passaram 31 testes focados de backend e 16 de frontend, incluindo aplicação em dados isolados. A verificação visual na interface continua pendente.</p>
+    <h3>Arquivo images do Auto-Cleaner Check</h3>
+    <p><strong>Sintoma:</strong> uma execução Artístico sobre <code>04_AUTO_CLEANER_CHECK/3/images/page-060-068.png</code> voltou a mostrar “Consolidado Final indisponível” porque a comparação usou <code>images</code> como capítulo.</p>
+    <p><strong>Causa:</strong> a resolução anterior cobria apenas a pasta <code>clean</code> do Glass; o explorador também permite selecionar imagens de outras etapas.</p>
+    <p><strong>Correção:</strong> buscar o nome da página nos manifestos do Consolidado Final. Se ele aparecer em vários capítulos, conferir o capítulo presente no caminho verificado da origem Check ou Glass. Sem capítulo comprovado, bloquear com erro explícito. O histórico também reconhece essas estruturas.</p>
+    <p><strong>Verificação:</strong> a proposta real retornou <code>Cap. 3 · page-060-068.png</code>, e as duas imagens responderam HTTP 200 em leitura, sem publicação. Testes focados cobrem Check, Glass, aplicação isolada e ambiguidade. A conferência visual ainda está pendente.</p>
+    <h3>Nome repetido em vários capítulos</h3>
+    <p><code>page-075-078.png</code> aparecia em cinco capítulos. A origem verificada era <code>04_AUTO_CLEANER_CHECK/4/images/</code>; o capítulo <code>4</code> é aceito apenas se seu manifesto contiver a página. A proposta real retornou <code>Cap. 4 · page-075-078.png</code> e as duas imagens responderam HTTP 200, sem publicação.</p>
+    <p><strong>Interface simplificada:</strong> selecionar no cartão e aplicar no painel, com confirmação compacta e destino oficial visível. O popup de comparação foi retirado deste fluxo; o comparador do histórico continua disponível para restauração.</p>
+    <p><strong>Verificação da seleção no cartão:</strong> 19 testes focados de frontend e 32 de backend passaram nessa etapa. A conferência visual e uma aplicação real pela Central V2 continuam pendentes.</p>
+    <h3>Recuperação da última execução do Artístico</h3>
+    <p>Ao selecionar novamente a mesma imagem de origem, a Central V2 recupera a execução concluída mais recente do Artístico quando origem, SHA-256, snapshot, manifesto e PNG continuam verificáveis. O cartão mostra <strong>“Resultado recuperado”</strong> e permite selecionar a prévia para o Consolidado Final sem recalcular o filtro.</p>
+    <p>A execução real <code>91021c3f2a5e470585e994d76bdeaede</code> de <code>page-075-078.png</code> permanece no disco; a consulta e a leitura do PNG retornaram HTTP 200, sem publicação final. Passaram 33 testes focados de backend e 20 de frontend. A conferência visual na Central V2 permanece pendente.</p>
   </section>
 
   <footer>

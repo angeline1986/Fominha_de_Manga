@@ -5,11 +5,12 @@ import { connectSmooth, connectStylized, connectSolid } from "/texto_off/laborat
 import { connectFinalReview } from "/texto_off/laboratorio/final_review.js";
 import { connectFinalHistory } from "/texto_off/laboratorio/final_history.js";
 import { finalPageSelection } from "/texto_off/laboratorio/final_target.js";
+import { getRecentLaboratoryResult } from "/_app/api/laboratorio.js";
 
 /** Integra imagem original, ROIs e os três estados experimentais independentes. */
 export function connectTreatmentController({ root, navigation, workspace, image, progress }) {
   const panel = root.querySelector(".lab-actions");
-  const review = connectFinalReview(root);
+  const review = connectFinalReview(root, () => workspace.openPanel?.());
   const history = connectFinalHistory(root, () => {
     const { provider, manga } = getContext();
     const { chapter, page } = finalPageSelection(navigation.getSelection());
@@ -99,6 +100,9 @@ export function connectTreatmentController({ root, navigation, workspace, image,
     history.pageChanged();
     const { provider, manga } = getContext();
     const selected = navigation.getSelection();
+    const recoveryIdentity = { provider, manga, source: selected.source,
+      chapter: selected.chapter, page: selected.page,
+      ...(selected.path ? { path: selected.path } : {}) };
     const identity = `${provider}|${manga}|${selected.source}|${selected.path || ""}|${selected.chapter}|${selected.page}`;
     degrade.reset(identity);
     stylized.reset(identity);
@@ -130,6 +134,17 @@ export function connectTreatmentController({ root, navigation, workspace, image,
       workspace.updateZoom();
       workspace.setZoomEnabled(true);
       roi.setSource(`${identity}|${src}`, true);
+      Promise.resolve().then(async () => {
+        if (disposed || id !== originalLoadSerial) return;
+        const revision = stylized.revision();
+        try {
+          const { result } = await getRecentLaboratoryResult(recoveryIdentity);
+          if (disposed || id !== originalLoadSerial || !result) return;
+          stylized.restore(result, recoveryIdentity, revision);
+        } catch {
+          // A saved preview is optional; execution remains available.
+        }
+      });
     };
     image.onerror = () => {
       if (disposed || id !== originalLoadSerial) return;

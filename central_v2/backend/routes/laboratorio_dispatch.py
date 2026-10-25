@@ -29,11 +29,14 @@ from central_v2.backend.routes.laboratorio_final_history import (
     history_response as lab_final_history, image_response as lab_final_history_image,
     restore_response as lab_final_restore,
 )
+from central_v2.backend.routes.laboratorio_recovery import recent_response as lab_recent
 from central_v2.backend.routes.response import RouteResponse
 from config.data_paths import OUTPUT_ROOT
 
 
 def dispatch_laboratorio_get(request, output_root: Path = OUTPUT_ROOT) -> tuple[bool, RouteResponse | None]:
+    if request.path == "/api/textoff/laboratorio/recent":
+        return True, lab_recent(parse_qs(request.query), output_root)
     if request.path == "/api/textoff/laboratorio/final/history":
         return True, lab_final_history(parse_qs(request.query), output_root)
     if request.path == "/api/textoff/laboratorio/final/history/image":

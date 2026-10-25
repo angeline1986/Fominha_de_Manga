@@ -11,6 +11,7 @@
 .lab-columns { display: grid; grid-template-columns: 255px minmax(0, 1fr); flex: 1; min-height: 0; gap: 12px; }
 .lab-page.lab-panel-open .lab-columns { grid-template-columns: 255px minmax(0, 1fr) 295px; }
 .lab-panel, .lab-workspace { min-width: 0; overflow: hidden; border: 1px solid #c3e0ef; border-radius: 9px; background: #fff; }
+.lab-actions { overflow-y: auto; }
 .lab-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #d8eaf3; }
 .lab-panel-body { padding: 12px; }
 .lab-panel input { width: 100%; height: 36px; padding: 8px; border: 1px solid #c3e0ef; border-radius: 6px; }
@@ -23,6 +24,24 @@
 .lab-toolbar .lab-muted { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lab-page button { padding: 8px 11px; border: 1px solid #c1deec; border-radius: 7px; background: #f4fafe; color: #2a6785; font: inherit; }
 .lab-page button:disabled { opacity: .58; cursor: not-allowed; }
+.lab-page .lab-final-select-button {
+  width: calc(100% - 16px); margin: 8px; background: var(--color-primary-soft);
+  color: var(--color-text); font-size: 11px; font-weight: 700; cursor: pointer;
+}
+.lab-page .lab-final-select-button[hidden], .lab-page .lab-final-selection[hidden] { display: none; }
+.lab-page .lab-final-select-button[aria-pressed="true"] {
+  background: var(--color-primary); color: var(--color-surface);
+}
+.lab-page .lab-treatment-card:has(.lab-final-select-button[aria-pressed="true"]) {
+  border-color: var(--color-primary); box-shadow: 0 0 0 2px var(--color-primary-soft);
+}
+.lab-page .lab-final-apply { width: 100%; margin-top: 8px; background: var(--color-primary); color: var(--color-surface); font-weight: 700; cursor: pointer; }
+.lab-page .lab-final-apply[hidden] { display: none; }
+.lab-page .lab-final-selection {
+  margin: 14px 0 0; padding: 10px; border: 1px solid var(--color-border-primary);
+  border-radius: 7px; background: var(--color-primary-soft); color: var(--color-text);
+  font-size: 12px; line-height: 1.5;
+}
 .lab-page .lab-panel-toggle, .lab-page .lab-close-panel { background: #fff; white-space: nowrap; }
 .lab-page .lab-close-panel { padding: 2px 8px; }
 .lab-stage { width: 100%; max-width: 100%; flex: 1 1 auto; min-width: 0; min-height: 0; overflow: auto; overscroll-behavior: contain; padding: 18px; background-color: #f8fdff; background-image: radial-gradient(#c6dfee .8px, transparent .8px); background-size: 18px 18px; }

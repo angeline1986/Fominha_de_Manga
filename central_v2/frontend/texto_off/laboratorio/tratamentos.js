@@ -86,10 +86,31 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, treatmen
     return id === serial && JSON.stringify(getRequest()) === snapshot;
   }
 
+  function restore(result, identity, expectedSerial) {
+    if (serial !== expectedSerial || !result?.run_id || !result.image_url
+        || result.treatment !== treatment) return false;
+    const id = ++serial;
+    image.onload = () => {
+      if (id !== serial) return;
+      image.hidden = false;
+      setState("completed", "Resultado recuperado");
+      review?.ready(treatment, identity, result.run_id);
+    };
+    image.onerror = () => {
+      if (id !== serial) return;
+      image.hidden = true;
+      setState("failed", "Não foi possível reabrir o resultado salvo.");
+    };
+    image.src = result.image_url;
+    return true;
+  }
+
   button.addEventListener("click", run);
   return {
     reset,
     invalidate: clear,
+    revision: () => serial,
+    restore,
     dispose() {
       serial++;
       controllers.forEach((controller) => controller.abort());

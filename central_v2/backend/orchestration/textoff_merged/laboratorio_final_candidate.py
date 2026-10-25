@@ -8,12 +8,12 @@ from central_v2.backend.orchestration.textoff_special.artifacts import (
     contained_file, read_json, sha256,
 )
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT, treatment_for
+from .laboratorio_final_target import final_target
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
 SOLID_PREVIEWS = "_laboratorio_solidos_previews"
 TREATMENTS = {"degrade", "estilizado", "gradiente_suave", "solidos"}
 RUN_ID = re.compile(r"[0-9a-f]{32}\Z")
-GLASS_STAGE = ("FLUXO_SECUNDARIO", "04_TEXTO_OFF", "05_AUTO_CLEANER_TRANSPARENCIA")
 
 
 def candidate(manga: Path, chapter: str, page: str, treatment: str,
@@ -35,7 +35,7 @@ def candidate(manga: Path, chapter: str, page: str, treatment: str,
     if not isinstance(raw_source_path, str) or not Path(raw_source_path).is_absolute():
         raise ValueError("Origem experimental inválida.")
     source_path = Path(raw_source_path).resolve()
-    target_chapter, target_page = _final_target(manga, source_path, source)
+    target_chapter, target_page = final_target(manga, source_path, source)
     if (manifest.get("run_id") != run_id or request.get("run_id") != run_id
             or request.get("treatment") != treatment
             or not isinstance(manifest.get("treatment"), dict)
@@ -59,21 +59,6 @@ def candidate(manga: Path, chapter: str, page: str, treatment: str,
             "treatment": treatment, "run_id": run_id,
             "artifact": manifest["result_file"],
             "final_chapter": target_chapter, "final_page": target_page}
-
-
-def _final_target(manga: Path, source_path: Path, source: dict) -> tuple[str, str]:
-    """Map a verified Glass clean file to its official chapter and page."""
-    chapter, page = source.get("chapter"), source.get("filename")
-    if not source_path.is_relative_to(manga):
-        return chapter, page
-    parts = source_path.relative_to(manga).parts
-    if (len(parts) == 7 and parts[:3] == GLASS_STAGE
-            and parts[3] in {"BASICA", "NORMAL", "LEGADA"}
-            and parts[5] == "clean" and parts[6] == page
-            and chapter == "clean" and isinstance(page, str)
-            and page.endswith("_clean.png")):
-        return parts[4], page[:-10] + ".png"
-    return chapter, page
 
 
 def _solid(manga: Path, chapter: str, page: str, run_id: str,

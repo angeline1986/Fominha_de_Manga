@@ -106,36 +106,46 @@ class FinalReviewTests(unittest.TestCase):
                 response = self.proposal(treatment=treatment)
                 self.assertEqual(response.status, 200)
 
-    def test_glass_clean_file_resolves_its_official_final_page(self):
-        clean = (self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF"
-                 / "05_AUTO_CLEANER_TRANSPARENCIA/BASICA/1/clean/page_clean.png")
-        clean.parent.mkdir(parents=True)
-        clean.write_bytes(self.source.read_bytes())
-        run = self.make_run(treatment="estilizado")
-        request_path = run / "request.json"
-        manifest_path = run / "manifest.json"
-        request = json.loads(request_path.read_text())
-        request["source"].update({"path": str(clean), "sha256": digest(clean),
-                                  "chapter": "clean", "filename": "page_clean.png"})
-        manifest = json.loads(manifest_path.read_text())
-        manifest["source"] = request["source"]
-        request_path.write_text(json.dumps(request), encoding="utf-8")
-        manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
-        payload = {"chapter": "clean", "page": "page_clean.png", "treatment": "estilizado"}
-        response = self.proposal(**payload)
-        self.assertEqual(response.status, 200)
-        reviewed = json.loads(response.body)
-        self.assertEqual((reviewed["chapter"], reviewed["page"]), ("1", "page.png"))
-        self.assertEqual(dispatch_get(reviewed["current_image_url"], self.root).status, 200)
-        self.assertEqual(dispatch_get(reviewed["candidate_image_url"], self.root).status, 200)
-        self.assertEqual(self.proposal(chapter="2", **{k: v for k, v in payload.items()
-                                                     if k != "chapter"}).status, 400)
-        applied = dispatch_post("/api/textoff/laboratorio/final/apply", {
-            **self.payload, **payload, "chapter": reviewed["chapter"],
-            "page": reviewed["page"], "version": reviewed["version"],
-            "confirmed": True}, self.root)
-        self.assertEqual(applied.status, 200, applied.body)
-        self.assertEqual(digest(self.final_image), reviewed["candidate_sha256"])
+    def test_files_from_check_and_glass_resolve_the_official_final_page(self):
+        other_manifest = final_manifest_path(self.manga, "2")
+        other_manifest.parent.mkdir(parents=True)
+        other_image = other_manifest.parent.parent / "page.png"
+        Image.new("RGB", (20, 30), "yellow").save(other_image)
+        other_manifest.write_text(json.dumps({"provider": "ridi", "manga": "obra",
+            "chapter": "2", "pages": {"page.png": {"sha256": digest(other_image)}}}))
+        selections = (
+            ("04_AUTO_CLEANER_CHECK/1/images/page.png", "images", "page.png"),
+            ("05_AUTO_CLEANER_TRANSPARENCIA/BASICA/1/clean/page_clean.png",
+             "clean", "page_clean.png"),
+        )
+        for suffix, chapter, page in selections:
+            with self.subTest(suffix=suffix):
+                Image.new("RGB", (20, 30), "blue").save(self.final_image)
+                self.write_final()
+                source = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF" / suffix
+                source.parent.mkdir(parents=True, exist_ok=True)
+                source.write_bytes(self.source.read_bytes())
+                run = self.make_run(treatment="estilizado")
+                request_path, manifest_path = run / "request.json", run / "manifest.json"
+                request = json.loads(request_path.read_text())
+                request["source"].update({"path": str(source), "sha256": digest(source),
+                                          "chapter": chapter, "filename": page})
+                manifest = json.loads(manifest_path.read_text())
+                manifest["source"] = request["source"]
+                request_path.write_text(json.dumps(request), encoding="utf-8")
+                manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+                response = self.proposal(chapter=chapter, page=page, treatment="estilizado")
+                self.assertEqual(response.status, 200, response.body)
+                reviewed = json.loads(response.body)
+                self.assertEqual((reviewed["chapter"], reviewed["page"]), ("1", "page.png"))
+                self.assertEqual(dispatch_get(reviewed["current_image_url"], self.root).status, 200)
+                self.assertEqual(dispatch_get(reviewed["candidate_image_url"], self.root).status, 200)
+                applied = dispatch_post("/api/textoff/laboratorio/final/apply", {
+                    **self.payload, "chapter": reviewed["chapter"], "page": reviewed["page"],
+                    "treatment": "estilizado", "version": reviewed["version"],
+                    "confirmed": True}, self.root)
+                self.assertEqual(applied.status, 200, applied.body)
+                self.assertEqual(digest(self.final_image), reviewed["candidate_sha256"])
 
     def test_rejects_wrong_page_tampering_and_dimensions(self):
         self.assertEqual(self.proposal(page="other.png").status, 400)

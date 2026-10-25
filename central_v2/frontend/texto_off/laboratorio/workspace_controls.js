@@ -111,6 +111,7 @@ export function connectWorkspaceControls(root, originalImage) {
   updateZoom();
 
   return {
+    openPanel: () => setPanel(true),
     setZoomEnabled,
     resetZoomDimensions,
     updateZoom,
