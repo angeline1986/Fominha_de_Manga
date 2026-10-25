@@ -1,7 +1,7 @@
 # CV2-UX-08 — Padronizar a navegação por capítulo e página nos visualizadores de Limpeza de Balões
 
 - **Prioridade:** P2
-- **Status:** TODO
+- **Status:** DONE (25/10/2026)
 - **Categoria:** UI/UX · Navegação de páginas
 - **Escopo:** Central V2 — visualizadores da feature Limpeza de Balões
 - **Referência:** sidebar com título “Páginas”, seletores `Cap.` e `Pág.` na mesma linha e lista de páginas abaixo, como no Auto-Cleaner Check e no Laboratório.
@@ -27,8 +27,12 @@ O Auto-Cleaner Check (`comparison/screen.js`, modo `check`) e o Laboratório (`l
 
 ## Critérios de aceite
 
-- [ ] Todas as telas inventariadas mostram `Cap.` e `Pág.` e permitem navegar entre os resultados elegíveis da obra.
-- [ ] Seletor de página, lista e conteúdo exibido permanecem sincronizados após troca de capítulo e página.
-- [ ] Dados de Mapear, Bubble Sommelier e tratamentos especiais correspondem à página ativa; mudanças não descartam decisões não salvas.
-- [ ] O Check e o Laboratório preservam seus comportamentos atuais, inclusive a escolha IMG/MERGE e o explorador do Laboratório.
-- [ ] Tabelas de execução, o modal de candidatos do Mapear, a antiga tela manual `especiais/view.js` não usada nas rotas atuais e a ação Correção Assistida sem rota implementada ficam fora deste ajuste.
+- [x] Todas as telas inventariadas mostram `Cap.` e `Pág.` e permitem navegar entre os resultados elegíveis da obra.
+- [x] Seletor de página, lista e conteúdo exibido permanecem sincronizados após troca de capítulo e página.
+- [x] Dados de Mapear, Bubble Sommelier e tratamentos especiais correspondem à página ativa; alterações não salvas bloqueiam a troca de capítulo no comparador.
+- [x] O Check e o Laboratório preservam seus comportamentos atuais, inclusive a escolha IMG/MERGE e o explorador do Laboratório.
+- [x] Tabelas de execução, o modal de candidatos do Mapear, a antiga tela manual `especiais/view.js` não usada nas rotas atuais e a ação Correção Assistida sem rota implementada ficaram fora deste ajuste.
+
+## Entrega em 25/10/2026
+
+Seletores compartilhados no comparador e no Mapear; revisão do Bubble Sommelier usa os mesmos controles. A troca de capítulo usa apenas resultados elegíveis, mantém zoom e foco no comparador e no Mapear e conserva a página inicial aberta pela tabela. Arquivos de código alterados ou criados têm até 200 linhas. Testes direcionados de navegação passaram. A suíte JavaScript completa ainda possui falhas anteriores em contratos e mocks de outras áreas.

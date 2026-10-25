@@ -85,6 +85,7 @@ export function createMergedLevel2View(onRun, onReprocess) {
   }
 
   function draw() {
+    comparison.setChapters?.(state.chapters);
     drawOutcomeFilters(filters, state.chapters, selectedFilter, (key) => {
       selectedFilter = key; pagination.reset(); draw();
     });

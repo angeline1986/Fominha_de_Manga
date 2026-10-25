@@ -70,7 +70,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [CV2-AC-08](../../tickets/central_v2/CV2-AC-08.md) | Avaliar preenchimento uniforme no Auto-Cleaner · Sólidos | TODO |
 | [CV2-AC-09](../../tickets/central_v2/CV2-AC-09.md) | Adicionar filtro Do ao Auto-Cleaner | TODO |
 | [CV2-PERF-01](../../tickets/central_v2/CV2-PERF-01.md) | Reduzir o carregamento do Auto-Cleaner e Auto-Cleaner Check | PARCIALMENTE CONCLUÍDO · P1 |
-| [CV2-UX-08](../../tickets/central_v2/CV2-UX-08.md) | Padronizar capítulo e página nos visualizadores de Limpeza de Balões | TODO · P2 |
+| [CV2-UX-08](../../tickets/central_v2/CV2-UX-08.md) | Padronizar capítulo e página nos visualizadores de Limpeza de Balões | DONE · P2 |
 | [CV2-AUD-01](../../tickets/central_v2/CV2-AUD-01.md) | Validar visualmente a Auditoria Antes & Depois | DO |
 | [CV2-CAT-01](../../tickets/central_v2/CV2-CAT-01.md) | Validar o catálogo de resíduos por capítulo | DO · P1 |
 | [CV2-CAT-02](../../tickets/central_v2/CV2-CAT-02.md) | Validar a autoridade do catálogo no Auto-Cleaner Passo 2 | DO · P1 |

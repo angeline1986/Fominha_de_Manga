@@ -32,7 +32,8 @@ test('comparison modes preserve pair/triptych provenance and shared navigation c
 });
 
 test('screen exposes mode-driven comparison, page preview and focus navigation', async () => {
-  const source = await read('screen.js');
+  const source = (await Promise.all(['screen.js', 'screen_template.js', 'screen_preview.js',
+    'page_navigation.js'].map(read))).join('\n');
   assert.match(source, /Buscar página/);
   assert.match(source, /comparisonModeConfig\(context\.comparisonMode\)/);
   assert.match(source, /mode\.heading/);

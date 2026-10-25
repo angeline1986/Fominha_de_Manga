@@ -41,6 +41,7 @@ export function renderSpecial(container, level) {
   root.querySelector(".auto-merge-toolbar").after(progress.element);
 
   function draw() {
+    comparison.setChapters?.(rows);
     drawOutcomeFilters(filters, rows, filter, (key) => {
       filter = key; pagination.reset(); draw();
     });

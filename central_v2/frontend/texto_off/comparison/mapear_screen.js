@@ -5,6 +5,7 @@ import { createPageList } from "/texto_off/comparison/page_list.js";
 import { createSlider } from "/texto_off/comparison/slider.js";
 import { clampZoom, INITIAL_ZOOM } from "/texto_off/comparison/model.js";
 import { createMapearOverlay } from "/texto_off/comparison/mapear_overlay.js";
+import { pageNavigationMarkup, createPageNavigation } from "/texto_off/comparison/page_navigation.js";
 
 export function createMapearComparisonScreen(context, onBack) {
   const element = document.createElement("section");
@@ -13,9 +14,8 @@ export function createMapearComparisonScreen(context, onBack) {
   element.innerHTML = `<header class="comparison-page-heading">MAPEAR · BALÕES IDENTIFICADOS</header>
     <div class="comparison-workspace">
       <aside class="comparison-sidebar">
-        <div class="comparison-sidebar-heading"><h2>Páginas mapeadas</h2><span></span></div>
-        <label class="comparison-search"><span class="visually-hidden">Buscar página</span>
-          <input data-search type="search" placeholder="Buscar página"></label>
+        <div class="comparison-sidebar-heading"><h2>Páginas</h2></div>
+        ${pageNavigationMarkup(true)}
         <div class="comparison-page-list" data-pages role="listbox" aria-label="Páginas com balões mapeados"></div>
         <div class="comparison-pagination" data-pagination></div>
       </aside>
@@ -58,10 +58,10 @@ export function createMapearComparisonScreen(context, onBack) {
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet"; stylesheet.href = "/texto_off/comparison/mapear_overlay.css";
   element.append(stylesheet);
-  let index = 0, zoom = INITIAL_ZOOM;
+  let index = 0, activeIndex = null, zoom = context.viewState?.zoom ?? INITIAL_ZOOM;
   const slider = createSlider(viewport, (next, error) => {
     state.hidden = next === "ready";
-    if (next === "error") state.textContent = error;
+    if (next === "error") { activeIndex = null; state.textContent = error; }
     if (next === "ready") {
       const metrics = slider.getImageMetrics();
       candidates.render(pages[index]?.candidates, metrics.naturalWidth, metrics.naturalHeight);
@@ -72,11 +72,17 @@ export function createMapearComparisonScreen(context, onBack) {
   const pageList = createPageList({ list: query("[data-pages]"), search: query("[data-search]"),
     paginationRoot: query("[data-pagination]"), onSelect: selectPage,
     onPreview: () => {}, onPreviewPosition: () => {} });
-  const focusDispose = bindFocusMode(element, { button: query("[data-focus-toggle]") });
+  const focusDispose = bindFocusMode(element, { button: query("[data-focus-toggle]"), active: context.viewState?.focus });
+  const navigation = createPageNavigation(element, { chapter: context.chapter,
+    chapters: context.availableChapters, onChapterChange: context.onChapterChange,
+    onPageChange: selectPage });
+  navigation.setPages(pages);
 
   function selectPage(next) {
     if (next < 0 || next >= pages.length) return;
+    if (next === index && activeIndex === next) return;
     index = next;
+    activeIndex = next;
     const page = pages[index];
     const url = mergedLevel3ImageUrl(context.provider, context.manga, context.chapter, page.source);
     state.textContent = "Carregando imagem analisada…"; state.hidden = false;
@@ -87,6 +93,7 @@ export function createMapearComparisonScreen(context, onBack) {
     query("[data-prev]").disabled = index === 0;
     query("[data-next]").disabled = index === pages.length - 1;
     pageList.render(pages, index);
+    navigation.selectPage(index);
     slider.load([url, url]); slider.zoom(zoom / 100); updateZoom();
   }
   function updateZoom() { query("[data-zoom-value]").textContent = `${zoom}%`; }
@@ -112,7 +119,6 @@ export function createMapearComparisonScreen(context, onBack) {
     if (event.key === "ArrowRight") selectPage(index + 1);
   }
   element.addEventListener("click", onClick); element.addEventListener("keydown", onKeyDown);
-  query(".comparison-sidebar-heading span").textContent = `Cap. ${context.chapter}`;
 
   function dispose() {
     element.removeEventListener("click", onClick); element.removeEventListener("keydown", onKeyDown);
@@ -120,6 +126,10 @@ export function createMapearComparisonScreen(context, onBack) {
   }
   return { element, start() {
     if (pages.length) selectPage(0);
-    else state.textContent = "Nenhum balão mapeado disponível para este capítulo.";
-  }, dispose };
+    else {
+      state.textContent = "Nenhum balão mapeado disponível para este capítulo.";
+      query("[data-prev]").disabled = true;
+      query("[data-next]").disabled = true;
+    }
+  }, dispose, getViewState: () => ({ zoom, focus: element.classList.contains("is-focus-mode") }) };
 }

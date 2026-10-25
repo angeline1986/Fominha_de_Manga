@@ -23,7 +23,7 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
       if (focus?.isConnected) focus.focus({ preventScroll: true });
     }
   }
-  function open(row, button, target = {}) {
+  function open(row, button, target = {}, viewState = null) {
     close(false);
     const { provider, manga } = getContext();
     focus = button;
@@ -31,10 +31,12 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
     const createScreen = mode === "mapear" ? createMapearComparisonScreen : createComparisonScreen;
     screen = createScreen({ provider, manga, chapter: row.chapter, step,
       ...(mode === "mapear" ? { mapearPages: row.candidate_pages } : {}),
-      ...(mode === "check" ? { availableChapters, onChapterChange: (chapter) => {
+      availableChapters: availableChapters.filter((entry) => canCompare(entry, step, mode)),
+      onChapterChange: (chapter) => {
         const targetRow = availableChapters.find((entry) => String(entry.chapter) === String(chapter));
-        if (targetRow && canCompare(targetRow, step, mode)) open(targetRow, button);
-      } } : {}),
+        if (targetRow && canCompare(targetRow, step, mode)) open(targetRow, button, {}, screen?.getViewState?.());
+      },
+      ...(viewState ? { viewState } : {}),
       comparisonMode: mode, ...(scope ? { scope } : {}),
       ...(target.page ? { initialPage: target.page } : {}),
       ...(target.occurrence ? { initialOccurrence: target.occurrence } : {}) }, close);

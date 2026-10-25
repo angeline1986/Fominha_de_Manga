@@ -64,6 +64,7 @@ export function renderSpecialWorklist(container, treatment = "estilizado") {
     }
   }
   function draw() {
+    review.setChapters?.(rows);
     root.setAttribute("aria-busy", String(phase === "loading"));
     status.textContent = phase === "idle" ? "Selecione uma obra para consultar os tratamentos."
       : phase === "loading" ? "Consultando tratamentos…" : phase === "error" ? error : "";

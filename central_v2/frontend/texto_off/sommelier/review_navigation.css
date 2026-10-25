@@ -1,0 +1,10 @@
+.sommelier-review-pages-heading {
+  margin: 12px 0 4px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-primary-hover);
+  font-size: var(--font-size-dialog-title);
+}
+.sommelier-review-page-controls { display: block; }
+.sommelier-review-page-controls .comparison-check-selects { margin: 8px 0; }
+.sommelier-review-page-search { margin: 0 0 8px; }

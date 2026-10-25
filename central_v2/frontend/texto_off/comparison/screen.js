@@ -1,15 +1,17 @@
 import { bindFocusMode } from "/_shared/focus_mode/focus_mode.js";
-import { iconMarkup } from "/_shared/icons/icons.js";
 import { fetchComparison, comparisonImageUrl } from "/_app/api/comparison.js";
 import { createSlider } from "/texto_off/comparison/slider.js";
 import { createSolidCatalog } from "/texto_off/comparison/solid_catalog.js";
 import { comparisonModeConfig, INITIAL_ZOOM, clampZoom, level2StatusText } from "/texto_off/comparison/model.js";
 import { createPageList } from "/texto_off/comparison/page_list.js";
 import { createResidueCatalog } from "/texto_off/comparison/residue_catalog.js";
-import { fetchResidueOccurrences } from "/_app/api/residue_occurrences.js";
 import { createDegradeContext } from "/texto_off/comparison/degrade_context.js";
 import { bindDegradeViewTools } from "/texto_off/comparison/degrade_view_tools.js";
 import { bindRestoreMergePreview } from "/texto_off/comparison/restore_merge_preview.js";
+import { comparisonScreenMarkup } from "/texto_off/comparison/screen_template.js";
+import { createPageNavigation } from "/texto_off/comparison/page_navigation.js";
+import { bindComparisonPreview } from "/texto_off/comparison/screen_preview.js";
+import { loadCheckTypes } from "/texto_off/comparison/screen_check_types.js";
 
 export function createComparisonScreen(context, onBack) {
   const mode = comparisonModeConfig(context.comparisonMode);
@@ -17,45 +19,7 @@ export function createComparisonScreen(context, onBack) {
   element.className = "comparison-screen focus-mode-root";
   if (context.comparisonMode === "check") element.classList.add("comparison-check-filters");
   element.setAttribute("aria-label", mode.heading.replace(" · ", ": "));
-  element.innerHTML = `<header class="comparison-page-heading">${mode.heading}</header>
-    <div class="comparison-workspace">
-      <aside class="comparison-sidebar">
-        <div class="comparison-sidebar-heading"><h2>Páginas</h2>${context.comparisonMode === "check" ? "" : `<span>Cap. ${escapeHtml(context.chapter)}</span>`}</div>
-        ${context.comparisonMode === "check" ? `<div class="comparison-check-selects">
-          <label><span class="visually-hidden">Capítulo</span><select data-check-chapter aria-label="Capítulo"></select></label>
-          <label><span class="visually-hidden">Página</span><select data-check-page aria-label="Página"></select></label>
-        </div>` : `<label class="comparison-search"><span class="visually-hidden">Buscar página pelo nome</span>
-          <input data-search type="search" placeholder="Buscar página"></label>`}
-        <div class="comparison-page-list" data-pages role="listbox" aria-label="Páginas do capítulo"></div>
-        <div class="comparison-pagination" data-pagination></div>
-      </aside>
-      <main class="comparison-canvas-panel">
-        <header class="comparison-canvas-toolbar">
-          <div class="comparison-canvas-title"><strong>${mode.title}</strong><span data-summary></span></div>
-          <div class="comparison-canvas-controls">
-            <div class="zoom-control comparison-zoom" aria-label="Controles de zoom">
-              <button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button>
-              <output data-zoom-value aria-live="polite">40%</output>
-              <button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button>
-              <button type="button" data-zoom="one" aria-label="Visualizar em escala 1 para 1">1:1</button>
-            </div>
-            <button type="button" class="btn comparison-focus-toggle" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button>
-            <button type="button" class="btn comparison-panel-toggle" data-panel-toggle aria-controls="comparison-residue-panel" aria-expanded="false" aria-pressed="false">Painel</button>
-          </div>
-        </header>
-        <div class="comparison-canvas-viewport"><div class="comparison-state" data-state role="status" aria-live="polite"></div><div data-viewport></div></div>
-        <footer class="comparison-canvas-footer"><span>Zoom e rolagem sincronizados</span>
-          <div class="comparison-focus-navigation" data-focus-navigation aria-label="Navegação entre páginas">
-            <button type="button" data-prev aria-label="Página anterior" title="Página anterior">${iconMarkup("back")}</button>
-            <output data-focus-count></output>
-            <button type="button" data-next aria-label="Próxima página" title="Próxima página">${iconMarkup("next")}</button>
-          </div>
-          <span>Atalho de foco: F</span>
-        </footer>
-      </main>
-    </div>
-    <aside class="comparison-hover-preview" data-preview role="tooltip" hidden>
-      <img alt="Prévia da imagem original"><span data-preview-name></span></aside>`;
+  element.innerHTML = comparisonScreenMarkup(mode, context.comparisonMode);
   const query = (selector) => element.querySelector(selector);
   if (context.comparisonMode === "check") {
     const stylesheet = document.createElement("link");
@@ -63,63 +27,18 @@ export function createComparisonScreen(context, onBack) {
     stylesheet.href = "/texto_off/comparison/restore_merge_preview.css";
     element.append(stylesheet);
   }
-  if (context.comparisonMode === "check") {
-    const style = document.createElement("style");
-    style.textContent = `.comparison-check-filters .comparison-check-selects{
-        display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.34fr);
-        gap:9px;margin:0 0 14px;align-items:center
-      }
-      .comparison-check-filters .comparison-check-selects label{
-        position:relative;display:block;min-width:0
-      }
-      .comparison-check-filters .comparison-check-selects label::after{
-        content:"";pointer-events:none;position:absolute;
-        width:8px;height:8px;right:15px;top:calc(50% - 6px);
-        border-right:1.8px solid #537b93;border-bottom:1.8px solid #537b93;
-        transform:rotate(45deg)
-      }
-      .comparison-check-filters .comparison-check-selects select{
-        display:block;width:100%;min-width:0;height:44px;
-        box-sizing:border-box;padding:0 34px 0 13px;
-        border:1px solid #c7dfed;border-radius:10px;
-        background-color:#fff;color:#275875;
-        font-family:inherit;font-size:15px;font-weight:500;line-height:1.3;
-        letter-spacing:0;appearance:none;-webkit-appearance:none;
-        box-shadow:none;cursor:pointer;outline:none
-      }
-      .comparison-check-filters .comparison-check-selects select:hover{
-        border-color:#9bc8e1
-      }
-      .comparison-check-filters .comparison-check-selects select:focus-visible{
-        border-color:#5b9ec1;outline:2px solid #aed7ec;outline-offset:1px
-      }
-      .comparison-check-filters .comparison-check-selects select:disabled{
-        color:#738e9f;background-color:#f8fbfd;cursor:default
-      }
-      .comparison-check-filters .comparison-check-selects label:has(select:disabled)::after{
-        opacity:.55
-      }`;
-    element.append(style);
-    const chapterSelect = query("[data-check-chapter]");
-    const chapters = Array.isArray(context.availableChapters) ? context.availableChapters : [];
-    const candidates = chapters.filter((item) => item.cleaned === true);
-    if (!candidates.some((item) => String(item.chapter) === String(context.chapter))) {
-      candidates.unshift({ chapter: context.chapter });
-    }
-    for (const item of candidates) {
-      const option = document.createElement("option");
-      option.value = String(item.chapter);
-      option.textContent = `Cap. ${item.chapter}`;
-      chapterSelect.append(option);
-    }
-    chapterSelect.value = String(context.chapter);
-    chapterSelect.addEventListener("change", () => context.onChapterChange?.(chapterSelect.value));
-  }
+  const navigation = createPageNavigation(element, {
+    chapter: context.chapter,
+    chapters: context.availableChapters,
+    onChapterChange: context.onChapterChange,
+    onPageChange: selectPage,
+  });
   const canvas = query("[data-viewport]");
   const state = query("[data-state]"), preview = query("[data-preview]");
   const controller = new AbortController();
-  let pages = [], index = 0, activeImageIndex = null, pageState = "loading", zoom = INITIAL_ZOOM, disposed = false;
+  let pages = [], index = 0, activeImageIndex = null, pageState = "loading", zoom = context.viewState?.zoom ?? INITIAL_ZOOM, disposed = false;
   const checkTypes = new Map();
+  const dirtyPages = new Set();
   const checkImageRefreshRetries = new Set();
   const slider = createSlider(canvas, (nextState, error) => {
     canvas.setAttribute("aria-busy", String(nextState === "loading"));
@@ -144,6 +63,8 @@ export function createComparisonScreen(context, onBack) {
       pageList.setOccurrenceCount(pageName, count);
     },
     onDraftState: (pageName, count, dirty, types) => {
+      if (dirty) dirtyPages.add(pageName); else dirtyPages.delete(pageName);
+      navigation.setChapterBlocked(dirtyPages.size > 0);
       if (context.comparisonMode === "check" && Array.isArray(types)) checkTypes.set(pageName, types);
       pageList.setDraftOccurrenceCount(pageName, count);
     },
@@ -155,6 +76,8 @@ export function createComparisonScreen(context, onBack) {
   catalog.element.id = "comparison-residue-panel";
   query(".comparison-workspace").append(catalog.element);
   const focusButton = query("[data-focus-toggle]");
+  const { show: showPreview, position: drawPreviewPosition } = bindComparisonPreview(
+    preview, query(".comparison-sidebar"), (name) => pages.find((page) => page.name === name), context, mode);
   const pageList = createPageList({
     list: query("[data-pages]"), search: query("[data-search]"),
     paginationRoot: query("[data-pagination]"), onSelect: selectPage,
@@ -168,7 +91,7 @@ export function createComparisonScreen(context, onBack) {
     ? bindRestoreMergePreview(query(".comparison-canvas-controls"), () => ({
         context, page: pages[index],
       }), () => load()) : null;
-  const disposeFocus = bindFocusMode(element, { button: focusButton });
+  const disposeFocus = bindFocusMode(element, { button: focusButton, active: context.viewState?.focus });
   const disposeViewTools = context.comparisonMode === "degrade" ? bindDegradeViewTools(query(".comparison-canvas-controls"), slider) : () => {};
   document.body.append(preview);
 
@@ -194,8 +117,7 @@ export function createComparisonScreen(context, onBack) {
     query("[data-next]").disabled = index >= pages.length - 1;
     pageList.render(pages, index);
     restorePreview?.setReady(Boolean(pages[index]));
-    const pageSelect = query("[data-check-page]");
-    if (pageSelect) pageSelect.value = String(index);
+    navigation.selectPage(index);
     activeImageIndex = index;
     const imageContext = { ...context, layout: mode.layout };
     const status = context.comparisonMode === "before_after" && page.level2_status
@@ -208,30 +130,6 @@ export function createComparisonScreen(context, onBack) {
     if (context.comparisonMode !== "check" || !page || checkImageRefreshRetries.has(page.name)) return;
     checkImageRefreshRetries.add(page.name);
     void load({ preserveSelection: true });
-  }
-  function drawPreviewPosition(button) {
-    if (!button || preview.hidden) return;
-    const rect = button.getBoundingClientRect();
-    const sidebar = query(".comparison-sidebar").getBoundingClientRect();
-    const card = preview.getBoundingClientRect();
-    const width = card.width || 300, height = card.height || 420;
-    const gap = 12;
-    let left = sidebar.right + gap;
-    if (left + width > innerWidth - 8) left = sidebar.left - width - gap;
-    left = Math.max(8, Math.min(left, innerWidth - width - 8));
-    let top = rect.top - 24;
-    top = Math.max(8, Math.min(top, innerHeight - height - 8));
-    preview.style.left = `${left}px`; preview.style.top = `${top}px`;
-  }
-  function showPreview(name, item) {
-    if (name === null) { preview.hidden = true; return; }
-    const page = pages.find((entry) => entry.name === name);
-    if (!page) return;
-    preview.querySelector("img").src = comparisonImageUrl(
-      { ...context, layout: mode.layout }, page, mode.sides[0],
-    );
-    preview.querySelector("[data-preview-name]").textContent = name;
-    preview.hidden = false; drawPreviewPosition(item);
   }
   function onZoom(event) {
     const action = event.target.closest("[data-zoom]")?.dataset.zoom;
@@ -256,8 +154,6 @@ export function createComparisonScreen(context, onBack) {
     if (pages[index + delta]) selectPage(index + delta);
   }
   function onPanel(event) { if (event.target.closest("[data-panel-toggle]")) catalog.toggle(); }
-  const pageSelect = query("[data-check-page]");
-  if (pageSelect) pageSelect.addEventListener("change", () => selectPage(Number(pageSelect.value)));
   const disposePageList = pageList.dispose;
   element.addEventListener("click", onZoom);
   element.addEventListener("click", onMove);
@@ -270,17 +166,9 @@ export function createComparisonScreen(context, onBack) {
       const result = await fetchComparison({ ...context, layout: mode.layout }, controller.signal);
       if (disposed) return;
       pages = result.pages || [];
-      if (context.comparisonMode === "check") void loadCheckTypes(pages);
-      if (pageSelect) {
-        pageSelect.replaceChildren();
-        pages.forEach((page, pageIndex) => {
-          const option = document.createElement("option");
-          option.value = String(pageIndex);
-          option.textContent = page.name.replace(/^page-/, "Pág. ").replace(/\.png$/i, "");
-          pageSelect.append(option);
-        });
-        pageSelect.disabled = pages.length === 0;
-      }
+      if (context.comparisonMode === "check") void loadCheckTypes(pages, context, controller.signal,
+        () => disposed, (name, types) => { checkTypes.set(name, types); pageList.setOccurrenceTypes(name); });
+      navigation.setPages(pages);
       catalog.setPages?.(pages);
       if (!pages.length) { pageState = "empty"; drawState(); pageList.render(pages, index); return; }
       if (selectedPage && pages.some((page) => page.name === selectedPage)) {
@@ -293,24 +181,6 @@ export function createComparisonScreen(context, onBack) {
       if (!disposed && error.name !== "AbortError") { pageState = "error"; state.textContent = error.message; drawState(); }
     }
   }
-  async function loadCheckTypes(rows) {
-    // Até três requisições simultâneas; uma falha não cria classificação fictícia.
-    let cursor = 0;
-    async function worker() {
-      while (!disposed && cursor < rows.length) {
-        const page = rows[cursor++];
-        try {
-          const result = await fetchResidueOccurrences({ ...context, page: page.name }, controller.signal);
-          if (disposed) return;
-          checkTypes.set(page.name, (result.occurrences || []).map((item) => item.type ?? item.tipo ?? ""));
-          pageList.setOccurrenceTypes(page.name);
-        } catch (error) {
-          if (error.name !== "AbortError") console.warn("[Check] Falha ao consultar tipos:", page.name, error);
-        }
-      }
-    }
-    await Promise.all(Array.from({ length: Math.min(3, rows.length) }, worker));
-  }
   function dispose() {
     disposed = true; controller.abort(); preview.hidden = true; preview.querySelector("img").removeAttribute("src"); preview.remove();
     disposePageList();
@@ -322,6 +192,5 @@ export function createComparisonScreen(context, onBack) {
     disposeViewTools();
   }
   drawState();
-  return { element, start: load, dispose };
+  return { element, start: load, dispose, getViewState: () => ({ zoom, focus: element.classList.contains("is-focus-mode") }) };
 }
-function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }
