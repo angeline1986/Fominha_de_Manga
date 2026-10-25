@@ -6,7 +6,8 @@ import { createMapearComparisonScreen } from "/texto_off/comparison/mapear_scree
 
 export function canCompare(row, step, mode = comparisonModeForStep(step)) {
   if (mode === "mapear") return row.cleaned === true && row.candidate_pages?.length > 0;
-  if (mode === "level1" || mode === "level2" || mode === "before_after" || mode === "check") return row.cleaned === true;
+  if (mode === "level2") return row.cleaned === true && ["processed", "no_change"].includes(row.level2_status);
+  if (mode === "level1" || mode === "before_after" || mode === "check") return row.cleaned === true;
   if (["degrade", "suave", "artistico"].includes(mode)) return row.review_available === true;
   return row.comparison_available === true;
 }

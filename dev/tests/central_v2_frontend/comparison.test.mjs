@@ -144,7 +144,7 @@ test('comparison availability is scoped to the navigation mode', async () => {
   const { canCompare } = await browserModules()('/texto_off/comparison/launcher.js');
   const row = { cleaned: true, level2_status: 'pending', comparison_available: false };
   assert.equal(canCompare(row, '1', 'level1'), true);
-  assert.equal(canCompare(row, '2', 'level2'), true);
+  assert.equal(canCompare(row, '2', 'level2'), false);
   assert.equal(canCompare(row, '1', 'before_after'), true);
   assert.equal(canCompare(row, '3', 'preview'), false);
   assert.equal(canCompare({ level2_status: 'no_change' }, '2'), false);

@@ -2,6 +2,14 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { browserModules } from './modules.mjs';
 
+test('Glass Básica offers chapters only after Passo 2 has a valid result', async () => {
+  const { canCompare } = await browserModules()('/texto_off/comparison/launcher.js');
+  assert.equal(canCompare({ cleaned: true, level2_status: 'pending' }, '2', 'level2'), false);
+  assert.equal(canCompare({ cleaned: true, level2_status: 'no_candidates' }, '2', 'level2'), false);
+  assert.equal(canCompare({ cleaned: true, level2_status: 'processed' }, '2', 'level2'), true);
+  assert.equal(canCompare({ cleaned: true, level2_status: 'no_change' }, '2', 'level2'), true);
+});
+
 test('chapter change opens only eligible results and retains zoom and focus', async () => {
   const contexts = [];
   const origin = {
