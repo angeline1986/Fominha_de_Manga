@@ -1,0 +1,13 @@
+SET search_path TO fominha, public;
+DROP TRIGGER IF EXISTS reset_item_guard ON reset_items;
+DROP TRIGGER IF EXISTS reset_event_scope ON reset_events;
+DROP TRIGGER IF EXISTS publication_item_guard ON publication_items;
+DROP TRIGGER IF EXISTS publication_run_scope ON publications;
+DROP TRIGGER IF EXISTS segment_version_scope ON derived_segment_versions;
+DROP TRIGGER IF EXISTS stage_scope_definition ON stage_run_scopes;
+DROP FUNCTION IF EXISTS guard_reset_item();
+DROP FUNCTION IF EXISTS guard_reset_event_scope();
+DROP FUNCTION IF EXISTS guard_publication_item();
+DROP FUNCTION IF EXISTS guard_publication_run_scope();
+DROP FUNCTION IF EXISTS guard_segment_version_scope();
+DROP FUNCTION IF EXISTS guard_scope_definition();

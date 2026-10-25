@@ -1,0 +1,18 @@
+SET search_path TO fominha, public;
+ALTER TABLE invalidation_outbox DROP CONSTRAINT IF EXISTS invalidation_approval_decision_fk;
+ALTER TABLE invalidation_outbox DROP CONSTRAINT IF EXISTS invalidation_previous_approval_fk;
+ALTER TABLE invalidation_outbox DROP CONSTRAINT IF EXISTS invalidation_source_version_fk;
+ALTER TABLE invalidation_outbox DROP CONSTRAINT IF EXISTS invalidation_previous_version_fk;
+ALTER TABLE invalidation_outbox DROP CONSTRAINT IF EXISTS invalidation_approval_subject_fk;
+ALTER TABLE approval_dependencies DROP CONSTRAINT IF EXISTS approval_dependency_decision_fk;
+DROP TABLE IF EXISTS current_approval_decisions;
+DROP TABLE IF EXISTS approval_decisions;
+DROP TABLE IF EXISTS approval_subjects;
+DROP TABLE IF EXISTS approval_batches;
+DROP TABLE IF EXISTS occurrence_revisions;
+DROP TABLE IF EXISTS occurrences;
+DROP TABLE IF EXISTS segment_source_ranges;
+ALTER TABLE artifact_slots DROP CONSTRAINT IF EXISTS artifact_slot_segment_fk;
+ALTER TABLE artifact_slots DROP CONSTRAINT IF EXISTS artifact_slot_page_fk;
+ALTER TABLE stage_run_scopes DROP CONSTRAINT IF EXISTS stage_scope_segment_fk;
+ALTER TABLE stage_run_scopes DROP CONSTRAINT IF EXISTS stage_scope_page_fk;

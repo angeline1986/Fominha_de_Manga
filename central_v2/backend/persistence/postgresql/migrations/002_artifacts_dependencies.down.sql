@@ -1,0 +1,12 @@
+SET search_path TO fominha, public;
+DROP TABLE IF EXISTS invalidation_outbox;
+DROP TABLE IF EXISTS artifact_state_events;
+DROP TABLE IF EXISTS artifact_validations;
+DROP TABLE IF EXISTS approval_dependencies;
+DROP TABLE IF EXISTS artifact_dependencies;
+DROP TABLE IF EXISTS stage_run_artifacts;
+DROP TABLE IF EXISTS artifact_versions;
+DROP TABLE IF EXISTS artifact_slots;
+DROP TABLE IF EXISTS artifact_objects;
+DROP TABLE IF EXISTS derived_segment_versions;
+DROP TABLE IF EXISTS derived_segments;

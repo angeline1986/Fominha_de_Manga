@@ -1,0 +1,10 @@
+SET search_path TO fominha, public;
+REVOKE SELECT ON public.fominha_schema_migrations FROM fominha_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA fominha REVOKE SELECT,INSERT ON TABLES FROM fominha_app;
+ALTER DEFAULT PRIVILEGES IN SCHEMA fominha REVOKE ALL ON TABLES FROM fominha_migrator;
+REVOKE ALL PRIVILEGES ON ALL TABLES IN SCHEMA fominha FROM fominha_app,fominha_migrator,fominha_retention;
+REVOKE ALL PRIVILEGES ON ALL SEQUENCES IN SCHEMA fominha FROM fominha_migrator;
+REVOKE USAGE ON SCHEMA fominha FROM fominha_app,fominha_migrator,fominha_retention;
+DROP ROLE IF EXISTS fominha_app;
+DROP ROLE IF EXISTS fominha_migrator;
+DROP ROLE IF EXISTS fominha_retention;

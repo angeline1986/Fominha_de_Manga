@@ -1,0 +1,13 @@
+SET search_path TO fominha, public;
+DROP TABLE IF EXISTS stage_run_events;
+DROP TABLE IF EXISTS stage_run_scopes;
+DROP TABLE IF EXISTS stage_runs;
+DROP TABLE IF EXISTS pipeline_stages;
+DROP TABLE IF EXISTS source_page_aliases;
+DROP TABLE IF EXISTS source_pages;
+DROP TABLE IF EXISTS chapters;
+DROP TABLE IF EXISTS work_path_aliases;
+DROP TABLE IF EXISTS works;
+DROP TABLE IF EXISTS providers;
+DROP SCHEMA IF EXISTS fominha;
+DROP EXTENSION IF EXISTS btree_gist;

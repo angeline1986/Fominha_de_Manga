@@ -1,0 +1,9 @@
+SET search_path TO fominha, public;
+DROP TABLE IF EXISTS legacy_import_items;
+DROP TABLE IF EXISTS legacy_import_batches;
+DROP TABLE IF EXISTS audit_events;
+DROP TABLE IF EXISTS reset_items;
+DROP TABLE IF EXISTS reset_events;
+DROP TABLE IF EXISTS active_artifacts;
+DROP TABLE IF EXISTS publication_items;
+DROP TABLE IF EXISTS publications;
