@@ -62,7 +62,12 @@ class LaboratoryFileSelectionTests(unittest.TestCase):
         with patch("central_v2.backend.routes.laboratorio_solidos._filter",
                    return_value=(Image.new("RGB", (30, 30)),
                                  Image.new("L", (30, 30)), [])):
-            self.assertEqual(execute_solids(self.payload, self.output).status, 200)
+            solids = execute_solids(self.payload, self.output)
+            self.assertEqual(solids.status, 200)
+            run_id = json.loads(solids.body)["run_id"]
+            manifest = json.loads((self.output / "_laboratorio_solidos_previews"
+                                   / run_id / "manifest.json").read_text())
+            self.assertEqual(manifest["source_path"], self.payload["path"])
 
     def test_selected_path_cannot_escape_the_work(self):
         outside = self.output / "outside.png"

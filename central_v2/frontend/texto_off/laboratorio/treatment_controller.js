@@ -136,11 +136,14 @@ export function connectTreatmentController({ root, navigation, workspace, image,
       roi.setSource(`${identity}|${src}`, true);
       Promise.resolve().then(async () => {
         if (disposed || id !== originalLoadSerial) return;
-        const revision = stylized.revision();
+        const stylizedRevision = stylized.revision();
+        const solidRevision = solid.revision();
         try {
-          const { result } = await getRecentLaboratoryResult(recoveryIdentity);
-          if (disposed || id !== originalLoadSerial || !result) return;
-          stylized.restore(result, recoveryIdentity, revision);
+          const { result, solids_result: solidsResult } =
+            await getRecentLaboratoryResult(recoveryIdentity);
+          if (disposed || id !== originalLoadSerial) return;
+          if (result) stylized.restore(result, recoveryIdentity, stylizedRevision);
+          if (solidsResult) solid.restore(solidsResult, recoveryIdentity, solidRevision);
         } catch {
           // A saved preview is optional; execution remains available.
         }

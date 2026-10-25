@@ -81,7 +81,7 @@ def execute(payload, output_root):
         provider, manga = payload.get("provider"), payload.get("manga")
         selections = validate_selections(payload.get("selections"))
         if len(selections) > 30: raise ValueError("Limite de 30 áreas por prévia")
-        _, source, chapter, page = resolve_source(payload, output_root)
+        manga_path, source, chapter, page = resolve_source(payload, output_root)
         source_hash = _sha(source)
         with Image.open(source) as inp: original = inp.convert("RGB")
         if original.width*original.height > 100_000_000:
@@ -98,6 +98,7 @@ def execute(payload, output_root):
             mask.save(target/"mask.png")
             meta = {"schema":"laboratorio_solidos_preview_v1", "source_sha256":source_hash,
                     "provider":provider,"manga":manga,"chapter":chapter,"page":page,
+                    "source_path":str(source.relative_to(manga_path)),
                     "preview_sha256":_sha(target/"preview.png"),"regions":audit,
                     "preview_only":True}
             (target/"manifest.json").write_text(json.dumps(meta,ensure_ascii=False,indent=2)+"\n")

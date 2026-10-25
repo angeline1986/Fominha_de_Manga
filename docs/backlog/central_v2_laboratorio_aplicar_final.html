@@ -130,6 +130,10 @@
     <h3>Recuperação da última execução do Artístico</h3>
     <p>Ao selecionar novamente a mesma imagem de origem, a Central V2 recupera a execução concluída mais recente do Artístico quando origem, SHA-256, snapshot, manifesto e PNG continuam verificáveis. O cartão mostra <strong>“Resultado recuperado”</strong> e permite selecionar a prévia para o Consolidado Final sem recalcular o filtro.</p>
     <p>A execução real <code>91021c3f2a5e470585e994d76bdeaede</code> de <code>page-075-078.png</code> permanece no disco; a consulta e a leitura do PNG retornaram HTTP 200, sem publicação final. Passaram 33 testes focados de backend e 20 de frontend. A conferência visual na Central V2 permanece pendente.</p>
+    <h3>Sólidos sobre arquivo clean do capítulo 5</h3>
+    <p>A prévia de <code>page-076-082_clean.png</code> aparecia no cartão, mas a proposta retornava HTTP 400 porque o manifesto guardava o nome físico, sem o destino oficial <code>5/page-076-082.png</code>. Novas prévias registram o caminho da origem; prévias anteriores são vinculadas pelo SHA-256 e pelo capítulo de caminhos conhecidos, sempre exigindo um único destino.</p>
+    <p>A execução real <code>24b58dcdb0a84bfa8ea9ea938ec8a932</code> agora produz proposta válida para o capítulo 5, sem publicação. Um teste isolado aplicou uma prévia antiga e confirmou que a página de mesmo nome no capítulo 3 permaneceu intacta.</p>
+    <p>Ao selecionar novamente a mesma origem, o cartão Sólidos recupera a última prévia íntegra, inclusive essa execução, sem repetir o filtro.</p>
   </section>
 
   <footer>

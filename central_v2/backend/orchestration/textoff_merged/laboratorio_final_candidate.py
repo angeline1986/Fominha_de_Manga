@@ -10,6 +10,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import (
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT, treatment_for
 from central_v2.backend.orchestration.textoff_special.run_paths import run_folder
 from .laboratorio_final_target import final_target
+from .laboratorio_final_solid_source import solid_target
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
 SOLID_PREVIEWS = "_laboratorio_solidos_previews"
@@ -70,8 +71,7 @@ def _solid(manga: Path, chapter: str, page: str, run_id: str,
     if (meta.get("schema") != "laboratorio_solidos_preview_v1"
             or meta.get("preview_only") is not True
             or meta.get("provider") != manga.parent.name
-            or meta.get("manga") != manga.name
-            or meta.get("chapter") != chapter or meta.get("page") != page):
+            or meta.get("manga") != manga.name):
         raise ValueError("Resultado Sólidos não corresponde à página selecionada.")
     result = contained_file(folder, "preview.png")
     digest = meta.get("preview_sha256")
@@ -80,9 +80,14 @@ def _solid(manga: Path, chapter: str, page: str, run_id: str,
             or not re.fullmatch(r"[0-9a-f]{64}", meta["source_sha256"])
             or sha256(result) != digest):
         raise ValueError("Resultado Sólidos com hash divergente.")
+    final_chapter, final_page = solid_target(manga, meta)
+    if (chapter, page) not in {(meta.get("chapter"), meta.get("page")),
+                               (final_chapter, final_page)}:
+        raise ValueError("Resultado Sólidos não corresponde à página selecionada.")
     return {"path": result, "sha256": digest,
             "source_sha256": meta["source_sha256"], "treatment": "solidos",
-            "run_id": run_id, "artifact": "preview.png"}
+            "run_id": run_id, "artifact": "preview.png",
+            "final_chapter": final_chapter, "final_page": final_page}
 
 
 def image_size(path: Path) -> tuple[int, int]:

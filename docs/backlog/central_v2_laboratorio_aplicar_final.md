@@ -125,4 +125,12 @@ Definir um fluxo controlado na Central V2 para aplicar, mediante confirmação, 
 - A execução real `91021c3f2a5e470585e994d76bdeaede` de `page-075-078.png` permanece no disco; a consulta de recuperação e a leitura do PNG retornaram HTTP 200 sem alterar o Consolidado Final.
 - Verificação focada atual: 33 testes de backend e 20 de frontend passaram. A conferência visual na Central V2 ainda está pendente.
 
+### Sólidos sobre arquivo `clean` do capítulo 5
+
+- **Sintoma:** a prévia Sólidos de `page-076-082_clean.png` era exibida, mas a proposta para o Consolidado Final retornava HTTP 400.
+- **Causa:** o manifesto da prévia guardava `clean` e o nome físico do arquivo, sem o caminho da origem. O destino oficial é `5/page-076-082.png`, e o mesmo nome existe em outros capítulos.
+- **Correção:** novas prévias registram o caminho da origem. Para prévias antigas, a proposta confere o SHA-256 da origem em caminhos conhecidos e exige que todos apontem para uma única página final. Capítulo ambíguo continua bloqueado.
+- **Verificação:** a prévia real `24b58dcdb0a84bfa8ea9ea938ec8a932` produziu uma proposta válida para `5/page-076-082.png` (940 × 6237 px), sem publicação. Teste isolado aplicou uma prévia antiga ao capítulo 5 e verificou que a página homônima do capítulo 3 permaneceu intacta.
+- **Recuperação:** ao selecionar novamente a mesma imagem, o cartão Sólidos reabre a última prévia íntegra, inclusive a execução acima, sem repetir o filtro. A consulta real retornou o mesmo run_id.
+
 Cada etapa deve manter arquivos de código com até 200 linhas e passar pelos testes focados antes de avançar.

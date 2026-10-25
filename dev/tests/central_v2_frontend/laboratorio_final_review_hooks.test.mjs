@@ -90,7 +90,7 @@ test('resposta tardia não volta a habilitar a seleção', async () => {
   controller.dispose();
 });
 
-test('Artístico recuperado reaparece no cartão e volta a oferecer seleção', async () => {
+test('Artístico e Sólidos recuperados reaparecem nos cartões para seleção', async () => {
   const { cards, root } = fixture();
   const calls = [];
   const review = { ready: (...args) => calls.push(args), clear() {} };
@@ -99,8 +99,10 @@ test('Artístico recuperado reaparece no cartão e volta a oferecer seleção', 
       export async function executeSmoothLaboratoryJob() {}
       export async function executeSolidLaboratory() {}`,
   });
-  const { connectStylized } = await load('/texto_off/laboratorio/tratamentos.js');
+  const { connectStylized, connectSolid } = await load('/texto_off/laboratorio/tratamentos.js');
   const controller = connectStylized({ root, button: new Element(),
+    getRequest: () => null, review });
+  const solids = connectSolid({ root, button: new Element(),
     getRequest: () => null, review });
   const identity = { provider: 'comix', manga: 'obra', chapter: 'images',
     page: 'page.png', source: 'file', path: 'check/4/images/page.png' };
@@ -112,7 +114,14 @@ test('Artístico recuperado reaparece no cartão e volta a oferecer seleção', 
   assert.equal(cards[1].placeholder.textContent, 'Resultado recuperado');
   assert.equal(calls[0][0], 'estilizado');
   assert.equal(calls[0][2], result.run_id);
+  const solidResult = { ...result, treatment: 'solidos',
+    image_url: '/api/textoff/laboratorio/solidos/image?run_id=' + result.run_id };
+  assert.equal(solids.restore(solidResult, identity, solids.revision()), true);
+  cards[3].children[0].onload();
+  assert.equal(cards[3].placeholder.textContent, 'Resultado recuperado');
+  assert.equal(calls[1][0], 'solidos');
   controller.invalidate();
   assert.equal(controller.restore(result, identity, revision), false);
   controller.dispose();
+  solids.dispose();
 });

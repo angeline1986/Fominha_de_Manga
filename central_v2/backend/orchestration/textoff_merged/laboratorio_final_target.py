@@ -53,6 +53,10 @@ def _source_chapter(manga: Path, path: Path, source: dict) -> str | None:
             and parts[4] == "images" and parts[5] == source.get("filename")
             and source.get("chapter") == "images"):
         return parts[3]
+    if (len(parts) == 6 and parts[2] in {"01_AUTO_CLEANER", "TO_MERGED_NIVEL_I"}
+            and parts[4] == "clean" and parts[5] == source.get("filename")
+            and source.get("chapter") == "clean"):
+        return parts[3]
     if (len(parts) == 7 and parts[2] == "05_AUTO_CLEANER_TRANSPARENCIA"
             and parts[3] in {"BASICA", "NORMAL", "LEGADA"}
             and parts[5] == "clean" and parts[6] == source.get("filename")
