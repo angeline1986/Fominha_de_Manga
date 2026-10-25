@@ -1,5 +1,5 @@
 export const KINDS = [
-  { key: "textoff_merged", label: "TEXTO OFF — MERGED", dest: "raws_semi-clean", unit: "imagens" },
+  { key: "textoff_merged", label: "TEXTO OFF — CONSOLIDADO FINAL", dest: "raws_semi-clean", unit: "imagens" },
   { key: "pdf_merge", label: "PDF_MERGE", dest: "Traducoes", unit: "PDFs" },
 ];
 export const mb = n => `${(Number(n || 0) / 1000000).toLocaleString("pt-BR", { maximumFractionDigits: 1 })} MB`;

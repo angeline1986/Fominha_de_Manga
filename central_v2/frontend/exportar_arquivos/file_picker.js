@@ -1,4 +1,4 @@
-import { post } from "/exportar_arquivos/state.js";
+import { KINDS, post } from "/exportar_arquivos/state.js";
 
 // Navegador virtual: a API devolve somente arquivos elegíveis sob a origem da obra.
 // Pastas são derivadas desses caminhos e nunca acessam diretórios arbitrários.
@@ -27,7 +27,7 @@ export function createFilePicker(root, onSelect) {
     </footer>`;
   root.append(dialog);
   const $ = q => dialog.querySelector(q);
-  let serial = 0, kind = "", work = "", current = "", files = [];
+  let serial = 0, kind = "", source = "", work = "", current = "", files = [];
   let selected = new Set(), allMode = true, loaded = false;
 
   const isWithin = (path, dir) => !dir || path.startsWith(`${dir}/`);
@@ -59,7 +59,7 @@ export function createFilePicker(root, onSelect) {
   }
   function browse(path = "") {
     current = path;
-    $("[data-path]").textContent = `${work}/${kind}${path ? `/${path}` : ""}`;
+    $("[data-path]").textContent = `${work}/${source}${path ? `/${path}` : ""}`;
     const list = $("[data-list]");
     list.replaceChildren();
     if (path) list.append(row("← Pasta anterior", "dir", () => browse(path.split("/").slice(0, -1).join("/"))));
@@ -94,19 +94,21 @@ export function createFilePicker(root, onSelect) {
   async function open(provider, manga, nextKind, previous) {
     close();
     kind = nextKind;
+    source = KINDS.find(item => item.key === kind)?.label || kind;
     work = `${provider}/${manga}`;
     current = "";
     files = []; loaded = false; selected = new Set();
     allMode = previous == null;
     const id = ++serial;
     $("[data-list]").textContent = "Carregando arquivos…";
-    $("[data-path]").textContent = `${work}/${kind}`;
+    $("[data-path]").textContent = `${work}/${source}`;
     $("[data-info]").textContent = "";
     update();
     dialog.showModal();
     try {
       const data = await post("/api/export/files", {provider, manga, kind});
       if (id !== serial || !dialog.open) return;
+      if (typeof data.source === "string" && data.source) source = data.source;
       files = Array.isArray(data.files) ? data.files : [];
       if (files.length > 10000) throw new Error("Quantidade excessiva de arquivos.");
       if (!files.every(f => typeof f.path === "string" && f.path && !f.path.startsWith("/") &&

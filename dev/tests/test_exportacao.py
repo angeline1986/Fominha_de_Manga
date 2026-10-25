@@ -39,6 +39,12 @@ class ExportacaoTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as td:
             root = Path(td)
             manga = self.manga(root)
+            for decoy in (
+                manga / "textoff_merged/1/page-001.png",
+                manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/MERGED/1/page-001.png",
+            ):
+                decoy.parent.mkdir(parents=True)
+                decoy.write_bytes(b"not-final")
             dest = root / "dest"
             dest.mkdir()
             (dest / "keep.txt").write_text("keep")
@@ -47,7 +53,9 @@ class ExportacaoTest(unittest.TestCase):
             )
             result = exportador.execute_plan(manga, plan["plan_id"])
             self.assertTrue((dest / "keep.txt").is_file())
-            self.assertTrue((dest / "obra/raws_semi-clean/1/page-001.png").is_file())
+            self.assertEqual(
+                (dest / "obra/raws_semi-clean/1/page-001.png").read_bytes(), b"image"
+            )
             self.assertTrue((dest / "obra/Traducoes/1/1.pdf").is_file())
             self.assertEqual(result["copied"], 2)
 
@@ -96,7 +104,9 @@ class ExportacaoTest(unittest.TestCase):
             (history / "page-001.png").write_bytes(b"old")
             (laboratory / "page-001.png").write_bytes(b"experimental")
 
-            files = exportador.list_source_files(manga, "textoff_merged")["files"]
+            listing = exportador.list_source_files(manga, "textoff_merged")
+            self.assertEqual(listing["source"], "FLUXO_SECUNDARIO/04_TEXTO_OFF/07_CONSOLIDADO_FINAL")
+            files = listing["files"]
             self.assertEqual([row["path"] for row in files], ["1/page-001.png"])
 
             dest = root / "dest"

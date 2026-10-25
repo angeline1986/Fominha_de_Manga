@@ -5,7 +5,7 @@ from pathlib import Path
 _PLAN_LOCK=threading.Lock()
 _PLANS={}
 CONTENT={
- "textoff_merged":{"label":"Texto Off — MERGED","source":("FLUXO_SECUNDARIO","04_TEXTO_OFF","07_CONSOLIDADO_FINAL"),"dest":"raws_semi-clean"},
+ "textoff_merged":{"label":"Texto Off — Consolidado Final","source":("FLUXO_SECUNDARIO","04_TEXTO_OFF","07_CONSOLIDADO_FINAL"),"dest":"raws_semi-clean"},
  "pdf_merge":{"label":"PDF_MERGE","source":("FLUXO_SECUNDARIO","03_PDF_MERGE"),"dest":"Traducoes"},
 }
 
@@ -70,7 +70,7 @@ def list_source_files(manga, kind):
     result=[]
     for src,relative in _source_files(base,kind):
         result.append({"path":relative.as_posix(),"size":src.stat().st_size})
-    return {"kind":kind,"files":result}
+    return {"kind":kind,"source":"/".join(CONTENT[kind]["source"]),"files":result}
 
 
 def _normalize_selection(selections, keys):
