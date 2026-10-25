@@ -107,10 +107,6 @@ export const routes = {
     context: "exportar-arquivos",
     module: "/exportar_arquivos/saved_works/index.js",
   },
-  "destino-local": {
-    context: "exportar-arquivos",
-    module: "/exportar_arquivos/index.js",
-  },
   "pdf-originais": {
     context: "gerar-pdf",
     module: "/gerar_pdf/originais.js",

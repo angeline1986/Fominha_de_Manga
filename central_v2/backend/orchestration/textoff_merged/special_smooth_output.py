@@ -8,6 +8,7 @@ import tempfile
 
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT, treatment_for
+from central_v2.backend.orchestration.textoff_special.run_paths import run_from_manifest
 
 from .artifact_paths import artifact_ref, prepare_artifact_dirs
 from .level2_validation import promote_stage
@@ -29,7 +30,7 @@ def _validated_preview(run: dict, source: dict) -> tuple[Path, Path, int]:
     identifier = run.get("run_id")
     if not isinstance(identifier, str) or not identifier.isalnum():
         raise ValueError("Identidade da prévia Suave inválida.")
-    folder = STAGING_ROOT.resolve() / identifier
+    folder = run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)
     result = contained_file(folder, run.get("result_file"))
     expected = (run.get("validation") or {}).get("result_sha256")
     changed = (run.get("validation") or {}).get("changed_pixels")

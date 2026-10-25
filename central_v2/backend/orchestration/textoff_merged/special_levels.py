@@ -9,6 +9,7 @@ from .manifests import _manifest_matches_merge, _stage_manifest
 from .query import query_merged_level1
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_folder, staging_root
 from central_v2.backend.orchestration.textoff_special.execution import preview
 
 TREATMENTS = {"IV": "transparente", "V": "transparente_legacy"}
@@ -70,9 +71,9 @@ def execute_special_level(manga: Path, level: str, chapters: list[str], progress
                            "chapter": chapter, "filename": source.name,
                            "expected_sha256": sha256(source), "selections": selections}
                 if level in {"IV", "V"}:
-                    STAGING_ROOT.mkdir(parents=True, exist_ok=True)
+                    staging_root(manga, "textoff_especiais_v2").mkdir(parents=True, exist_ok=True)
                     with tempfile.TemporaryDirectory(prefix="textoff-merged-mask-",
-                                                     dir=STAGING_ROOT) as temporary:
+                                                     dir=staging_root(manga, "textoff_especiais_v2")) as temporary:
                         mask = (_legacy_authorization_mask(folder, source_page)
                                 if level == "V" else _normal_authorization_mask(folder, source_page))
                         mask_path = Path(temporary) / "authorized.png"
@@ -84,7 +85,7 @@ def execute_special_level(manga: Path, level: str, chapters: list[str], progress
                         run = preview(manga, payload)
                 page_results.append({"filename": source.name, "status": run["execution_status"],
                                      "run_id": run["run_id"],
-                                     "manifest": str(STAGING_ROOT / run["run_id"] / "manifest.json"),
+                                     "manifest": str(run_folder(manga, "textoff_especiais_v2", run["run_id"], legacy=STAGING_ROOT) / "manifest.json"),
                                      "error": run.get("error")})
             status = "failed" if any(page.get("status") == "failed" for page in page_results) else "ok"
             results.append({"chapter": chapter, "status": status, "pages": page_results})

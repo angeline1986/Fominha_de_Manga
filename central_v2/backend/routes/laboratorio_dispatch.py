@@ -53,11 +53,11 @@ def dispatch_laboratorio_get(request, output_root: Path = OUTPUT_ROOT) -> tuple[
     if request.path == "/api/textoff/laboratorio/solidos/image":
         return True, lab_solidos_image(parse_qs(request.query), output_root)
     if request.path == "/api/textoff/laboratorio/degrade/image":
-        return True, lab_degrade_image(parse_qs(request.query))
+        return True, lab_degrade_image(parse_qs(request.query), output_root)
     if request.path == "/api/textoff/laboratorio/estilizado/image":
-        return True, lab_stylized_image(parse_qs(request.query))
+        return True, lab_stylized_image(parse_qs(request.query), output_root=output_root)
     if request.path == "/api/textoff/laboratorio/gradiente_suave/image":
-        return True, lab_stylized_image(parse_qs(request.query), "gradiente_suave")
+        return True, lab_stylized_image(parse_qs(request.query), "gradiente_suave", output_root)
     return False, None
 
 
@@ -80,7 +80,7 @@ def dispatch_laboratorio_post(
     if route == "/api/textoff/laboratorio/degrade/execute":
         return True, lab_degrade_execute(payload, output_root)
     if route == "/api/textoff/laboratorio/degrade/authorization-candidates":
-        return True, lab_degrade_candidates(payload)
+        return True, lab_degrade_candidates(payload, output_root)
     if route == "/api/textoff/laboratorio/degrade/authorize":
         return True, lab_degrade_authorize(payload, output_root)
     if route == "/api/textoff/laboratorio/estilizado/job":

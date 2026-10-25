@@ -11,6 +11,7 @@ from central_v2.backend.orchestration.textoff_merged.laboratorio_final_candidate
 from central_v2.backend.routes.laboratorio_source import resolve_source
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import roots
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
 FIELDS = ("provider", "manga", "chapter", "page", "source")
@@ -28,8 +29,9 @@ def recent_response(query, output_root):
             payload["path"] = (query.get("path") or [""])[0]
         manga, path, chapter, filename = resolve_source(payload, output_root)
         source_hash = sha256(path)
-        for request_file in sorted(STAGING.glob("*/request.json"),
-                                   key=lambda item: item.stat().st_mtime, reverse=True):
+        requests = (item for root in roots(manga, "textoff_laboratorio", legacy=STAGING)
+                    for item in root.glob("*/request.json"))
+        for request_file in sorted(requests, key=lambda item: item.stat().st_mtime, reverse=True):
             folder = request_file.parent
             if not RUN_ID.fullmatch(folder.name):
                 continue
@@ -58,7 +60,8 @@ def recent_response(query, output_root):
                 image_size(result)
                 return _json({"result": {"treatment": "estilizado", "run_id": folder.name,
                     "image_url": "/api/textoff/laboratorio/estilizado/image?"
-                    + urlencode({"run_id": folder.name})}})
+                    + urlencode({"run_id": folder.name, "provider": manga.parent.name,
+                                 "manga": manga.name})}})
             except (OSError, ValueError, KeyError, TypeError):
                 continue
         return _json({"result": None})

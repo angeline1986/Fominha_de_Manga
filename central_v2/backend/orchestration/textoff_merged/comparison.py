@@ -15,6 +15,7 @@ from .overview import current_preview_records
 from .query import query_merged_level2
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_folder
 
 
 def comparison_pairs(manga: Path, chapter: str, step: str, *, check: bool = False) -> list[dict]:
@@ -152,7 +153,7 @@ def _preview_pairs(manga: Path, chapter: str, step: str) -> list[dict]:
         if not run_id or Path(run_id).name != run_id or run_id in {".", ".."}:
             continue
         try:
-            folder = STAGING_ROOT / run_id
+            folder = run_folder(manga, "textoff_especiais_v2", run_id, legacy=STAGING_ROOT)
             before = contained_file(folder, "input/source.png")
             if sha256(before) != manifest["source"]["sha256"]:
                 continue

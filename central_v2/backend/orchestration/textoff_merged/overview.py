@@ -13,6 +13,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import (
     contained_file, read_json, sha256,
 )
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import roots
 from central_v2.backend.orchestration.textoff_special.inputs import resolve_input
 
 TREATMENTS = {"degrade": "degrade", "estilizado": "artistic", "gradiente_suave": "soft"}
@@ -73,31 +74,32 @@ def current_previews(manga: Path, staging: Path = STAGING_ROOT) -> dict:
 
 def current_preview_records(manga: Path, staging: Path = STAGING_ROOT):
     """Yield validated previews with their original outcome metadata."""
-    for path in staging.glob("*/manifest.json"):
-        try:
-            manifest = read_json(path)
-            source = manifest.get("source", {})
-            if (manifest.get("execution_status") != "succeeded"
-                    or source.get("manga") != str(manga.resolve())
-                    or source.get("level") != "MERGED_NIVEL_I"):
+    for root in roots(manga, "textoff_especiais_v2", legacy=staging):
+        for path in root.glob("*/manifest.json"):
+            try:
+                manifest = read_json(path)
+                source = manifest.get("source", {})
+                if (manifest.get("execution_status") != "succeeded"
+                        or source.get("manga") != str(manga.resolve())
+                        or source.get("level") != "MERGED_NIVEL_I"):
+                    continue
+                key = TREATMENTS.get(manifest.get("treatment"))
+                if manifest.get("merged_level") == "IV" and manifest.get("treatment") == "transparente":
+                    key = "ac3"
+                if manifest.get("merged_level") == "V" and manifest.get("treatment") == "transparente_legacy":
+                    key = "ac4"
+                if key is None:
+                    continue
+                current = resolve_input(manga, source["level"], source["chapter"],
+                                        source["filename"], source["sha256"])
+                if current["predecessors"] != source.get("predecessors"):
+                    continue
+                output = contained_file(path.parent, manifest["result_file"])
+                if sha256(output) != manifest["validation"]["result_sha256"]:
+                    continue
+                yield key, manifest
+            except (OSError, ValueError, TypeError, KeyError, AttributeError):
                 continue
-            key = TREATMENTS.get(manifest.get("treatment"))
-            if manifest.get("merged_level") == "IV" and manifest.get("treatment") == "transparente":
-                key = "ac3"
-            if manifest.get("merged_level") == "V" and manifest.get("treatment") == "transparente_legacy":
-                key = "ac4"
-            if key is None:
-                continue
-            current = resolve_input(manga, source["level"], source["chapter"],
-                                    source["filename"], source["sha256"])
-            if current["predecessors"] != source.get("predecessors"):
-                continue
-            output = contained_file(path.parent, manifest["result_file"])
-            if sha256(output) != manifest["validation"]["result_sha256"]:
-                continue
-            yield key, manifest
-        except (OSError, ValueError, TypeError, KeyError, AttributeError):
-            continue
 
 
 def query_mapping_worklist(manga: Path) -> dict:

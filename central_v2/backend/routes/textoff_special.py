@@ -10,6 +10,7 @@ from central_v2.backend.orchestration.textoff_merged.manual_specials import (
 )
 from central_v2.backend.orchestration.textoff_special.artifacts import read_json, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.routes.experiment_runs import belongs_to_manga, folder_for_request
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.catalog import build_catalog
 from central_v2.backend.state.manga_state import resolve_manga
@@ -38,16 +39,14 @@ def special_image_response(query: dict, output_root: Path) -> RouteResponse:
         return _json_response({"error": "Imagem de Nível I não encontrada."}, 404)
 
 
-def special_result_response(query: dict) -> RouteResponse:
+def special_result_response(query: dict, output_root: Path) -> RouteResponse:
     run_id = _value(query, "run_id")
     if not run_id.isalnum():
         return _json_response({"error": "Prévia não encontrada."}, 404)
-    folder = (STAGING_ROOT / run_id).resolve()
-    if not folder.is_relative_to(STAGING_ROOT.resolve()):
-        return _json_response({"error": "Prévia não encontrada."}, 404)
     try:
+        folder, manga = folder_for_request(query, output_root, "textoff_especiais_v2", STAGING_ROOT)
         manifest = read_json(folder / "manifest.json")
-        if manifest.get("execution_status") != "succeeded":
+        if manifest.get("execution_status") != "succeeded" or not belongs_to_manga(manifest, manga):
             return _json_response({"error": "Prévia não concluída."}, 404)
         result = (folder / str(manifest.get("result_file") or "")).resolve()
         allowed = {".png", ".jpg", ".jpeg", ".webp"}

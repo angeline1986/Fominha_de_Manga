@@ -5,6 +5,7 @@ import shutil
 
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_folder
 from central_v2.backend.orchestration.textoff_special.execution import preview
 
 from .auto_cleaner_check_manifest import _write_atomic, manifest_path as check_path
@@ -83,7 +84,7 @@ def _execute_chapter(manga, provider, chapter, progress, selected):
                 "selections": rois}, resolved_source=detection)
             if run.get("execution_status") != "succeeded":
                 raise RuntimeError(str(run.get("error") or "Prévia Artístico falhou."))
-            run["run_dir"] = str(STAGING_ROOT / run["run_id"])
+            run["run_dir"] = str(run_folder(manga, "textoff_especiais_v2", run["run_id"], legacy=STAGING_ROOT))
             composed = folder / "compositions" / f"{page}.png"
             composition = compose_occurrence(manga, chapter, page, detection, current,
                 base["sha256"], final_record, run, composed)

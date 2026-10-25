@@ -11,6 +11,8 @@ from central_v2.backend.orchestration.textoff_special.artifacts import (
 from central_v2.backend.orchestration.textoff_special.execution import preview
 from central_v2.backend.orchestration.textoff_special.inputs import validate_selections
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_folder, staging_root
+from central_v2.backend.routes.experiment_runs import belongs_to_manga, folder_for_request
 from central_v2.backend.routes.laboratorio_lock import TREATMENT_LOCK
 from central_v2.backend.routes.laboratorio_logging import (
     authorization_ready, authorization_unavailable, run_treatment_logged,
@@ -46,9 +48,10 @@ def _resolve(payload, output_root):
     return manga, source, request
 
 
-def _result(manifest):
+def _result(manifest, payload):
     run_id = manifest['run_id']
-    url = '/api/textoff/laboratorio/degrade/image?' + urlencode({'run_id': run_id})
+    url = '/api/textoff/laboratorio/degrade/image?' + urlencode(
+        {'run_id': run_id, 'provider': payload['provider'], 'manga': payload['manga']})
     return _json({'run_id': run_id, 'image_url': url,
                   'validation': manifest.get('validation'), 'status': 'succeeded'})
 
@@ -62,7 +65,7 @@ def execute(payload, output_root, on_progress=None):
     try:
         manga, source, request = _resolve(payload, output_root)
         manifest = run_treatment_logged("degrade", payload, lambda: preview(
-            manga, request, staging=STAGING, resolved_source=source,
+            manga, request, staging=staging_root(manga, 'textoff_laboratorio'), resolved_source=source,
             laboratory_experimental=True, on_progress=on_progress))
         if manifest.get('execution_status') != 'succeeded':
             detail = manifest.get('error') or {}
@@ -76,27 +79,26 @@ def execute(payload, output_root, on_progress=None):
                           'Degradê não concluiu; consulte o manifesto experimental.'),
                           'run_id': manifest['run_id'], 'failure_type':
                           detail.get('type', '') if isinstance(detail, dict) else ''}, 422)
-        return _result(manifest)
+        return _result(manifest, payload)
     except (ValueError, OSError, RuntimeError, TimeoutError) as error:
         return _json({'error': str(error)}, 400)
     finally:
         _LOCK.release()
 
 
-def authorization_candidates(payload):
+def authorization_candidates(payload, output_root=None):
     if not isinstance(payload, dict):
         return _json({'error': 'Requisição inválida.'}, 400)
     try:
         run_id = _field(payload.get('run_id'), 'Execução')
         if len(run_id) != 32 or any(c not in '0123456789abcdef' for c in run_id):
             raise ValueError('Execução inválida.')
-        folder = (STAGING / run_id).resolve()
-        if not folder.is_relative_to(STAGING.resolve()):
-            raise ValueError('Execução inválida.')
+        folder, manga = folder_for_request(payload, output_root, 'textoff_laboratorio', STAGING)
         manifest, request = read_json(folder / 'manifest.json'), read_json(folder / 'request.json')
         error = manifest.get('error')
         if (manifest.get('run_id') != run_id or request.get('run_id') != run_id
                 or request.get('treatment') != 'degrade'
+                or not belongs_to_manga(request, manga)
                 or manifest.get('execution_status') != 'failed'
                 or not isinstance(error, dict) or error.get('error')
                 != 'Nenhum componente autorizado intersecta as seleções.'):
@@ -129,8 +131,8 @@ def confirm_authorization(payload, output_root, on_progress=None):
         manga, source, request = _resolve(payload, output_root)
         run_id = _field(payload.get('proposal_run_id'), 'Proposta')
         token = _field(payload.get('proposal_token'), 'Confirmação')
-        folder = (STAGING / run_id).resolve()
-        if (len(run_id) != 32 or not folder.is_relative_to(STAGING.resolve())):
+        folder = run_folder(manga, 'textoff_laboratorio', run_id, legacy=STAGING)
+        if len(run_id) != 32:
             raise ValueError('Proposta inválida.')
         record = load_pending(folder, token)
         previous = read_json(folder / 'request.json')
@@ -149,7 +151,7 @@ def confirm_authorization(payload, output_root, on_progress=None):
         selected = payload.get('component_ids')
         authorization = consume(folder, record, selected)
         manifest = run_treatment_logged("degrade", payload, lambda: preview(
-            manga, request, staging=STAGING, resolved_source=source,
+            manga, request, staging=staging_root(manga, 'textoff_laboratorio'), resolved_source=source,
             laboratory_authorization=authorization,
             laboratory_experimental=True, on_progress=on_progress), correlation_id=source_run_id)
         if manifest.get('execution_status') != 'succeeded':
@@ -157,23 +159,22 @@ def confirm_authorization(payload, output_root, on_progress=None):
             return _json({'error': 'Degradê assistido não concluiu; consulte o manifesto experimental.',
                           'run_id': manifest['run_id'], 'failure_type': detail.get('type', '')
                           if isinstance(detail, dict) else ''}, 422)
-        return _result(manifest)
+        return _result(manifest, payload)
     except (ValueError, OSError, RuntimeError, TimeoutError, KeyError, TypeError) as error:
         return _json({'error': str(error)}, 409)
     finally:
         _LOCK.release()
 
 
-def result_image(query):
+def result_image(query, output_root=None):
     run_id = (query.get('run_id') or [''])[0]
     if len(run_id) != 32 or any(c not in '0123456789abcdef' for c in run_id):
         return _json({'error': 'Execução inválida.'}, 400)
     try:
-        folder = (STAGING / run_id).resolve()
-        if not folder.is_relative_to(STAGING.resolve()):
-            raise ValueError('Execução inválida.')
+        folder, manga = folder_for_request(query, output_root, 'textoff_laboratorio', STAGING)
         manifest = read_json(folder / 'manifest.json')
-        if manifest.get('run_id') != run_id or manifest.get('execution_status') != 'succeeded':
+        if (manifest.get('run_id') != run_id or not belongs_to_manga(manifest, manga)
+                or manifest.get('execution_status') != 'succeeded'):
             raise ValueError('Resultado não aprovado.')
         result = contained_file(folder, manifest['result_file'])
         if sha256(result) != manifest['validation']['result_sha256']:

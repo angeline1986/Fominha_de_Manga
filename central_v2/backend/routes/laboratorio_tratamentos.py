@@ -7,6 +7,8 @@ from central_v2.backend.orchestration.textoff_special.artifacts import (
     contained_file, read_json, sha256,
 )
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import staging_root
+from central_v2.backend.routes.experiment_runs import belongs_to_manga, folder_for_request
 from central_v2.backend.orchestration.textoff_special.execution import preview
 from central_v2.backend.orchestration.textoff_special.inputs import validate_selections
 from central_v2.backend.routes.laboratorio_source import resolve_source
@@ -41,7 +43,7 @@ def _execute(payload, output_root, treatment, on_progress=None):
         request = {"treatment": treatment, "level": "LAB", "chapter": chapter,
                    "filename": filename, "expected_sha256": digest, "selections": boxes}
         manifest = run_treatment_logged(treatment, payload, lambda: preview(
-            manga, request, staging=STAGING, resolved_source=source,
+            manga, request, staging=staging_root(manga, "textoff_laboratorio"), resolved_source=source,
             on_progress=on_progress))
         if manifest.get("execution_status") != "succeeded":
             detail = manifest.get("error") or {}
@@ -54,7 +56,8 @@ def _execute(payload, output_root, treatment, on_progress=None):
                           "failure_type": detail.get("type", "")
                           if isinstance(detail, dict) else ""}, 422)
         run_id = manifest["run_id"]
-        image_url = f"/api/textoff/laboratorio/{treatment}/image?" + urlencode({"run_id": run_id})
+        image_url = f"/api/textoff/laboratorio/{treatment}/image?" + urlencode(
+            {"run_id": run_id, "provider": payload["provider"], "manga": payload["manga"]})
         return _json({"run_id": run_id, "image_url": image_url,
                       "validation": manifest.get("validation"), "status": "succeeded"})
     except (ValueError, OSError, RuntimeError, TimeoutError) as error:
@@ -134,19 +137,18 @@ def execute_smooth(payload, output_root):
     return _execute(payload, output_root, "gradiente_suave")
 
 
-def result_image(query, treatment="estilizado"):
+def result_image(query, treatment="estilizado", output_root=None):
     run_id = (query.get("run_id") or [""])[0]
     if len(run_id) != 32 or any(char not in "0123456789abcdef" for char in run_id):
         return _json({"error": "Execução inválida."}, 400)
     try:
-        folder = (STAGING / run_id).resolve()
-        if not folder.is_relative_to(STAGING.resolve()):
-            raise ValueError("Execução inválida.")
+        folder, manga = folder_for_request(query, output_root, "textoff_laboratorio", STAGING)
         manifest = read_json(folder / "manifest.json")
         request = read_json(folder / "request.json")
         if (manifest.get("run_id") != run_id
                 or request.get("run_id") != run_id
                 or request.get("treatment") != treatment
+                or not belongs_to_manga(request, manga)
                 or manifest.get("execution_status") != "succeeded"):
             raise ValueError("Resultado não aprovado.")
         result = contained_file(folder, manifest["result_file"])

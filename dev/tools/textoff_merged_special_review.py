@@ -29,11 +29,9 @@ def run_result(report_root: Path, report_name: str, chapter: str) -> tuple[Path 
     page = item.get("pages", [{}])[0]
     if page.get("status") != "succeeded":
         return None, str((page.get("error") or {}).get("error") or page.get("status"))
-    manifest = json.loads((ROOT / page["manifest"]).read_text(encoding="utf-8"))
-    result = ROOT / page["run_id"] / manifest["result_file"]
-    if not result.is_file():
-        result = (ROOT / "reports/experimentos/textoff_especiais_v2" /
-                  page["run_id"] / manifest["result_file"])
+    manifest_path = ROOT / page["manifest"]
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    result = manifest_path.parent / manifest["result_file"]
     validation = manifest.get("validation", {})
     return result, f"alterados {validation.get('changed_pixels', 0)} px; fora da máscara {validation.get('changed_outside_mask', 0)} px"
 

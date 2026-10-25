@@ -6,6 +6,7 @@ import numpy as np
 
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_from_manifest
 
 from . import special_styled_composition as composition
 from .special_styled_authorship import different, image
@@ -25,7 +26,7 @@ def _mask(path, digest, shape):
 
 def compose_occurrence(manga, chapter, page, detection, current_path, current_hash,
                        final_record, run, destination):
-    folder = Path(run.get("run_dir") or (STAGING_ROOT / run["run_id"])).resolve()
+    folder = Path(run.get("run_dir") or run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)).resolve()
     technical = contained_file(folder, run.get("result_file"))
     mask_name = ((run.get("treatment") or {}).get("artifacts") or {}).get("authorized_mask")
     mask_ref = f"treatment/{mask_name}"

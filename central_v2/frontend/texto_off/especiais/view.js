@@ -97,7 +97,7 @@ export function renderSpecial(container, level) {
       const result = results[0];
       if (result?.execution_status === "succeeded") {
         root.querySelector("[data-before]").src = manualSpecialImageUrl(provider, manga, chapterSelect.value, pageSelect.value);
-        root.querySelector("[data-after]").src = manualSpecialResultUrl(result.run_id);
+        root.querySelector("[data-after]").src = manualSpecialResultUrl(result.run_id, provider, manga);
         root.querySelector("[data-comparison]").hidden = false;
       }
       await showOperationSummary({ title: `Nível ${level} concluído`, summary: {

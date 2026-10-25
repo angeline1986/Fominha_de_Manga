@@ -7,12 +7,13 @@ import uuid
 
 from .artifacts import contained_file, read_json, sha256, write_json
 from .catalog import STAGING_ROOT, python_for, treatment_for
+from .run_paths import staging_root
 from .inputs import assert_unchanged, resolve_input, validate_selections
 from .process import run_worker
 from .lab_degrade_authorization import SCHEMA as LAB_DEGRADE_AUTH_SCHEMA
 
 
-def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
+def preview(manga: Path, payload: dict, *, staging: Path | None = None,
             approved_check_rois: bool = False, on_progress=None,
             resolved_source: dict | None = None,
             laboratory_authorization: dict | None = None,
@@ -35,9 +36,12 @@ def preview(manga: Path, payload: dict, *, staging: Path = STAGING_ROOT,
     if laboratory_experimental and key != "degrade":
         raise ValueError("A execução experimental assistida só se aplica ao Degradê.")
     mask_sources = {}
-    staging = staging.resolve()
-    if staging.is_relative_to(manga.resolve()):
-        raise ValueError("Staging deve ficar fora da obra.")
+    staging = Path(staging if staging is not None else
+                   staging_root(manga, "textoff_especiais_v2")).resolve()
+    if (staging.is_relative_to(manga.resolve())
+            and staging not in {staging_root(manga, name)
+                                for name in ("textoff_especiais_v2", "textoff_laboratorio")}):
+        raise ValueError("Staging deve ficar fora da obra ou na área de retoques.")
     run_id = uuid.uuid4().hex
     folder = staging / run_id
     (folder / "input").mkdir(parents=True)

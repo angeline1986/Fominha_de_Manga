@@ -7,6 +7,7 @@ import numpy as np
 
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_from_manifest
 from .artifact_paths import artifact_ref
 from .stages import stage_chapter
 
@@ -18,7 +19,7 @@ ORIGINS = {"PINCEL_DEGRADE": ("PINCEL_DEGRADE", "degrade-manifest.json"),
 def compose_delta(manga: Path, chapter: str, page: str, detection: dict,
                   current_path: Path, current_hash: str, final_record: dict,
                   run: dict, destination: Path) -> dict:
-    folder = Path(run.get("run_dir") or (STAGING_ROOT / run["run_id"])).resolve()
+    folder = Path(run.get("run_dir") or run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)).resolve()
     technical = contained_file(folder, run.get("result_file"))
     treatment = run.get("treatment") or {}
     artifacts = treatment.get("artifacts") or {}

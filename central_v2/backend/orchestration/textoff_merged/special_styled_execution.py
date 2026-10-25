@@ -5,6 +5,7 @@ import re
 
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_folder
 from central_v2.backend.orchestration.textoff_special.execution import preview
 
 from .auto_cleaner_check_manifest import _write_atomic, manifest_path as check_manifest_path
@@ -62,7 +63,7 @@ def _execute_new(manga, provider, chapters, progress, *, retry, selections=None)
                     "expected_sha256": detection["sha256"], "selections": rois})
                 if run.get("execution_status") != "succeeded":
                     raise RuntimeError(str(run.get("error") or "Prévia Artístico falhou."))
-                run["run_dir"] = str(STAGING_ROOT / run["run_id"])
+                run["run_dir"] = str(run_folder(manga, "textoff_especiais_v2", run["run_id"], legacy=STAGING_ROOT))
                 composed = folder / "compositions" / page
                 composition = compose_initial(manga, chapter, page, detection, current,
                                                final_record, run, composed)

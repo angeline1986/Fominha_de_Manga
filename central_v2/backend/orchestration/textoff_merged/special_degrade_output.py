@@ -8,6 +8,7 @@ import tempfile
 
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_from_manifest
 from central_v2.backend.orchestration.textoff_special.catalog import treatment_for
 
 from .artifact_paths import artifact_ref, prepare_artifact_dirs
@@ -32,7 +33,7 @@ def _validated_preview(run: dict, source: dict) -> Path:
     identifier = run.get("run_id")
     if not isinstance(identifier, str) or not identifier.isalnum():
         raise ValueError("Identidade da prévia Degradê inválida.")
-    folder = STAGING_ROOT.resolve() / identifier
+    folder = run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)
     result = contained_file(folder, run.get("result_file"))
     expected = (run.get("validation") or {}).get("result_sha256")
     if not isinstance(expected, str) or sha256(result) != expected:

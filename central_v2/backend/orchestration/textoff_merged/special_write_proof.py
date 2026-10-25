@@ -4,6 +4,7 @@ import shutil
 
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_from_manifest
 
 
 def persist_write_mask(staged: Path, run: dict, page: str) -> dict | None:
@@ -11,7 +12,7 @@ def persist_write_mask(staged: Path, run: dict, page: str) -> dict | None:
     if not name:
         return None
     reference = f"treatment/{name}"
-    folder = STAGING_ROOT.resolve() / run["run_id"]
+    folder = run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)
     source = contained_file(folder, reference)
     expected = (run.get("artifacts") or {}).get(reference)
     if not isinstance(expected, str) or sha256(source) != expected:

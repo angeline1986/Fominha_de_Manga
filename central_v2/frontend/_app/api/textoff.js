@@ -89,8 +89,8 @@ export function mergedLevel3ImageUrl(provider, manga, chapter, filename) {
   return `/api/textoff/merged/level3/image?${query}`;
 }
 
-export function manualSpecialResultUrl(runId) {
-  return `/api/textoff/special/result?${new URLSearchParams({ run_id: runId })}`;
+export function manualSpecialResultUrl(runId, provider, manga) {
+  return `/api/textoff/special/result?${new URLSearchParams({ run_id: runId, provider, manga })}`;
 }
 
 export async function startManualSpecial(provider, manga, level, chapter, filename, selections) {

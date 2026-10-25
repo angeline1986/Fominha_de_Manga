@@ -124,7 +124,7 @@ def dispatch_get(
     if request.path == "/api/textoff/special/image":
         return special_image_response(parse_qs(request.query), output_root)
     if request.path == "/api/textoff/special/result":
-        return special_result_response(parse_qs(request.query))
+        return special_result_response(parse_qs(request.query), output_root)
 
     if request.path == "/api/merge-manual/proposal/image":
         return merge_manual_proposal_image_response(parse_qs(request.query), output_root)

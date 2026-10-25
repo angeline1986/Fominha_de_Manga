@@ -8,6 +8,7 @@ from central_v2.backend.orchestration.textoff_special.artifacts import (
     contained_file, read_json, sha256,
 )
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT, treatment_for
+from central_v2.backend.orchestration.textoff_special.run_paths import run_folder
 from .laboratorio_final_target import final_target
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
@@ -22,9 +23,7 @@ def candidate(manga: Path, chapter: str, page: str, treatment: str,
         raise ValueError("Tratamento ou execução do Laboratório inválidos.")
     if treatment == "solidos":
         return _solid(manga, chapter, page, run_id, output_root)
-    folder = (STAGING / run_id).resolve()
-    if not folder.is_relative_to(STAGING.resolve()):
-        raise ValueError("Execução fora do Laboratório.")
+    folder = run_folder(manga, "textoff_laboratorio", run_id, legacy=STAGING)
     manifest = read_json(folder / "manifest.json")
     request = read_json(folder / "request.json")
     source = request.get("source")

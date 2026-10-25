@@ -6,6 +6,7 @@ import tempfile
 
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT, treatment_for
+from central_v2.backend.orchestration.textoff_special.run_paths import run_from_manifest
 
 from .artifact_paths import artifact_ref, prepare_artifact_dirs
 from .level2_validation import promote_stage
@@ -16,7 +17,6 @@ STAGE = "PINCEL_ARTISTICO"
 MANIFEST = "artistico-manifest.json"
 SCHEMA = "textoff_pincel_artistico_manifest_v1"
 
-
 def _validated_preview(run, source):
     if (run.get("execution_status") != "succeeded"
             or (run.get("treatment") or {}).get("algorithm") != treatment_for("estilizado").algorithm
@@ -25,7 +25,7 @@ def _validated_preview(run, source):
     run_id = run.get("run_id")
     if not isinstance(run_id, str) or not run_id.isalnum():
         raise ValueError("Identidade da prévia Artístico inválida.")
-    folder = STAGING_ROOT.resolve() / run_id
+    folder = run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)
     result = contained_file(folder, run.get("result_file"))
     report = contained_file(folder, "treatment/roi_report.json")
     expected = (run.get("validation") or {}).get("result_sha256")
@@ -86,7 +86,7 @@ def prepare_styled_stage(manga, provider, chapter, special_path, special_hash,
             sha256(output), report_ref, sha256(saved_report), changed, input_ref,
             provider, manga.name, chapter)
         mask_ref = ((run.get("treatment") or {}).get("artifacts") or {}).get("authorized_mask")
-        authorized = contained_file(STAGING_ROOT.resolve() / run_id, f"treatment/{mask_ref}")
+        authorized = contained_file(run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT), f"treatment/{mask_ref}")
         expected_mask = (run.get("artifacts") or {}).get(f"treatment/{mask_ref}")
         if sha256(authorized) != expected_mask:
             raise ValueError("Máscara da prévia Artístico sem hash verificável.")

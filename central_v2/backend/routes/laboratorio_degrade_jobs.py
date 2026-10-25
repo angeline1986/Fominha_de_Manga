@@ -56,7 +56,7 @@ def start(payload, output_root, assisted=False):
                 failure = _parse(response)
                 run_id = failure.get("run_id")
                 if run_id:
-                    proposal = authorization_candidates({"run_id": run_id})
+                    proposal = authorization_candidates({**payload, "run_id": run_id}, output_root)
                     if proposal.status == 200:
                         offer = _parse(proposal)
                         rows = offer.get("candidates") or []

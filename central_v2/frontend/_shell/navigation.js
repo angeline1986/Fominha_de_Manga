@@ -161,7 +161,6 @@ export const navigation = [
         label: "EXECUÇÃO",
         items: [
           { id: "simular-exportar", label: "Simular e Exportar" },
-          { id: "destino-local", label: "Destino Local" },
           { id: "obras-download", label: "Obras para Download" },
         ],
       },

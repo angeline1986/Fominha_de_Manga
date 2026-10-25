@@ -7,6 +7,7 @@ import numpy as np
 
 from central_v2.backend.orchestration.textoff_special.artifacts import contained_file, sha256
 from central_v2.backend.orchestration.textoff_special.catalog import STAGING_ROOT
+from central_v2.backend.orchestration.textoff_special.run_paths import run_from_manifest
 
 from .artifact_paths import artifact_ref
 from .final_active_lineage import active_page_rows
@@ -76,7 +77,7 @@ def _write_mask(manga, chapter, page, row, shape):
 def compose_initial(manga, chapter, page, detection, current_path, current_record,
                     run, destination):
     """Write a composed candidate only when ancestry and masks prove it safe."""
-    folder = Path(run.get("run_dir") or (STAGING_ROOT / run["run_id"])).resolve()
+    folder = Path(run.get("run_dir") or run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)).resolve()
     technical = contained_file(folder, run["result_file"])
     mask_ref = "treatment/roi_authorized_mask.png"
     authorized_path = contained_file(folder, mask_ref)
