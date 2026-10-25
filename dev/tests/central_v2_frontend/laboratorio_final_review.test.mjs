@@ -82,6 +82,16 @@ test('resultado só pode ser selecionado após proposta e duas imagens carregada
   review.dispose();
 });
 
+test('comparação usa capítulo e página oficiais retornados para arquivo clean', async () => {
+  const selected = { ...request, chapter: 'clean', page: 'page_clean.png' };
+  const { review, view, buttons } = await connect(async () => response);
+  review.ready('degrade', selected, response.run_id);
+  buttons.degrade.dispatch('click');
+  await new Promise((resolve) => setTimeout(resolve, 0));
+  assert.match(view.page.textContent, /Cap\. 1 · page\.png/);
+  review.dispose();
+});
+
 test('mudança de seleção descarta comparação ainda pendente', async () => {
   const pending = deferred();
   let signal;

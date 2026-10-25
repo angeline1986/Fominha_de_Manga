@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Fluxo TextOff Merged e Auto-Cleaner: Cleaner, Check, Glass, proteções, consolidação e tratamentos.">
+  <meta name="description" content="Fluxo TextOff Merged e Auto-Cleaner: Cleaner, Check, Glass, consolidação, tratamentos e Laboratório da Central V2.">
   <title>TextOff Merged — fluxo de limpeza e transparência</title>
   <style>
     :root{color-scheme:light;--ink:#153c50;--muted:#527286;--blue:#1683ad;--line:#bce5f3;--pale:#edf8fc;--green:#eaf7f0;--amber:#fff5df;--white:#fff}
@@ -24,12 +24,12 @@
   <header>
     <div class="eyebrow">Documentação integrada · Central V2 e referências V1</div>
     <h1>TextOff Merged: fluxo de limpeza e balões transparentes</h1>
-    <p class="lede">Este documento reúne o percurso desde as imagens MERGE até a publicação consolidada, explicando o papel do Cleaner, do Check, do Auto-Cleaner Glass, do Sommelier, de Sólidos e dos tratamentos. As etapas são independentes quando indicado; a interface não executa automaticamente todo o fluxo.</p>
-    <p class="small"><strong>Fonte de verdade:</strong> código e manifests vigentes. A documentação histórica registra experimentos e decisões passadas, sem substituir os contratos atuais. Revisão documental: 22/10/2026.</p>
+    <p class="lede">Este documento reúne o percurso desde as imagens MERGE até a publicação consolidada, explicando o papel do Cleaner, do Check, do Auto-Cleaner Glass, do Sommelier, de Sólidos, dos tratamentos e do Laboratório. As etapas são independentes quando indicado; a interface não executa automaticamente todo o fluxo.</p>
+    <p class="small"><strong>Fonte de verdade:</strong> código e manifests vigentes. A documentação histórica registra experimentos e decisões passadas, sem substituir os contratos atuais. Revisão documental: 24/10/2026.</p>
   </header>
 
   <nav aria-label="Navegação desta página">
-    <a href="#resumo">Visão geral</a><a href="#etapas">Etapas e autoridade</a><a href="#glass-reset">Glass e Check</a><a href="#reset-pagina">Como funciona o Reset</a><a href="#algoritmos">Algoritmos</a><a href="#persistencia">Pastas e manifests</a><a href="#versoes">V1 e V2</a><a href="#historico">Evidências e limites</a><a href="#fontes">Documentos-fonte</a>
+    <a href="#resumo">Visão geral</a><a href="#etapas">Etapas e autoridade</a><a href="#glass-reset">Glass e Check</a><a href="#reset-pagina">Como funciona o Reset</a><a href="#algoritmos">Algoritmos</a><a href="#persistencia">Pastas e manifests</a><a href="#laboratorio-final">Laboratório e Final</a><a href="#versoes">V1 e V2</a><a href="#historico">Evidências e limites</a><a href="#fontes">Documentos-fonte</a>
   </nav>
 
   <section class="card" id="resumo">
@@ -51,7 +51,8 @@
     │                           └──> tratamentos especiais   └──> Combo Turbo (fluxo distinto)
     └──> Bubble Sommelier
 
-Consolidado I/II + tratamentos explicitamente promovidos ──> Consolidado Final</pre>
+Consolidado I/II + tratamentos explicitamente promovidos ──> Consolidado Final
+Prévia válida do Laboratório ──> comparação e confirmação ──> página no Consolidado Final</pre>
   </section>
 
   <section class="card" id="etapas">
@@ -63,11 +64,12 @@ Consolidado I/II + tratamentos explicitamente promovidos ──> Consolidado Fin
         <tr><td><strong>Bubble Sommelier</strong></td><td>Detector/análise exclusivos da V2; aponta candidatos e informa revisão, mas não limpa pixels nem autoriza tratamento por si só.</td><td>MERGE e resultados Mapear → relatório, estados de revisão e recortes.</td></tr>
         <tr><td><strong>Auto-Cleaner Check</strong></td><td>Reúne sugestões de Mapear, Sommelier e ocorrências; permite revisar, alterar tipo, aprovar ou remover.</td><td>Manifesto próprio em <code>04_AUTO_CLEANER_CHECK</code>; decisões aprovadas são consumidas por etapas específicas.</td></tr>
         <tr><td><strong>Auto-Cleaner Glass / Nível II</strong></td><td>Refina somente componentes de texto adiados e autorizados pelo Nível I, respeitando proteções do Check.</td><td>MERGE + máscaras/relatórios do Nível I + proteções e Reset aplicável do Check → saídas candidatas e relatório Nível II.</td></tr>
-        <tr><td><strong>Sólidos</strong></td><td>Opera em regiões aprovadas no Check como <code>residuo_balao_solido_branco</code>. Não faz uma detecção geral.</td><td>Imagem do Nível I ou snapshot do Check → prévia <code>preview_only</code>; não promove ao Consolidado Final.</td></tr>
+        <tr><td><strong>Sólidos</strong></td><td>Opera em regiões aprovadas no Check como <code>residuo_balao_solido_branco</code>. Não faz uma detecção geral.</td><td>Imagem do Nível I ou snapshot do Check → prévia <code>preview_only</code>. O executor não promove; uma prévia válida pode ser aplicada pela ação explícita do Laboratório.</td></tr>
         <tr><td><strong>Tratamentos especiais</strong></td><td>Executam algoritmos próprios (por exemplo Degradê, Artístico/Estilizado e Gradiente Suave). Execução, revisão e promoção são ações distintas.</td><td>Fonte e regiões aprovadas → artefatos/proposta com hashes; promoção depende do tratamento e de validação.</td></tr>
+        <tr><td><strong>Laboratório da Central V2</strong></td><td>Compara uma prévia válida com a página final vigente e permite aplicar somente a escolhida, mediante confirmação. Também lista e restaura versões verificáveis.</td><td>Execução experimental + Consolidado Final → página final com origem <code>LABORATORIO</code>, SHA-256, snapshot e histórico.</td></tr>
         <tr><td><strong>Consolidado I/II</strong></td><td>Resolve a imagem vigente por página a partir das etapas válidas.</td><td>Usa Nível II para página alterada e válida; mantém Nível I para as demais.</td></tr>
         <tr><td><strong>Mapear / Nível III</strong></td><td>Analisa imagens consolidadas e cataloga candidatos; análise não altera a imagem.</td><td>Consolidado → relatórios de análise; pode contribuir sugestões para o Check e Sommelier.</td></tr>
-        <tr><td><strong>Consolidado Final e restauração</strong></td><td>Publica imagens por página com histórico. Restauração é explícita e revalida hashes antes de promover.</td><td>Consolidado I/II + tratamentos promovidos → <code>final-manifest.json</code> e conjunto final.</td></tr>
+        <tr><td><strong>Consolidado Final e restauração</strong></td><td>Publica imagens por página com histórico. Restauração é explícita e revalida hashes antes de promover.</td><td>Consolidado I/II + tratamentos promovidos + aplicação confirmada do Laboratório → <code>final-manifest.json</code> e conjunto final.</td></tr>
       </tbody>
     </table></div>
     <p class="small">O Sommelier usa runtime Node/RT-DETR. Parâmetros globais documentados incluem confiança ≥ 0,30, NMS em IoU ≤ 0,50, tiles com pelo menos 200 px de altura e análise de grade 12×12; candidatos podem ser classificados como <code>SPECIAL</code> quando cobertura ≥ 0,75 e MAD de luminância &gt; 1,0. Perfis podem alterar o detector. Esses indicadores continuam sendo candidatos, não autorização de limpeza.</p>
@@ -153,7 +155,8 @@ Consolidado I/II + tratamentos explicitamente promovidos ──> Consolidado Fin
         <tr><td>Sommelier</td><td><code>BUBBLE_SOMMELIER</code> / <code>03_BUBBLE_SOMMELIER</code></td><td>Relatório, revisão e recortes.</td></tr>
         <tr><td>Sólidos</td><td><code>05_AUTO_CLEANER_SOLIDOS</code></td><td><code>solid-white-manifest.json</code>, <code>preview_only: true</code>.</td></tr>
         <tr><td>Tratamentos especiais</td><td>Estágio próprio por tratamento, incluindo <code>06_PINCEL</code></td><td>Execução/proposta, revisão e promoção separadas.</td></tr>
-        <tr><td>Consolidado Final</td><td><code>07_CONSOLIDADO_FINAL</code></td><td><code>json/final-manifest.json</code>, SHA por página e histórico.</td></tr>
+        <tr><td>Laboratório</td><td>Artefatos da execução experimental; após aplicação, snapshot em <code>07_CONSOLIDADO_FINAL/&lt;capítulo&gt;/laboratorio/&lt;run_id&gt;/&lt;página&gt;</code>.</td><td>Pedido e manifesto da execução validam tratamento, identidade, dimensões e SHA-256 antes da comparação/publicação.</td></tr>
+        <tr><td>Consolidado Final</td><td><code>07_CONSOLIDADO_FINAL</code></td><td><code>json/final-manifest.json</code>, SHA por página e histórico; versão substituída em <code>history/&lt;sha256&gt;/&lt;página&gt;</code> no capítulo.</td></tr>
       </tbody>
     </table></div>
     <p class="callout warning"><strong>Migração de artefatos:</strong> o registry consultado declara dual-write, autoridade de leitura legada e pares ainda não validados. Os caminhos novos são espelhos onde declarados; não renomear ou remover pastas sem verificar leitores, manifests e o registry vigente.</p>
@@ -175,6 +178,20 @@ Consolidado I/II + tratamentos explicitamente promovidos ──> Consolidado Fin
       </tbody>
     </table></div>
     <p class="small">Os limites de promoção e parâmetros devem ser conferidos no adapter ativo. A existência de um botão “Salvar” ou uma prévia concluída não substitui validação do contrato daquele tratamento.</p>
+  </section>
+
+  <section class="card" id="laboratorio-final">
+    <h2>Laboratório: aplicar no Consolidado Final</h2>
+    <p>Na Central V2, uma prévia concluída do Laboratório pode substituir a página vigente no <code>07_CONSOLIDADO_FINAL</code>. A pessoa abre <strong>Comparar com Consolidado Final</strong>, confere as duas imagens lado a lado e confirma <strong>Aplicar no Consolidado Final</strong>. A ação é por página; a execução do tratamento não publica a prévia automaticamente.</p>
+    <ol>
+      <li><strong>Proposta:</strong> o backend confere provider, obra, capítulo, página, execução, artefato, dimensões, SHA-256 e a versão final atual. Se a página ou a proposta mudou desde a comparação, pede nova revisão.</li>
+      <li><strong>Publicação:</strong> copia a imagem anterior para <code>history/&lt;sha256&gt;/&lt;página&gt;</code>, conserva uma cópia da prévia em <code>laboratorio/&lt;run_id&gt;/&lt;página&gt;</code> e publica imagem e manifesto em uma transação recuperável. A entrada final registra <code>origin: LABORATORIO</code>, tratamento, execução, artefato de origem, hashes e data.</li>
+      <li><strong>Histórico e restauração:</strong> a interface lista versões arquivadas com PNG e hash válidos, permite compará-las e exige confirmação e versão vigente para restaurar. A versão substituída pela restauração também é arquivada; o histórico permanece disponível para novas correções.</li>
+    </ol>
+    <p class="callout"><strong>Restaurar no Consolidado Final</strong> recupera uma versão histórica da página final. O <a href="#reset-pagina">Reset do Auto-Cleaner Check</a> restaura a imagem de revisão a partir do MERGE e tem outro destino e outro contrato.</p>
+    <p><strong>Correção da prévia em 24/10/2026:</strong> a comparação mostrava “Resultado não corresponde à página selecionada” e imagens vazias para execuções reais de Artístico e Suave. O pedido grava o nome do tratamento; o manifesto da execução guarda um objeto com o algoritmo. A validação agora confere cada formato corretamente, sem remover as verificações de identidade, dimensões e SHA-256.</p>
+    <p>Para um arquivo <code>_clean.png</code> escolhido pelo explorador na estrutura do Auto-Cleaner Glass, a comparação e o histórico usam o capítulo e o nome oficiais do Consolidado Final. A pasta física <code>clean</code> não é tratada como capítulo. Arquivos de outras estruturas não recebem destino presumido.</p>
+    <p class="small">Verificação: 30 testes focados de backend e 12 de frontend passaram. Propostas de Artístico e Suave para <code>page-050-057.png</code> (Cap. 1) foram aceitas e os quatro endpoints de imagem retornaram PNGs em leitura. A conferência visual da comparação, aplicação e restauração em uma obra real ainda está pendente após reiniciar a Central V2; essa verificação não publicou uma imagem final.</p>
   </section>
 
   <section class="grid">
@@ -247,6 +264,7 @@ Consolidado I/II + tratamentos explicitamente promovidos ──> Consolidado Fin
           <li><a href="central_v2/limpeza_baloes/fluxo_completo.md">Fluxo completo</a></li>
           <li><a href="central_v2/limpeza_baloes/contratos_e_persistencia.md">Contratos e persistência</a></li>
           <li><a href="central_v2/limpeza_baloes/laboratorio.md">Laboratório</a></li>
+          <li><a href="backlog/central_v2_laboratorio_aplicar_final.html">Aplicar resultado do Laboratório no Consolidado Final: implementação e validação</a></li>
           <li><a href="central_v2/limpeza_baloes/etapas/cleaner_v2.md">Cleaner V2</a></li>
           <li><a href="central_v2/limpeza_baloes/etapas/auto_cleaner_check.md">Auto-Cleaner Check</a></li>
           <li><a href="central_v2/limpeza_baloes/etapas/bubble_sommelier.md">Bubble Sommelier</a></li>

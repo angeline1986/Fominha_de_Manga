@@ -148,6 +148,10 @@ test('tratamentos recebem o caminho da imagem escolhida', async () => {
       export const connectStylized = connect;
       export const connectSmooth = connect;
       export const connectSolid = connect;`,
+    '/texto_off/laboratorio/final_review.js': `export function connectFinalReview() {
+      return { clear() {}, dispose() {} }; }`,
+    '/texto_off/laboratorio/final_history.js': `export function connectFinalHistory() {
+      return { pageChanged() {}, dispose() {} }; }`,
   });
   const { connectTreatmentController } = await load('/texto_off/laboratorio/treatment_controller.js');
   const controller = connectTreatmentController({ root, navigation, workspace, image });

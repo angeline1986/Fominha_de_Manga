@@ -4,6 +4,7 @@ import { connectDegrade } from "/texto_off/laboratorio/degrade.js";
 import { connectSmooth, connectStylized, connectSolid } from "/texto_off/laboratorio/tratamentos.js";
 import { connectFinalReview } from "/texto_off/laboratorio/final_review.js";
 import { connectFinalHistory } from "/texto_off/laboratorio/final_history.js";
+import { finalPageSelection } from "/texto_off/laboratorio/final_target.js";
 
 /** Integra imagem original, ROIs e os três estados experimentais independentes. */
 export function connectTreatmentController({ root, navigation, workspace, image, progress }) {
@@ -11,7 +12,7 @@ export function connectTreatmentController({ root, navigation, workspace, image,
   const review = connectFinalReview(root);
   const history = connectFinalHistory(root, () => {
     const { provider, manga } = getContext();
-    const { chapter, page } = navigation.getSelection();
+    const { chapter, page } = finalPageSelection(navigation.getSelection());
     return { provider, manga, chapter, page };
   });
   const originalPanel = root.querySelector(".lab-cards > .lab-image:first-child");

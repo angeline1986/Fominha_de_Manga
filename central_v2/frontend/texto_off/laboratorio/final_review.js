@@ -76,6 +76,7 @@ export function connectFinalReview(root) {
         throw new Error("Resposta de comparação incompleta.");
       }
       review.proposal = proposal;
+      view.page.textContent = `Cap. ${proposal.chapter} · ${proposal.page} · ${LABELS[treatment]}`;
       view.status.textContent = "Carregando comparação…";
       for (const [image, url] of [[view.current, proposal.current_image_url],
         [view.candidate, proposal.candidate_image_url]]) {

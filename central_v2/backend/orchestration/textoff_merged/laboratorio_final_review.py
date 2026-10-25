@@ -29,17 +29,20 @@ def inspect(payload: dict, output_root: Path) -> dict:
     manga = resolve_manga(output_root, provider, name).resolve()
     proposal = candidate(manga, chapter, page, payload["treatment"],
                          payload["run_id"], output_root)
-    current_row, current_path, manifest_hash = read_final_page(manga, chapter, page)
+    final_chapter = proposal["final_chapter"] if "final_chapter" in proposal else chapter
+    final_page = proposal["final_page"] if "final_page" in proposal else page
+    current_row, current_path, manifest_hash = read_final_page(manga, final_chapter, final_page)
     size = image_size(proposal["path"])
     if size != image_size(current_path):
         raise ValueError("Dimensões diferentes da página no Consolidado Final.")
-    binding = {**payload, "candidate_sha256": proposal["sha256"],
+    identity = {**payload, "chapter": final_chapter, "page": final_page}
+    binding = {**identity, "candidate_sha256": proposal["sha256"],
                "current_sha256": current_row["sha256"],
                "final_manifest_sha256": manifest_hash}
     version = hashlib.sha256(json.dumps(binding, sort_keys=True).encode()).hexdigest()
-    query = {**payload, "version": version}
+    query = {**identity, "version": version}
     return {"version": version, "provider": provider, "manga": name,
-            "chapter": chapter, "page": page, "treatment": proposal["treatment"],
+            "chapter": final_chapter, "page": final_page, "treatment": proposal["treatment"],
             "run_id": proposal["run_id"], "artifact": proposal["artifact"],
             "source_sha256": proposal["source_sha256"],
             "candidate_sha256": proposal["sha256"],
