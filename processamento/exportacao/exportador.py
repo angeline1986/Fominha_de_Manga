@@ -12,6 +12,18 @@ CONTENT={
 def _excluded(p):
     return p.name.lower()==".ds_store" or p.name.startswith("._") or p.suffix.lower()==".json" or p.name.lower().endswith("_mask.png")
 
+def _source_files(base, kind):
+    if not base.is_dir(): return
+    for src in sorted(base.rglob("*")):
+        if src.is_symlink() or not src.is_file() or _excluded(src): continue
+        if not src.resolve().is_relative_to(base): continue
+        relative=src.relative_to(base)
+        if kind=="textoff_merged" and (
+            len(relative.parts)!=2 or not relative.parts[0].isdigit()
+            or src.suffix.lower()!=".png"
+        ): continue
+        yield src,relative
+
 def _sha256(p):
     h=hashlib.sha256()
     with p.open("rb") as f:
@@ -56,12 +68,8 @@ def list_source_files(manga, kind):
     base=manga.joinpath(*CONTENT[kind]["source"]).resolve()
     if not base.is_relative_to(manga): raise ValueError("Origem inválida.")
     result=[]
-    if base.is_dir():
-        for src in sorted(base.rglob("*")):
-            if src.is_symlink() or not src.is_file() or _excluded(src): continue
-            resolved=src.resolve()
-            if not resolved.is_relative_to(base): continue
-            result.append({"path":src.relative_to(base).as_posix(),"size":src.stat().st_size})
+    for src,relative in _source_files(base,kind):
+        result.append({"path":relative.as_posix(),"size":src.stat().st_size})
     return {"kind":kind,"files":result}
 
 
@@ -94,22 +102,19 @@ def _discover(manga,selected,work_dest,selections=None):
         counts={"new":0,"identical":0,"conflict":0}; size=0
         allowed=selections.get(key) if selections is not None else None
         found=set()
-        if base.is_dir():
-            for src in sorted(base.rglob("*")):
-                if src.is_symlink() or not src.is_file() or _excluded(src): continue
-                if not src.resolve().is_relative_to(base): continue
-                source_rel=src.relative_to(base).as_posix()
-                if allowed is not None and source_rel not in allowed: continue
-                found.add(source_rel)
-                rel=Path(cfg["dest"])/src.relative_to(base)
-                target=(work_dest/rel).resolve()
-                st=src.stat(); src_hash=_sha256(src)
-                status="new"
-                if target.is_file():
-                    status="identical" if target.stat().st_size==st.st_size and _sha256(target)==src_hash else "conflict"
-                item={"kind":key,"source":str(src),"relative":str(rel),"size":int(st.st_size),
-                      "mtime_ns":int(st.st_mtime_ns),"sha256":src_hash,"status":status}
-                files.append(item); counts[status]+=1; size+=item["size"]
+        for src,source_path in _source_files(base,key):
+            source_rel=source_path.as_posix()
+            if allowed is not None and source_rel not in allowed: continue
+            found.add(source_rel)
+            rel=Path(cfg["dest"])/source_path
+            target=(work_dest/rel).resolve()
+            st=src.stat(); src_hash=_sha256(src)
+            status="new"
+            if target.is_file():
+                status="identical" if target.stat().st_size==st.st_size and _sha256(target)==src_hash else "conflict"
+            item={"kind":key,"source":str(src),"relative":str(rel),"size":int(st.st_size),
+                  "mtime_ns":int(st.st_mtime_ns),"sha256":src_hash,"status":status}
+            files.append(item); counts[status]+=1; size+=item["size"]
         if allowed is not None and found!=allowed:
             raise ValueError("A seleção contém arquivos indisponíveis. Selecione novamente.")
         summary[key]={"label":cfg["label"],"files":sum(counts.values()),"bytes":size,"available":base.is_dir(),**counts}
