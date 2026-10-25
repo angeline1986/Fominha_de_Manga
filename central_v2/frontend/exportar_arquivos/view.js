@@ -13,7 +13,7 @@ export function createExportView(container) {
   const root = document.createElement("section");
   root.className = "export-v2";
   root.innerHTML = `
-    <div class="export-heading"><h1>Exportar arquivos</h1><span tabindex="0" role="note" title="Simule e revise os arquivos antes de exportar. Conflitos impedem a cópia.">ⓘ</span></div>
+    <div class="export-heading"><h1>Simular e Exportar</h1><span tabindex="0" role="note" title="Simule e revise os arquivos antes de exportar. Conflitos impedem a cópia.">ⓘ</span></div>
     <div class="export-split">
       <section class="export-config" aria-label="Configuração de exportação">
         <header class="export-title-row"><strong>Configuração</strong><span data-manga class="export-manga">Selecione uma obra</span></header>

@@ -156,6 +156,7 @@ export const navigation = [
   {
     id: "exportar-arquivos",
     label: "Exportar Arquivos",
+    defaultAction: "simular-exportar",
     groups: [
       {
         label: "EXECUÇÃO",
