@@ -30,102 +30,84 @@
   <header>
     <p class="eyebrow">Fominha de Manga · Central V2</p>
     <h1>Backlog: armazenamento e organização de experimentos</h1>
-    <p><span class="status">URGENTE · BACKLOG · NÃO INICIADO · NÃO AUTORIZADO</span></p>
-    <p class="meta">Escopo: Laboratório e tratamentos especiais. Destino proposto: <code>FominhaData/&lt;provider&gt;/&lt;obra&gt;/experimentos/</code>.</p>
-    <p>Planejar a centralização dos experimentos na pasta da obra e substituir a organização operacional baseada apenas em UUID por uma hierarquia legível, preservando o UUID interno de cada execução.</p>
-    <p class="note">Este registro não autoriza implementação, migração, cópia, movimentação ou exclusão de arquivos. Não altera Central V1, algoritmos, parâmetros de tratamento ou M3 PostgreSQL.</p>
+    <p><span class="status">URGENTE · EXP-01 CONCLUÍDO · EXP-02 PENDENTE</span></p>
+    <p class="meta">Escopo: Laboratório e tratamentos especiais. Destino das novas execuções: <code>&lt;obra&gt;/FLUXO_SECUNDARIO/05_Lab_Retoques/</code>.</p>
+    <p>As novas execuções são gravadas na pasta da obra. A organização por capítulo, página e tratamento continua pendente; o UUID ainda identifica a pasta de cada execução.</p>
+    <p class="note">Os resultados anteriores permanecem em <code>reports/experimentos/</code> e continuam disponíveis para leitura. Não há migração nem exclusão de históricos planejada nesta etapa.</p>
   </header>
 
   <section>
-    <h2>Situação relatada</h2>
-    <pre>Fominha_de_Manga/reports/experimentos/
-├── textoff_especiais_v2/
-└── textoff_laboratorio/
-
-experimentos/&lt;UUID&gt;/</pre>
-    <p>O inventário real de produtores, leitores, rotas HTTP e formatos ainda precisa ser confirmado. A árvore acima veio do pedido e não foi inspecionada nem alterada nesta atividade.</p>
+    <h2>Situação atual</h2>
+    <pre>&lt;obra&gt;/FLUXO_SECUNDARIO/05_Lab_Retoques/
+├── textoff_especiais_v2/&lt;UUID&gt;/
+└── textoff_laboratorio/&lt;UUID&gt;/</pre>
+    <p>Produtores e leitores da Central V2 usam a pasta da obra para execuções novas. A leitura mantém compatibilidade com as execuções antigas em <code>Fominha_de_Manga/reports/experimentos/</code>. A mudança entrou no commit <code>f0e3ab4d</code>.</p>
   </section>
 
   <section>
-    <h2>Estrutura proposta</h2>
-    <pre>FominhaData/&lt;provider&gt;/&lt;obra&gt;/experimentos/
-└── &lt;capitulo-original&gt;/
-    └── &lt;pagina-original&gt;/
-        └── &lt;tratamento&gt;/
-            └── &lt;execucao_id-UUID&gt;/
-                ├── input/
-                ├── treatment/
-                ├── logs/
-                ├── manifest.json
-                ├── request.json
-                └── worker-error.json (quando houver)</pre>
-    <p>Exemplo: <code>experimentos/14/page-039-044.png/artistico/bb1bfa1dd9354ea586d8ccbc9d012772/</code>.</p>
-    <p>Usar numeração original do capítulo e nome original da página. O UUID fica no último nível e identifica a execução, permitindo várias execuções da mesma página e tratamento sem colisões nem sobrescrita. Regras de filesystem devem tratar nomes reservados, separadores e diferenças de caixa sem colisões ou perda de identidade.</p>
+    <h2>Organização futura em avaliação</h2>
+    <p>EXP-02 deverá facilitar a navegação por capítulo, página e tratamento dentro das duas pastas existentes. A hierarquia exata ainda precisa ser definida, inclusive para nomes reservados, separadores e diferenças de caixa. O UUID continuará identificando cada execução.</p>
   </section>
 
   <section>
-    <h2>Tickets urgentes</h2>
+    <h2>Tickets</h2>
     <article class="ticket">
-      <h3>EXP-01 — Migrar armazenamento</h3>
-      <p><strong>Prioridade:</strong> URGENTE · <strong>Escopo:</strong> Laboratório e tratamentos especiais.</p>
-      <p>Centralizar experimentos hoje associados a <code>textoff_especiais_v2/</code> e <code>textoff_laboratorio/</code> na pasta da obra em FominhaData. Mapear e adaptar produtores, leitores e rotas HTTP mantendo compatibilidade com a interface. Preservar imagens, máscaras, logs, manifestos, requisições e diagnósticos. Evitar duplicação no fluxo normal.</p>
-      <p>Migrar históricos somente após inventário e validação de identidade e integridade, incluindo hashes disponíveis, manifestos e referências. Reportar divergências, metadados ausentes e colisões, sem promoção automática. Não excluir diretórios antigos sem autorização específica e reconciliação aprovada.</p>
+      <h3>EXP-01 — Gravar novas execuções na pasta da obra</h3>
+      <p><strong>Prioridade original:</strong> URGENTE · <strong>Status:</strong> CONCLUÍDO.</p>
+      <p>Laboratório e tratamentos especiais gravam novas execuções em <code>05_Lab_Retoques/</code>, nas respectivas pastas <code>textoff_laboratorio/</code> e <code>textoff_especiais_v2/</code>. Leitores e rotas mantêm acesso às execuções anteriores. O histórico existente não foi movido.</p>
     </article>
     <article class="ticket">
       <h3>EXP-02 — Organizar por capítulo, página e execução</h3>
-      <p><strong>Prioridade:</strong> URGENTE · <strong>Escopo:</strong> hierarquia e ciclo de vida das execuções.</p>
-      <p>Substituir a navegação operacional <code>experimentos/&lt;UUID&gt;/</code> por obra/capítulo/página/tratamento/UUID. Permitir reexecuções, preservar resultados anteriores e persistir estados <code>sucesso</code>, <code>falha</code> ou <code>interrompido</code>. Associar logs e erros à execução e à página corretas e manter acesso compatível com a Central V2.</p>
-      <p>Cada execução é create-only: nova tentativa recebe novo UUID e não sobrescreve resultados. Manifesto, requisição, logs e eventuais erros devem permitir rastrear obra, capítulo, página, tratamento, execução e estado final, respeitando contratos existentes. Definir tratamento de arquivos parciais e interrupções antes da migração.</p>
+      <p><strong>Prioridade:</strong> URGENTE · <strong>Status:</strong> PENDENTE.</p>
+      <p>Definir uma organização navegável por capítulo, página e tratamento dentro de <code>05_Lab_Retoques/</code>, mantendo as duas pastas atuais e o UUID da execução. Preservar reexecuções, resultados anteriores, logs, erros e estados, com acesso compatível pela Central V2.</p>
+      <p>Antes de alterar os caminhos, especificar nomes seguros, escrita sem sobrescrita, comportamento em falha e compatibilidade de leitura. Não mover automaticamente os históricos existentes.</p>
     </article>
   </section>
 
   <section>
     <h2>Dependências e decisões</h2>
     <ul>
-      <li>Inventariar produtores, leitores diretos e indiretos, rotas HTTP, tarefas em background e consumidores para Laboratório e Especiais.</li>
-      <li>Definir identificadores canônicos e mapeamento de provider, obra, capítulo original, nome de página original e tratamento.</li>
-      <li>Versionar contratos do manifesto e requisição, nomes de diretório, estados terminais e execução incompleta.</li>
-      <li>Definir gravação atômica/create-only e comportamento em retry, colisão, falha do worker e interrupção.</li>
-      <li>Planejar compatibilidade temporária da interface sem duas cópias em escrita normal.</li>
-      <li>Definir reconciliação histórica e aprovação explícita para eventual retirada dos caminhos antigos.</li>
+      <li>Inventariar consumidores afetados pela futura organização por capítulo e página.</li>
+      <li>Definir identificadores canônicos de capítulo, página e tratamento, sem colisões no filesystem.</li>
+      <li>Definir contratos de manifesto, requisição, estados terminais e execução incompleta.</li>
+      <li>Preservar escrita isolada por UUID e definir comportamento em retry, colisão e interrupção.</li>
+      <li>Manter a leitura dos caminhos atuais e legados durante qualquer mudança futura.</li>
     </ul>
   </section>
 
   <section>
     <h2>Riscos</h2>
     <ul>
-      <li>UUIDs mapeados incorretamente podem associar experimento à obra, capítulo, página ou tratamento errado.</li>
+      <li>Mapeamento incorreto pode associar experimento à obra, capítulo, página ou tratamento errado.</li>
       <li>Nomes originais podem conter caracteres inválidos, diferenças de caixa ou colisões após normalização.</li>
       <li>Alterar apenas produtores ou consumidores pode quebrar listagem, download, polling, logs ou reabertura na interface.</li>
       <li>Retry ou concorrência pode sobrescrever histórico se o caminho de execução não for create-only.</li>
-      <li>Manifestos incompletos, cópia parcial ou hashes divergentes podem esconder perda de conteúdo.</li>
-      <li>Coexistência sem autoridade explícita pode criar cópias divergentes; volume por obra pode afetar espaço, backup e desempenho.</li>
+      <li>Manifestos incompletos ou hashes divergentes podem esconder perda de conteúdo.</li>
+      <li>Volume por obra pode afetar espaço, backup e desempenho.</li>
       <li>Alterações acidentais de algoritmos, parâmetros, resultados, Central V1 ou PostgreSQL estão fora de escopo.</li>
     </ul>
   </section>
 
   <section>
-    <h2>Critérios de aceite futuros</h2>
+    <h2>Critérios de aceite</h2>
     <ul>
-      <li>Experimentos novos gravados em <code>FominhaData/&lt;provider&gt;/&lt;obra&gt;/experimentos/</code>, organizados por capítulo e página originais e tratamento.</li>
-      <li>UUID no nível da execução; múltiplas execuções por página/tratamento, sem sobrescrita em retry ou concorrência.</li>
-      <li>Laboratório e Especiais produzem e leem registros acessíveis pela Central V2; logs, erros e estados correspondem à página certa.</li>
-      <li>Estados sucesso, falha e interrompido persistidos e interpretados corretamente.</li>
-      <li>Imagens, máscaras, manifestos, requisições, logs e diagnósticos preservados e rastreáveis.</li>
-      <li>Históricos migrados só após validação de integridade; divergências reportadas e sem promoção automática.</li>
-      <li>Sem duplicações desnecessárias no fluxo normal; diretórios legados não excluídos sem autorização.</li>
-      <li>Sem alterações em algoritmos/resultados, Central V1 ou M3 PostgreSQL.</li>
+      <li>Concluído: novas execuções são gravadas em <code>&lt;obra&gt;/FLUXO_SECUNDARIO/05_Lab_Retoques/</code>.</li>
+      <li>Concluído: Laboratório e Especiais continuam lendo execuções antigas.</li>
+      <li>Pendente: organizar as execuções por capítulo, página e tratamento, sem sobrescrever UUIDs anteriores.</li>
+      <li>Pendente: validar estados, logs e erros por página após a reorganização.</li>
+      <li>Preservar imagens, máscaras, manifestos, requisições, logs e diagnósticos.</li>
+      <li>Não migrar nem excluir os diretórios legados nesta etapa.</li>
     </ul>
   </section>
 
   <section>
-    <h2>Próximo passo proposto</h2>
-    <p>Após autorização própria, iniciar por inventário somente leitura dos produtores, consumidores, rotas e formatos; aprovar identificadores canônicos e contrato create-only; validar compatibilidade da interface com dados sintéticos. Só então preparar reconciliação de históricos. Migração e retirada de caminhos antigos exigem autorização específica.</p>
+    <h2>Próximo passo</h2>
+    <p>Detalhar EXP-02 a partir dos caminhos já usados, validar a navegação por capítulo e página em dados de teste e preservar a leitura dos resultados existentes. Qualquer migração histórica exige decisão separada.</p>
   </section>
 
   <footer>
-    <strong>BACKLOG — URGENTE — NÃO INICIADO — NÃO AUTORIZADO.</strong>
-    <p>Este registro não autoriza implementar, copiar, mover ou excluir dados; alterar algoritmos/parâmetros, Central V1 ou M3; nem fazer commit ou push.</p>
+    <strong>EXP-01 CONCLUÍDO · EXP-02 URGENTE E PENDENTE.</strong>
+    <p>O destino para novas execuções já está em uso. Os arquivos históricos permanecem onde estavam.</p>
     <p><a href="central_v2_experimentos_armazenamento.md">Versão Markdown do backlog</a></p>
   </footer>
 </main>
