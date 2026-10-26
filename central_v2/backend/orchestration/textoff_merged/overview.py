@@ -7,6 +7,7 @@ from .artifact_migration import registry_snapshot
 from .manifests import manifest_snapshot
 from .stages import stage_path_snapshot, stage_chapter
 from .auto_cleaner_check_manifest import manifest_path, SCHEMA as CHECK_SCHEMA
+from .cleaner_final_status import current_final_status
 from central_v2.backend.orchestration.bubble_sommelier.query import _sommelier_state
 import json
 from central_v2.backend.orchestration.textoff_special.artifacts import (
@@ -32,6 +33,7 @@ def _query_cleaner_overview(manga: Path) -> dict:
     previews = current_previews(manga)
     for row in result["chapters"]:
         flags = previews.get(row["chapter"], set()) if row["cleaned"] else set()
+        final_glass, final_retouch = current_final_status(manga, row["chapter"])
         row["stages"] = {
             "ac1": row["cleaned"],
             "ac2": row["level2_status"] in {"processed", "no_change"},
@@ -48,9 +50,10 @@ def _query_cleaner_overview(manga: Path) -> dict:
             "bubble": bool(_sommelier_state(bubble)),
             "check": _verified_manifest(check, CHECK_SCHEMA, chapter),
             "solids": _verified_manifest(solid, "textoff_solid_stage_v1", chapter),
-            "glass": False,  # Sem fonte oficial identificada: nao inferir de AC3/AC4.
+            "glass": row["stages"]["ac2"] or "ac3" in flags or "ac4" in flags or final_glass,
         })
-        row["retouch"] = {key: key in flags for key in TREATMENTS.values()}
+        row["retouch"] = {key: key in flags or key in final_retouch
+                          for key in (*TREATMENTS.values(), "laboratory")}
         row["selectable"] = row["merge_valid"]
     return result
 

@@ -21,7 +21,8 @@ export function createStageColumns() {
         const value = document.createElement("span");
         value.className = "cleaner-retouch-types";
         value.textContent = names.join(" · ") || "—";
-        value.title = names.length ? "Retoques com prévia disponível" : "Sem retoque registrado";
+        value.title = names.length ? "Retoques com prévia ou aplicação final verificada"
+          : "Sem retoque registrado";
         return value;
       }
       const done = row.stages?.[key] === true;

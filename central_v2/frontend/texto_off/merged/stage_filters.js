@@ -3,7 +3,8 @@ export const STAGES = [
   ["bubble", "Bubble"], ["check", "Check"], ["solids", "Sólidos"],
   ["glass", "Glass"], ["retouch", "Retoque"],
 ];
-export const RETOUCH = [["degrade", "Degradê"], ["artistic", "Artístico"], ["soft", "Suave"]];
+export const RETOUCH = [["degrade", "Degradê"], ["artistic", "Artístico"],
+  ["soft", "Suave"], ["laboratory", "Laboratório"]];
 
 export function matchesStage(row, key, treatments = []) {
   if (key === "all") return true;
@@ -45,14 +46,12 @@ export function createStageFilters(container, onChange) {
       main.replaceChildren();
       secondary.replaceChildren();
       for (const [key, label] of STAGES) {
-        const count = key === "glass" ? "—" : loading ? "…"
-          : rows.filter((row) => matchesStage(row, key)).length;
+        const count = loading ? "…" : rows.filter((row) => matchesStage(row, key)).length;
         const filterLabel = label;
         const control = button(`${filterLabel} (${count})`, active === key, () => {
           active = key; onChange();
         });
-        control.disabled = loading || key === "glass";
-        if (key === "glass") control.title = "Sem fonte oficial de execução identificada";
+        control.disabled = loading;
         main.append(control);
       }
       secondary.hidden = active !== "retouch";

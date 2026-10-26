@@ -14,6 +14,34 @@ test('cleaner stage filters use independent booleans and combine retouch types w
   assert.equal(matchesStage(row, 'retouch', []), true);
   assert.equal(matchesStage({}, 'retouch'), false);
   assert.equal(matchesStage({}, 'ac4'), false);
+  assert.equal(matchesStage({ retouch: { laboratory: true } }, 'retouch'), true);
+  assert.equal(matchesStage({ retouch: { laboratory: true } }, 'retouch', ['laboratory']), true);
+});
+
+test('Glass has a live count and Laboratório can be selected among retouches', async () => {
+  const element = () => ({ children: [], classList: { toggle() {} }, setAttribute() {},
+    addEventListener(_event, action) { this.click = action; },
+    append(child) { this.children.push(child); },
+    replaceChildren(...children) { this.children = children; } });
+  const { createStageFilters } = await browserModules({ document: { createElement: element } })
+    ('/texto_off/merged/stage_filters.js');
+  const container = element();
+  const visible = createStageFilters(container, () => {});
+  visible.draw([{ stages: { glass: true }, retouch: { laboratory: true } }]);
+  const [main, secondary] = container.children;
+  const glassButton = main.children.find((button) => button.textContent.startsWith('Glass'));
+  assert.equal(glassButton.textContent, 'Glass (1)');
+  assert.equal(glassButton.disabled, false);
+  glassButton.click();
+  assert.equal(visible.matches({ stages: { glass: true } }), true);
+  assert.equal(visible.matches({ stages: { glass: false } }), false);
+  main.children.find((button) => button.textContent.startsWith('Retoque')).click();
+  visible.draw([{ stages: { glass: true }, retouch: { laboratory: true } }]);
+  assert.equal(secondary.hidden, false);
+  assert.equal(secondary.children.at(-1).textContent, 'Laboratório');
+  secondary.children.at(-1).click();
+  assert.equal(visible.matches({ retouch: { laboratory: true } }), true);
+  assert.equal(visible.matches({ retouch: { artistic: true } }), false);
 });
 
 test('outcome filters distinguish unchanged from unavailable and use recorded residue', async () => {
