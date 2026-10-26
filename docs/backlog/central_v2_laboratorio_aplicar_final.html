@@ -28,7 +28,7 @@
   <header>
     <p class="eyebrow">Fominha de Manga · Central V2 · Laboratório</p>
     <h1>LAB-APPLY-FINAL | Aplicar resultado do Laboratório ao Consolidado Final</h1>
-    <p><span class="badge">PRIORIDADE ALTA</span><span class="badge status">ETAPAS 1 A 5 IMPLEMENTADAS</span></p>
+    <p><span class="badge">PRIORIDADE ALTA</span><span class="badge status">CONCLUÍDO</span></p>
     <p class="muted">Alvo limitado: página selecionada em <code>07_CONSOLIDADO_FINAL</code> e seus metadados oficiais.</p>
     <p class="callout">A interface permite selecionar um resultado no cartão, aplicá-lo pelo painel e restaurar uma versão arquivada. Publicação e restauração preservam a imagem anterior em transação recuperável.</p>
   </header>
@@ -73,7 +73,7 @@
       <li>Versão anterior é preservada e restaurável; proveniência inclui run_id, artefato, tratamento, página e data/hora.</li>
       <li>Origem registrada é reconhecida pelos leitores. Tratamento original e outras páginas permanecem inalterados.</li>
       <li>Comparador, Reset/restauração, Consolidado Final, manifestos e leitores são compatíveis.</li>
-      <li>Fluxo dispensa substituição por Terminal. A seleção no cartão, aplicação e restauração em uma obra real ainda aguardam confirmação visual após reinício da Central V2.</li>
+      <li>Fluxo dispensa substituição por Terminal. Seleção, aplicação e restauração pela interface foram confirmadas em obra real.</li>
     </ul>
   </section>
 
@@ -92,7 +92,13 @@
   <section>
     <h2>Prioridade e status</h2>
     <p><strong>Prioridade ALTA.</strong> A funcionalidade pode alterar conteúdo oficial; cada etapa deve ser verificada antes de habilitar a escrita.</p>
-    <p><strong>Etapas 1 a 5 implementadas.</strong> A proposta é verificada, os quatro cartões permitem selecionar uma prévia concluída, o painel confirma a publicação, o histórico permite restaurar versões verificáveis e os leitores usam a linhagem vigente.</p>
+    <p><strong>Concluído.</strong> A proposta é verificada, os quatro cartões permitem selecionar uma prévia concluída, o painel confirma a publicação, o histórico permite restaurar versões verificáveis e os leitores usam a linhagem vigente.</p>
+  </section>
+
+  <section>
+    <h2>Validação final · 25/10/2026</h2>
+    <p>Na obra <code>comix/Gazing at you_v2</code>, oito páginas vigentes do Consolidado Final registram origem <code>LABORATORIO</code> e <code>visual_review=confirmed</code>. A usuária confirmou a restauração de uma versão anterior pela interface após aplicar um resultado em uma obra real.</p>
+    <p>As notas históricas abaixo descrevem o estado de cada correção quando foi investigada. A validação visual pendente nessas etapas foi encerrada pela confirmação acima.</p>
   </section>
 
   <section>
@@ -112,24 +118,24 @@
     <p><strong>Causa:</strong> o pedido identifica o tratamento por nome; o manifesto real registra um objeto com o algoritmo. A validação esperava texto nos dois arquivos.</p>
     <p><strong>Correção:</strong> conferir o nome no pedido e o algoritmo correspondente no manifesto, preservando as verificações de identidade da página, dimensões e SHA-256.</p>
     <p><strong>Verificação:</strong> 30 testes focados de backend e 12 de frontend passaram. Propostas reais de Artístico e Suave para <code>page-050-057.png</code> (Cap. 1) foram aceitas e os quatro endpoints da comparação retornaram PNGs, sem publicar arquivos finais.</p>
-    <p><strong>Pendente:</strong> confirmação visual na Central V2 após reinício. As suítes gerais ainda apresentam falhas anteriores fora deste item.</p>
+    <p><strong>Na data desta correção:</strong> faltava confirmação visual na Central V2 após reinício. A validação final foi registrada acima.</p>
     <h3>Arquivo clean do Glass selecionado pelo explorador</h3>
     <p><strong>Sintoma:</strong> a comparação mostrava <code>Cap. clean · page-050-057_clean.png</code>, “Consolidado Final indisponível” e imagens vazias.</p>
     <p><strong>Causa:</strong> o explorador usava a pasta e o nome físico da imagem tratada como identidade da página final; o Final usa o capítulo <code>1</code> e <code>page-050-057.png</code>.</p>
     <p><strong>Correção inicial:</strong> arquivos da estrutura conhecida do Auto-Cleaner Glass resolvem o capítulo e a página oficiais, mantendo o vínculo verificado com a execução. O histórico usa o mesmo destino.</p>
-    <p><strong>Verificação:</strong> a proposta real do Artístico retornou <code>Cap. 1 · page-050-057.png</code> e as duas imagens responderam HTTP 200, sem publicação. Passaram 31 testes focados de backend e 16 de frontend, incluindo aplicação em dados isolados. A verificação visual na interface continua pendente.</p>
+    <p><strong>Verificação na época:</strong> a proposta real do Artístico retornou <code>Cap. 1 · page-050-057.png</code> e as duas imagens responderam HTTP 200, sem publicação. Passaram 31 testes focados de backend e 16 de frontend, incluindo aplicação em dados isolados. A confirmação visual geral foi registrada acima.</p>
     <h3>Arquivo images do Auto-Cleaner Check</h3>
     <p><strong>Sintoma:</strong> uma execução Artístico sobre <code>04_AUTO_CLEANER_CHECK/3/images/page-060-068.png</code> voltou a mostrar “Consolidado Final indisponível” porque a comparação usou <code>images</code> como capítulo.</p>
     <p><strong>Causa:</strong> a resolução anterior cobria apenas a pasta <code>clean</code> do Glass; o explorador também permite selecionar imagens de outras etapas.</p>
     <p><strong>Correção:</strong> buscar o nome da página nos manifestos do Consolidado Final. Se ele aparecer em vários capítulos, conferir o capítulo presente no caminho verificado da origem Check ou Glass. Sem capítulo comprovado, bloquear com erro explícito. O histórico também reconhece essas estruturas.</p>
-    <p><strong>Verificação:</strong> a proposta real retornou <code>Cap. 3 · page-060-068.png</code>, e as duas imagens responderam HTTP 200 em leitura, sem publicação. Testes focados cobrem Check, Glass, aplicação isolada e ambiguidade. A conferência visual ainda está pendente.</p>
+    <p><strong>Verificação na época:</strong> a proposta real retornou <code>Cap. 3 · page-060-068.png</code>, e as duas imagens responderam HTTP 200 em leitura, sem publicação. Testes focados cobrem Check, Glass, aplicação isolada e ambiguidade. A confirmação visual geral foi registrada acima.</p>
     <h3>Nome repetido em vários capítulos</h3>
     <p><code>page-075-078.png</code> aparecia em cinco capítulos. A origem verificada era <code>04_AUTO_CLEANER_CHECK/4/images/</code>; o capítulo <code>4</code> é aceito apenas se seu manifesto contiver a página. A proposta real retornou <code>Cap. 4 · page-075-078.png</code> e as duas imagens responderam HTTP 200, sem publicação.</p>
     <p><strong>Interface simplificada:</strong> selecionar no cartão e aplicar no painel, com confirmação compacta e destino oficial visível. O popup de comparação foi retirado deste fluxo; o comparador do histórico continua disponível para restauração.</p>
-    <p><strong>Verificação da seleção no cartão:</strong> 19 testes focados de frontend e 32 de backend passaram nessa etapa. A conferência visual e uma aplicação real pela Central V2 continuam pendentes.</p>
+    <p><strong>Verificação da seleção no cartão naquela etapa:</strong> 19 testes focados de frontend e 32 de backend passaram. A aplicação real e a confirmação visual posterior estão registradas acima.</p>
     <h3>Recuperação da última execução do Artístico</h3>
     <p>Ao selecionar novamente a mesma imagem de origem, a Central V2 recupera a execução concluída mais recente do Artístico quando origem, SHA-256, snapshot, manifesto e PNG continuam verificáveis. O cartão mostra <strong>“Resultado recuperado”</strong> e permite selecionar a prévia para o Consolidado Final sem recalcular o filtro.</p>
-    <p>A execução real <code>91021c3f2a5e470585e994d76bdeaede</code> de <code>page-075-078.png</code> permanece no disco; a consulta e a leitura do PNG retornaram HTTP 200, sem publicação final. Passaram 33 testes focados de backend e 20 de frontend. A conferência visual na Central V2 permanece pendente.</p>
+    <p>A execução real <code>91021c3f2a5e470585e994d76bdeaede</code> de <code>page-075-078.png</code> permanece no disco; a consulta e a leitura do PNG retornaram HTTP 200, sem publicação final naquela etapa. Passaram 33 testes focados de backend e 20 de frontend. A confirmação visual geral foi registrada acima.</p>
     <h3>Sólidos sobre arquivo clean do capítulo 5</h3>
     <p>A prévia de <code>page-076-082_clean.png</code> aparecia no cartão, mas a proposta retornava HTTP 400 porque o manifesto guardava o nome físico, sem o destino oficial <code>5/page-076-082.png</code>. Novas prévias registram o caminho da origem; prévias anteriores são vinculadas pelo SHA-256 e pelo capítulo de caminhos conhecidos, sempre exigindo um único destino.</p>
     <p>A execução real <code>24b58dcdb0a84bfa8ea9ea938ec8a932</code> agora produz proposta válida para o capítulo 5, sem publicação. Um teste isolado aplicou uma prévia antiga e confirmou que a página de mesmo nome no capítulo 3 permaneceu intacta.</p>

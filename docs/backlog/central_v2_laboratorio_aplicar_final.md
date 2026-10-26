@@ -1,7 +1,7 @@
 # LAB-APPLY-FINAL | Aplicar resultado do Laboratório ao Consolidado Final
 
 **Prioridade:** ALTA
-**Status:** **ETAPAS 1 A 5 IMPLEMENTADAS**
+**Status:** **CONCLUÍDO**
 **Área:** Laboratório da Central V2
 **Alvo limitado:** página selecionada em `07_CONSOLIDADO_FINAL` e seus metadados oficiais
 
@@ -62,7 +62,7 @@ Definir um fluxo controlado na Central V2 para aplicar, mediante confirmação, 
 - [x] A operação não altera a pasta do tratamento original nem outras páginas do capítulo nos testes focados.
 - [x] Reset, composição e recuperação do Artístico, reconstrução e Combo Turbo têm testes de compatibilidade focados.
 - [x] O fluxo dispensa substituição manual por Terminal.
-- [ ] Confirmar visualmente na Central V2, após reinício, a seleção no cartão, aplicação pelo painel e restauração em uma obra real.
+- [x] Confirmar visualmente na Central V2, após reinício, a seleção no cartão, aplicação pelo painel e restauração em uma obra real.
 
 ## Riscos e dependências
 
@@ -79,7 +79,11 @@ Definir um fluxo controlado na Central V2 para aplicar, mediante confirmação, 
 
 **Prioridade ALTA.** A ação pode substituir conteúdo oficial, portanto cada etapa deve ser verificada antes de habilitar a escrita.
 
-**ETAPAS 1 A 5 IMPLEMENTADAS:** proposta verificada, seleção no cartão, publicação confirmada pelo painel e restauração de versões arquivadas pela interface. A linhagem vigente após uma restauração é usada pelo Reset e pela composição e recuperação do Artístico. Pincéis bloqueiam a origem Laboratório até que a página seja restaurada.
+**CONCLUÍDO:** proposta verificada, seleção no cartão, publicação confirmada pelo painel e restauração de versões arquivadas pela interface. A linhagem vigente após uma restauração é usada pelo Reset e pela composição e recuperação do Artístico. Pincéis bloqueiam a origem Laboratório até que a página seja restaurada.
+
+## Validação final — 25/10/2026
+
+Na obra `comix/Gazing at you_v2`, oito páginas vigentes do Consolidado Final registram origem `LABORATORIO` e `visual_review=confirmed`, confirmando aplicações reais pela interface. A usuária confirmou que também restaurou uma versão anterior pela interface após aplicar um resultado do Laboratório em uma obra real. As notas de correção abaixo registram o estado de cada etapa no momento em que foi investigada; suas pendências de validação visual foram encerradas por essa confirmação.
 
 ## Etapas controladas
 
@@ -95,35 +99,35 @@ Definir um fluxo controlado na Central V2 para aplicar, mediante confirmação, 
 - **Causa:** o pedido experimental identifica o tratamento por nome, mas o manifesto real registra `treatment` como objeto com o algoritmo. A validação esperava o nome também no manifesto.
 - **Correção:** a proposta confere o nome no pedido e o algoritmo correspondente no manifesto, mantendo as validações de página, origem, dimensões e SHA-256.
 - **Verificação:** 30 testes focados de backend e 12 de frontend passaram. As execuções reais de Artístico e Suave para `page-050-057.png` (Cap. 1) produziram propostas válidas; os quatro endpoints de imagem da comparação retornaram PNGs em leitura, sem publicar nada.
-- **Pendente:** confirmação visual após reiniciar a Central V2. As suítes gerais ainda têm falhas anteriores, fora deste item.
+- **Na data desta correção:** faltava confirmação visual após reiniciar a Central V2. A validação final foi registrada acima.
 
 ### Arquivo `clean` do Glass selecionado pelo explorador
 
 - **Sintoma:** a comparação mostrava `Cap. clean · page-050-057_clean.png`, “Consolidado Final indisponível” e imagens vazias.
 - **Causa:** o explorador usava a pasta e o nome físico da imagem tratada como identidade da página final. O Consolidado Final registra essa página no capítulo `1` como `page-050-057.png`.
 - **Correção inicial:** a estrutura conhecida do Auto-Cleaner Glass (`05_AUTO_CLEANER_TRANSPARENCIA/<perfil>/<capítulo>/clean/<página>_clean.png`) passou a apontar para o destino oficial. O histórico usa o mesmo destino.
-- **Verificação:** a proposta real do Artístico retornou `Cap. 1 · page-050-057.png`; as imagens atual e experimental responderam HTTP 200, sem publicação. Passaram 31 testes focados de backend e 16 de frontend, incluindo comparação e aplicação em dados isolados. A conferência visual na interface continua pendente.
+- **Verificação na época:** a proposta real do Artístico retornou `Cap. 1 · page-050-057.png`; as imagens atual e experimental responderam HTTP 200, sem publicação. Passaram 31 testes focados de backend e 16 de frontend, incluindo comparação e aplicação em dados isolados. A confirmação visual geral foi registrada acima.
 
 ### Arquivo `images` do Auto-Cleaner Check
 
 - **Sintoma:** uma execução Artístico sobre `04_AUTO_CLEANER_CHECK/3/images/page-060-068.png` voltou a mostrar “Consolidado Final indisponível” porque a comparação usou `images` como capítulo.
 - **Causa:** a resolução anterior cobria apenas a pasta `clean` do Glass. O explorador pode escolher imagens de outras etapas.
 - **Correção:** localizar o nome da página nos manifestos do Consolidado Final; quando ele existir em vários capítulos, conferir o capítulo presente no caminho verificado da origem Check ou Glass. Sem capítulo comprovado, bloquear com erro explícito. O histórico também reconhece essas estruturas.
-- **Verificação:** a proposta real retornou `Cap. 3 · page-060-068.png`, e as duas imagens da comparação responderam HTTP 200 em leitura, sem publicação final. Testes focados cobrem seleção de arquivos Check/Glass, aplicação isolada e ambiguidade. A conferência visual na interface continua pendente.
+- **Verificação na época:** a proposta real retornou `Cap. 3 · page-060-068.png`, e as duas imagens da comparação responderam HTTP 200 em leitura, sem publicação final. Testes focados cobrem seleção de arquivos Check/Glass, aplicação isolada e ambiguidade. A confirmação visual geral foi registrada acima.
 
 ### Nome repetido em vários capítulos
 
 - `page-075-078.png` apareceu em cinco capítulos do Consolidado Final. O arquivo selecionado pertencia a `04_AUTO_CLEANER_CHECK/4/images/`, mas a busca anterior usava apenas o nome e recusava a proposta.
 - O capítulo `4` do caminho da origem é aceito somente quando o manifesto desse capítulo contém a página. A proposta real passou a retornar `Cap. 4 · page-075-078.png`; as duas imagens responderam HTTP 200 em leitura, sem publicação.
 - **Interface simplificada:** o cartão do tratamento concluído permite selecionar o resultado; o painel mostra tratamento, capítulo e página oficiais e solicita confirmação compacta para aplicar. O popup de comparação foi retirado deste fluxo. O comparador do histórico permanece para restauração.
-- **Verificação da seleção no cartão:** 19 testes focados de frontend e 32 de backend passaram nessa etapa. Falta a conferência visual e uma aplicação real pela Central V2.
+- **Verificação da seleção no cartão naquela etapa:** 19 testes focados de frontend e 32 de backend passaram. A aplicação real e a confirmação visual posterior estão registradas acima.
 
 ### Recuperação da última execução do Artístico
 
 - Ao selecionar novamente a mesma imagem de origem, a Central V2 procura a execução concluída mais recente do Artístico. A prévia só reaparece se a origem, seu SHA-256, o snapshot, o manifesto e o PNG ainda forem verificáveis.
 - O cartão mostra **“Resultado recuperado”** e permite selecionar essa execução para o Consolidado Final, sem executar o filtro de novo. Uma execução nova ou mudança de página invalida respostas de recuperação atrasadas.
 - A execução real `91021c3f2a5e470585e994d76bdeaede` de `page-075-078.png` permanece no disco; a consulta de recuperação e a leitura do PNG retornaram HTTP 200 sem alterar o Consolidado Final.
-- Verificação focada atual: 33 testes de backend e 20 de frontend passaram. A conferência visual na Central V2 ainda está pendente.
+- Verificação focada naquela etapa: 33 testes de backend e 20 de frontend passaram. A confirmação visual geral foi registrada acima.
 
 ### Sólidos sobre arquivo `clean` do capítulo 5
 

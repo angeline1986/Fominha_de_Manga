@@ -6,7 +6,7 @@
 
 | ID | Tarefa | Status |
 |---|---|---|
-| [BL-04](../../tickets/central_v2/BL-04.md) | Confirmar a origem das imagens enviadas ao Drive | IN PROGRESS · P1 |
+| [BL-04](../../tickets/central_v2/BL-04.md) | Confirmar a origem das imagens enviadas ao Drive | DONE · P1 |
 | [CV2-CAT-03](../../tickets/central_v2/CV2-CAT-03.md) | Integrar Lezhinus ao catálogo da Central V2 | DO |
 
 ### UX/UI transversal
@@ -69,7 +69,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [CV2-AC-07](../../tickets/central_v2/CV2-AC-07.md) | Sincronizar a cor das caixas de seleção com os bullets do Auto-Cleaner Check | IN PROGRESS |
 | [CV2-AC-08](../../tickets/central_v2/CV2-AC-08.md) | Avaliar preenchimento uniforme no Auto-Cleaner · Sólidos | TODO |
 | [CV2-AC-09](../../tickets/central_v2/CV2-AC-09.md) | Adicionar filtro Do ao Auto-Cleaner | TODO |
-| [CV2-PERF-01](../../tickets/central_v2/CV2-PERF-01.md) | Reduzir o carregamento do Auto-Cleaner e Auto-Cleaner Check | PARCIALMENTE CONCLUÍDO · P1 |
+| [CV2-PERF-01](../../tickets/central_v2/CV2-PERF-01.md) | Atingir a meta de 1,5 s na primeira abertura do Auto-Cleaner e Check | PARCIALMENTE CONCLUÍDO · P1 |
 | [CV2-UX-08](../../tickets/central_v2/CV2-UX-08.md) | Padronizar capítulo e página nos visualizadores de Limpeza de Balões | DONE · P2 |
 | [CV2-AUD-01](../../tickets/central_v2/CV2-AUD-01.md) | Validar visualmente a Auditoria Antes & Depois | DO |
 | [CV2-CAT-01](../../tickets/central_v2/CV2-CAT-01.md) | Validar o catálogo de resíduos por capítulo | DO · P1 |
@@ -81,7 +81,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 |---|---|---|
 | [EXP-01](../../../backlog/central_v2_experimentos_armazenamento.md) | Gravar novas execuções em `05_Lab_Retoques` na pasta da obra | DONE · prioridade original URGENTE |
 | [EXP-02](../../../backlog/central_v2_experimentos_armazenamento.md) | Organizar experimentos por capítulo, página e execução | TODO · URGENTE |
-| [LAB-APPLY-FINAL](../../../backlog/central_v2_laboratorio_aplicar_final.md) | Validar aplicação do Laboratório ao Consolidado Final em uma obra real | PARCIALMENTE CONCLUÍDO · ALTA |
+| [LAB-APPLY-FINAL](../../../backlog/central_v2_laboratorio_aplicar_final.md) | Aplicar e restaurar resultado do Laboratório no Consolidado Final | DONE · ALTA |
 
 ## Exportar Arquivos
 
