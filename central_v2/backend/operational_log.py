@@ -6,6 +6,8 @@ import json
 import os
 import re
 
+from central_v2.backend.log_redaction import redact_log_text
+
 
 _operation = ContextVar("central_v2_operation_log", default=None)
 _LEVELS = {"DEBUG": 10, "INFO": 20, "WARNING": 30, "ERROR": 40}
@@ -39,6 +41,7 @@ def emit(level: str, message: str, *, component: str | None = None,
     if fields:
         values = " ".join(f"{key}={_value(value)}" for key, value in fields.items())
         line += f" · {values}"
+    line = redact_log_text(line)
     print(line, flush=True)
     return line
 

@@ -4,11 +4,12 @@ from __future__ import annotations
 import json
 from pathlib import Path
 import shutil
-import subprocess
+import sys
 import tempfile
 import time
 
 from processamento.unificacao_imagens import image_stitcher as v3
+from central_v2.backend.redacted_subprocess import launch
 from .artifact_migration import mirror_stage_chapter
 from .level2_isolated_destination import isolated_level2_target
 from .artifact_paths import artifact_ref
@@ -86,7 +87,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
     for name, *_ in records:
         progress(name, {"stage": "level2", "percent": 0, "completed": 0,
                         "total": len(records), "message": "Iniciando detector e reconstrutor do Nível II."})
-    process = subprocess.Popen(command, cwd=REPOSITORY_ROOT)
+    process, output_reader = launch(command, cwd=REPOSITORY_ROOT, destination=sys.stdout)
     last_progress, started = None, time.monotonic()
     try:
         while process.poll() is None:
@@ -180,6 +181,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
             if not any(item.get("chapter") == name for item in results):
                 results.append({"chapter": name, "status": "failed", "error": str(exc)})
     finally:
+        output_reader.join(timeout=3)
         shutil.rmtree(batch_work, ignore_errors=True)
     result_by_chapter = {item["chapter"]: item for item in results}
     for index, name in enumerate(chapters, 1):

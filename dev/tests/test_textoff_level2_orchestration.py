@@ -1,4 +1,5 @@
 import json
+import io
 import tempfile
 import unittest
 from pathlib import Path
@@ -51,6 +52,7 @@ class TextoffLevel2OrchestrationTests(unittest.TestCase):
                 returncode = 0
 
                 def __init__(self, command, **_kwargs):
+                    self.stdout = io.StringIO("")
                     batch_manifest = Path(command[command.index("--batch-manifest") + 1])
                     job = json.loads(batch_manifest.read_text())[0]
                     worker_jobs.append(job)
@@ -113,7 +115,8 @@ class TextoffLevel2OrchestrationTests(unittest.TestCase):
                  patch.object(level2.v3, "is_chapter_merged", return_value=True), \
                  patch.object(level2.v3, "merge_output_dir", return_value=source_dir), \
                  patch.object(level2.v3, "merge_artifact_files", return_value=images), \
-                 patch.object(level2.subprocess, "Popen", side_effect=SuccessfulWorker), \
+                 patch("central_v2.backend.redacted_subprocess.subprocess.Popen",
+                       side_effect=SuccessfulWorker), \
                  patch.object(level2, "mirror_stage_chapter", return_value=False) as mirror, \
                  patch("central_v2.backend.orchestration.textoff_merged.consolidated.rebuild_consolidated",
                        return_value={"outputs": 18, "level2_outputs_used": 8}) as rebuild, \

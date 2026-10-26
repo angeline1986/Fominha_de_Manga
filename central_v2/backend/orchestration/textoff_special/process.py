@@ -6,6 +6,7 @@ import signal
 import subprocess
 import time
 
+from central_v2.backend.redacted_subprocess import launch
 from .catalog import ROOT, python_for
 
 
@@ -17,8 +18,8 @@ def run_worker(key: str, request_path: Path, log_path: Path, timeout: float = 18
     environment = os.environ.copy()
     environment.update(HF_HUB_OFFLINE="1", TRANSFORMERS_OFFLINE="1", PYTHONUNBUFFERED="1")
     with log_path.open("w", encoding="utf-8") as log:
-        process = subprocess.Popen(command, cwd=ROOT, env=environment, stdout=log,
-                                   stderr=subprocess.STDOUT, start_new_session=(os.name == "posix"))
+        process, output_reader = launch(command, cwd=ROOT, env=environment, destination=log,
+                                        start_new_session=(os.name == "posix"))
         try:
             code = _wait_for_worker(process, timeout, request_path, on_progress)
         except BaseException:
@@ -32,6 +33,8 @@ def run_worker(key: str, request_path: Path, log_path: Path, timeout: float = 18
                     process.kill()
                 process.wait()
             raise
+        finally:
+            output_reader.join(timeout=3)
     if code:
         raise RuntimeError(f"Worker de Casos Especiais falhou ({code}); consulte {log_path}.")
 

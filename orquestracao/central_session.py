@@ -4,7 +4,10 @@ import fcntl
 import os
 from pathlib import Path
 import socket
+import sys
 import tempfile
+
+from central_v2.backend.log_redaction import forward_redacted
 
 
 LEASE_ENV = "FOMINHA_CENTRAL_SESSION_HELD"
@@ -27,13 +30,18 @@ def central_session(lock_path: Path | None = None):
 
 
 def run_central(command: list[str], cwd: Path, env: dict[str, str] | None = None) -> None:
-    """Keep both the menu process and server child inside one lease."""
+    """Keep the menu lease and sanitize child output before reaching the terminal."""
     import subprocess
 
     child_env = dict(os.environ if env is None else env)
     child_env[LEASE_ENV] = "1"
+    child_env["PYTHONUNBUFFERED"] = "1"
     with central_session():
-        subprocess.run(command, cwd=cwd, env=child_env, check=False)
+        with subprocess.Popen(command, cwd=cwd, env=child_env, stdout=subprocess.PIPE,
+                              stderr=subprocess.STDOUT, text=True, encoding="utf-8",
+                              errors="replace", bufsize=1) as process:
+            forward_redacted(process.stdout, sys.stdout)
+            process.wait()
 
 
 def server_session():

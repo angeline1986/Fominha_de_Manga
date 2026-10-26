@@ -13,7 +13,8 @@ class OperationalLogTests(unittest.TestCase):
         self.assertRegex(line, r"^\d{2}:\d{2}:\d{2}\.\d{3} INFO \[SOMMELIER\]\[abcdef\] ")
         self.assertNotIn("\n", line)
         self.assertIn("página concluída · pagina=2/18", line)
-        self.assertIn("caminho=/Users/x/a.png", line)
+        self.assertIn("caminho=[HOME]/a.png", line)
+        self.assertNotIn("/Users/x", line)
         output.assert_called_once_with(line, flush=True)
 
     def test_context_is_isolated_between_operations(self):

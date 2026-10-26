@@ -1,5 +1,6 @@
 """Timeout and offline process contracts for the isolated preview worker."""
 import subprocess
+import io
 import json
 import tempfile
 import unittest
@@ -49,6 +50,7 @@ class WorkerProcessTests(unittest.TestCase):
     def test_callback_receives_real_cleaner_progress_and_log_is_teed(self):
         child = MagicMock()
         child.wait.side_effect = [subprocess.TimeoutExpired("worker", 0.25), 0]
+        child.stdout = io.StringIO("worker output /Users/example/Documents/TI/Projetos/file.png\n")
         events = []
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -57,18 +59,14 @@ class WorkerProcessTests(unittest.TestCase):
             progress.write_text(json.dumps({"overall": 0.42, "stage": "ocr",
                                             "detail": "processando OCR"}), encoding="utf-8")
 
-            def launch(_command, **kwargs):
-                kwargs["stdout"].write("worker output\n")
-                return child
-
             with patch.object(process, "python_for", return_value=Path("isolated-python")), \
-                 patch.object(process.subprocess, "Popen", side_effect=launch):
+                 patch.object(process.subprocess, "Popen", return_value=child):
                 process.run_worker("degrade", root / "request.json", root / "worker.log",
                                    on_progress=events.append)
             self.assertEqual(events, [{"percent": 37, "stage": "ocr",
                                        "message": "processando OCR"}])
             self.assertEqual((root / "worker.log").read_text(encoding="utf-8"),
-                             "worker output\n")
+                             "worker output [HOME]/Documents/TI/Projetos/file.png\n")
             self.assertEqual(child.wait.call_count, 2)
 
 

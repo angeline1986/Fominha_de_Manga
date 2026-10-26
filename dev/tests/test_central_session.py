@@ -1,4 +1,5 @@
 from pathlib import Path
+import io
 import tempfile
 import unittest
 from unittest.mock import patch
@@ -21,13 +22,26 @@ class CentralSessionTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             lock = Path(temporary) / "central.lock"
             with patch("orquestracao.central_session.LOCK_PATH", lock):
+                class Child:
+                    stdout = io.StringIO("")
+
+                    def __enter__(self):
+                        return self
+
+                    def __exit__(self, *_args):
+                        return False
+
+                    def wait(self):
+                        return 0
+
                 def assert_locked(*args, **kwargs):
                     with self.assertRaises(RuntimeError):
                         with central_session(lock):
                             pass
                     self.assertEqual(kwargs["env"]["FOMINHA_CENTRAL_SESSION_HELD"], "1")
+                    return Child()
 
-                with patch("subprocess.run", side_effect=assert_locked):
+                with patch("subprocess.Popen", side_effect=assert_locked):
                     run_central(["python", "server.py"], Path.cwd())
                 with central_session(lock):
                     pass
