@@ -2,6 +2,10 @@
 from pathlib import Path
 
 from central_v2.backend.routes.laboratorio_pages import _chapter, _directory, _images
+from central_v2.backend.routes.laboratorio_glass_pages import (
+    check_page_for_glass, glass_chapter,
+)
+from central_v2.backend.routes.laboratorio_check_pages import check_pages
 from central_v2.backend.state.catalog import build_catalog
 from central_v2.backend.state.manga_state import IMAGE_EXTENSIONS, resolve_manga
 
@@ -33,6 +37,23 @@ def resolve_source(payload, output_root):
                 or parent_name != chapter or parts[-1] != filename):
             raise ValueError("Imagem fora do catálogo autorizado.")
         return manga, path, chapter, filename
+    if kind == "glass":
+        if manga_name not in build_catalog(output_root).get(provider, []):
+            raise ValueError("Obra fora do catálogo.")
+        manga = resolve_manga(output_root, provider, manga_name).resolve()
+        folder = glass_chapter(manga, chapter)
+        pages = {page.name: page.resolve() for page in _images(folder)}
+        if filename not in pages or check_page_for_glass(filename) is None:
+            raise ValueError("Página Glass fora do catálogo autorizado.")
+        return manga, pages[filename], chapter, filename
+    if kind == "check":
+        if manga_name not in build_catalog(output_root).get(provider, []):
+            raise ValueError("Obra fora do catálogo.")
+        manga = resolve_manga(output_root, provider, manga_name).resolve()
+        pages = check_pages(manga, provider, chapter)
+        if filename not in pages:
+            raise ValueError("Página Check fora do catálogo autorizado.")
+        return manga, pages[filename], chapter, filename
     if kind not in {"img", "merge"}:
         raise ValueError("Origem inválida.")
     image_root = _directory(output_root, provider, manga_name, kind)

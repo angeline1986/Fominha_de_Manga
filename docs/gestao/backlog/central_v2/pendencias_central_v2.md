@@ -57,9 +57,11 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [BL-03](../../tickets/central_v2/BL-03.md) | Documentar o contrato do Consolidado Final | DO |
 | [BL-05](../../tickets/central_v2/BL-05.md) | Investigar compatibilidade V1 no Auto-Cleaner Passo 1 | IN PROGRESS · P1 |
 | [BL-06](../../tickets/central_v2/BL-06.md) | Exibir feedback contextual dos tratamentos no Laboratório | DONE |
+| [CV2-LAB-01](../../tickets/central_v2/CV2-LAB-01.md) | Ordenar cartões do Laboratório pela execução da página | DONE · P2 |
+| [CV2-LAB-02](../../tickets/central_v2/CV2-LAB-02.md) | Mostrar páginas “Outro” do Check nas origens Glass e Check do Laboratório | DONE · P2 |
 | [BL-12](../../tickets/central_v2/BL-12.md) | Validar autorização Degradê com múltiplos componentes | IN PROGRESS |
 | [BL-13](../../tickets/central_v2/BL-13.md) | Sair do modo Foco com Esc | DONE |
-| [BL-15](../../tickets/central_v2/BL-15.md) | Definir MERGE como origem padrão no Laboratório | TODO |
+| [BL-15](../../tickets/central_v2/BL-15.md) | Definir Glass como origem padrão no Laboratório | DONE |
 | [BL-16](../../tickets/central_v2/BL-16.md) | Exibir a data da última execução do Auto-Cleaner | TODO |
 | [CV2-AC-01](../../tickets/central_v2/CV2-AC-01.md) | Corrigir descarte de boxes pequenos `unknown` | DO |
 | [CV2-AC-03](../../tickets/central_v2/CV2-AC-03.md) | Diagnosticar o Auto-Cleaner Passo 3 | IN PROGRESS |

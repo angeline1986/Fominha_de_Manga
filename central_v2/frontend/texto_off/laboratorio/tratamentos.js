@@ -5,8 +5,9 @@ import {
 } from "/_app/api/laboratorio.js";
 
 function connectTreatment({ root, button, getRequest, cardIndex, label, treatment,
-  execute, progress, review }) {
-  const panel = root.querySelector(`.lab-cards > .lab-image:nth-child(${cardIndex})`);
+  execute, progress, review, order }) {
+  const panel = root.querySelector(`[data-lab-card="${treatment}"]`)
+    || root.querySelector(`.lab-cards > .lab-image:nth-child(${cardIndex})`);
   const placeholder = panel.querySelector(".lab-placeholder");
   const image = document.createElement("img");
   image.className = "lab-treatment-image";
@@ -26,6 +27,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, treatmen
   function clear() {
     serial++;
     review?.clear(treatment);
+    order?.clear(treatment);
     image.hidden = true;
     image.removeAttribute("src");
     setState("waiting", "Aguardando execução");
@@ -49,6 +51,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, treatmen
     const active = new AbortController();
     controllers.add(active);
     review?.clear(treatment);
+    order?.clear(treatment);
     button.disabled = true;
     image.hidden = true;
     image.removeAttribute("src");
@@ -64,6 +67,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, treatmen
         image.hidden = false;
         setState("completed", "Concluído");
         review?.ready(treatment, payload, result.run_id);
+        order?.complete(treatment);
       };
       image.onerror = () => {
         if (!isCurrent(id, snapshot)) return;
@@ -95,6 +99,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, treatmen
       image.hidden = false;
       setState("completed", "Resultado recuperado");
       review?.ready(treatment, identity, result.run_id);
+      order?.complete(treatment, result.completed_at);
     };
     image.onerror = () => {
       if (id !== serial) return;

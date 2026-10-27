@@ -6,10 +6,12 @@ import { connectFinalReview } from "/texto_off/laboratorio/final_review.js";
 import { connectFinalHistory } from "/texto_off/laboratorio/final_history.js";
 import { finalPageSelection } from "/texto_off/laboratorio/final_target.js";
 import { getRecentLaboratoryResult } from "/_app/api/laboratorio.js";
+import { connectCardOrder } from "/texto_off/laboratorio/card_order.js";
 
 /** Integra imagem original, ROIs e os três estados experimentais independentes. */
 export function connectTreatmentController({ root, navigation, workspace, image, progress }) {
   const panel = root.querySelector(".lab-actions");
+  const order = connectCardOrder(root);
   const review = connectFinalReview(root, () => workspace.openPanel?.());
   const history = connectFinalHistory(root, () => {
     const { provider, manga } = getContext();
@@ -72,19 +74,19 @@ export function connectTreatmentController({ root, navigation, workspace, image,
   };
   const degrade = connectDegrade({
     root, button: panel.querySelector("[data-lab-degrade]"), getRequest,
-    progress: treatmentProgress, review,
+    progress: treatmentProgress, review, order,
   });
   const stylized = connectStylized({
     root, button: panel.querySelector("[data-lab-stylized]"), getRequest,
-    progress: treatmentProgress, review,
+    progress: treatmentProgress, review, order,
   });
   const smooth = connectSmooth({
     root, button: panel.querySelector("[data-lab-smooth]"), getRequest,
-    progress: treatmentProgress, review,
+    progress: treatmentProgress, review, order,
   });
   const solid = connectSolid({
     root, button: panel.querySelector("[data-lab-solid]"), getRequest,
-    progress: treatmentProgress, review,
+    progress: treatmentProgress, review, order,
   });
   const roiObserver = new MutationObserver(() => {
     degrade.invalidate();
@@ -104,6 +106,7 @@ export function connectTreatmentController({ root, navigation, workspace, image,
       chapter: selected.chapter, page: selected.page,
       ...(selected.path ? { path: selected.path } : {}) };
     const identity = `${provider}|${manga}|${selected.source}|${selected.path || ""}|${selected.chapter}|${selected.page}`;
+    order.setPage(identity);
     degrade.reset(identity);
     stylized.reset(identity);
     smooth.reset(identity);
@@ -138,12 +141,17 @@ export function connectTreatmentController({ root, navigation, workspace, image,
         if (disposed || id !== originalLoadSerial) return;
         const stylizedRevision = stylized.revision();
         const solidRevision = solid.revision();
+        const degradeRevision = degrade.revision();
+        const smoothRevision = smooth.revision();
         try {
-          const { result, solids_result: solidsResult } =
+          const { result, solids_result: solidsResult, degrade_result: degradeResult,
+            smooth_result: smoothResult } =
             await getRecentLaboratoryResult(recoveryIdentity);
           if (disposed || id !== originalLoadSerial) return;
           if (result) stylized.restore(result, recoveryIdentity, stylizedRevision);
           if (solidsResult) solid.restore(solidsResult, recoveryIdentity, solidRevision);
+          if (degradeResult) degrade.restore(degradeResult, recoveryIdentity, degradeRevision);
+          if (smoothResult) smooth.restore(smoothResult, recoveryIdentity, smoothRevision);
         } catch {
           // A saved preview is optional; execution remains available.
         }

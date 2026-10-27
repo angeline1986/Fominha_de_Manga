@@ -13,6 +13,8 @@
 .lab-panel, .lab-workspace { min-width: 0; overflow: hidden; border: 1px solid #c3e0ef; border-radius: 9px; background: #fff; }
 .lab-actions { overflow-y: auto; }
 .lab-panel-head { display: flex; align-items: center; justify-content: space-between; padding: 12px; border-bottom: 1px solid #d8eaf3; }
+.lab-pages .lab-panel-head { padding-inline: 8px; }
+.lab-pages .lab-source-toggle { flex: 1; justify-content: space-between; }
 .lab-panel-body { padding: 12px; }
 .lab-panel input { width: 100%; height: 36px; padding: 8px; border: 1px solid #c3e0ef; border-radius: 6px; }
 .lab-pill { padding: 4px 10px; border: 1px solid #c3e0ef; border-radius: 7px; }
@@ -59,14 +61,14 @@
 .lab-wide { width: 100%; }
 .lab-panel hr { margin: 18px 0; border: 0; border-top: 1px solid #e1eef6; }
 
-/* Navegação, origem IMG/MERGE e previews. */
+/* Navegação, origens da imagem e previews. */
 .lab-pages { display: flex; min-height: 0; flex-direction: column; }
 .lab-pages-body { position: relative; display: flex; min-height: 0; flex: 1; flex-direction: column; padding: 12px; }
 .lab-page-selectors { display: grid; grid-template-columns: 78px minmax(0, 1fr) 34px; align-items: center; gap: 6px; min-width: 0; margin-bottom: 9px; }
 .lab-page-selectors select { width: 100%; min-width: 0; height: 34px; padding: 5px; border: 1px solid #c3e0ef; border-radius: 6px; background: #fff; color: #14516c; font: inherit; font-size: 12px; }
 .lab-page .lab-explore-button { display: grid; width: 34px; min-width: 34px; height: 34px; place-items: center; padding: 0; border: 1px solid #c3e0ef; background: #fff; font-size: 15px; }
 .lab-source-toggle { display: flex; gap: 2px; padding: 2px; border: 1px solid #c3e0ef; border-radius: 7px; background: #f3fafe; }
-.lab-page .lab-source-toggle button { padding: 4px 7px; border: 0; border-radius: 5px; background: transparent; color: #386d89; font-size: 10px; font-weight: 700; cursor: pointer; }
+.lab-page .lab-source-toggle button { padding: 4px 5px; border: 0; border-radius: 5px; background: transparent; color: #386d89; font-size: 10px; font-weight: 700; cursor: pointer; }
 .lab-page .lab-source-toggle button.is-active { background: #d8edf9; color: #075474; }
 .lab-page-list { display: flex; min-height: 0; flex: 1; flex-direction: column; align-items: stretch; gap: 5px; overflow-y: auto; }
 .lab-page-entry { width: 100%; min-height: 33px; flex: none; overflow: hidden; padding: 7px 9px !important; border: 1px solid #c9e4f2 !important; border-radius: 7px !important; background: #f5fafd !important; font-size: 11px !important; font-weight: 650 !important; text-align: left; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }

@@ -27,8 +27,13 @@ class FinalTargetTests(unittest.TestCase):
             identified = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/04_AUTO_CLEANER_CHECK/1/images/page.png"
             self.assertEqual(final_target(manga, identified,
                 {"chapter": "images", "filename": "page.png"}), ("1", "page.png"))
+            self.assertEqual(final_target(manga, identified,
+                {"chapter": "1", "filename": "page.png"}), ("1", "page.png"))
             self.assertEqual(final_target(manga, manga / "IMG/1/page.png",
                 {"chapter": "1", "filename": "page.png"}), ("1", "page.png"))
+            glass = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_II/1/clean/page_clean.png"
+            self.assertEqual(final_target(manga, glass,
+                {"chapter": "1", "filename": "page_clean.png"}), ("1", "page.png"))
 
     def test_legacy_solids_uses_verified_source_hash_and_rejects_ambiguous_chapters(self):
         with tempfile.TemporaryDirectory() as temporary:

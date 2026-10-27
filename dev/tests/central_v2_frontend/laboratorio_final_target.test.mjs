@@ -5,6 +5,12 @@ import { browserModules } from './modules.mjs';
 const load = browserModules();
 const { finalPageSelection } = await load('/texto_off/laboratorio/final_target.js');
 
+test('origem Glass aponta para a página oficial no histórico', () => {
+  assert.deepEqual(JSON.parse(JSON.stringify(finalPageSelection({ source: 'glass',
+    chapter: '1', page: 'page-050-057_clean.png' }))),
+  { chapter: '1', page: 'page-050-057.png' });
+});
+
 test('arquivo clean do Glass aponta para a página oficial no histórico', () => {
   assert.deepEqual(JSON.parse(JSON.stringify(finalPageSelection({ source: 'file', chapter: 'clean',
     page: 'page-050-057_clean.png', path: 'FLUXO_SECUNDARIO/04_TEXTO_OFF/'

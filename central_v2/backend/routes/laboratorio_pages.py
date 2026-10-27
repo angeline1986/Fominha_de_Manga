@@ -1,7 +1,6 @@
 """Consulta isolada, somente leitura, de paginas originais para o Laboratorio."""
 import json
 import mimetypes
-import os
 from pathlib import Path
 from urllib.parse import urlencode
 
@@ -9,6 +8,9 @@ from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.catalog import build_catalog
 from central_v2.backend.state.manga_state import resolve_manga, IMAGE_EXTENSIONS
 from central_v2.backend.state.sorting import natural_sort_key
+from central_v2.backend.routes.laboratorio_image_files import _images
+from central_v2.backend.routes.laboratorio_check_pages import other_pages
+from central_v2.backend.routes.laboratorio_stage_pages import stage_response
 
 ROUTE = "/api/textoff/laboratorio/pages"
 IMAGE_ROUTE = ROUTE + "/image"
@@ -44,25 +46,6 @@ def _chapter(image_root, name):
     return folder
 
 
-def _images(folder):
-    root, files = folder.resolve(), []
-    with os.scandir(folder) as entries:
-        for entry in entries:
-            path = Path(entry.path)
-            if (path.suffix.lower() not in IMAGE_EXTENSIONS
-                    or path.stem.lower().endswith("_old")):
-                continue
-            try:
-                if not entry.is_file(follow_symlinks=True):
-                    continue
-                if entry.is_symlink() and not path.resolve().is_relative_to(root):
-                    continue
-            except OSError:
-                continue
-            files.append(path)
-    return sorted(files, key=lambda path: natural_sort_key(path.name))
-
-
 def response(query, output_root, *, image=False):
     try:
         provider, name = _arg(query, "provider"), _arg(query, "manga")
@@ -70,6 +53,8 @@ def response(query, output_root, *, image=False):
             return _browse_image(output_root, provider, name, _arg(query, "path"))
         if _arg(query, "browse") == "1" and not image:
             return _browse(output_root, provider, name, _arg(query, "path"))
+        if _arg(query, "source") in {"glass", "check"}:
+            return stage_response(query, output_root, provider, name, image)
         image_root = _directory(output_root, provider, name, _arg(query, "source") or "img")
         if not image_root.is_dir():
             return _json({"provider": provider, "manga": name, "chapters": {}}) if not image else _json({"error": "Imagem indisponível."}, 404)
@@ -88,12 +73,17 @@ def response(query, output_root, *, image=False):
                 mimetypes.guess_type(target.name)[0] or "image/png")
 
         chapters = {}
+        check_only = _arg(query, "check_other") == "1" and _arg(query, "source") == "merge"
+        manga = resolve_manga(output_root, provider, name) if check_only else None
         for folder in sorted(image_root.iterdir(), key=lambda p: natural_sort_key(p.name)):
             if not folder.is_dir() or not folder.resolve().is_relative_to(image_root):
                 continue
             files = _images(folder)
             if not files:
                 continue
+            if check_only:
+                marked = other_pages(manga, provider, folder.name)
+                files = [page for page in files if page.name in marked]
             chapters[folder.name] = [{
                 "name": page.name,
                 "previewUrl": IMAGE_ROUTE + "?" + urlencode({

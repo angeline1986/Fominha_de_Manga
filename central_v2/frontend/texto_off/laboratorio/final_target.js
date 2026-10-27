@@ -1,6 +1,9 @@
 /** Derive the final-page identity for known TextOff file layouts. */
 export function finalPageSelection(selection) {
   const { source, path, chapter, page } = selection;
+  if (source === "glass" && typeof page === "string" && page.endsWith("_clean.png")) {
+    return { chapter, page: `${page.slice(0, -10)}.png` };
+  }
   if (source !== "file" || typeof path !== "string" || typeof page !== "string") {
     return { chapter, page };
   }

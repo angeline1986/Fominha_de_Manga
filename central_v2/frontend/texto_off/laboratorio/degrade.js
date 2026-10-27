@@ -1,8 +1,9 @@
 /** Degradê experimental: o clique autoriza componentes elegíveis nas ROIs. */
 import { executeDegradeLaboratoryJob } from "/_app/api/laboratorio.js";
 
-export function connectDegrade({ root, button, getRequest, progress, review }) {
-  const panel = root.querySelector('.lab-cards > .lab-image:nth-child(2)');
+export function connectDegrade({ root, button, getRequest, progress, review, order }) {
+  const panel = root.querySelector('[data-lab-card="degrade"]')
+    || root.querySelector('.lab-cards > .lab-image:nth-child(2)');
   const placeholder = panel.querySelector('.lab-placeholder');
   const image = document.createElement('img');
   Object.assign(image, { className: 'lab-original-image',
@@ -26,6 +27,7 @@ export function connectDegrade({ root, button, getRequest, progress, review }) {
   function invalidate() {
     serial++;
     review?.clear('degrade');
+    order?.clear('degrade');
     clearResult();
     button.disabled = false;
   }
@@ -43,6 +45,7 @@ export function connectDegrade({ root, button, getRequest, progress, review }) {
       image.hidden = false;
       setState('completed', 'Concluído');
       review?.ready('degrade', getRequest(), result.run_id);
+      order?.complete('degrade');
     };
     image.onerror = () => {
       if (current(id, snapshot)) clearResult('Falha ao abrir a prévia experimental.', 'failed');
@@ -60,6 +63,7 @@ export function connectDegrade({ root, button, getRequest, progress, review }) {
     const active = new AbortController();
     controllers.add(active);
     review?.clear('degrade');
+    order?.clear('degrade');
     clearResult('Executando Degradê…', 'running');
     const progressRun = progress?.start('Executando Degradê');
     button.disabled = true;
@@ -79,7 +83,24 @@ export function connectDegrade({ root, button, getRequest, progress, review }) {
     }
   }
   button.addEventListener('click', run);
-  return { reset, invalidate, dispose() {
+  function restore(result, identity, expectedSerial) {
+    if (serial !== expectedSerial || !result?.run_id || !result.image_url
+        || result.treatment !== 'degrade') return false;
+    const id = ++serial;
+    image.onload = () => {
+      if (id !== serial) return;
+      image.hidden = false;
+      setState('completed', 'Resultado recuperado');
+      review?.ready('degrade', identity, result.run_id);
+      order?.complete('degrade', result.completed_at);
+    };
+    image.onerror = () => {
+      if (id === serial) clearResult('Não foi possível reabrir o resultado salvo.', 'failed');
+    };
+    image.src = result.image_url;
+    return true;
+  }
+  return { reset, invalidate, restore, revision: () => serial, dispose() {
     serial++;
     controllers.forEach((controller) => controller.abort());
     button.removeEventListener('click', run);

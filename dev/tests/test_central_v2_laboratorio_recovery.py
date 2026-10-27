@@ -35,6 +35,20 @@ class RecoveryTests(unittest.TestCase):
                 "run_id": run_id, "source": source, "execution_status": "succeeded",
                 "result_file": "treatment/result.png",
                 "validation": {"result_sha256": sha256(result)}}))
+            for treatment, letter in (("degrade", "c"), ("gradiente_suave", "d")):
+                sibling = root / "staging" / (letter * 32)
+                target = sibling / "treatment/result.png"
+                target.parent.mkdir(parents=True)
+                Image.new("RGB", (8, 8), "green").save(target)
+                copied = sibling / "input/source.png"
+                copied.parent.mkdir()
+                copied.write_bytes(source_path.read_bytes())
+                (sibling / "request.json").write_text(json.dumps({
+                    "run_id": sibling.name, "treatment": treatment, "source": source}))
+                (sibling / "manifest.json").write_text(json.dumps({
+                    "run_id": sibling.name, "source": source,
+                    "execution_status": "succeeded", "result_file": "treatment/result.png",
+                    "validation": {"result_sha256": sha256(target)}}))
             query = {key: [value] for key, value in {
                 "provider": "comix", "manga": "obra", "chapter": "images",
                 "page": "page.png", "source": "file", "path": "images/page.png"}.items()}
@@ -44,6 +58,8 @@ class RecoveryTests(unittest.TestCase):
                 found = recovery.recent_response(query, root)
                 self.assertEqual(found.status, 200)
                 self.assertEqual(json.loads(found.body)["result"]["run_id"], run_id)
+                self.assertEqual(json.loads(found.body)["degrade_result"]["run_id"], "c" * 32)
+                self.assertEqual(json.loads(found.body)["smooth_result"]["run_id"], "d" * 32)
                 Image.new("RGB", (8, 8), "red").save(source_path)
                 stale = recovery.recent_response(query, root)
                 self.assertIsNone(json.loads(stale.body)["result"])

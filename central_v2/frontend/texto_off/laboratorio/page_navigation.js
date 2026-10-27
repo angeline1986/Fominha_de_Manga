@@ -1,5 +1,6 @@
 import { positionPreview, previewNearElement } from "/texto_off/laboratorio/preview_position.js";
 import { getContext, subscribeContext } from "/_app/state/context.js";
+import { connectPageKeyboard } from "/texto_off/laboratorio/page_keyboard.js";
 
 /** Seleção de origem, capítulo, página e navegação paginada do Laboratório. */
 export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw = () => {} } = {}) {
@@ -15,7 +16,7 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
   let pagesByChapter = {};
   let currentPage = 0;
   let selectedName = "";
-  let currentSource = "img";
+  let currentSource = "glass";
   let selectedFile = null;
 
   function chapterPages() { return selectedFile ? [selectedFile] : pagesByChapter[chapterSelect.value] || []; }
@@ -50,7 +51,10 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
     if (!all.length || !subset.length) {
       const empty = document.createElement("p");
       empty.className = "lab-muted lab-page-empty";
-      empty.textContent = all.length ? "Nenhuma página encontrada." : "Nenhuma página carregada.";
+      empty.textContent = all.length ? "Nenhuma página encontrada."
+        : ["merge", "glass", "check"].includes(currentSource) && chapterSelect.value
+          ? "Nenhuma página Outro com imagem nesta origem."
+          : "Nenhuma página carregada.";
       list.append(empty);
     }
     subset.forEach((page) => {
@@ -98,22 +102,22 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
     });
     chapterSelect.replaceChildren(new Option("Cap.", ""));
     Object.keys(pagesByChapter).forEach((chapter) => chapterSelect.add(new Option(chapter, chapter)));
+    chapterSelect.value = "";
     currentPage = 0;
     selectedName = "";
     draw();
   }
   function setSource(source, notify = true) {
-    if (!["img", "merge"].includes(source)) return;
-    const wasFile = Boolean(selectedFile);
+    if (!["img", "merge", "glass", "check"].includes(source)) return;
     selectedFile = null;
-    if (wasFile) {
-      chapterSelect.replaceChildren(new Option("Cap.", ""));
-      selectedName = "";
-      currentPage = 0;
-    }
+    pagesByChapter = {};
+    chapterSelect.replaceChildren(new Option("Cap.", ""));
+    chapterSelect.value = "";
+    selectedName = "";
+    currentPage = 0;
     currentSource = source;
     syncSourceButtons();
-    if (wasFile) draw();
+    draw();
     if (notify) root.dispatchEvent(new CustomEvent("laboratorio:source", { detail: { source } }));
   }
 
@@ -146,19 +150,7 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
   });
   root.addEventListener("laboratorio:pages", loadPages);
 
-  function onPaginationKey(event) {
-    if (!['ArrowLeft', 'ArrowRight'].includes(event.key) || event.defaultPrevented || event.repeat
-        || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey || !root.isConnected) return;
-    if (event.target instanceof Element && event.target.closest(
-      'input, textarea, select, button, [contenteditable], [role="slider"], [role="dialog"], [role="listbox"]'
-    )) return;
-    if (document.querySelector('dialog[open], [role="dialog"][aria-modal="true"]')) return;
-    const button = event.key === 'ArrowLeft' ? prev : next;
-    if (button.disabled) return;
-    event.preventDefault();
-    button.click();
-  }
-  document.addEventListener('keydown', onPaginationKey);
+  const disconnectKeyboard = connectPageKeyboard(root, prev, next);
 
   return {
     draw,
@@ -193,7 +185,7 @@ export function connectPageNavigation(root, { beforeDraw = () => {}, afterDraw =
     dispose() {
       unsubscribeContext();
       root.removeEventListener("laboratorio:pages", loadPages);
-      document.removeEventListener('keydown', onPaginationKey);
+      disconnectKeyboard();
     },
   };
 }

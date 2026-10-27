@@ -1,5 +1,6 @@
 """Read-only recovery of verified Laboratory previews for a source image."""
 import json
+from datetime import datetime
 from pathlib import Path
 import re
 from urllib.parse import urlencode
@@ -23,6 +24,16 @@ def _json(body, status=200):
     return RouteResponse(status, json.dumps(body, ensure_ascii=False).encode("utf-8"))
 
 
+def _completed_at(manifest, path):
+    stamp = manifest.get("finished_at")
+    if isinstance(stamp, str):
+        try:
+            return datetime.fromisoformat(stamp).timestamp() * 1000
+        except ValueError:
+            pass
+    return path.stat().st_mtime * 1000
+
+
 def recent_response(query, output_root):
     try:
         payload = {key: (query.get(key) or [""])[0] for key in FIELDS}
@@ -30,14 +41,19 @@ def recent_response(query, output_root):
             payload["path"] = (query.get("path") or [""])[0]
         manga, path, chapter, filename = resolve_source(payload, output_root)
         source_hash = sha256(path)
-        return _json({"result": _recent_artistic(manga, path, chapter, filename, source_hash),
+        previews = _recent_previews(manga, path, chapter, filename, source_hash)
+        return _json({"result": previews.get("estilizado"),
+                      "degrade_result": previews.get("degrade"),
+                      "smooth_result": previews.get("gradiente_suave"),
                       "solids_result": _recent_solids(output_root, payload, manga,
                                                        path, source_hash)})
     except (OSError, ValueError, KeyError, TypeError) as error:
         return _json({"error": str(error)}, 400)
 
 
-def _recent_artistic(manga, path, chapter, filename, source_hash):
+def _recent_previews(manga, path, chapter, filename, source_hash):
+    previews = {}
+    supported = {"degrade", "estilizado", "gradiente_suave"}
     requests = (item for root in roots(manga, "textoff_laboratorio", legacy=STAGING)
                 for item in root.glob("*/request.json"))
     for request_file in sorted(requests, key=lambda item: item.stat().st_mtime, reverse=True):
@@ -47,8 +63,9 @@ def _recent_artistic(manga, path, chapter, filename, source_hash):
         try:
             request = read_json(request_file)
             source = request.get("source")
+            treatment = request.get("treatment")
             if (request.get("run_id") != folder.name
-                    or request.get("treatment") != "estilizado"
+                    or treatment not in supported or treatment in previews
                     or not isinstance(source, dict)
                     or source.get("path") != str(path)
                     or source.get("sha256") != source_hash
@@ -67,13 +84,16 @@ def _recent_artistic(manga, path, chapter, filename, source_hash):
                     or sha256(result) != manifest["validation"]["result_sha256"]):
                 continue
             image_size(result)
-            return {"treatment": "estilizado", "run_id": folder.name,
-                    "image_url": "/api/textoff/laboratorio/estilizado/image?"
+            previews[treatment] = {"treatment": treatment, "run_id": folder.name,
+                    "completed_at": _completed_at(manifest, folder / "manifest.json"),
+                    "image_url": f"/api/textoff/laboratorio/{treatment}/image?"
                     + urlencode({"run_id": folder.name, "provider": manga.parent.name,
                                  "manga": manga.name})}
+            if len(previews) == len(supported):
+                break
         except (OSError, ValueError, KeyError, TypeError):
             continue
-    return None
+    return previews
 
 
 def _recent_solids(output_root, payload, manga, path, source_hash):
@@ -98,6 +118,7 @@ def _recent_solids(output_root, payload, manga, path, source_hash):
                 continue
             image_size(preview)
             return {"treatment": "solidos", "run_id": folder.name,
+                    "completed_at": manifest_file.stat().st_mtime * 1000,
                     "image_url": "/api/textoff/laboratorio/solidos/image?"
                     + urlencode({"run_id": folder.name})}
         except (OSError, ValueError, KeyError, TypeError):

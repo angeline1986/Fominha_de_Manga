@@ -5,7 +5,7 @@ export function connectLaboratorio(root) {
   let controller = null;
   let serial = 0;
   let disposed = false;
-  let source = "img";
+  let source = "glass";
 
   async function load() {
     const id = ++serial;
@@ -17,6 +17,7 @@ export function connectLaboratorio(root) {
     ));
     if (!provider || !manga) { send({}); return; }
     const query = new URLSearchParams({ provider, manga, source });
+    if (source === "merge") query.set("check_other", "1");
     try {
       const response = await fetch(`/api/textoff/laboratorio/pages?${query}`, {
         signal: controller.signal, cache: "no-store",
@@ -34,7 +35,7 @@ export function connectLaboratorio(root) {
 
   const onSource = (event) => {
     const next = event.detail?.source;
-    if (!["img", "merge"].includes(next)) return;
+    if (!["img", "merge", "glass", "check"].includes(next)) return;
     source = next;
     load();
   };
