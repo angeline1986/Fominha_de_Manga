@@ -14,7 +14,7 @@ class BubbleSommelierExecutionLogTests(unittest.TestCase):
             root = Path(folder)
             manga = root / "manga"
             report_dir = (manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
-                          "BUBBLE_SOMMELIER/1")
+                          "03_BUBBLE_SOMMELIER/1")
             report_dir.mkdir(parents=True)
             report = report_dir / "report.json"
             payload = {"checkpoints": {"result": {
@@ -42,12 +42,9 @@ class BubbleSommelierExecutionLogTests(unittest.TestCase):
                                   lambda chapter, progress: events.append((chapter, progress)),
                                   "poc_a_v1", provider="comix", manga_name="Manga")
 
-            mirrored_report = (manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
-                               "03_BUBBLE_SOMMELIER/1/report.json")
-            self.assertEqual(
-                json.loads(mirrored_report.read_text(encoding="utf-8")),
-                json.loads(report.read_text(encoding="utf-8")),
-            )
+            self.assertTrue(report.is_file())
+            self.assertFalse((manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
+                              "BUBBLE_SOMMELIER/1").exists())
 
         page_events = [value for _, value in events if value.get("stage") == "page"]
         self.assertEqual(len(page_events), 1)

@@ -3,12 +3,10 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-
 from central_v2.backend.orchestration.textoff_merged import (
     execute_merged, execute_merged_level1, query_merged, query_merged_level1, query_merged_level2,
     validate_selection,
 )
-
 
 class TextoffMergedUseCaseTests(unittest.TestCase):
     def make_manga(self, root):
@@ -194,7 +192,7 @@ class TextoffMergedUseCaseTests(unittest.TestCase):
                  patch("central_v2.backend.orchestration.textoff_merged.execution.v3.merge_artifact_files", return_value=images), \
                  patch("central_v2.backend.orchestration.textoff_merged.cleaner.clean_level1_chapter", return_value={"status": "ok"}) as clean:
                 execute_merged_level1(manga, ["1"], lambda *_: None)
-            self.assertEqual(clean.call_args.args[1], manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "TO_MERGED_NIVEL_I" / "1")
+            self.assertEqual(clean.call_args.args[1], manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "01_AUTO_CLEANER" / "1")
             self.assertEqual(clean.call_args.kwargs["source_stage"], "MERGE")
 
 

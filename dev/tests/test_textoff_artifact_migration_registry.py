@@ -18,20 +18,19 @@ class TextoffArtifactMigrationRegistryTests(unittest.TestCase):
 
     def test_registry_schema_and_read_write_mode(self):
         self.assertEqual(self.registry["schema"], "artifact_migration_registry_v1")
-        self.assertEqual(self.registry["migration_mode"], "dual_write")
+        self.assertEqual(self.registry["migration_mode"], "single_write_target")
         self.assertIs(self.registry["legacy_read_enabled"], True)
         self.assertIs(self.registry["new_read_enabled"], True)
-        self.assertEqual(self.registry["read_authority"], "legacy")
-        self.assertIs(self.registry["dual_write_enabled"], True)
-        dual_write_stages = {
+        self.assertEqual(self.registry["read_authority"], "target")
+        self.assertIs(self.registry["dual_write_enabled"], False)
+        single_write_stages = {
             "auto_cleaner", "mapear", "mapear_input_consolidado", "bubble_sommelier",
             "auto_cleaner_transparencia_basica",
         }
-        self.assertEqual({stage["stage_id"] for stage in self.registry["stages"]
-                          if stage["dual_write"]}, dual_write_stages)
-        self.assertTrue(all(stage["read_authority"] == "legacy"
+        self.assertTrue(all(not stage["dual_write"] for stage in self.registry["stages"]))
+        self.assertTrue(all(stage["read_authority"] == "target"
                             for stage in self.registry["stages"]
-                            if stage["stage_id"] in dual_write_stages))
+                            if stage["stage_id"] in single_write_stages))
 
     def test_persistent_stages_are_mapped_to_approved_targets(self):
         expected = {
@@ -53,7 +52,7 @@ class TextoffArtifactMigrationRegistryTests(unittest.TestCase):
                 self.assertEqual(stage["classification"], "PERSISTENT_STAGE"
                                  if stage_id != "mapear_input_consolidado"
                                  else "CONSOLIDATED_OUTPUT_INTERMEDIATE")
-                self.assertEqual(stage["read_authority"], "legacy")
+                self.assertEqual(stage["read_authority"], "target")
                 self.assertEqual(stage["migration_status"], "mapped")
                 self.assertIs(stage["validated"], False)
                 self.assertTrue(stage["writers"])

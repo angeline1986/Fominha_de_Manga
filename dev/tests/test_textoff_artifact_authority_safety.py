@@ -19,8 +19,12 @@ class ArtifactAuthoritySafetyTests(unittest.TestCase):
         self.manga.mkdir()
         self.registry_path = self.root / "registry.json"
         self.registry = json.loads(artifact_migration.REGISTRY_PATH.read_text())
+        self.registry["migration_mode"] = "dual_write"
+        self.registry["dual_write_enabled"] = True
         for stage in self.registry["stages"]:
-            if stage.get("dual_write"):
+            if stage["stage_id"] in {"auto_cleaner", "mapear", "mapear_input_consolidado",
+                                     "bubble_sommelier", "auto_cleaner_transparencia_basica"}:
+                stage["dual_write"] = True
                 stage["read_authority"] = "target"
         self.registry["read_authority"] = "target"
         self.save_registry()

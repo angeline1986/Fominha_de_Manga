@@ -31,10 +31,10 @@ class WriteDestinationTests(unittest.TestCase):
                 "TO_MERGED_CONSOLIDADO", "02_MAPEAR/INPUT_CONSOLIDADO"),
             "bubble_sommelier": ("BUBBLE_SOMMELIER", "03_BUBBLE_SOMMELIER"),
         }
-        for stage, (old, new) in expected.items():
+        for stage, (_, new) in expected.items():
             with self.subTest(stage=stage):
                 self.assertEqual(planned_write_chapter(self.manga, stage, "1"),
-                                 self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF" / old / "1")
+                                 self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF" / new / "1")
                 self.assertEqual(planned_write_chapter(self.manga, stage, "1", preview_target=True),
                                  self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF" / new / "1")
         self.assertEqual(list(self.manga.rglob("*")), [])
@@ -49,7 +49,7 @@ class WriteDestinationTests(unittest.TestCase):
             planned_write_chapter(self.manga, "auto_cleaner_check", "1")
 
     def test_fail_closed_when_registry_mode_changes(self):
-        self.registry["dual_write_enabled"] = False
+        self.registry["dual_write_enabled"] = True
         with self.assertRaises(ValueError):
             planned_write_chapter(self.manga, "mapear", "1")
 

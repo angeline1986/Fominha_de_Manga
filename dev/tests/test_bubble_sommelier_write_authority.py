@@ -16,9 +16,12 @@ class SommelierWriteAuthorityTests(unittest.TestCase):
         self.manga = Path(self.tmp.name) / "obra"
         self.manga.mkdir()
         registry = json.loads(artifact_migration.REGISTRY_PATH.read_text())
+        registry["migration_mode"] = "dual_write"
+        registry["dual_write_enabled"] = True
         registry["read_authority"] = "target"
         for entry in registry["stages"]:
-            if entry.get("dual_write"):
+            if entry["stage_id"] == "bubble_sommelier":
+                entry["dual_write"] = True
                 entry["read_authority"] = "target"
         local = Path(self.tmp.name) / "registry.json"
         local.write_text(json.dumps(registry))

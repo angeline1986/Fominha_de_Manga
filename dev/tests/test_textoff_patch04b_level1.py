@@ -31,7 +31,7 @@ class TestPatch04B(unittest.TestCase):
     def test_default_preserves_legacy_and_mirror(self):
         result, destinations, mirror = self.check_execution()
         self.assertEqual(result[0]['status'], 'ok')
-        self.assertEqual(destinations, [self.manga / 'FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/1'])
+        self.assertEqual(destinations, [self.manga / 'FLUXO_SECUNDARIO/04_TEXTO_OFF/01_AUTO_CLEANER/1'])
         mirror.assert_called_once_with(self.manga, 'auto_cleaner', '1')
 
     def test_existing_numbered_override_is_preserved(self):

@@ -19,11 +19,14 @@ class TextoffArtifactDualWriteTests(unittest.TestCase):
         payload = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
         payload["migration_mode"] = "dual_write"
         payload["dual_write_enabled"] = True
+        payload["read_authority"] = "legacy"
         for stage in payload["stages"]:
             stage["dual_write"] = stage["stage_id"] in {
                 "auto_cleaner", "mapear", "mapear_input_consolidado",
                 "bubble_sommelier", "auto_cleaner_transparencia_basica",
             }
+            if stage["dual_write"]:
+                stage["read_authority"] = "legacy"
         self.registry_path = self.root / "registry.json"
         self.registry_path.write_text(json.dumps(payload), encoding="utf-8")
         self.registry_patch = patch.object(artifact_migration, "REGISTRY_PATH", self.registry_path)
@@ -59,7 +62,7 @@ class TextoffArtifactDualWriteTests(unittest.TestCase):
             self.assertEqual((legacy / relative).read_bytes(), contents)
 
     def test_registry_is_active_but_stage_read_helper_stays_on_legacy(self):
-        registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+        registry = json.loads(self.registry_path.read_text(encoding="utf-8"))
         self.assertEqual(registry["migration_mode"], "dual_write")
         self.assertIs(registry["legacy_read_enabled"], True)
         self.assertIs(registry["new_read_enabled"], True)

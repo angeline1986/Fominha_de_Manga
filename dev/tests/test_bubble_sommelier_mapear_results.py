@@ -110,7 +110,7 @@ class BubbleSommelierMapearResultsTests(unittest.TestCase):
         mapear = self.valid_report([candidate("soft_gradient", True, [7, 8, 9, 10])])
         self.write_mapear(mapear)
         output_dir = (self.root / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
-                      "BUBBLE_SOMMELIER/1")
+                      "03_BUBBLE_SOMMELIER/1")
         output_dir.mkdir(parents=True)
         report_path = output_dir / "report.json"
         original_bubble = {"identity": "page-013-016-bubble-01", "candidate": True,
@@ -143,7 +143,7 @@ class BubbleSommelierMapearResultsTests(unittest.TestCase):
 
     def test_execution_completes_when_mapear_report_is_missing(self):
         output_dir = (self.root / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
-                      "BUBBLE_SOMMELIER/1")
+                      "03_BUBBLE_SOMMELIER/1")
         output_dir.mkdir(parents=True)
         report_path = output_dir / "report.json"
         original = {"status": "completed", "profile_id": "poc_a_v1",

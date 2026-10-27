@@ -18,9 +18,12 @@ class BubbleSommelierStageResolverTests(unittest.TestCase):
             with self.subTest(authority=authority), TemporaryDirectory() as td:
                 manga = Path(td) / 'manga'
                 registry = json.loads(artifact_migration.REGISTRY_PATH.read_text())
+                registry['migration_mode'] = 'dual_write'
+                registry['dual_write_enabled'] = True
                 registry['read_authority'] = authority
                 for entry in registry['stages']:
-                    if entry.get('dual_write'):
+                    if entry.get('stage_id') == 'bubble_sommelier':
+                        entry['dual_write'] = True
                         entry['read_authority'] = authority
                 config = Path(td) / 'registry.json'
                 config.write_text(json.dumps(registry))
@@ -38,9 +41,12 @@ class BubbleSommelierStageResolverTests(unittest.TestCase):
             legacy = manga / 'FLUXO_SECUNDARIO/04_TEXTO_OFF/BUBBLE_SOMMELIER/1'
             legacy.mkdir(parents=True)
             registry = json.loads(artifact_migration.REGISTRY_PATH.read_text())
+            registry['migration_mode'] = 'dual_write'
+            registry['dual_write_enabled'] = True
             registry['read_authority'] = 'target'
             for entry in registry['stages']:
-                if entry.get('dual_write'):
+                if entry.get('stage_id') == 'bubble_sommelier':
+                    entry['dual_write'] = True
                     entry['read_authority'] = 'target'
             config = Path(td) / 'registry.json'
             config.write_text(json.dumps(registry))

@@ -6,7 +6,7 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
-from central_v2.backend.orchestration.textoff_merged import artifact_shadow_read
+from central_v2.backend.orchestration.textoff_merged import artifact_migration, artifact_shadow_read
 from central_v2.backend.orchestration.textoff_merged.artifact_migration import (
     REGISTRY_PATH, TEXT_OFF_ROOT,
 )
@@ -22,8 +22,21 @@ class TextoffArtifactShadowReadTests(unittest.TestCase):
         self.root = Path(self.temporary.name)
         self.manga = self.root / "manga"
         self.registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+        self.registry["migration_mode"] = "dual_write"
+        self.registry["dual_write_enabled"] = True
+        self.registry["read_authority"] = "legacy"
+        for entry in self.registry["stages"]:
+            if entry.get("legacy_path") != entry.get("target_path") and entry.get("classification") in {
+                "PERSISTENT_STAGE", "CONSOLIDATED_OUTPUT_INTERMEDIATE"}:
+                entry["dual_write"] = True
+                entry["read_authority"] = "legacy"
+        self.registry_path = self.root / "registry.json"
+        self.registry_path.write_text(json.dumps(self.registry))
+        self.guard = patch.object(artifact_migration, "REGISTRY_PATH", self.registry_path)
+        self.guard.start()
 
     def tearDown(self):
+        self.guard.stop()
         self.temporary.cleanup()
 
     def stage_paths(self, stage_id, chapter="1"):
@@ -53,7 +66,7 @@ class TextoffArtifactShadowReadTests(unittest.TestCase):
         }
         entries = [item for item in self.registry["stages"]
                    if item["stage_id"] in stage_ids]
-        before_registry = REGISTRY_PATH.read_bytes()
+        before_registry = self.registry_path.read_bytes()
         for item in entries:
             legacy, target = self.stage_paths(item["stage_id"])
             self.write(legacy / "sample.bin", b"same")
@@ -74,7 +87,7 @@ class TextoffArtifactShadowReadTests(unittest.TestCase):
         self.assertEqual(before_files, {
             p: p.read_bytes() for p in self.manga.rglob("*") if p.is_file()
         })
-        self.assertEqual(REGISTRY_PATH.read_bytes(), before_registry)
+        self.assertEqual(self.registry_path.read_bytes(), before_registry)
 
     def test_legacy_reader_wins_for_match_mismatch_missing_and_invalid_target(self):
         legacy, target = self.stage_paths("mapear")

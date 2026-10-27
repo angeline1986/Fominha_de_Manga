@@ -3,7 +3,8 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
-
+from unittest.mock import patch
+from central_v2.backend.orchestration.textoff_merged import artifact_migration
 from central_v2.backend.orchestration.textoff_merged.artifact_migration import (
     REGISTRY_PATH,
     TEXT_OFF_ROOT,
@@ -15,29 +16,35 @@ from central_v2.backend.orchestration.textoff_merged.artifact_validation import 
     validate_stage_chapter,
 )
 
-
 class TextoffArtifactValidationTests(unittest.TestCase):
     def setUp(self):
         self.temporary = tempfile.TemporaryDirectory()
         self.root = Path(self.temporary.name)
         self.legacy = self.root / "legacy"
         self.target = self.root / "target"
-
+        registry = json.loads(REGISTRY_PATH.read_text(encoding="utf-8"))
+        registry.update(migration_mode="dual_write", dual_write_enabled=True,
+                        read_authority="legacy")
+        for entry in registry["stages"]:
+            if entry.get("classification") in {"PERSISTENT_STAGE", "CONSOLIDATED_OUTPUT_INTERMEDIATE"}:
+                entry.update(dual_write=True, read_authority="legacy")
+        self.registry_path = self.root / "registry.json"
+        self.registry_path.write_text(json.dumps(registry))
+        self.registry_guard = patch.object(artifact_migration, "REGISTRY_PATH", self.registry_path)
+        self.registry_guard.start()
     def tearDown(self):
+        self.registry_guard.stop()
         self.temporary.cleanup()
-
     def write(self, root, relative, data):
         path = root / relative
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_bytes(data)
         return path
-
     def compare(self):
         return compare_artifact_trees(
             self.legacy, self.target, stage="sample", chapter="1",
             legacy_path="legacy/1", target_path="target/1",
         )
-
     def test_identical_trees_match_with_nested_relative_paths(self):
         contents = {
             "json/clean-manifest.json": b'{"ok":true}\n',
@@ -55,7 +62,6 @@ class TextoffArtifactValidationTests(unittest.TestCase):
         )
         self.assertEqual(result["artifacts"][0]["comparison_status"], "MATCH")
         self.assertEqual(result, self.compare())
-
     def test_same_size_different_contents_mismatch_by_sha256(self):
         self.write(self.legacy, "a.txt", b"ABC")
         self.write(self.target, "a.txt", b"XYZ")
@@ -65,7 +71,6 @@ class TextoffArtifactValidationTests(unittest.TestCase):
         self.assertNotEqual(result["artifacts"][0]["sha256_legacy"],
                             result["artifacts"][0]["sha256_target"])
         self.assertEqual(result["comparison_status"], "MISMATCH")
-
     def test_different_sizes_mismatch(self):
         self.write(self.legacy, "a.txt", b"A")
         self.write(self.target, "a.txt", b"AB")
@@ -134,7 +139,7 @@ class TextoffArtifactValidationTests(unittest.TestCase):
         }
         for stage_id, (legacy, target) in expected.items():
             (manga / TEXT_OFF_ROOT / legacy).mkdir(parents=True)
-            result = validate_stage_chapter(manga, stage_id, "1")
+            result = validate_stage_chapter(manga, stage_id, "1", registry_path=self.registry_path)
             self.assertEqual(result["legacy_path"], legacy)
             self.assertEqual(result["target_path"], target)
             self.assertEqual(result["comparison_status"], "MISSING_TARGET")
@@ -155,7 +160,7 @@ class TextoffArtifactValidationTests(unittest.TestCase):
             for path in legacy.rglob("*") if path.is_file()
         }
         self.assertTrue(mirror_stage_chapter(manga, "auto_cleaner", "1"))
-        result = validate_stage_chapter(manga, "auto_cleaner", "1")
+        result = validate_stage_chapter(manga, "auto_cleaner", "1", registry_path=self.registry_path)
         self.assertEqual(result["comparison_status"], "MATCH")
         self.assertEqual(len(result["artifacts"]), len(expected))
         self.assertEqual(legacy_snapshot, {
@@ -174,7 +179,8 @@ class TextoffArtifactValidationTests(unittest.TestCase):
         self.assertEqual(REGISTRY_PATH.read_bytes(), registry_before)
 
     def test_non_dual_write_stage_is_not_applicable(self):
-        result = validate_stage_chapter(self.root / "manga", "auto_cleaner_check", "1")
+        result = validate_stage_chapter(self.root / "manga", "auto_cleaner_check", "1",
+                                        registry_path=self.registry_path)
         self.assertEqual(result["comparison_status"], "NOT_APPLICABLE")
         self.assertEqual(result["artifacts"], [])
 

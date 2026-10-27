@@ -50,7 +50,7 @@ class IsolatedNumberedWriteTests(unittest.TestCase):
     def test_default_legacy_unchanged(self):
         result, paths, mirror = self.run_it()
         self.assertEqual(result[0]["status"],"ok")
-        self.assertEqual(paths,[self.manga/"FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/2"])
+        self.assertEqual(paths,[self.manga/"FLUXO_SECUNDARIO/04_TEXTO_OFF/01_AUTO_CLEANER/2"])
         mirror.assert_called_once()
 
     def test_unmarked_workspace_denied(self):

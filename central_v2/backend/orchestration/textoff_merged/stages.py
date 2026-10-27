@@ -10,6 +10,7 @@ LEVEL2 = "TO_MERGED_NIVEL_II"
 LEVEL3 = "TO_MERGED_NIVEL_III"
 CONSOLIDATED = "TO_MERGED_CONSOLIDADO"
 COMBO_TURBO = "COMBO_TURBO"
+_MAPPED = {LEVEL1, LEVEL2, LEVEL3, CONSOLIDATED, "BUBBLE_SOMMELIER"}
 
 LEGACY_NAMES = {
     LEVEL1: "MERGED_NIVEL_I",
@@ -65,6 +66,10 @@ def stage_path_snapshot():
 
 def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
+    from .stage_single_write import entry_for, target_root
+    entry = entry_for(canonical) if canonical in _MAPPED else None
+    if entry is not None:
+        return target_root(manga, entry)
     if canonical == LEVEL1 and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") == "1":
         return manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "01_AUTO_CLEANER"
     if canonical in PINCEIS:
@@ -92,6 +97,12 @@ def stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = 
 
 def _resolve_stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
+    from .stage_single_write import entry_for, read_chapter
+    entry = entry_for(canonical) if canonical in _MAPPED else None
+    if entry is not None:
+        if read_legacy:
+            return read_chapter(manga, entry, chapter, LEGACY_NAMES.get(canonical))
+        return stage_root(manga, canonical, read_legacy=False) / chapter
     if canonical == LEVEL1 and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") == "1":
         return stage_root(manga, LEVEL1, read_legacy=False) / chapter
     if canonical in PINCEIS:

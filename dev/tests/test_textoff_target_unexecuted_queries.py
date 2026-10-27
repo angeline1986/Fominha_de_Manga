@@ -18,9 +18,12 @@ class TargetUnexecutedQueriesTests(unittest.TestCase):
         self.manga = Path(temporary.name) / 'manga'
         self.manga.mkdir()
         registry = json.loads(artifact_migration.REGISTRY_PATH.read_text(encoding='utf-8'))
+        registry['migration_mode'] = 'dual_write'
+        registry['dual_write_enabled'] = True
         registry['read_authority'] = 'target'
         for entry in registry['stages']:
-            if entry.get('dual_write'):
+            if entry.get('classification') in {'PERSISTENT_STAGE', 'CONSOLIDATED_OUTPUT_INTERMEDIATE'}:
+                entry['dual_write'] = True
                 entry['read_authority'] = 'target'
         self.registry = Path(temporary.name) / 'registry.json'
         self.registry.write_text(json.dumps(registry), encoding='utf-8')

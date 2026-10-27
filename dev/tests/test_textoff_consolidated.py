@@ -4,7 +4,6 @@ import tempfile
 import unittest
 from pathlib import Path
 from unittest.mock import patch
-
 from central_v2.backend.orchestration.textoff_merged.consolidated import (
     consolidated_is_current, rebuild_consolidated,
 )
@@ -13,7 +12,6 @@ from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, LEVEL
 from central_v2.backend.orchestration.textoff_merged.level2_vision import ALGORITHM
 from central_v2.backend.orchestration.textoff_merged.comparison import comparison_pairs
 from central_v2.backend.orchestration.textoff_merged import query as query_module
-
 
 class TextoffConsolidatedTests(unittest.TestCase):
     def setUp(self):
@@ -35,7 +33,6 @@ class TextoffConsolidatedTests(unittest.TestCase):
         }), encoding="utf-8")
         self.sources = names
         self._write_stage(LEVEL1, [b"level1-a", b"level1-b"], None)
-
     def _write_stage(self, stage, contents, source_hash, candidates=None):
         folder = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF" / stage / self.chapter
         (folder / "clean").mkdir(parents=True, exist_ok=True)
@@ -93,10 +90,9 @@ class TextoffConsolidatedTests(unittest.TestCase):
             })
         (folder / "json/clean-manifest.json").write_text(
             json.dumps(manifest), encoding="utf-8")
-
     def test_falls_back_to_level1_until_valid_level2_exists(self):
         result = rebuild_consolidated(self.manga, self.chapter)
-        folder = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/1"
+        folder = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/02_MAPEAR/INPUT_CONSOLIDADO/1"
         manifest = json.loads((folder / "json/clean-manifest.json").read_text())
         self.assertEqual(result["level2_outputs_used"], 0)
         self.assertEqual([item["selected_from"] for item in manifest["selections"]], [LEVEL1, LEVEL1])
@@ -104,7 +100,6 @@ class TextoffConsolidatedTests(unittest.TestCase):
         self.assertTrue(consolidated_is_current(self.manga, self.chapter))
         self.assertEqual(consolidated_image(self.manga, self.chapter, "page-001-005_clean.png").read_bytes(),
                          b"level1-a")
-
     def test_prefers_valid_level2_and_invalidates_when_its_manifest_changes(self):
         level1_manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/1/json/clean-manifest.json"
         source_hash = hashlib.sha256(level1_manifest.read_bytes()).hexdigest()
@@ -116,7 +111,7 @@ class TextoffConsolidatedTests(unittest.TestCase):
         level2_manifest["changed_artifacts"] = level2_manifest["clean_artifacts"]
         level2_manifest_path.write_text(json.dumps(level2_manifest), encoding="utf-8")
         result = rebuild_consolidated(self.manga, self.chapter)
-        folder = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/1"
+        folder = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/02_MAPEAR/INPUT_CONSOLIDADO/1"
         manifest_path = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_II/1/json/clean-manifest.json"
         manifest = json.loads((folder / "json/clean-manifest.json").read_text())
         self.assertEqual(result["level2_outputs_used"], 2)
@@ -125,26 +120,22 @@ class TextoffConsolidatedTests(unittest.TestCase):
         self.assertTrue(consolidated_is_current(self.manga, self.chapter))
         manifest_path.write_text(manifest_path.read_text() + " ", encoding="utf-8")
         self.assertFalse(consolidated_is_current(self.manga, self.chapter))
-
     def test_keeps_only_changed_pages_in_level2_and_references_level1_for_rest(self):
         level1_manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/1/json/clean-manifest.json"
         source_hash = hashlib.sha256(level1_manifest.read_bytes()).hexdigest()
         self._write_stage(LEVEL2, [b"level2-changed"], source_hash, candidates=[self.sources[0]])
-
         result = rebuild_consolidated(self.manga, self.chapter)
-        consolidated = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/1"
+        consolidated = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/02_MAPEAR/INPUT_CONSOLIDADO/1"
         self.assertEqual(result["level2_outputs_used"], 1)
         self.assertTrue((consolidated / "clean/page-001-005_clean.png").is_file())
         self.assertFalse((consolidated / "clean/page-005-010_clean.png").exists())
         self.assertTrue(consolidated_is_current(self.manga, self.chapter))
-
     def test_mixed_changed_and_unchanged_pages_promote_with_level1_fallback(self):
         level1_manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/1/json/clean-manifest.json"
         source_hash = hashlib.sha256(level1_manifest.read_bytes()).hexdigest()
         self._write_stage(LEVEL2, [b"level2-changed"], source_hash)
-
         result = rebuild_consolidated(self.manga, self.chapter)
-        target = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_CONSOLIDADO/1"
+        target = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/02_MAPEAR/INPUT_CONSOLIDADO/1"
         manifest = json.loads((target / "json/clean-manifest.json").read_text())
         self.assertTrue(consolidated_is_current(self.manga, self.chapter))
         self.assertEqual(result["level2_outputs_used"], 1)
@@ -153,7 +144,6 @@ class TextoffConsolidatedTests(unittest.TestCase):
         self.assertEqual([item["name"] for item in pairs], self.sources)
         self.assertEqual(pairs[0]["after"].read_bytes(), b"level2-changed")
         self.assertEqual(pairs[1]["before"], pairs[1]["after"])
-
     def test_all_unchanged_candidate_pages_are_valid_no_change(self):
         level1_manifest = self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_I/1/json/clean-manifest.json"
         source_hash = hashlib.sha256(level1_manifest.read_bytes()).hexdigest()
