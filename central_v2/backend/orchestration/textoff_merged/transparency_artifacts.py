@@ -105,8 +105,11 @@ def _transparent_balloon_masks(original, raw_mask, prediction, cv2, np):
                 mask = interior
         if not policy.measure_transparency(original, mask, raw_mask)["transparent"]:
             continue
+        available = (mask > 0) & (labels == 0)
+        if not np.any(available):
+            continue
         transparent_count += 1
-        labels[mask > 0] = transparent_count
+        labels[available] = transparent_count
         mask_labels[detection_index] = {
             "mask_label": transparent_count, "bbox": [int(x), int(y), int(width), int(height)],
         }

@@ -107,6 +107,25 @@ class MergedLevel1AdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "Rótulo da máscara transparente ausente"):
             _bind_mask_labels([{"balloon": 2, "bbox": [1, 2, 3, 4]}], {}, "page.png")
 
+    def test_nested_transparent_balloons_keep_both_reported_labels(self):
+        inner = np.array([[20, 20], [40, 20], [40, 40], [20, 40]])
+        outer = np.array([[10, 10], [80, 10], [80, 80], [10, 80]])
+        prediction = SimpleNamespace(masks=SimpleNamespace(xy=[inner, outer]))
+        image = np.full((100, 100, 3), 255, dtype=np.uint8)
+        raw_mask = np.zeros((100, 100), dtype=np.uint8)
+        with patch(
+            "central_v2.backend.orchestration.textoff_merged.transparency_artifacts.policy.measure_transparency",
+            return_value={"transparent": True},
+        ):
+            labels, combined, mapping = _transparent_balloon_masks(
+                image, raw_mask, prediction, cv2, np
+            )
+        self.assertEqual([mapping[index]["mask_label"] for index in (1, 2)], [1, 2])
+        self.assertGreater(np.count_nonzero(labels == 1), 0)
+        self.assertGreater(np.count_nonzero(labels == 2), 0)
+        self.assertEqual(labels[30, 30], 1)
+        self.assertTrue(combined[30, 30])
+
 
 if __name__ == "__main__":
     unittest.main()

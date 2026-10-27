@@ -12,6 +12,7 @@ from processamento.unificacao_imagens import image_stitcher as v3
 from central_v2.backend.redacted_subprocess import launch
 from .artifact_migration import mirror_stage_chapter
 from .level2_isolated_destination import isolated_level2_target
+from .level2_failure import failure_message
 from .artifact_paths import artifact_ref
 from .manifests import _stage_manifest, _stage_manifest_sha256
 from .level2_manual_protection import load_level1_protection_context
@@ -108,7 +109,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
                     pass
             time.sleep(0.25)
         if process.returncode != 0:
-            raise RuntimeError(f"Nível II encerrou sem resultado validado (código {process.returncode}).")
+            raise RuntimeError(failure_message(progress_file, process.returncode, chapters))
 
         prepared = []
         for name, source_dir, target, staged, candidate_names in records:
