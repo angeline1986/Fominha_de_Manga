@@ -8,6 +8,16 @@
   max-width: 240px;
 }
 
+@media (min-width: 701px) {
+  .auto-merge-page:not(.artistico-page):not(.textoff-special-manual):not(.combo-turbo-page)
+  .auto-merge-search:not(.solid-search) {
+    flex: 0 0 80px;
+    width: 80px;
+    min-width: 80px;
+    max-width: 80px;
+  }
+}
+
 .pdf-v2 .pdf-v2-toolbar input {
   flex: 0 1 240px;
   width: 240px;

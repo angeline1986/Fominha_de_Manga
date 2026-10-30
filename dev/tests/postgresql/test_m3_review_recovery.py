@@ -27,7 +27,7 @@ class M3RecoveryReview(unittest.TestCase):
         with psycopg.connect(cls.dsn) as conn:
             if not conn.execute("SELECT current_database()").fetchone()[0].startswith("fominha_m3_test_"):
                 raise RuntimeError("refusing to test outside fominha_m3_* databases")
-            if conn.execute("SELECT count(*) FROM public.fominha_schema_migrations").fetchone()[0] != 7:
+            if conn.execute("SELECT count(*) FROM public.fominha_schema_migrations").fetchone()[0] != 10:
                 raise RuntimeError("run the complete integration suite against a fresh database")
         cls.temp = TemporaryDirectory(prefix="fominha-m3-recovery-")
         cls.store = ArtifactStore(Path(cls.temp.name) / "objects")
@@ -78,7 +78,6 @@ class M3RecoveryReview(unittest.TestCase):
             self.assertEqual(conn.execute("SELECT count(*) FROM fominha.artifact_objects WHERE object_id=%s",
                                           (object_id,)).fetchone()[0], 1)
 
-    @unittest.expectedFailure
     def test_finished_legacy_batch_rejects_late_items(self):
         from persistence.postgresql.legacy import LegacyImportRepository
         with psycopg.connect(self.dsn) as conn:

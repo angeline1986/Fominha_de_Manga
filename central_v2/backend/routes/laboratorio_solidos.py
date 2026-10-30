@@ -3,15 +3,16 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
-import tempfile
 import uuid
 from urllib.parse import urlencode
 from PIL import Image
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.laboratorio_source import resolve_source
+from central_v2.backend.routes.experiment_runs import folder_for_request
 from central_v2.backend.orchestration.textoff_special.inputs import validate_selections
-
-PREVIEWS = "_laboratorio_solidos_previews"
+from central_v2.backend.orchestration.textoff_special.run_paths import (
+    legacy_solids_root, staging_root,
+)
 
 def _json(data, code=200):
     return RouteResponse(code, json.dumps(data, ensure_ascii=False).encode("utf-8"))
@@ -88,7 +89,7 @@ def execute(payload, output_root):
             raise ValueError("Imagem excede o limite operacional")
         result, mask, audit = _filter(original,selections)
         if _sha(source) != source_hash: raise ValueError("Imagem mudou durante execução")
-        output_dir = Path(output_root).resolve()/PREVIEWS
+        output_dir = staging_root(manga_path, "textoff_laboratorio")
         output_dir.mkdir(parents=True,exist_ok=True)
         run_id = uuid.uuid4().hex
         target = output_dir/run_id
@@ -107,7 +108,8 @@ def execute(payload, output_root):
             shutil.rmtree(target,ignore_errors=True)
             raise
         return _json({"run_id":run_id,"image_url":"/api/textoff/laboratorio/solidos/image?"+
-                      urlencode({"run_id":run_id}), "regions":audit, "status":"preview"})
+                      urlencode({"run_id":run_id,"provider":provider,"manga":manga}),
+                      "regions":audit,"status":"preview"})
     except (ValueError,OSError,ImportError) as error:
         return _json({"error":str(error)},400)
 
@@ -115,11 +117,16 @@ def image_response(query, output_root):
     rid=(query.get("run_id") or [""])[0]
     if len(rid)!=32 or any(c not in "0123456789abcdef" for c in rid):
         return _json({"error":"Execução inválida"},400)
-    path=Path(output_root).resolve()/PREVIEWS/rid
     try:
+        path, manga = folder_for_request(query, output_root, "textoff_laboratorio",
+                                         legacy_solids_root(output_root))
         meta=json.loads((path/"manifest.json").read_text())
         preview=path/"preview.png"
-        if meta.get("preview_only") is not True or _sha(preview)!=meta.get("preview_sha256"):
+        if (meta.get("schema") != "laboratorio_solidos_preview_v1"
+                or meta.get("preview_only") is not True
+                or (manga is not None and (meta.get("provider") != manga.parent.name
+                                           or meta.get("manga") != manga.name))
+                or _sha(preview)!=meta.get("preview_sha256")):
             raise ValueError("Prévia divergente")
         return RouteResponse(200,preview.read_bytes(),"image/png")
     except (OSError,ValueError):

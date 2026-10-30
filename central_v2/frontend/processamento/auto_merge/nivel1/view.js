@@ -14,7 +14,7 @@ export function createLevel1View({ onExecute } = {}) {
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search">
         <span class="visually-hidden">Buscar capítulo</span>
-        <input type="search" data-query placeholder="Capítulo">
+        <input type="search" data-query placeholder="Cap.">
       </label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos">
         <button type="button" data-filter="all" aria-pressed="true">All</button>

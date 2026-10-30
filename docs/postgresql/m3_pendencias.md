@@ -1,30 +1,30 @@
 # M3 — Pendências e gates seguintes
 
-**Parecer técnico da homologação M3:** **REPROVADO para liberação do próximo milestone.** Os bloqueios P0/P1 abaixo precisam ser resolvidos e retestados antes de considerar qualquer autorização posterior. Os demais itens bloqueiam ativação, migração real, troca de autoridade ou cutover.
+**Parecer técnico da homologação M3:** os quatro bloqueios de integridade foram corrigidos e passaram em 20 testes sintéticos. A ativação operacional permanece pendente; `fominha_app` não tem escrita direta em tabelas, mas pode registrar metadados do catálogo por funções restritas.
 
-## Bloqueios da homologação
+## Bloqueios de integridade corrigidos
 
 ### P0 — Escrita do papel da aplicação pode contornar validação
 
-Migration 006 concede `INSERT` em todas as tabelas do schema a `fominha_app`. O teste sintético assumiu `SET ROLE fominha_app` e inseriu um evento `VALID` para versão sem passar por `ArtifactRepository.set_state()` nem registrar validação de hash. O banco aceitou a operação. O papel também recebe `INSERT` em pointers/publicações e registros de decisão, então as invariantes implementadas somente nos repositórios não são barreira contra gravações SQL diretas.
+Migration 009 revoga os grants de escrita de 006, inclusive os grants de `UPDATE` por coluna e o `INSERT` padrão em tabelas futuras. O teste usa `SET LOCAL ROLE fominha_app`, confirma `current_user`, percorre as tabelas e verifica que o papel não pode inserir, atualizar ou excluir. Também tenta inserir diretamente estado `VALID` e publicação; ambos são recusados.
 
-**Recomendação:** reduzir grants por tabela/coluna e impedir transições privilegiadas por escrita direta. Escolher uma API SQL restrita (funções com validação/SECURITY DEFINER bem revisada) ou outro mecanismo que faça com que o papel de runtime não consiga validar, publicar ou aprovar por conta própria. Incluir testes de privilégio conectando-se como o papel efetivo da aplicação.
+**Próximo passo para uso operacional:** estender a API de escrita restrita além do catálogo, com identidades distintas para validação de bytes, aprovação e publicação, sem devolver grants diretos ao papel de runtime. O adaptador M3 permanece opt-in e não está ligado aos executores.
 
 ### P1 — Aprovação não está vinculada relacionalmente ao snapshot e à página corretos
 
-O teste confirmou que `approval_batches` aceita `source_snapshot_version_id` cujo slot pertence a outro capítulo. Também aceitou uma decisão de aprovação cujo `reviewed_image_version_id` pertence a outra página que a revisão da ocorrência. As FKs atuais garantem existência de IDs, mas não essas relações de escopo.
+Migration 008 exige que o snapshot e o run do lote cubram o capítulo e, quando aplicável, a página/segmento. A ocorrência do assunto e a imagem da decisão também precisam pertencer à página do snapshot, quando ele é uma página. Os testes cobrem capítulo diferente e outra página do mesmo capítulo, inclusive por SQL direto.
 
-**Recomendação:** validar chapter/run/snapshot na criação do lote e relacionar decisão, revisão, ocorrência e imagem por FKs compostas ou triggers de integridade; repetir as provas negativas usando o papel da aplicação.
+O papel da aplicação não tem escrita direta em tabelas e as funções atuais cobrem apenas catálogo; não consegue criar lote ou decisão. Os triggers protegem também gravações feitas pela conexão privilegiada dos testes.
 
 ### P1 — Lote de importação concluído continua mutável
 
-`LegacyImportRepository.record()` insere itens sem verificar o status do lote, e o schema não possui trigger que feche itens quando o lote passa a `COMPLETED`, `PARTIAL` ou `FAILED`. A prova negativa conseguiu anexar item depois de `COMPLETED`.
+`LegacyImportRepository.record()` verifica o lote com lock antes de inserir. Migration 008 só aceita novos itens enquanto o lote estiver `RUNNING`; o lock serializa inserção e fechamento. Itens são append-only e a transição do lote é irreversível para `COMPLETED`, `PARTIAL` ou `FAILED`. Testes de repositório e SQL direto passaram.
 
-**Recomendação:** aceitar itens somente enquanto o lote estiver `RUNNING`, impor transições terminais e testar imutabilidade do snapshot de importação depois do fechamento.
+O relatório da importação fechada não recebe itens tardios nem mutações dos itens já registrados.
 
 ## Necessários antes de conectar a dados operacionais
 
-1. Aprovar e provisionar ambientes PostgreSQL, versões suportadas, alta disponibilidade, TLS, autenticação e rotação de credenciais.
+1. Aprovar e provisionar ambientes PostgreSQL, versões suportadas, alta disponibilidade, TLS, autenticação e rotação de credenciais; definir a API de escrita confiável antes de conectar executores.
 2. Rever a matriz de privilégios e associar os papéis sem login (`fominha_app`, `fominha_migrator`, `fominha_retention`) a identidades reais; definir quem pode migrar e auditar.
 3. Escolher backend do Artifact Store, durabilidade, replicação, monitoramento de corrupção e proteção técnica além das permissões locais de arquivo. O adaptador M3 implementa filesystem local e não oferece armazenamento imutável/WORM.
 4. Aprovar frequência, retenção, local externo, criptografia e exercícios de restauração conjunta de PostgreSQL e blobs; estabelecer RPO/RTO.
@@ -51,10 +51,8 @@ O teste confirmou que `approval_batches` aceita `source_snapshot_version_id` cuj
 - Manifesto e dump precisam compartilhar ponto de consistência com o conjunto de blobs; M3 documenta a coordenação, mas não implementa agendador de backups.
 - Não houve teste de carga, falha de host, perda de disco, restauração em outro ambiente, concorrência elevada nem teste de credenciais não privilegiadas.
 - Migrations `down` são para bancos descartáveis. Papéis PostgreSQL são globais ao cluster; grants em outros bancos podem impedir sua remoção até que esses bancos sejam tratados pelo operador.
-- A validação feita dentro dos repositórios não é suficiente enquanto `fominha_app` puder inserir diretamente estados e relações que contornam essas validações.
-- As referências de aprovação podem ser consistentes por existência e ainda apontar para outra página/capítulo; integridade relacional incompleta pode produzir decisão válida para o conteúdo errado.
-- Lotes legados fechados não são imutáveis no schema atual e podem receber itens tardios, alterando retrospectivamente seu relatório.
+- O papel de runtime só escreve metadados do catálogo por funções restritas. Os demais repositórios ainda precisam de API própria antes de funcionar com credenciais operacionais de menor privilégio.
 
 ## Fora de escopo e decisão
 
-Não iniciar M4, migrar imagens/JSONs, ativar autoridade PostgreSQL, alterar executores ou remover `TO_*`/legado. Revisar grants e constraints, corrigir os quatro testes esperados e obter execução limpa sem `expected failures`; então atualizar o parecer M3. Depois disso, as decisões de ambiente, segurança, política de dados, contratos da migração e cutover continuam exigindo aprovação separada.
+Os quatro testes esperados agora passam normalmente. As migrations 008/009 e a nova 010 fizeram `down`/`up` em bancos descartáveis. Antes de integrar dados reais, ativar autoridade PostgreSQL, alterar executores ou remover `TO_*`/legado, ainda faltam decisões de ambiente, segurança, política de dados, contratos da migração, API de escrita para as demais operações e cutover.

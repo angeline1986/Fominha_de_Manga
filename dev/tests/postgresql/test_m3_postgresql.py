@@ -169,7 +169,7 @@ class M3PostgresIntegration(unittest.TestCase):
 
     def test_schema_and_append_only_guards(self):
         with psycopg.connect(self.dsn) as conn:
-            self.assertEqual(conn.execute("SELECT count(*) FROM public.fominha_schema_migrations").fetchone()[0], 7)
+            self.assertEqual(conn.execute("SELECT count(*) FROM public.fominha_schema_migrations").fetchone()[0], 10)
             self.assertTrue(conn.execute("SELECT to_regclass('fominha.legacy_import_items')").fetchone()[0])
             with self.assertRaises(psycopg.Error):
                 conn.execute("UPDATE fominha.artifact_objects SET byte_size=byte_size")

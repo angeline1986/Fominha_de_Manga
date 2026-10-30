@@ -8,6 +8,7 @@ from unittest.mock import patch
 from PIL import Image
 
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+from central_v2.backend.orchestration.textoff_special.run_paths import staging_root
 from central_v2.backend.routes import laboratorio_recovery as recovery
 
 
@@ -95,6 +96,34 @@ class RecoveryTests(unittest.TestCase):
                 manifest.write_text(json.dumps(meta))
                 mismatched = json.loads(recovery.recent_response(query, root).body)
                 self.assertIsNone(mismatched["solids_result"])
+
+    def test_recovers_per_work_solids_preview_with_scoped_image_url(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary)
+            manga = root / "comix/obra"
+            source = manga / "clean/page_clean.png"
+            source.parent.mkdir(parents=True)
+            Image.new("RGB", (8, 8), "white").save(source)
+            run_id = "e" * 32
+            folder = staging_root(manga, "textoff_laboratorio") / run_id
+            folder.mkdir(parents=True)
+            preview = folder / "preview.png"
+            Image.new("RGB", (8, 8), "green").save(preview)
+            (folder / "manifest.json").write_text(json.dumps({
+                "schema": "laboratorio_solidos_preview_v1", "preview_only": True,
+                "provider": "comix", "manga": "obra", "chapter": "clean",
+                "page": "page_clean.png", "source_path": "clean/page_clean.png",
+                "source_sha256": sha256(source), "preview_sha256": sha256(preview)}))
+            query = {key: [value] for key, value in {
+                "provider": "comix", "manga": "obra", "chapter": "clean",
+                "page": "page_clean.png", "source": "file",
+                "path": "clean/page_clean.png"}.items()}
+            with patch.object(recovery, "resolve_source", return_value=(
+                    manga, source, "clean", "page_clean.png")):
+                result = json.loads(recovery.recent_response(query, root).body)["solids_result"]
+            self.assertEqual(result["run_id"], run_id)
+            self.assertIn("provider=comix", result["image_url"])
+            self.assertIn("manga=obra", result["image_url"])
 
 
 if __name__ == "__main__":

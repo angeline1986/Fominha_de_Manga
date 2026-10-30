@@ -4,12 +4,16 @@ from pathlib import Path
 import tempfile
 import unittest
 from unittest.mock import patch
+from urllib.parse import parse_qs, urlparse
 
 from PIL import Image
 
+from central_v2.backend.orchestration.textoff_special.artifacts import sha256
 from central_v2.backend.routes.laboratorio_degrade import _resolve as resolve_degrade
 from central_v2.backend.routes.laboratorio_pages import response as pages_response
-from central_v2.backend.routes.laboratorio_solidos import execute as execute_solids
+from central_v2.backend.routes.laboratorio_solidos import (
+    execute as execute_solids, image_response as solid_image,
+)
 from central_v2.backend.routes.laboratorio_source import resolve_source
 from central_v2.backend.routes.laboratorio_tratamentos import _execute as execute_treatment
 
@@ -64,10 +68,35 @@ class LaboratoryFileSelectionTests(unittest.TestCase):
                                  Image.new("L", (30, 30)), [])):
             solids = execute_solids(self.payload, self.output)
             self.assertEqual(solids.status, 200)
-            run_id = json.loads(solids.body)["run_id"]
-            manifest = json.loads((self.output / "_laboratorio_solidos_previews"
-                                   / run_id / "manifest.json").read_text())
+            body = json.loads(solids.body)
+            run_id = body["run_id"]
+            folder = self.work / "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_laboratorio" / run_id
+            manifest = json.loads((folder / "manifest.json").read_text())
             self.assertEqual(manifest["source_path"], self.payload["path"])
+            query = parse_qs(urlparse(body["image_url"]).query)
+            self.assertEqual(query["provider"], ["comix"])
+            self.assertEqual(query["manga"], ["obra"])
+            self.assertEqual(solid_image(query, self.output).body,
+                             (folder / "preview.png").read_bytes())
+            self.assertEqual(solid_image({"run_id": [run_id]}, self.output).status, 404)
+            self.assertFalse((self.output / "_laboratorio_solidos_previews" / run_id).exists())
+
+    def test_legacy_solids_image_remains_readable_only_for_its_work(self):
+        run_id = "b" * 32
+        folder = self.output / "_laboratorio_solidos_previews" / run_id
+        folder.mkdir(parents=True)
+        preview = folder / "preview.png"
+        Image.new("RGB", (30, 30), "white").save(preview)
+        (folder / "manifest.json").write_text(json.dumps({
+            "schema": "laboratorio_solidos_preview_v1", "preview_only": True,
+            "provider": "comix", "manga": "obra",
+            "preview_sha256": sha256(preview)}))
+        self.assertEqual(solid_image({"run_id": [run_id]}, self.output).body,
+                         preview.read_bytes())
+        query = {"run_id": [run_id], "provider": ["comix"], "manga": ["obra"]}
+        self.assertEqual(solid_image(query, self.output).body, preview.read_bytes())
+        (self.output / "comix/other/IMG").mkdir(parents=True)
+        self.assertEqual(solid_image({**query, "manga": ["other"]}, self.output).status, 404)
 
     def test_selected_path_cannot_escape_the_work(self):
         outside = self.output / "outside.png"

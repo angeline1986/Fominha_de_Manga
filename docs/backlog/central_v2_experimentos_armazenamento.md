@@ -6,7 +6,7 @@
 
 ## Situação atual
 
-Desde `f0e3ab4d`, as novas execuções são gravadas dentro da pasta da obra:
+As novas execuções são gravadas dentro da pasta da obra:
 
 ```text
 <obra>/FLUXO_SECUNDARIO/05_Lab_Retoques/
@@ -14,7 +14,7 @@ Desde `f0e3ab4d`, as novas execuções são gravadas dentro da pasta da obra:
 └── textoff_laboratorio/<UUID>/
 ```
 
-Produtores, leitores e rotas da Central V2 usam esse destino para novas execuções. As execuções anteriores permanecem em `Fominha_de_Manga/reports/experimentos/` e continuam disponíveis para leitura. A decisão foi aplicar o novo caminho somente daqui em diante; não há migração nem exclusão dos históricos nesta etapa. O caminho efetivo está em [`run_paths.py`](../../central_v2/backend/orchestration/textoff_special/run_paths.py).
+Degradê, Artístico, Suave e Sólidos gravam novas execuções em `textoff_laboratorio/`; os tratamentos especiais usam `textoff_especiais_v2/`. As execuções anteriores em `Fominha_de_Manga/reports/experimentos/` e as prévias antigas de Sólidos em `<raiz de saída>/_laboratorio_solidos_previews/` continuam disponíveis para leitura. A decisão foi aplicar o novo caminho somente daqui em diante; não há migração nem exclusão dos históricos nesta etapa. O caminho efetivo está em [`run_paths.py`](../../central_v2/backend/orchestration/textoff_special/run_paths.py).
 
 ## Tickets
 
@@ -23,7 +23,7 @@ Produtores, leitores e rotas da Central V2 usam esse destino para novas execuç�
 **Prioridade original:** URGENTE
 **Status:** CONCLUÍDO
 
-Laboratório e tratamentos especiais gravam novas execuções nas respectivas pastas de `05_Lab_Retoques/`. A leitura dos resultados anteriores foi preservada. Os dados históricos não foram movidos.
+Os quatro tratamentos do Laboratório e os tratamentos especiais gravam novas execuções nas respectivas pastas de `05_Lab_Retoques/`. A leitura dos resultados anteriores, inclusive das prévias antigas de Sólidos, foi preservada. Os dados históricos não foram movidos.
 
 ### EXP-02 — Organizar por capítulo, página e execução
 
@@ -45,8 +45,8 @@ A hierarquia exata ainda precisa ser decidida. Antes de alterar os caminhos, esp
 
 ## Critérios de aceite
 
-- [x] Novas execuções são gravadas em `<obra>/FLUXO_SECUNDARIO/05_Lab_Retoques/`.
-- [x] Laboratório e tratamentos especiais continuam lendo execuções antigas.
+- [x] Novas execuções, inclusive Sólidos, são gravadas em `<obra>/FLUXO_SECUNDARIO/05_Lab_Retoques/`.
+- [x] Laboratório e tratamentos especiais continuam lendo execuções antigas, inclusive prévias de Sólidos na raiz de saída.
 - [ ] Caminhos permitem navegar por capítulo, página e tratamento, mantendo o UUID da execução.
 - [ ] Reexecuções não sobrescrevem resultados anteriores.
 - [ ] Estados, logs e erros apontam para a página e a execução corretas.

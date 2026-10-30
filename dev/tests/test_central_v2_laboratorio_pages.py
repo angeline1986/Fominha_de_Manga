@@ -10,6 +10,7 @@ from central_v2.backend.routes.laboratorio_source import resolve_source
 from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check_manifest import (
     SCHEMA, manifest_path,
 )
+from central_v2.backend.orchestration.textoff_merged.stages import LEVEL2, stage_root
 
 
 class LaboratorioPagesTests(unittest.TestCase):
@@ -56,7 +57,7 @@ class LaboratorioPagesTests(unittest.TestCase):
             output = Path(temporary)
             manga = output / "ridi" / "obra"
             (manga / "IMG" / "1").mkdir(parents=True)
-            clean = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/TO_MERGED_NIVEL_II/1/clean"
+            clean = stage_root(manga, LEVEL2, read_legacy=False) / "1" / "clean"
             clean.mkdir(parents=True)
             for name in ("page-001_clean.png", "page-002_clean.png"):
                 (clean / name).write_bytes(name.encode())

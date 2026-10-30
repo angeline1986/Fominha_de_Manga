@@ -27,7 +27,7 @@ export function renderSpecial(container, level) {
   root.className = "auto-merge-page textoff-merged-page cleaner-outcomes";
   root.innerHTML = `<header><h1 class="textoff-page-title-hint" data-tooltip="${descriptions[level]}" tabindex="0" aria-description="${descriptions[level]}">${titles[level]}</h1></header>
     <div class="auto-merge-toolbar">
-      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Capítulo"></label>
+      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Cap."></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
       <button class="auto-merge-execute" type="button" data-run>Executar Passo ${level === "IV" ? 3 : 4}</button>
     </div>

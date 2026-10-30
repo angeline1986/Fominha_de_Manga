@@ -14,9 +14,11 @@ from central_v2.backend.orchestration.textoff_merged import (
 from central_v2.backend.orchestration.textoff_special.catalog import treatment_for
 from central_v2.backend.orchestration.combo_turbo import publication_candidates
 from central_v2.backend.orchestration.textoff_merged.final_consolidated import final_manifest_path
+from central_v2.backend.orchestration.textoff_merged.final_consolidated_manifest import read_manifest
 from central_v2.backend.orchestration.textoff_merged.special_styled_final import prepare_final
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, stage_chapter
 from central_v2.backend.routes.router import dispatch_post
+from processamento.exportacao.exportador import list_source_files
 
 
 def sha(path):
@@ -81,6 +83,23 @@ class LaboratoryApplyTests(unittest.TestCase):
                                  self.identity, self.root)
         self.assertEqual(response.status, 200)
         return json.loads(response.body)
+
+    def test_final_v1_contract_uses_root_png_and_verified_manifest_artifact(self):
+        folder = self.manifest.parent.parent
+        self.assertEqual(folder, self.manga /
+            "FLUXO_SECUNDARIO/04_TEXTO_OFF/07_CONSOLIDADO_FINAL/1")
+        payload = read_manifest(self.manifest, self.manga, "1")
+        self.assertEqual((payload["schema"], payload["version"], payload["page_count"]),
+            ("textoff_consolidado_final_manifest_v1", 1, 2))
+        for page, row in payload["pages"].items():
+            self.assertEqual(row["artifact"], page)
+            self.assertEqual(row["sha256"], sha(folder / page))
+        exported = list_source_files(self.manga, "textoff_merged")
+        self.assertEqual([row["path"] for row in exported["files"]],
+            ["1/other.png", "1/page.png"])
+        self.final.write_bytes(b"alterado")
+        with self.assertRaisesRegex(ValueError, "Página final inválida"):
+            read_manifest(self.manifest, self.manga, "1")
 
     def apply(self, version, confirmed=True):
         return dispatch_post("/api/textoff/laboratorio/final/apply",

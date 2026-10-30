@@ -58,7 +58,7 @@ export function createMergedLevel2View(onRun, onReprocess) {
   element.innerHTML = `
     <header><h1 class="textoff-page-title-hint" data-tooltip="Tratamento focado em páginas com balões transparentes." tabindex="0" aria-description="Tratamento focado em páginas com balões transparentes.">Auto-Cleaner — Passo 2: Balões Transparentes</h1></header>
     <div class="auto-merge-toolbar">
-      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Capítulo"></label>
+      <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span><input type="search" data-query placeholder="Cap."></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos"></div>
       <button class="auto-merge-execute" type="button" data-execute>Executar Passo 2</button>
     </div>

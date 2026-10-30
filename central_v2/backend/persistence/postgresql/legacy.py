@@ -38,6 +38,12 @@ class LegacyImportRepository:
             raise ValueError("unverified legacy item cannot reference a promoted version")
         identity = uuid4()
         with transaction(self.conn):
+            row = self.conn.execute(
+                "SELECT status FROM fominha.legacy_import_batches WHERE import_batch_id=%s FOR UPDATE",
+                (batch_id,),
+            ).fetchone()
+            if row is None or row[0] != "RUNNING":
+                raise ValueError("legacy import batch is missing or already finished")
             self.conn.execute(
                 "INSERT INTO fominha.legacy_import_items(import_item_id,import_batch_id,legacy_path,"
                 "legacy_sha256,contract_code,classification,artifact_version_id,issue_code,details_json) "

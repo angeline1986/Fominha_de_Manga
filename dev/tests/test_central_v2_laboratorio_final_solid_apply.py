@@ -12,7 +12,7 @@ from central_v2.backend.routes.router import dispatch_post
 
 
 class SolidApplyTests(unittest.TestCase):
-    def test_legacy_clean_preview_proposes_and_applies_only_chapter_five(self):
+    def _propose_and_apply(self, location):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             manga = output / "comix/obra"
@@ -22,7 +22,9 @@ class SolidApplyTests(unittest.TestCase):
             source.parent.mkdir(parents=True)
             Image.new("RGB", (20, 30), "white").save(source)
             run_id = "a" * 32
-            preview = output / "_laboratorio_solidos_previews" / run_id / "preview.png"
+            root = (output / "_laboratorio_solidos_previews" if location == "legacy"
+                    else manga / "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_laboratorio")
+            preview = root / run_id / "preview.png"
             preview.parent.mkdir(parents=True)
             Image.new("RGB", (20, 30), "green").save(preview)
             (preview.parent / "manifest.json").write_text(json.dumps({
@@ -57,6 +59,12 @@ class SolidApplyTests(unittest.TestCase):
                                     / "page.png"), sha256(preview))
             self.assertEqual((final_manifest_path(manga, "3").parent.parent
                               / "page.png").read_bytes(), other)
+
+    def test_legacy_clean_preview_proposes_and_applies_only_chapter_five(self):
+        self._propose_and_apply("legacy")
+
+    def test_per_work_clean_preview_proposes_and_applies_only_chapter_five(self):
+        self._propose_and_apply("work")
 
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ export function createLevel3View({ onExecute } = {}) {
     <header><h1 class="table-heading-tooltip" data-tooltip="Análise estrutural dos resíduos seguros recebidos do Nível II." tabindex="0" aria-description="Análise estrutural dos resíduos seguros recebidos do Nível II.">Auto-Merge Nível III</h1></header>
     <div class="auto-merge-toolbar">
       <label class="auto-merge-search"><span class="visually-hidden">Buscar capítulo</span>
-        <input type="search" data-query placeholder="Capítulo"></label>
+        <input type="search" data-query placeholder="Cap."></label>
       <div class="auto-merge-filters" role="group" aria-label="Filtrar capítulos por estado"></div>
       <button class="auto-merge-execute" type="button" data-execute>Executar Nível III</button>
     </div>

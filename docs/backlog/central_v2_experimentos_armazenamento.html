@@ -33,7 +33,7 @@
     <p><span class="status">URGENTE · EXP-01 CONCLUÍDO · EXP-02 PENDENTE</span></p>
     <p class="meta">Escopo: Laboratório e tratamentos especiais. Destino das novas execuções: <code>&lt;obra&gt;/FLUXO_SECUNDARIO/05_Lab_Retoques/</code>.</p>
     <p>As novas execuções são gravadas na pasta da obra. A organização por capítulo, página e tratamento continua pendente; o UUID ainda identifica a pasta de cada execução.</p>
-    <p class="note">Os resultados anteriores permanecem em <code>reports/experimentos/</code> e continuam disponíveis para leitura. Não há migração nem exclusão de históricos planejada nesta etapa.</p>
+    <p class="note">Os resultados anteriores em <code>reports/experimentos/</code> e as prévias antigas de Sólidos em <code>&lt;raiz de saída&gt;/_laboratorio_solidos_previews/</code> continuam disponíveis para leitura. Não há migração nem exclusão de históricos planejada nesta etapa.</p>
   </header>
 
   <section>
@@ -41,7 +41,7 @@
     <pre>&lt;obra&gt;/FLUXO_SECUNDARIO/05_Lab_Retoques/
 ├── textoff_especiais_v2/&lt;UUID&gt;/
 └── textoff_laboratorio/&lt;UUID&gt;/</pre>
-    <p>Produtores e leitores da Central V2 usam a pasta da obra para execuções novas. A leitura mantém compatibilidade com as execuções antigas em <code>Fominha_de_Manga/reports/experimentos/</code>. A mudança entrou no commit <code>f0e3ab4d</code>.</p>
+    <p>Degradê, Artístico, Suave e Sólidos gravam novas execuções em <code>textoff_laboratorio/</code>; os tratamentos especiais usam <code>textoff_especiais_v2/</code>. A leitura mantém compatibilidade com as execuções antigas em <code>Fominha_de_Manga/reports/experimentos/</code> e com as prévias antigas de Sólidos na raiz de saída.</p>
   </section>
 
   <section>
@@ -54,7 +54,7 @@
     <article class="ticket">
       <h3>EXP-01 — Gravar novas execuções na pasta da obra</h3>
       <p><strong>Prioridade original:</strong> URGENTE · <strong>Status:</strong> CONCLUÍDO.</p>
-      <p>Laboratório e tratamentos especiais gravam novas execuções em <code>05_Lab_Retoques/</code>, nas respectivas pastas <code>textoff_laboratorio/</code> e <code>textoff_especiais_v2/</code>. Leitores e rotas mantêm acesso às execuções anteriores. O histórico existente não foi movido.</p>
+      <p>Os quatro tratamentos do Laboratório e os tratamentos especiais gravam novas execuções em <code>05_Lab_Retoques/</code>, nas respectivas pastas <code>textoff_laboratorio/</code> e <code>textoff_especiais_v2/</code>. Leitores e rotas mantêm acesso às execuções anteriores, inclusive às prévias antigas de Sólidos. O histórico existente não foi movido.</p>
     </article>
     <article class="ticket">
       <h3>EXP-02 — Organizar por capítulo, página e execução</h3>
@@ -91,8 +91,8 @@
   <section>
     <h2>Critérios de aceite</h2>
     <ul>
-      <li>Concluído: novas execuções são gravadas em <code>&lt;obra&gt;/FLUXO_SECUNDARIO/05_Lab_Retoques/</code>.</li>
-      <li>Concluído: Laboratório e Especiais continuam lendo execuções antigas.</li>
+      <li>Concluído: novas execuções, inclusive Sólidos, são gravadas em <code>&lt;obra&gt;/FLUXO_SECUNDARIO/05_Lab_Retoques/</code>.</li>
+      <li>Concluído: Laboratório e Especiais continuam lendo execuções antigas, inclusive prévias de Sólidos na raiz de saída.</li>
       <li>Pendente: organizar as execuções por capítulo, página e tratamento, sem sobrescrever UUIDs anteriores.</li>
       <li>Pendente: validar estados, logs e erros por página após a reorganização.</li>
       <li>Preservar imagens, máscaras, manifestos, requisições, logs e diagnósticos.</li>

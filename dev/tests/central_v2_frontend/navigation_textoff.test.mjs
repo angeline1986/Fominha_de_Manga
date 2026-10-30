@@ -31,6 +31,12 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
 
   const timelineMarkup = groupMarkup(timeline);
   assert.match(timelineMarkup, /cleaning-timeline/);
+  assert.doesNotMatch(timelineMarkup, /cleaning-timeline-next/);
+  const glassButtons = [...timelineMarkup.matchAll(/<button\s+class="segmented-button[^\"]*"[\s\S]*?<\/button>/g)];
+  assert.equal(glassButtons.length, 3);
+  for (const [index, option] of timeline.control.options.entries()) {
+    assert.ok(glassButtons[index][0].includes(`data-action="${option.action}"`));
+  }
   assert.match(timelineMarkup, /ui-icon--sparkles/);
   assert.match(timelineMarkup, /ui-icon--diamond/);
   assert.match(timelineMarkup, /ui-icon--circle-dot/);

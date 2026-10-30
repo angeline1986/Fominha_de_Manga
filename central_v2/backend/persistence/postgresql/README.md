@@ -3,6 +3,13 @@
 This package is an opt-in M3 adapter. Existing executors, migration registry,
 `dual_write`, and `read_authority=legacy` remain untouched.
 
+After migration 010, `fominha_app` has no direct table writes. It can register
+catalog metadata through six narrowly granted `SECURITY DEFINER` functions.
+Other repository write methods are exercised only with a privileged connection
+in disposable synthetic tests.
+Do not use a privileged migration identity as an operational runtime account.
+A restricted write API and real role provisioning are required before integration.
+
 ## Configuration
 
 Install `requirements.txt` in the application environment. Supply either
@@ -27,7 +34,7 @@ createuser -h 127.0.0.1 -p 55432 fominha_dev
 
 Set `FOMINHA_PG_MIGRATION_DSN` to the disposable cluster administrator
 connection and `FOMINHA_PG_DSN` to the restricted application connection.
-Apply migrations, then grant membership in the no-login role:
+Apply migrations, then grant membership in the no-login restricted role:
 
 ```sh
 PYTHONPATH=central_v2/backend python3 -m persistence.postgresql check

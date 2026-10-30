@@ -8,12 +8,13 @@ from central_v2.backend.orchestration.textoff_special.artifacts import (
     contained_file, read_json, sha256,
 )
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT, treatment_for
-from central_v2.backend.orchestration.textoff_special.run_paths import run_folder
+from central_v2.backend.orchestration.textoff_special.run_paths import (
+    legacy_solids_root, run_folder,
+)
 from .laboratorio_final_target import final_target
 from .laboratorio_final_solid_source import solid_target
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
-SOLID_PREVIEWS = "_laboratorio_solidos_previews"
 TREATMENTS = {"degrade", "estilizado", "gradiente_suave", "solidos"}
 RUN_ID = re.compile(r"[0-9a-f]{32}\Z")
 
@@ -63,10 +64,8 @@ def candidate(manga: Path, chapter: str, page: str, treatment: str,
 
 def _solid(manga: Path, chapter: str, page: str, run_id: str,
            output_root: Path) -> dict:
-    root = (Path(output_root).resolve() / SOLID_PREVIEWS).resolve()
-    folder = (root / run_id).resolve()
-    if not folder.is_relative_to(root):
-        raise ValueError("Execução fora do Laboratório.")
+    folder = run_folder(manga, "textoff_laboratorio", run_id,
+                        legacy=legacy_solids_root(output_root))
     meta = read_json(folder / "manifest.json")
     if (meta.get("schema") != "laboratorio_solidos_preview_v1"
             or meta.get("preview_only") is not True

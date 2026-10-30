@@ -12,10 +12,11 @@ from central_v2.backend.orchestration.textoff_merged.laboratorio_final_candidate
 from central_v2.backend.routes.laboratorio_source import resolve_source
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.orchestration.textoff_special.catalog import ROOT
-from central_v2.backend.orchestration.textoff_special.run_paths import roots
+from central_v2.backend.orchestration.textoff_special.run_paths import (
+    legacy_solids_root, roots,
+)
 
 STAGING = ROOT / "reports/experimentos/textoff_laboratorio"
-SOLID_PREVIEWS = "_laboratorio_solidos_previews"
 FIELDS = ("provider", "manga", "chapter", "page", "source")
 RUN_ID = re.compile(r"[0-9a-f]{32}\Z")
 
@@ -97,9 +98,12 @@ def _recent_previews(manga, path, chapter, filename, source_hash):
 
 
 def _recent_solids(output_root, payload, manga, path, source_hash):
-    root = Path(output_root).resolve() / SOLID_PREVIEWS
-    for manifest_file in sorted(root.glob("*/manifest.json"),
-                                key=lambda item: item.stat().st_mtime, reverse=True):
+    manifest_files = ((root.resolve(), item)
+                      for root in roots(manga, "textoff_laboratorio",
+                                        legacy=legacy_solids_root(output_root))
+                      for item in root.glob("*/manifest.json"))
+    for root, manifest_file in sorted(manifest_files,
+                                      key=lambda pair: pair[1].stat().st_mtime, reverse=True):
         folder = manifest_file.parent.resolve()
         if not folder.is_relative_to(root) or not RUN_ID.fullmatch(folder.name):
             continue
@@ -120,7 +124,8 @@ def _recent_solids(output_root, payload, manga, path, source_hash):
             return {"treatment": "solidos", "run_id": folder.name,
                     "completed_at": manifest_file.stat().st_mtime * 1000,
                     "image_url": "/api/textoff/laboratorio/solidos/image?"
-                    + urlencode({"run_id": folder.name})}
+                    + urlencode({"run_id": folder.name, "provider": manga.parent.name,
+                                 "manga": manga.name})}
         except (OSError, ValueError, KeyError, TypeError):
             continue
     return None

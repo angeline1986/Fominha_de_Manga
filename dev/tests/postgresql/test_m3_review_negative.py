@@ -27,7 +27,7 @@ class M3NegativeReview(unittest.TestCase):
         with psycopg.connect(cls.dsn) as conn:
             if not conn.execute("SELECT current_database()").fetchone()[0].startswith("fominha_m3_test_"):
                 raise RuntimeError("refusing to test outside fominha_m3_* databases")
-            if conn.execute("SELECT count(*) FROM public.fominha_schema_migrations").fetchone()[0] != 7:
+            if conn.execute("SELECT count(*) FROM public.fominha_schema_migrations").fetchone()[0] != 10:
                 raise RuntimeError("run the complete integration suite against a fresh database")
         cls.temp = TemporaryDirectory(prefix="fominha-m3-negative-")
         cls.store = ArtifactStore(Path(cls.temp.name) / "objects")
@@ -150,7 +150,6 @@ class M3NegativeReview(unittest.TestCase):
             self.assertIn(active[0], (version_a, version_b))
             self.assertEqual(active[1], 1)
 
-    @unittest.expectedFailure
     def test_application_role_cannot_mark_unvalidated_blob_valid(self):
         from persistence.postgresql.artifacts import ArtifactRepository
         with psycopg.connect(self.dsn) as conn:
@@ -164,7 +163,6 @@ class M3NegativeReview(unittest.TestCase):
                                  "(state_event_id,artifact_version_id,sequence_no,state) "
                                  "VALUES(%s,%s,2,'VALID')", (uuid4(), version))
 
-    @unittest.expectedFailure
     def test_approval_snapshot_must_match_chapter(self):
         from persistence.postgresql.approvals import ApprovalRepository
         with psycopg.connect(self.dsn) as conn:
@@ -173,7 +171,6 @@ class M3NegativeReview(unittest.TestCase):
             with self.assertRaises((ValueError, psycopg.Error)):
                 ApprovalRepository(conn).approval_batch(chapter_a, run_a, version_b)
 
-    @unittest.expectedFailure
     def test_decision_image_must_match_approved_page(self):
         from persistence.postgresql.approvals import ApprovalRepository
         with psycopg.connect(self.dsn) as conn:

@@ -52,7 +52,6 @@ function timelineControlMarkup(control) {
     <span class="cleaning-timeline-number" aria-hidden="true">${control.number}</span>
     <div class="cleaning-timeline-control">
       ${segmentedMarkup(control)}
-      ${control.options.map((option) => `<button class="cleaning-timeline-next" type="button" data-selected-value="${option.value}" data-action="${option.action}" aria-label="Abrir ${option.label}" title="Abrir ${option.label}">${iconMarkup("next")}</button>`).join("")}
     </div>
   </li>`;
 }

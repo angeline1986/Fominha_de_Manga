@@ -6,11 +6,16 @@ from .catalog import ROOT
 
 NAMES = {"textoff_especiais_v2", "textoff_laboratorio"}
 RUN_ID = re.compile(r"[A-Za-z0-9]{1,64}\Z")
+LEGACY_SOLIDS_PREVIEWS = "_laboratorio_solidos_previews"
 
 
 def legacy_root(name: str) -> Path:
     _check_name(name)
     return ROOT / "reports" / "experimentos" / name
+
+
+def legacy_solids_root(output_root: Path) -> Path:
+    return Path(output_root).resolve() / LEGACY_SOLIDS_PREVIEWS
 
 
 def staging_root(manga: Path, name: str) -> Path:

@@ -1,0 +1,12 @@
+SET search_path TO fominha, public;
+DROP TRIGGER legacy_import_batch_transition ON legacy_import_batches;
+DROP TRIGGER legacy_import_item_append_only ON legacy_import_items;
+DROP TRIGGER legacy_import_item_open ON legacy_import_items;
+DROP TRIGGER approval_decision_page ON approval_decisions;
+DROP TRIGGER approval_subject_snapshot ON approval_subjects;
+DROP TRIGGER approval_batch_scope ON approval_batches;
+DROP FUNCTION guard_legacy_import_batch();
+DROP FUNCTION guard_legacy_import_item();
+DROP FUNCTION guard_approval_decision_page();
+DROP FUNCTION guard_approval_subject_snapshot();
+DROP FUNCTION guard_approval_batch_scope();

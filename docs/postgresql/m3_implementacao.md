@@ -1,6 +1,6 @@
 # M3 — Implementação PostgreSQL e persistência
 
-**Status da revisão técnica:** **REPROVADO para liberação do próximo milestone**, devido a falhas de integridade encontradas nos testes negativos.  
+**Status da revisão técnica:** bloqueios de integridade M3 corrigidos e aprovados em testes sintéticos; integração operacional ainda pendente.
 **Escopo:** infraestrutura, schema versionado, camada de persistência e Artifact Store para dados sintéticos.  
 **Dados reais:** não migrados; diretórios operacionais e executores existentes fora do escopo.
 
@@ -27,13 +27,14 @@ O Artifact Store local usa raiz configurada separada do repositório, chave cont
 ## Implementação e decisões realizadas
 
 - Adaptador opt-in em `central_v2/backend/persistence/postgresql/`: configuração por ambiente, conexões/transações, CLI de saúde/status e migrations versionadas com checksum, lock consultivo e rollback explícito.
-- Sete migrations criam catálogo, escopos e execuções, segmentos, objetos/blobs, versões/dependências, ocorrências/revisões/aprovações, publicações/pointer CAS, Reset/auditoria/importação legada, triggers de integridade e papéis PostgreSQL.
+- Dez migrations criam catálogo, escopos e execuções, segmentos, objetos/blobs, versões/dependências, ocorrências/revisões/aprovações, publicações/pointer CAS, Reset/auditoria/importação legada, triggers de integridade e papéis PostgreSQL. As migrations 008/009 corrigem escopo de aprovações, fechamento da importação e privilégios do papel da aplicação; a 010 abre a primeira API de escrita restrita para o catálogo.
 - Repositórios cobrem catálogo, runs, artefatos, aprovações, publicação/Reset, auditoria e importação legada. Resolver falha fechada para estados, dependências, aprovação, invalidação pendente e bytes divergentes. Reconciliador apenas reporta blobs ausentes, corrompidos ou órfãos; não remove dados.
 - Artifact Store local configurável usa SHA-256 como chave de conteúdo, gravação atômica create-if-absent, modo de arquivo somente leitura, verificação ao resolver/publicar e marcador de conflito. SHA identifica o conteúdo físico, não substitui a identidade lógica da página, execução, slot ou versão.
 - Importação aceita `LEGACY_UNVERIFIED` sem associar versão promovida. Tal registro não o torna válido nem autoriza publicação.
 - Migrations 005 e 007 fixam `search_path` dentro das funções de trigger. Os testes encontraram a falha quando as funções eram chamadas fora da sessão de migração; ela foi corrigida e revalidada.
 - `dual_write`, `read_authority`, executores e autoridade legada permaneceram intocados; nenhum dado operacional foi migrado e nenhum tratamento foi executado.
-- A suíte ampliada confirmou lacunas bloqueadoras: o papel da aplicação pode marcar artefato como `VALID` sem validação de bytes; aprovações aceitam snapshot de outro capítulo e imagem de outra página; lote de importação concluído ainda aceita novos itens. Detalhes e criticidade em [pendências](m3_pendencias.md).
+- A suíte ampliada passou com 20 testes, sem falhas esperadas. `fominha_app` não tem escrita direta em tabelas, inclusive futuras; não consegue validar, aprovar nem publicar por SQL direto. Triggers vinculam lote/snapshot/run e ocorrência à página correta, decisão à página revisada e impedem gravar ou alterar itens de importação após o fechamento.
+- A API de escrita do catálogo usa seis funções `SECURITY DEFINER` de propriedade do papel sem login `fominha_migrator`, com `search_path` fixo, `EXECUTE` revogado de `PUBLIC` e concedido apenas a `fominha_app`. O repositório do catálogo chama essas funções; o teste executa o fluxo como papel efetivo da aplicação e confirma que `INSERT` direto segue proibido. Os demais repositórios de escrita ainda exigem conexão privilegiada no ambiente sintético; não configurar essa identidade como runtime operacional.
 - Concorrência de publicação manteve um único ponteiro vencedor; o perdedor pode propagar `SerializationFailure`, sem retry/normalização no repositório. A publicação rejeitada não deixou um segundo pointer, mas o chamador precisa tratar o erro.
 - Dump/restore de PostgreSQL e cópia/restauração do Artifact Store sintético preservaram as contagens e hashes verificadas. Isso não remove as lacunas de autorização e integridade acima.
 
@@ -45,4 +46,4 @@ O [README do adaptador](../../central_v2/backend/persistence/postgresql/README.m
 
 ## Parecer
 
-**PARECER: REPROVADO para homologação e para liberação do próximo milestone.** Resolver os bloqueios P0/P1, reaplicar os testes negativos e atualizar este parecer antes de qualquer decisão de M4. Não iniciar M4, migrar dados, trocar autoridade ou executar cutover sem autorização separada.
+**PARECER: gate de integridade M3 aprovado no ambiente sintético.** A implementação ainda não está pronta para uso operacional: a API restrita cobre somente o catálogo; faltam as operações de runs, artefatos, aprovação e publicação, além de provisionamento de papéis e decisões de ambiente, backup e migração. Nenhum dado real foi migrado; autoridade, executores e cutover continuam inalterados.
