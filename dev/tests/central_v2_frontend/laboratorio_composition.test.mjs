@@ -43,24 +43,33 @@ function degradeRoot() {
 }
 
 test('Laboratório carrega sua composição modular e mantém os quatro cartões', async () => {
-  const load = browserModules();
+  const load = browserModules({ document: {
+    createElement: () => new Element(), head: { appendChild() {} },
+  } });
   const { render } = await load('/texto_off/laboratorio/index.js');
   assert.equal(typeof render, 'function');
   const { routes } = await load('/_app/router/routes.js');
   assert.equal(routes.laboratorio.module, '/texto_off/laboratorio/index.js');
-  const view = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/view.js', import.meta.url), 'utf8');
+  const { createLaboratorioView } = await load('/texto_off/laboratorio/view.js');
+  const container = new Element();
+  createLaboratorioView(container);
+  const markup = container.children[0].innerHTML;
   const style = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/style.css', import.meta.url), 'utf8');
   const degrade = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/degrade.js', import.meta.url), 'utf8');
   const candidates = await readFile(new URL('../../../central_v2/frontend/texto_off/laboratorio/degrade_candidates.js', import.meta.url), 'utf8');
-  const cards = [...view.matchAll(/<header>(ORIGINAL|DEGRADÊ|ARTÍSTICO|SUAVE)<\/header>/g)].map((match) => match[1]);
-  assert.deepEqual(cards, ['ORIGINAL', 'DEGRADÊ', 'ARTÍSTICO', 'SUAVE']);
-  assert.equal((view.match(/Selecione uma página e pelo menos uma área\./g) || []).length, 0);
-  assert.equal((view.match(/data-treatment-status=/g) || []).length, 3);
-  assert.match(view, /class="lab-treatment-actions"[\s\S]*data-lab-degrade[\s\S]*data-lab-stylized[\s\S]*data-lab-smooth/);
+  const cards = [...markup.matchAll(/<section class="lab-image lab-treatment-card"[^>]*>[\s\S]*?<\/section>/g)]
+    .map((match) => match[0]);
+  assert.equal(cards.length, 4);
+  for (const card of cards) {
+    assert.match(card, /<header>[\s\S]*data-treatment-status=[\s\S]*data-lab-final-select=[\s\S]*<\/header>/);
+    assert.doesNotMatch(card.split('</header>')[1], /data-treatment-status|data-lab-final-select/);
+  }
+  assert.match(markup, /<header><strong class="lab-card-title">ORIGINAL<\/strong><\/header>/);
+  assert.equal((markup.match(/Selecione uma página e pelo menos uma área\./g) || []).length, 0);
+  assert.match(markup, /class="lab-treatment-actions"[\s\S]*data-lab-degrade[\s\S]*data-lab-stylized[\s\S]*data-lab-smooth/);
   assert.match(style, /\.lab-treatment-actions\s*\{\s*display:\s*grid;\s*gap:\s*10px;/);
-  assert.match(style, /\.lab-placeholder\[data-treatment-status\]\s*\{[^}]*position:\s*sticky;[^}]*top:\s*var\(--lab-treatment-header-height/);
-  assert.equal((view.match(/class="lab-image lab-treatment-card"/g) || []).length, 3);
-  assert.match(style, /\.lab-treatment-card > header\s*\{[^}]*position:\s*sticky;[^}]*top:\s*0;/);
+  assert.match(style, /\.lab-image > header\s*\{[^}]*height:\s*40px;/);
+  assert.doesNotMatch(style, /\.lab-placeholder\[data-treatment-status\]\s*\{[^}]*position:\s*sticky;/);
   assert.doesNotMatch(style, /lab-degrade-progress|lab-treatment-spin|content:\s*["'][0-9]+%/);
   assert.doesNotMatch(degrade, /confirmMessage|Autorizar componentes adiados/);
   assert.match(candidates, /confirm\.textContent\s*=\s*'Autorizar e executar'/);

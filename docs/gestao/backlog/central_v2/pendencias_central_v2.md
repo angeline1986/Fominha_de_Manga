@@ -59,6 +59,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [BL-06](../../tickets/central_v2/BL-06.md) | Exibir feedback contextual dos tratamentos no Laboratório | DONE |
 | [CV2-LAB-01](../../tickets/central_v2/CV2-LAB-01.md) | Ordenar cartões do Laboratório pela execução da página | DONE · P2 |
 | [CV2-LAB-02](../../tickets/central_v2/CV2-LAB-02.md) | Mostrar páginas “Outro” do Check nas origens Glass e Check do Laboratório | DONE · P2 |
+| [CV2-LAB-03](../../tickets/central_v2/CV2-LAB-03.md) | Alinhar as imagens do Laboratório para comparação visual | DONE · P1 |
 | [BL-12](../../tickets/central_v2/BL-12.md) | Validar autorização Degradê com múltiplos componentes | IN PROGRESS |
 | [BL-13](../../tickets/central_v2/BL-13.md) | Sair do modo Foco com Esc | DONE |
 | [BL-15](../../tickets/central_v2/BL-15.md) | Definir Glass como origem padrão no Laboratório | DONE |

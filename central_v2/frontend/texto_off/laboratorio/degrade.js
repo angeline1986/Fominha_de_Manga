@@ -16,8 +16,10 @@ export function connectDegrade({ root, button, getRequest, progress, review, ord
   function setState(state, message, busy = false) {
     placeholder.dataset.state = state;
     placeholder.setAttribute('aria-busy', String(busy));
+    placeholder.setAttribute('aria-label', message);
+    placeholder.title = message;
     placeholder.textContent = message;
-    placeholder.hidden = state === 'running';
+    placeholder.hidden = false;
   }
   function clearResult(message = 'Aguardando execução', state = 'waiting') {
     image.hidden = true;

@@ -49,6 +49,8 @@ test('seleciona cartão concluído e mostra destino oficial no painel sem abrir 
   const ui = await connect(async (payload) => { sent = payload; return response; });
   ui.review.ready('degrade', request, response.run_id);
   assert.equal(ui.buttons.degrade.hidden, false);
+  assert.equal(ui.buttons.degrade.textContent, 'Selecionar');
+  assert.match(ui.buttons.degrade.getAttribute('aria-label'), /Degradê.*Consolidado Final/);
   ui.buttons.degrade.dispatch('click');
   await tick();
   assert.deepEqual(JSON.parse(JSON.stringify(sent)),
@@ -57,6 +59,7 @@ test('seleciona cartão concluído e mostra destino oficial no painel sem abrir 
   assert.match(ui.note.textContent, /Cap. 1 · page.png/);
   assert.equal(ui.applyButton.hidden, false);
   assert.equal(ui.buttons.degrade.getAttribute('aria-pressed'), 'true');
+  assert.equal(ui.buttons.degrade.textContent, 'Selecionado');
   assert.equal(ui.review.getSelection().version, 'v1');
   ui.buttons.degrade.dispatch('click');
   assert.equal(ui.review.getSelection(), null);

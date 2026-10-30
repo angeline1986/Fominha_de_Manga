@@ -29,8 +29,12 @@ export function connectFinalReview(root, revealPanel = () => {}) {
       button.hidden = !candidates.has(treatment);
       button.disabled = applying;
       button.setAttribute("aria-pressed", String(chosen));
-      button.textContent = chosen ? "Selecionado para o Consolidado Final"
-        : "Selecionar para o Consolidado Final";
+      button.textContent = chosen ? "Selecionado" : "Selecionar";
+      const description = chosen
+        ? `${LABELS[treatment]} selecionado para o Consolidado Final`
+        : `Selecionar ${LABELS[treatment]} para o Consolidado Final`;
+      button.setAttribute("aria-label", description);
+      button.title = description;
     }
     applyButton.hidden = !selected;
     applyButton.disabled = applying;

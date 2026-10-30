@@ -47,13 +47,13 @@ test('feedback contextual mantém os tratamentos independentes e ignora resposta
     return null;
   } };
   const load = browserModules({ AbortController, document: { createElement: () => new Element() }, fixtures }, {
-    '/_app/api/laboratorio.js': `export async function executeStylizedLaboratory(_payload, signal) {
+    '/_app/api/laboratorio.js': `export async function executeStylizedLaboratoryJob(_payload, signal) {
       globalThis.fixtures.signals.stylized = signal;
       return globalThis.fixtures.stylized.shift().promise;
-    } export async function executeSmoothLaboratory(_payload, signal) {
+    } export async function executeSmoothLaboratoryJob(_payload, signal) {
       globalThis.fixtures.signals.smooth = signal;
       return globalThis.fixtures.smooth.shift().promise;
-    }`,
+    } export async function executeSolidLaboratory() {}`,
   });
   const { connectStylized, connectSmooth } = await load('/texto_off/laboratorio/tratamentos.js');
   const stylizedButton = new Element(), smoothButton = new Element();
@@ -63,7 +63,7 @@ test('feedback contextual mantém os tratamentos independentes e ignora resposta
   stylizedButton.dispatch('click');
   assert.equal(progressEvents[0][1], 'Executando Artístico');
   assert.equal(panels[0].placeholder.dataset.state, 'running');
-  assert.equal(panels[0].placeholder.hidden, true);
+  assert.equal(panels[0].placeholder.hidden, false);
   assert.equal(panels[1].placeholder.textContent, 'Aguardando execução');
   pending.page = 'page-2.png';
   stylized.invalidate();

@@ -1,4 +1,15 @@
 /** Estrutura estática da tela do Laboratório L3. */
+function treatmentCard(name, title, status) {
+  return `<section class="lab-image lab-treatment-card" data-lab-card="${name}">
+    <header><strong class="lab-card-title">${title}</strong>
+      <span class="lab-placeholder" data-treatment-status="${status}" data-state="waiting"
+        role="status" aria-live="polite" title="Aguardando execução">Aguardando execução</span>
+      <button type="button" class="lab-final-select-button btn" data-lab-final-select="${name}"
+        aria-pressed="false" hidden>Selecionar</button>
+    </header>
+  </section>`;
+}
+
 export function createLaboratorioView(container) {
   const stylesheet = document.createElement("link");
   stylesheet.rel = "stylesheet";
@@ -34,11 +45,11 @@ export function createLaboratorioView(container) {
         </div>
         <div class="lab-stage">
           <div class="lab-cards">
-            <section class="lab-image"><header>ORIGINAL</header><div class="lab-placeholder">Aguardando seleção da página</div></section>
-            <section class="lab-image lab-treatment-card" data-lab-card="degrade"><header>DEGRADÊ</header><div class="lab-placeholder" data-treatment-status="degrade" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-final-select-button btn" data-lab-final-select="degrade" aria-pressed="false" hidden>Selecionar para o Consolidado Final</button></section>
-            <section class="lab-image lab-treatment-card" data-lab-card="estilizado"><header>ARTÍSTICO</header><div class="lab-placeholder" data-treatment-status="stylized" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-final-select-button btn" data-lab-final-select="estilizado" aria-pressed="false" hidden>Selecionar para o Consolidado Final</button></section>
-            <section class="lab-image lab-treatment-card" data-lab-card="gradiente_suave"><header>SUAVE</header><div class="lab-placeholder" data-treatment-status="smooth" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-final-select-button btn" data-lab-final-select="gradiente_suave" aria-pressed="false" hidden>Selecionar para o Consolidado Final</button></section>
-            <section class="lab-image lab-treatment-card" data-lab-card="solidos"><header>SÓLIDOS</header><div class="lab-placeholder" data-treatment-status="solid" data-state="waiting" role="status" aria-live="polite">Aguardando execução</div><button type="button" class="lab-final-select-button btn" data-lab-final-select="solidos" aria-pressed="false" hidden>Selecionar para o Consolidado Final</button></section>
+            <section class="lab-image"><header><strong class="lab-card-title">ORIGINAL</strong></header><div class="lab-placeholder">Aguardando seleção da página</div></section>
+            ${treatmentCard("degrade", "DEGRADÊ", "degrade")}
+            ${treatmentCard("estilizado", "ARTÍSTICO", "stylized")}
+            ${treatmentCard("gradiente_suave", "SUAVE", "smooth")}
+            ${treatmentCard("solidos", "SÓLIDOS", "solid")}
           </div>
         </div>
       </main>
