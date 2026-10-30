@@ -76,7 +76,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [CV2-PERF-01](../../tickets/central_v2/CV2-PERF-01.md) | Atingir a meta de 1,5 s na primeira abertura do Auto-Cleaner e Check | PARCIALMENTE CONCLUÍDO · P1 |
 | [CV2-UX-08](../../tickets/central_v2/CV2-UX-08.md) | Padronizar capítulo e página nos visualizadores de Limpeza de Balões | DONE · P2 |
 | [CV2-AUD-01](../../tickets/central_v2/CV2-AUD-01.md) | Validar visualmente a Auditoria Antes & Depois | DO |
-| [CV2-AUD-02](../../tickets/central_v2/CV2-AUD-02.md) | Selecionar 2 a 4 quadros em Antes & Depois pelo controle “Quadros” | TODO · P2 |
+| [CV2-AUD-02](../../tickets/central_v2/CV2-AUD-02.md) | Selecionar 2 a 4 quadros em Antes & Depois pelo controle “Quadros” | DONE · P2 |
 | [CV2-CAT-01](../../tickets/central_v2/CV2-CAT-01.md) | Validar o catálogo de resíduos por capítulo | DO · P1 |
 | [CV2-CAT-02](../../tickets/central_v2/CV2-CAT-02.md) | Validar a autoridade do catálogo no Auto-Cleaner Passo 2 | DO · P1 |
 

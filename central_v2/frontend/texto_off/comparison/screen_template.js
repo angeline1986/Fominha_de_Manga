@@ -1,5 +1,6 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { pageNavigationMarkup } from "/texto_off/comparison/page_navigation.js";
+import { panelChooserMarkup } from "/texto_off/comparison/panel_chooser.js";
 
 export function comparisonScreenMarkup(mode, comparisonMode) {
   return `<header class="comparison-page-heading">${mode.heading}</header>
@@ -14,6 +15,7 @@ export function comparisonScreenMarkup(mode, comparisonMode) {
         <header class="comparison-canvas-toolbar">
           <div class="comparison-canvas-title"><strong>${mode.title}</strong><span data-summary></span></div>
           <div class="comparison-canvas-controls">
+            ${panelChooserMarkup(comparisonMode)}
             <div class="zoom-control comparison-zoom" aria-label="Controles de zoom">
               <button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button>
               <output data-zoom-value aria-live="polite">40%</output>

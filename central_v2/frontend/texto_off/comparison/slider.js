@@ -16,19 +16,21 @@ export function createSlider(viewport, onState, comparisonMode) {
   let images = [], zoom = 0.4, width = 0, height = 0, ready = false, revision = 0, disposed = false;
   let overlay = null, interactionMode = "normal";
   let view = "dual", rulers = false;
+  let visiblePanels = new Set(panelsConfig.map(([key]) => key));
 
   function layout() {
     if (!ready) return;
     const imageWidth = width * zoom, imageHeight = height * zoom;
     frame.style.setProperty("--comparison-image-width", `${imageWidth}px`);
     frame.style.setProperty("--comparison-panel-gap", `${TRIPTYCH_PANEL_GAP}px`);
-    const count = view === "dual" ? panels.length : 1;
+    const count = mode.layout === "quad" ? visiblePanels.size : view === "dual" ? panels.length : 1;
     frame.style.width = `${imageWidth * count + TRIPTYCH_PANEL_GAP * (count - 1)}px`;
     frame.style.height = `${imageHeight + 44}px`;
     frame.style.gridTemplateColumns = `repeat(${count}, var(--comparison-image-width))`;
     frame.style.setProperty("--comparison-ruler-step", `${100 * zoom}px`);
     panels.forEach((panel, index) => {
-      panel.hidden = view !== "dual" && index !== (view === "before" ? 0 : 1);
+      panel.hidden = mode.layout === "quad" ? !visiblePanels.has(panelsConfig[index][0])
+        : view !== "dual" && index !== (view === "before" ? 0 : 1);
       panel.style.width = `${imageWidth}px`; panel.style.height = `${imageHeight + 44}px`;
     });
     frame.classList.toggle("has-rulers", rulers);
@@ -93,6 +95,12 @@ export function createSlider(viewport, onState, comparisonMode) {
     setView(value) {
       if (!["dual", "before", "after"].includes(value) || panels.length !== 2) return;
       view = value; layout();
+    },
+    setVisiblePanels(keys) {
+      if (mode.layout !== "quad") return;
+      const next = new Set(keys);
+      if (next.size < 2 || [...next].some((key) => !panelsConfig.some(([panel]) => panel === key))) return;
+      visiblePanels = next; layout();
     },
     setRulers(value) { rulers = Boolean(value); layout(); },
     getZoom() { return zoom; },

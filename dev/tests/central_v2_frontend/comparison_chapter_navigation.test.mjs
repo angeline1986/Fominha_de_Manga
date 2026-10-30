@@ -10,7 +10,7 @@ test('Glass Básica offers chapters only after Passo 2 has a valid result', asyn
   assert.equal(canCompare({ cleaned: true, level2_status: 'no_change' }, '2', 'level2'), true);
 });
 
-test('chapter change opens only eligible results and retains zoom and focus', async () => {
+test('audit chapter change retains zoom, focus and selected panels', async () => {
   const contexts = [];
   const origin = {
     parentElement: { scrollTop: 0 },
@@ -23,7 +23,7 @@ test('chapter change opens only eligible results and retains zoom and focus', as
     createTestScreen(context) {
       contexts.push(context);
       return { element: { remove() {} }, start() {}, dispose() {},
-        getViewState: () => ({ zoom: 80, focus: true }) };
+        getViewState: () => ({ zoom: 80, focus: true, visiblePanels: ['original', 'final'] }) };
     },
   }, {
     '/_app/state/context.js': 'export const getContext = () => getTestContext(); export const subscribeContext = () => subscribeTestContext();',
@@ -31,7 +31,7 @@ test('chapter change opens only eligible results and retains zoom and focus', as
     '/texto_off/comparison/screen.js': 'export const createComparisonScreen = (...args) => createTestScreen(...args);',
   });
   const { createComparisonLauncher } = await load('/texto_off/comparison/launcher.js');
-  const launcher = createComparisonLauncher(origin, '1', 'level1');
+  const launcher = createComparisonLauncher(origin, '1', 'before_after');
   const rows = [{ chapter: '1', cleaned: true }, { chapter: '2', cleaned: false },
     { chapter: '3', cleaned: true }];
   launcher.setChapters(rows);
@@ -41,6 +41,6 @@ test('chapter change opens only eligible results and retains zoom and focus', as
   assert.equal(contexts.length, 1);
   contexts[0].onChapterChange('3');
   assert.equal(contexts[1].chapter, '3');
-  assert.deepEqual(contexts[1].viewState, { zoom: 80, focus: true });
+  assert.deepEqual(contexts[1].viewState, { zoom: 80, focus: true, visiblePanels: ['original', 'final'] });
   launcher.dispose();
 });

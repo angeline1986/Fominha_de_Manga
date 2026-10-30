@@ -1,7 +1,7 @@
 # CV2-AUD-02 — Selecionar 2 a 4 quadros em Antes & Depois
 
 - **Prioridade:** P2
-- **Status:** TODO
+- **Status:** DONE (30/10/2026)
 - **Visão:** Limpeza de Balões · Antes & Depois
 - **Responsável:** A definir
 
@@ -19,12 +19,12 @@ Adicionar “Quadros” apenas ao modo Antes & Depois. Ao marcar ou desmarcar um
 
 ## Critérios de aceite
 
-- [ ] A tela abre com os quatro quadros visíveis; o botão “Quadros” apresenta as quatro caixas de seleção com seus estados atuais.
-- [ ] É possível exibir qualquer combinação de dois ou três quadros; não é possível deixar apenas um visível.
-- [ ] A grade usa apenas a largura dos quadros visíveis, sem espaço vazio para os ocultos.
-- [ ] A troca de quadros não recarrega a página nem altera o zoom ou a posição vertical da comparação.
-- [ ] A seleção permanece ao navegar entre páginas e capítulos na mesma sessão da tela.
-- [ ] O controle pode ser usado por teclado e informa quais quadros estão ativos.
-- [ ] Os outros visualizadores continuam com o layout atual.
+- [x] A tela abre com os quatro quadros visíveis; o botão “Quadros” apresenta as quatro caixas de seleção com seus estados atuais.
+- [x] É possível exibir qualquer combinação de dois ou três quadros; não é possível deixar apenas um visível.
+- [x] A grade usa apenas a largura dos quadros visíveis, sem espaço vazio para os ocultos.
+- [x] A troca de quadros não recarrega a página nem altera o zoom ou a posição vertical da comparação.
+- [x] A seleção permanece ao navegar entre páginas e capítulos na mesma sessão da tela.
+- [x] O controle pode ser usado por teclado e informa quais quadros estão ativos.
+- [x] Os outros visualizadores continuam com o layout atual.
 
 **Referência técnica:** `central_v2/frontend/texto_off/comparison/model.js`, `slider.js` e `screen_template.js`.

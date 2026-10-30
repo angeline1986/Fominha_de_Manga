@@ -12,6 +12,7 @@ import { comparisonScreenMarkup } from "/texto_off/comparison/screen_template.js
 import { createPageNavigation } from "/texto_off/comparison/page_navigation.js";
 import { bindComparisonPreview } from "/texto_off/comparison/screen_preview.js";
 import { loadCheckTypes } from "/texto_off/comparison/screen_check_types.js";
+import { bindPanelChooser } from "/texto_off/comparison/panel_chooser.js";
 
 export function createComparisonScreen(context, onBack) {
   const mode = comparisonModeConfig(context.comparisonMode);
@@ -50,6 +51,8 @@ export function createComparisonScreen(context, onBack) {
     else if (nextState === "ready") { activeImageIndex = index; pageState = "ready"; state.textContent = ""; catalog.render?.(); }
     drawState();
   }, context.comparisonMode);
+  const panelChooser = context.comparisonMode === "before_after"
+    ? bindPanelChooser(element, slider, context.viewState?.visiblePanels) : null;
   const createCatalog = context.comparisonMode === "solid" ? createSolidCatalog
     : ["degrade", "suave", "artistico"].includes(context.comparisonMode)
     ? createDegradeContext : createResidueCatalog;
@@ -187,10 +190,11 @@ export function createComparisonScreen(context, onBack) {
     element.removeEventListener("click", onZoom);
     element.removeEventListener("click", onMove); element.removeEventListener("click", onPanel);
     element.removeEventListener("keydown", onKeyDown);
-    catalog.dispose(); slider.dispose(); disposeFocus();
+    catalog.dispose(); panelChooser?.dispose(); slider.dispose(); disposeFocus();
     restorePreview?.dispose();
     disposeViewTools();
   }
   drawState();
-  return { element, start: load, dispose, getViewState: () => ({ zoom, focus: element.classList.contains("is-focus-mode") }) };
+  return { element, start: load, dispose, getViewState: () => ({ zoom, focus: element.classList.contains("is-focus-mode"),
+    ...(panelChooser ? { visiblePanels: panelChooser.selected() } : {}) }) };
 }
