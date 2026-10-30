@@ -8,12 +8,12 @@ export function segmentedMarkup(control) {
               data-preview-before="${option.preview.before}"
               data-preview-after="${option.preview.after}"
               aria-label="${option.label}: ${option.title}"`
-    : option.tooltip ? ` title="${option.tooltip}" data-tooltip="${option.tooltip}"
+    : option.tooltip ? ` data-tooltip="${option.tooltip}"
               aria-description="${option.tooltip}" aria-label="${option.label}: ${option.tooltip}"`
       : (option.title || option.caption) ? `title="${option.title ?? option.caption}" aria-label="${option.label}: ${option.title ?? option.caption}"` : "";
   const accessibleLabel = control.ariaLabel ?? control.label;
   const headerTooltip = control.tooltip
-    ? ` title="${control.tooltip}" data-tooltip="${control.tooltip}" aria-description="${control.tooltip}" tabindex="0"`
+    ? ` data-tooltip="${control.tooltip}" aria-description="${control.tooltip}" tabindex="0"`
     : "";
   return `
     <div

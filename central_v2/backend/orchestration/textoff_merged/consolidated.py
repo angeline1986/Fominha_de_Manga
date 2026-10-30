@@ -81,7 +81,7 @@ def rebuild_consolidated(manga: Path, chapter: str) -> dict:
 
 
 def consolidated_is_current(manga: Path, chapter: str) -> bool:
-    if both_absent(manga, "TO_MERGED_CONSOLIDADO", "02_MAPEAR/INPUT_CONSOLIDADO", chapter):
+    if both_absent(manga, CONSOLIDATED, "02_MAPEAR/INPUT_CONSOLIDADO", chapter):
         return False
     folder = stage_chapter(manga, CONSOLIDATED, chapter)
     try:

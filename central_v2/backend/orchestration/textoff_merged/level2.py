@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from central_v2.backend.state.work_layout import images_root
 import shutil
 import sys
 import tempfile
@@ -48,7 +49,7 @@ def execute_merged_level2(manga: Path, chapters: list[str], progress, preflight=
     for name in chapters:
         if preflight:
             preflight()
-        chapter = manga / "IMG" / name
+        chapter = images_root(manga) / name
         if not v3.is_chapter_merged(chapter):
             results.append({"chapter": name, "status": "failed", "error": "MERGE oficial alterado antes do Nível II."})
             continue

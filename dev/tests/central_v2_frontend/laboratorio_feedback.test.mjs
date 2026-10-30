@@ -84,7 +84,7 @@ test('feedback contextual mantém os tratamentos independentes e ignora resposta
   assert.ok(panels[0].children.indexOf(panels[0].placeholder) < panels[0].children.indexOf(image));
 
   smoothButton.dispatch('click');
-  assert.equal(progressEvents.at(-1)[1], 'Executando Suave');
+  assert.equal(progressEvents.at(-1)[1], 'Executando Gradiente');
   failedSmooth.reject(new Error('worker falhou'));
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(progressEvents.at(-1)[0], 'finish');

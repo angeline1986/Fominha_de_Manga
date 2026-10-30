@@ -4,6 +4,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from central_v2.backend.state.work_layout import TEXT_OFF_RELATIVE
 
 from .auto_cleaner_check_manifest import CHECK_STAGE, MANIFEST_NAME
 from .special_treatments_manifest import rebuild_special_treatments
@@ -11,7 +12,7 @@ from .special_treatments_manifest import rebuild_special_treatments
 
 def bootstrap(output_root: Path) -> list[dict]:
     root = output_root.resolve()
-    pattern = f"*/*/FLUXO_SECUNDARIO/04_TEXTO_OFF/{CHECK_STAGE}/*/{MANIFEST_NAME}"
+    pattern = f"*/*/{TEXT_OFF_RELATIVE.as_posix()}/{CHECK_STAGE}/*/{MANIFEST_NAME}"
     results = []
     for source in sorted(root.glob(pattern)):
         manga, chapter = source.parents[4], source.parent.name

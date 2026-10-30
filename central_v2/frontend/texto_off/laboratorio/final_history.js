@@ -4,7 +4,7 @@ import { createFinalHistoryView } from "/texto_off/laboratorio/final_history_vie
 
 const FIELDS = ["provider", "manga", "chapter", "page"];
 const ORIGINS = { LABORATORIO: "Laboratório", PINCEL_DEGRADE: "Degradê",
-  PINCEL_ARTISTICO: "Artístico", PINCEL_SUAVE: "Suave",
+  PINCEL_ARTISTICO: "Artístico", PINCEL_SUAVE: "Gradiente",
   AUTO_CLEANER: "Auto-Cleaner", AUTO_CLEANER_TRANSPARENCIA: "Auto-Cleaner II",
   AUTO_CLEANER_COMBO_TURBO: "Combo Turbo" };
 

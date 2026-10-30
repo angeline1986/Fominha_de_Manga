@@ -53,7 +53,7 @@ test('Limpeza de Balões keeps each flow and brush action on its existing route'
     await access(`${frontend}${option.preview.after}`);
   }
   assert.equal(menu.groups.find((group) => group.label === 'AUDITORIA DE QUALIDADE')
-    .items.map((item) => item.label).join('|'), 'Antes & Depois|Correção Assistida');
+    .items.map((item) => item.label).join('|'), 'Antes & Depois');
   const auditAction = menu.groups.find((group) => group.label === 'AUDITORIA DE QUALIDADE')
     .items.find((item) => item.label === 'Antes & Depois').id;
   assert.equal(auditAction, 'texto-off-quality-audit');

@@ -3,6 +3,7 @@ from pathlib import Path
 import re
 
 from .catalog import ROOT
+from central_v2.backend.state.work_layout import secondary_root
 
 NAMES = {"textoff_especiais_v2", "textoff_laboratorio"}
 RUN_ID = re.compile(r"[A-Za-z0-9]{1,64}\Z")
@@ -21,7 +22,7 @@ def legacy_solids_root(output_root: Path) -> Path:
 def staging_root(manga: Path, name: str) -> Path:
     _check_name(name)
     work = Path(manga).resolve()
-    root = (work / "FLUXO_SECUNDARIO" / "05_Lab_Retoques" / name).resolve()
+    root = (secondary_root(work) / "05_Lab_Retoques" / name).resolve()
     if not root.is_relative_to(work):
         raise ValueError("Área de retoques fora da obra.")
     return root

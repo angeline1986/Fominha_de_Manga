@@ -23,6 +23,7 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
   ]);
   assert.equal(timeline.control.number, '06');
   assert.equal(timeline.control.label, 'Auto-Cleaner: Glass');
+  assert.equal(timeline.control.defaultValue, 'basic');
   assert.deepEqual(JSON.parse(JSON.stringify(timeline.control.options.map((option) => [option.label, option.action]))), [
     ['Básica', 'texto-off-merged-ii'],
     ['Normal', 'texto-off-merged-iv'],
@@ -34,6 +35,7 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
   assert.doesNotMatch(timelineMarkup, /cleaning-timeline-next/);
   const glassButtons = [...timelineMarkup.matchAll(/<button\s+class="segmented-button[^\"]*"[\s\S]*?<\/button>/g)];
   assert.equal(glassButtons.length, 3);
+  assert.match(glassButtons[0][0], /aria-pressed="true"/);
   for (const [index, option] of timeline.control.options.entries()) {
     assert.ok(glassButtons[index][0].includes(`data-action="${option.action}"`));
   }
@@ -55,7 +57,7 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
   assert.doesNotMatch(timelineMarkup, /data-action="[^"]+"[^>]*>[^<]*Executar/);
 
   assert.equal(brush.label, 'PINCEL & RETOQUES DE ARTE');
-  assert.equal(Array.from(brush.control.options, (option) => option.label).join('|'), 'Degradê|Artístico|Suave');
+  assert.equal(Array.from(brush.control.options, (option) => option.label).join('|'), 'Degradê|Artístico|Gradiente');
   const brushMarkup = groupMarkup(brush);
   assert.doesNotMatch(brushMarkup, /Mapear/);
   for (const preview of ['degrade', 'estilizado', 'gradiente_suave']) {
@@ -65,10 +67,10 @@ test('Limpeza de Balões presents the stage flow and separate brush group', asyn
 
   const auditMarkup = groupMarkup(audit);
   assert.match(auditMarkup, /drill-action-primary/);
-  assert.match(auditMarkup, /drill-action-secondary/);
+  assert.doesNotMatch(auditMarkup, /drill-action-secondary/);
   assert.match(auditMarkup, /ui-icon--compare/);
-  assert.match(auditMarkup, /ui-icon--highlighter/);
-  assert.equal(audit.items.map((item) => item.label).join('|'), 'Antes & Depois|Correção Assistida');
+  assert.doesNotMatch(auditMarkup, /Correção Assistida/);
+  assert.equal(audit.items.map((item) => item.label).join('|'), 'Antes & Depois');
   assert.equal(menu.groups.some((group) => group.label === 'LEGADO'), false);
   assert.equal(menu.groups.some((group) => group.items?.some((item) =>
     ['texto-off-legacy', 'combo-turbo'].includes(item.id))), false);

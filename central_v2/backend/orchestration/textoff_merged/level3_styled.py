@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from central_v2.backend.state.work_layout import images_root
 import subprocess
 import tempfile
 
@@ -87,7 +88,7 @@ def execute_level3(manga: Path, chapters: list[str], progress, preflight=None) -
 def _analyze_chapter(
     manga: Path, chapter: str, transparent_candidates: list[dict] | None = None,
 ) -> dict:
-    merge_chapter = manga / "IMG" / chapter
+    merge_chapter = images_root(manga) / chapter
     merge_manifest = v3.merge_manifest_path(merge_chapter)
     level1 = _stage_manifest(manga, LEVEL1, chapter)
     source_hash = _stage_manifest_sha256(manga, LEVEL1, chapter)

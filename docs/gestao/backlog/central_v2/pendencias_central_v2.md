@@ -17,9 +17,9 @@
 | [CV2-UX-02](../../tickets/central_v2/CV2-UX-02.md) | Restaurar a ação Sincronizar da sidebar | DONE |
 | [CV2-UX-03](../../tickets/central_v2/CV2-UX-03.md) | Padronizar tabelas e cabeçalhos no estilo Artístico | DONE |
 | [CV2-UX-04](../../tickets/central_v2/CV2-UX-04.md) | Corrigir alinhamento da barra de progresso global | TODO |
-| [CV2-UX-05](../../tickets/central_v2/CV2-UX-05.md) | Padronizar o nome Bubble Sommelier na tela de curadoria | TODO |
+| [CV2-UX-05](../../tickets/central_v2/CV2-UX-05.md) | Padronizar o nome Bubble Sommelier na tela de curadoria | DONE · P3 |
 | [CV2-UX-06](../../tickets/central_v2/CV2-UX-06.md) | Avaliar navegação por teclado nas telas de comparação | TODO |
-| [CV2-UX-07](../../tickets/central_v2/CV2-UX-07.md) | Unificar nomenclaturas dos tratamentos especiais | TODO |
+| [CV2-UX-07](../../tickets/central_v2/CV2-UX-07.md) | Unificar nomenclaturas dos tratamentos especiais | DONE · P2 |
 
 ### Saúde Arquitetural
 
@@ -29,6 +29,7 @@
 | [BL-08](../../tickets/central_v2/BL-08.md) | Validar automaticamente o limite de 200 linhas | DO · P1 |
 | [BL-09](../../tickets/central_v2/BL-09.md) | Cobrir contratos visuais do Laboratório | DO |
 | [BL-14](../../tickets/central_v2/BL-14.md) | Inventariar arquivos da Central V2 acima de 200 linhas e planejar refactors | TODO |
+| [P5](../../tickets/central_v2/P5.md) | Centralizar endereçamentos e layout de dados da Central V2 | IN PROGRESS |
 | [CV2-OBS-01](../../tickets/central_v2/CV2-OBS-01.md) | Padronizar logs do terminal da Central V2 | DONE |
 | [CV2-OBS-02](../../tickets/central_v2/CV2-OBS-02.md) | Reduzir logs rotineiros do SHADOW_READ | DONE |
 | [CV2-OBS-03](../../tickets/central_v2/CV2-OBS-03.md) | Instrumentar autorização automática do Degradê para diagnóstico de falhas de detecção de balão | TODO · P1 |
@@ -75,6 +76,7 @@ _Sem pendências registradas para Imagens Originais ou Imagens Mescladas._
 | [CV2-PERF-01](../../tickets/central_v2/CV2-PERF-01.md) | Atingir a meta de 1,5 s na primeira abertura do Auto-Cleaner e Check | PARCIALMENTE CONCLUÍDO · P1 |
 | [CV2-UX-08](../../tickets/central_v2/CV2-UX-08.md) | Padronizar capítulo e página nos visualizadores de Limpeza de Balões | DONE · P2 |
 | [CV2-AUD-01](../../tickets/central_v2/CV2-AUD-01.md) | Validar visualmente a Auditoria Antes & Depois | DO |
+| [CV2-AUD-02](../../tickets/central_v2/CV2-AUD-02.md) | Selecionar 2 a 4 quadros em Antes & Depois pelo controle “Quadros” | TODO · P2 |
 | [CV2-CAT-01](../../tickets/central_v2/CV2-CAT-01.md) | Validar o catálogo de resíduos por capítulo | DO · P1 |
 | [CV2-CAT-02](../../tickets/central_v2/CV2-CAT-02.md) | Validar a autoridade do catálogo no Auto-Cleaner Passo 2 | DO · P1 |
 

@@ -100,7 +100,7 @@ const CHECK_DOTS = [
   ["balao_transparente", "Transparente"],
   ["residuo_degrade", "Degradê"],
   ["residuo_gradiente", "Gradiente"],
-  ["balao_estilizado", "Estilizado"],
+  ["balao_estilizado", "Artístico"],
   ["residuo_balao_solido_branco", "Branco sólido"],
   ["outro", "Outro / não identificado"],
 ];

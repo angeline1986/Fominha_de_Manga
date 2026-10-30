@@ -11,9 +11,10 @@ import tempfile
 import uuid
 
 from central_v2.backend.operational_log import emit
+from central_v2.backend.state.work_layout import TEXT_OFF_RELATIVE
 
 REGISTRY_PATH = Path(__file__).with_name("artifact-migration-registry.json")
-TEXT_OFF_ROOT = Path("FLUXO_SECUNDARIO") / "04_TEXTO_OFF"
+TEXT_OFF_ROOT = TEXT_OFF_RELATIVE
 _registry_snapshot = ContextVar("textoff_registry_snapshot", default=None)
 
 

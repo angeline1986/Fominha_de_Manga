@@ -8,6 +8,7 @@ from pathlib import Path
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.manga_state import resolve_manga, IMAGE_EXTENSIONS
 from central_v2.backend.state.sorting import natural_sort_key
+from central_v2.backend.state.work_layout import images_root, merge_root, pdf_root
 
 
 def _images(folder, manga):
@@ -29,9 +30,9 @@ def response(query, output_root: Path):
         return _json({'error': 'Origem invalida.'}, 400)
     try:
         manga = resolve_manga(output_root, provider, manga_name).resolve()
-        img_root = manga / 'IMG'
-        merge_root = manga / 'FLUXO_SECUNDARIO' / '02_MERGE'
-        pdf_root = (manga / 'PDF') if source == 'original' else (manga / 'FLUXO_SECUNDARIO' / '03_PDF_MERGE')
+        img_root = images_root(manga)
+        merged_images = merge_root(manga)
+        pdf_directory = pdf_root(manga, source)
         chapters = []
         if img_root.is_dir():
             for folder in sorted(img_root.iterdir(), key=lambda p: natural_sort_key(p.name)):
@@ -40,9 +41,9 @@ def response(query, output_root: Path):
                 original_count = len(_images(folder, manga))
                 if original_count == 0:
                     continue
-                merge_count = len(_images(merge_root / folder.name, manga))
+                merge_count = len(_images(merged_images / folder.name, manga))
                 image_count = original_count if source == 'original' else merge_count
-                pdf = pdf_root / folder.name / (folder.name + '.pdf')
+                pdf = pdf_directory / folder.name / (folder.name + '.pdf')
                 has_pdf = pdf.is_file() and pdf.resolve().is_relative_to(manga)
                 chapters.append({'chapter': folder.name, 'image_count': image_count,
                                  'merge_image_count': merge_count, 'has_pdf': has_pdf,

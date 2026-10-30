@@ -7,7 +7,7 @@ from pathlib import Path
 
 from .artifact_paths import artifact_file, artifact_ref
 from .special_styled_transaction import transaction_lock
-from .stages import COMBO_TURBO, LEVEL1, LEVEL2, stage_chapter
+from .stages import CONSOLIDATED, COMBO_TURBO, LEVEL1, LEVEL2, stage_chapter
 
 
 def consolidated_image(manga: Path, chapter: str, filename: str) -> Path | None:
@@ -16,7 +16,7 @@ def consolidated_image(manga: Path, chapter: str, filename: str) -> Path | None:
 
 
 def _consolidated_image(manga: Path, chapter: str, filename: str) -> Path | None:
-    folder = stage_chapter(manga, "TO_MERGED_CONSOLIDADO", chapter)
+    folder = stage_chapter(manga, CONSOLIDATED, chapter)
     try:
         manifest = json.loads((folder / "json/clean-manifest.json").read_text(encoding="utf-8"))
     except (OSError, ValueError, TypeError):

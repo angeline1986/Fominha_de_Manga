@@ -1,5 +1,6 @@
 """Run Cleaner V2 for the original Merged and isolated Level I stages."""
 from pathlib import Path
+from central_v2.backend.state.work_layout import images_root
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .cleaner import run_cleaner_v2
@@ -16,7 +17,7 @@ def validate_selection(manga: Path, chapters: object) -> list[str]:
         raise ValueError("A seleção contém capítulos inválidos.")
     if len(set(chapters)) != len(chapters):
         raise ValueError("A seleção contém capítulos repetidos.")
-    root = manga / "IMG"
+    root = images_root(manga)
     available = {path.name: path for path in root.iterdir() if path.is_dir()} if root.is_dir() else {}
     if any(name not in available for name in chapters):
         raise ValueError("A seleção contém capítulos fora da obra.")
@@ -40,7 +41,7 @@ def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
     for index, name in enumerate(chapters, 1):
         if preflight:
             preflight()
-        chapter = manga / "IMG" / name
+        chapter = images_root(manga) / name
         if not v3.is_chapter_merged(chapter):
             results.append({"chapter": name, "status": "failed", "error": "MERGE oficial inválido ou alterado antes da execução."})
             progress(name, {"stage": "done", "percent": round(index * 100 / len(chapters)),

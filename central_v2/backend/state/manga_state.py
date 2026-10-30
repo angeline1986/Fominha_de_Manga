@@ -2,6 +2,7 @@ from pathlib import Path
 
 from central_v2.backend.state.catalog import CATALOG_PROVIDERS
 from central_v2.backend.state.sorting import natural_sort_key as _natural_key
+from central_v2.backend.state.work_layout import images_root
 
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
@@ -38,7 +39,7 @@ def build_structural_state(
     manga_name: str,
 ) -> dict:
     manga = resolve_manga(output_root, provider, manga_name)
-    img_root = manga / "IMG"
+    img_root = images_root(manga)
 
     chapter_names = []
 

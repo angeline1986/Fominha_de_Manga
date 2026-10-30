@@ -6,7 +6,7 @@ from central_v2.backend.operational_log import emit, short_duration
 
 
 _LABELS = {"degrade": "Degradê", "estilizado": "Artístico",
-           "gradiente_suave": "Suave"}
+           "gradiente_suave": "Gradiente"}
 
 
 def run_treatment_logged(treatment, payload, operation, *, correlation_id=None):

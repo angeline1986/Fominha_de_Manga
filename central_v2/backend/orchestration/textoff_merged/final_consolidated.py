@@ -16,7 +16,7 @@ from .final_consolidated_validation import (
     assert_input_unchanged as _assert_input_unchanged, require_official_paint_source,
 )
 from .level2_validation import promote_stage
-from .stages import LEVEL1, LEVEL2, provider_name, stage_chapter
+from .stages import CONSOLIDATED, LEVEL1, LEVEL2, provider_name, stage_chapter
 from .special_styled_transaction import transaction_lock
 
 STAGE = "CONSOLIDADO_FINAL"
@@ -64,7 +64,7 @@ def resolve_final_input(manga: Path, chapter: str, page: str, expected_hash: str
 def rebuild_final_baseline(manga: Path, chapter: str) -> dict:
     if not consolidated_is_current(manga, chapter):
         raise ValueError(f"Consolidado intermediário inválido para Cap. {chapter}.")
-    intermediate = stage_chapter(manga, "TO_MERGED_CONSOLIDADO", chapter)
+    intermediate = stage_chapter(manga, CONSOLIDATED, chapter)
     intermediate_manifest_path = intermediate / "json/clean-manifest.json"
     intermediate_hash = sha256(intermediate_manifest_path)
     intermediate_manifest = json.loads(intermediate_manifest_path.read_text(encoding="utf-8"))

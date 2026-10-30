@@ -71,8 +71,8 @@ test('shared progress supports indeterminate work without a fabricated value', a
 
 test('Sommelier page progress aggregates chapters and completes failed jobs cleanly', async () => {
   const document = progressDocument();
-  const load = browserModules({ document }, { './review.js': 'export function renderBubbleSommelierReview() {};' });
-  const { aggregateSommelierProgress } = await load('/texto_off/sommelier/index.js');
+  const load = browserModules({ document });
+  const { aggregateSommelierProgress } = await load('/texto_off/sommelier/progress_model.js');
   const chapters = ['1', '2'];
   const pages = new Map([['1', 18], ['2', 12]]);
   const oneChapter = ['1'];
@@ -97,13 +97,13 @@ test('Sommelier page progress aggregates chapters and completes failed jobs clea
   assert.deepEqual({ ...aggregateSommelierProgress({ status: 'running', chapter: '1', progress: {
     stage: 'page', completed: 1, total: 18, message: 'Página 1/18',
   } }, chapters, pages) }, {
-    busy: true, title: 'Curadoria de Balões · running', message: 'Página 1/18',
+    busy: true, title: 'Bubble Sommelier · running', message: 'Página 1/18',
     percent: 3, completed: 1, total: 30,
   });
   assert.deepEqual({ ...aggregateSommelierProgress({ status: 'running', chapter: '2', progress: {
     stage: 'page', completed: 2, total: 12, message: 'Página 2/12',
   } }, chapters, pages) }, {
-    busy: true, title: 'Curadoria de Balões · running', message: 'Página 2/12',
+    busy: true, title: 'Bubble Sommelier · running', message: 'Página 2/12',
     percent: 67, completed: 20, total: 30,
   });
   assert.deepEqual(aggregateSommelierProgress({ status: 'failed', chapter: '2', progress: {

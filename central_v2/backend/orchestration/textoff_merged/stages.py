@@ -4,6 +4,7 @@ import os
 import json
 from contextlib import contextmanager
 from contextvars import ContextVar
+from central_v2.backend.state.work_layout import textoff_root
 
 LEVEL1 = "TO_MERGED_NIVEL_I"
 LEVEL2 = "TO_MERGED_NIVEL_II"
@@ -71,12 +72,12 @@ def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
     if entry is not None:
         return target_root(manga, entry)
     if canonical == LEVEL1 and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") == "1":
-        return manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "01_AUTO_CLEANER"
+        return textoff_root(manga) / "01_AUTO_CLEANER"
     if canonical in PINCEIS:
-        return manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / PINCEIS[canonical]
-    current = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / canonical
+        return textoff_root(manga) / PINCEIS[canonical]
+    current = textoff_root(manga) / canonical
     legacy_name = LEGACY_NAMES.get(canonical)
-    legacy = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / legacy_name if legacy_name else None
+    legacy = textoff_root(manga) / legacy_name if legacy_name else None
     if read_legacy and not current.exists() and legacy is not None and legacy.exists():
         return legacy
     return current
@@ -107,7 +108,7 @@ def _resolve_stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy
         return stage_root(manga, LEVEL1, read_legacy=False) / chapter
     if canonical in PINCEIS:
         target = stage_root(manga, canonical, read_legacy=False) / chapter
-        legacy = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / canonical / chapter
+        legacy = textoff_root(manga) / canonical / chapter
         if not target.exists() and legacy.is_dir() and not legacy.is_symlink():
             target.parent.mkdir(parents=True, exist_ok=True)
             os.replace(legacy, target)

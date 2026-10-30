@@ -1,5 +1,6 @@
 import json
 from pathlib import Path
+from central_v2.backend.state.work_layout import merge_root
 
 from .artifacts import images, merge_dir, validate_report
 from central_v2.backend.orchestration.textoff_merged.unexecuted_stage import both_absent
@@ -34,7 +35,7 @@ def _sommelier_state(report_path_value: Path) -> dict | None:
 
 
 def query(manga: Path) -> dict:
-    root = manga / "FLUXO_SECUNDARIO" / "02_MERGE"
+    root = merge_root(manga)
     chapters = []
     if root.is_dir():
         chapter_names = sorted(

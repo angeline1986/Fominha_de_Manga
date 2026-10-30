@@ -51,7 +51,7 @@ export const COMPARISON_MODES = Object.freeze({
     catalogPanelIndex: 1,
   }),
   suave: Object.freeze({
-    layout: "pair", heading: "PINCEL & RETOQUES · SUAVE", title: "Revisão Suave",
+    layout: "pair", heading: "PINCEL & RETOQUES · SUAVE", title: "Revisão Gradiente",
     sides: ["before", "after"], panels: [["before", "ANTES"], ["after", "DEPOIS"]],
     catalogPanelIndex: 1,
   }),

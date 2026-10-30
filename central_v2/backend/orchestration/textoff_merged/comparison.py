@@ -1,6 +1,7 @@
 """Resolve manifest-bound before/after pairs; no image promotion or writes."""
 from pathlib import Path
 import hashlib
+from central_v2.backend.state.work_layout import images_root
 
 from .artifact_paths import artifact_file
 from .manifests import (
@@ -29,7 +30,7 @@ def comparison_pairs(manga: Path, chapter: str, step: str, *, check: bool = Fals
     if check and step != "1":
         return []
     folder = stage_chapter(manga, LEVEL1, chapter)
-    originals = _listing_merge_artifacts(manga / "IMG" / chapter)
+    originals = _listing_merge_artifacts(images_root(manga) / chapter)
     if step in {"3", "4"}:
         return _preview_pairs(manga, chapter, step)
     level2, level2_folder, _ = _valid_level2(
@@ -65,7 +66,7 @@ def comparison_triplets(manga: Path, chapter: str) -> list[dict]:
     level1 = _stage_manifest(manga, LEVEL1, chapter)
     if not level1:
         return []
-    originals = _listing_merge_artifacts(manga / "IMG" / chapter)
+    originals = _listing_merge_artifacts(images_root(manga) / chapter)
     sources = level1.get("source_artifacts")
     if isinstance(sources, list) and sources and len(originals) != len(sources):
         raise OSError("Imagem original obrigatória ausente ou incompleta no MERGE.")

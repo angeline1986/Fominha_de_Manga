@@ -143,24 +143,19 @@
   font-size: 11px;
   font-weight: 600;
 }
-.drill-navigation.is-limpeza-baloes [data-tooltip] { position: relative; }
-.drill-navigation.is-limpeza-baloes [data-tooltip]:hover::after,
-.drill-navigation.is-limpeza-baloes [data-tooltip]:focus-visible::after {
-  position: absolute;
-  z-index: 20;
-  left: 50%;
-  bottom: calc(100% + 7px);
+.navigation-text-tooltip {
+  position: fixed;
+  z-index: 1001;
   width: max-content;
-  max-width: 250px;
+  max-width: min(250px, calc(100vw - 24px));
   padding: 6px 8px;
-  transform: translateX(-50%);
   border-radius: 6px;
-  background: var(--primary-dark-hover);
+  background: var(--color-primary-hover);
   color: #fff;
-  content: attr(data-tooltip);
   font: 500 11px/1.3 var(--font-family);
   pointer-events: none;
 }
+.navigation-text-tooltip[hidden] { display: none; }
 .drill-navigation.is-limpeza-baloes .cleaning-timeline-control .segmented-shell .segmented-header { display: flex; }
 .drill-navigation.is-limpeza-baloes .drill-group:has(.segmented-shell[data-segmented="textoff-brush"]) .segmented-card { padding: 3px; }
 .drill-navigation.is-limpeza-baloes .drill-group:has(.segmented-shell[data-segmented="textoff-brush"]) .segmented-control { padding: 0; border: 0; background: transparent; }

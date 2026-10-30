@@ -34,7 +34,7 @@ def get_response(query: dict, output_root: Path, *, image=False) -> RouteRespons
             content = images(manga, provider, chapter, page, proposal, _value(query, "side"))
             return RouteResponse(200, content, "image/png")
         return RouteResponse(200, json.dumps({"proposal": proposal,
-            "warning": "Todos os efeitos Artístico, Degradê e Suave posteriores serão descartados nesta página."},
+            "warning": "Todos os efeitos Artístico, Degradê e Gradiente posteriores serão descartados nesta página."},
             ensure_ascii=False).encode("utf-8"))
     except (OSError, ValueError, KeyError, TypeError, json.JSONDecodeError) as exc:
         return RouteResponse(400, json.dumps({"error": str(exc)}, ensure_ascii=False).encode("utf-8"))

@@ -17,6 +17,7 @@ from central_v2.backend.orchestration.textoff_merged.manifests import _stage_man
 from central_v2.backend.orchestration.textoff_merged.solid_stage import execute_chapter as run_solids
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, LEVEL2, stage_chapter
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+from central_v2.backend.state.work_layout import images_root
 
 
 def run_solids_isolated(manga, provider, chapter, pages, reusable_pages):
@@ -49,7 +50,7 @@ def run_solids_isolated(manga, provider, chapter, pages, reusable_pages):
 
 
 def run_glass_isolated(manga, provider, chapter, pages, reusable_pages, progress):
-    source = v3.merge_output_dir(manga / "IMG" / chapter)
+    source = v3.merge_output_dir(images_root(manga) / chapter)
     level1 = stage_chapter(manga, LEVEL1, chapter)
     stage = stage_chapter(manga, LEVEL2, chapter, read_legacy=False)
     previous_manifest, previous_report = (stage / "json" / "clean-manifest.json",
@@ -122,7 +123,7 @@ def source_signature(manga, provider, chapters):
     """Hash only selected chapters and their Combo authority/artifact stages."""
     root, files = Path(manga).resolve(), set()
     for chapter in chapters:
-        files.update(path for path in (root / "IMG" / chapter).rglob("*") if path.is_file())
+        files.update(path for path in (images_root(root) / chapter).rglob("*") if path.is_file())
         for stage in (LEVEL1, LEVEL2, "05_AUTO_CLEANER_SOLIDOS", "RESIDUE_OCCURRENCES"):
             folder = stage_chapter(root, stage, chapter, read_legacy=False)
             if folder.is_dir():

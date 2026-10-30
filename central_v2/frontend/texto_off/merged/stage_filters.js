@@ -4,7 +4,7 @@ export const STAGES = [
   ["glass", "Glass"], ["retouch", "Retoque"],
 ];
 export const RETOUCH = [["degrade", "Degradê"], ["artistic", "Artístico"],
-  ["soft", "Suave"], ["laboratory", "Laboratório"]];
+  ["soft", "Gradiente"], ["laboratory", "Laboratório"]];
 
 export function matchesStage(row, key, treatments = []) {
   if (key === "all") return true;

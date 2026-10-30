@@ -59,7 +59,7 @@ export function createLaboratorioView(container) {
           <div class="lab-treatment-actions">
             <button type="button" class="lab-wide" data-lab-degrade>Executar Degradê</button>
             <button type="button" class="lab-wide" data-lab-stylized>Executar Artístico</button>
-            <button type="button" class="lab-wide" data-lab-smooth>Executar Suave</button>
+            <button type="button" class="lab-wide" data-lab-smooth>Executar Gradiente</button>
             <button type="button" class="lab-wide" data-lab-solid>Executar Sólidos</button>
           </div>
           <hr/><strong class="lab-subtitle">Consolidado Final</strong>

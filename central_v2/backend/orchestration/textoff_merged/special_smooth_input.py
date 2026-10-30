@@ -1,4 +1,4 @@
-"""Resolve Check-approved Suave ROIs and their current Consolidado image."""
+"""Resolve Check-approved Gradiente ROIs and their current Consolidado image."""
 from __future__ import annotations
 
 import json
@@ -34,16 +34,16 @@ def pending_pages(manga: Path, provider: str, chapter: str,
     decisions = {(row.get("page"), row.get("id")): row for row in approved}
     rows = (payload.get("treatments") or {}).get("gradiente_suave")
     if not isinstance(rows, list):
-        raise ValueError("Tratamento Suave ausente do Manifesto Especial.")
+        raise ValueError("Tratamento Gradiente ausente do Manifesto Especial.")
     groups, seen = {}, set()
     for row in rows:
         if (not isinstance(row, dict) or row.get("treatment") != "gradiente_suave"
                 or row.get("tipo") != "residuo_gradiente"):
-            raise ValueError("Ocorrência incompatível com Gradiente Suave.")
+            raise ValueError("Ocorrência incompatível com Gradiente.")
         decision = decisions.get((row.get("page"), row.get("id")))
         if (decision is None or decision.get("tipo") != row.get("tipo")
                 or decision.get("box_pixels") != row.get("box_pixels")):
-            raise ValueError("Ocorrência Suave não corresponde à decisão aprovada do Check.")
+            raise ValueError("Ocorrência Gradiente não corresponde à decisão aprovada do Check.")
         eligible = row.get("status") == ("failed" if retry else "pending")
         if not eligible:
             continue
@@ -57,7 +57,7 @@ def pending_pages(manga: Path, provider: str, chapter: str,
     if sha256(path) != digest:
         raise ValueError("Manifesto Especial mudou durante a leitura.")
     if not groups:
-        raise ValueError(f"Capítulo {chapter} não possui Suave elegível.")
+        raise ValueError(f"Capítulo {chapter} não possui Gradiente elegível.")
     return path, digest, payload, groups
 
 

@@ -12,7 +12,7 @@ from .auto_cleaner_check_manifest import _read_check_manifest, manifest_path as 
 from .consolidated import consolidated_is_current
 from .consolidated_artifacts import consolidated_image
 from .special_treatments_manifest import SCHEMA as SPECIAL_SCHEMA, manifest_path as special_path
-from .stages import LEVEL1, LEVEL2, stage_chapter
+from .stages import CONSOLIDATED, LEVEL1, LEVEL2, stage_chapter
 
 
 def detection_input(manga: Path, provider: str, chapter: str, page: str,
@@ -42,7 +42,7 @@ def detection_input(manga: Path, provider: str, chapter: str, page: str,
         raise ValueError("Identidade ou ROI Artístico diverge do Check aprovado.")
     if not consolidated_is_current(manga, chapter):
         raise ValueError("Imagem de revisão do Check indisponível ou obsoleta.")
-    folder = stage_chapter(manga, "TO_MERGED_CONSOLIDADO", chapter)
+    folder = stage_chapter(manga, CONSOLIDATED, chapter)
     manifest = (folder / "json/clean-manifest.json").resolve()
     manifest_hash = sha256(manifest)
     selection = [row for row in json.loads(manifest.read_text(encoding="utf-8"))

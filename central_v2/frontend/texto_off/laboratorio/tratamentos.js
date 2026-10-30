@@ -3,6 +3,7 @@ import {
   executeSolidLaboratory,
   executeStylizedLaboratoryJob,
 } from "/_app/api/laboratorio.js";
+import { treatmentDisplayText } from "/_shared/treatment_names.js";
 
 function connectTreatment({ root, button, getRequest, cardIndex, label, treatment,
   execute, progress, review, order }) {
@@ -79,7 +80,7 @@ function connectTreatment({ root, button, getRequest, cardIndex, label, treatmen
       image.src = result.image_url;
     } catch (error) {
       if (isCurrent(id, snapshot) && error.name !== "AbortError") {
-        setState("failed", `${label} não concluído: ${error.message}`);
+        setState("failed", treatmentDisplayText(`${label} não concluído: ${error.message}`));
       }
     } finally {
       progress?.finish(progressRun);
@@ -140,6 +141,6 @@ export function connectSolid(options) {
 
 export function connectSmooth(options) {
   return connectTreatment({ ...options, cardIndex: 4,
-    label: "Suave", treatment: "gradiente_suave",
+    label: "Gradiente", treatment: "gradiente_suave",
     execute: executeSmoothLaboratoryJob });
 }

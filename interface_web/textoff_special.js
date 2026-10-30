@@ -1,14 +1,14 @@
 (() => {
   const PATCHES = {
     degrade: {
-      title: "Patch Degradê",
+      title: "Degradê",
       badge: "ESPECIAL",
       description: "Indicado para balões ou regiões com variação gradual de cor, onde a limpeza simples pode deixar marcas.",
       pipeline: "Cleaner → Balloon Authorization → Surface Gate → Local Heal",
       exampleClass: "degrade"
     },
     estilizado: {
-      title: "Patch Balão Estilizado",
+      title: "Artístico",
       badge: "ESPECIAL",
       description: "Indicado para balões coloridos ou decorados, preservando elementos gráficos enquanto o texto é reconstruído.",
       pipeline: "Cleaner → Classificação automática → Surface Gate → Local Heal",
@@ -29,13 +29,20 @@
       exampleClass: "transparent"
     },
     gradiente_suave: {
-      title: "Gradiente Suave",
+      title: "Gradiente",
       badge: "EXPERIMENTAL",
       description: "Reconstrói gradientes suaves usando o contexto acima e abaixo da seleção.",
       pipeline: "Seleção manual → Expansão 35% → LAB → Mediana → Suavização → Interpolação vertical",
       exampleClass: "degrade"
     }
   };
+
+  const treatmentDisplayText = value => String(value)
+    .replaceAll("Patch Balão Estilizado", "Artístico")
+    .replaceAll("Gradiente Suave", "Gradiente")
+    .replaceAll("Patch Degradê", "Degradê")
+    .replaceAll("Estilizado", "Artístico")
+    .replaceAll("Suave", "Gradiente");
 
   let selectedFile = null;
   let selectedSourcePath = "";
@@ -237,7 +244,7 @@
       wireCompare();
       toast(`${p.title} concluído.`);
     } catch (err) {
-      toast(err.message || "Não foi possível aplicar o tratamento.");
+      toast(treatmentDisplayText(err.message || "Não foi possível aplicar o tratamento."));
     } finally {
       busy = false;
       if (btn) {
@@ -345,9 +352,9 @@
           run_id: currentRunId
         })
       });
-      toast(response.message || `Resultado salvo: ${response.output_name || name || "Texto Off"}.`);
+      toast(treatmentDisplayText(response.message || `Resultado salvo: ${response.output_name || name || "Texto Off"}.`));
     } catch (err) {
-      toast(err.message || "Não foi possível salvar o resultado no Texto Off.");
+      toast(treatmentDisplayText(err.message || "Não foi possível salvar o resultado no Texto Off."));
     } finally {
       busy = false;
     }
@@ -375,11 +382,11 @@
           <div class="special-field">
             <label for="specialPatch">Tipo de tratamento</label>
             <select id="specialPatch">
-              <option value="degrade">Patch Degradê</option>
-              <option value="estilizado">Patch Balão Estilizado</option>
+              <option value="degrade">Degradê</option>
+              <option value="estilizado">Artístico</option>
               <option value="transparente">Patch Balão Transparente</option>
               <option value="transparente_legacy">Balão Transparente — Legado</option>
-              <option value="gradiente_suave">Gradiente Suave</option>
+              <option value="gradiente_suave">Gradiente</option>
             </select>
           </div>
           <div class="special-field">

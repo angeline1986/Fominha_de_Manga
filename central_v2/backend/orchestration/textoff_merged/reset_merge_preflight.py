@@ -2,6 +2,7 @@
 from hashlib import sha256
 from pathlib import Path
 import json
+from central_v2.backend.state.work_layout import images_root
 
 from central_v2.backend.orchestration.textoff_merged.manifests import _listing_merge_artifacts
 from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check_manifest import manifest_path
@@ -24,7 +25,7 @@ def inspect(manga: Path, chapter: str, page: str) -> dict:
             or not isinstance(page, str) or not page.lower().endswith(".png")
             or Path(page).name != page or "\\" in page):
         raise ValueError("Capítulo ou página inválido.")
-    merge = next((p for p in _listing_merge_artifacts(root / "IMG" / chapter)
+    merge = next((p for p in _listing_merge_artifacts(images_root(root) / chapter)
                   if p.name == page), None)
     if merge is None or not merge.resolve().is_relative_to(root):
         raise ValueError("Página MERGE não comprovada pelo manifesto de origem.")

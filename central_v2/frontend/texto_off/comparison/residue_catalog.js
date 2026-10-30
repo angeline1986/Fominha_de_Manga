@@ -1,8 +1,8 @@
 import { RESIDUE_TYPES, normalizedBox, normalizedPoint, renderedBoxSize } from "/texto_off/comparison/residue_model.js";
 import { createResidueCatalogState } from "/texto_off/comparison/residue_catalog_state.js";
 import { renderResidueOccurrences } from "/texto_off/comparison/residue_catalog_view.js";
-import { residueCatalogStatus } from "/texto_off/comparison/residue_catalog_status.js";
-import { iconMarkup } from "/_shared/icons/icons.js";
+import { syncResidueCatalogStatus } from "/texto_off/comparison/residue_catalog_status_view.js";
+import { residuePanelMarkup } from "/texto_off/comparison/residue_catalog_markup.js";
 import { showMessage } from "/_shared/messages/messages.js";
 
 export function createResidueCatalog({ workspace, slider, context, onOpenChange = () => {}, onCheckSaved = () => {},
@@ -13,38 +13,7 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   if (isCheck) panel.classList.add("is-check");
   panel.setAttribute("aria-label", isCheck ? "Revisão do Auto-Cleaner Check" : "Catalogação de resíduos");
   panel.setAttribute("aria-hidden", "true");
-  const actionControls = `<button class="btn comparison-residue-action" type="button" data-signal aria-pressed="false">${isCheck ? "Sinalizar área" : "Sinalizar Resíduo"}</button>
-    <button class="btn comparison-residue-action" type="button" data-draw aria-pressed="false" disabled>Selecionar área manual</button>
-    <p data-hint aria-live="polite">Ative a sinalização para selecionar áreas.</p>`;
-  // CHECK_BOTTOM_PANEL_V1: altera somente apresentacao; data-* preservam os handlers.
-  const checkTools = `<section class="check-bottom-tools" aria-label="Ferramentas de captura">
-    <div class="check-bottom-label">Ferramentas de Captura
-      <span class="check-bottom-info" tabindex="0" aria-label="Informação sobre a captura">ⓘ
-        <span class="check-bottom-tooltip">Ative a sinalização para selecionar áreas.</span>
-      </span>
-    </div>
-    <div class="check-bottom-grid">
-      <button class="btn check-bottom-tool" type="button" data-signal aria-pressed="false">Sinalizar</button>
-      <button class="btn check-bottom-tool" type="button" data-draw aria-pressed="false" disabled>Manual</button>
-    </div>
-    <p data-hint class="check-bottom-hint" aria-live="polite">Ative a sinalização para selecionar áreas.</p>
-    <button class="btn comparison-residue-catalog check-bottom-save" type="button" data-catalog disabled>Salvar Check</button>
-    <div class="comparison-residue-feedback"><p data-feedback role="status" aria-live="polite"></p>
-      <p data-source-status role="status" aria-live="polite" hidden></p>
-      <button class="btn comparison-residue-retry" type="button" data-retry hidden>Recarregar ocorrências</button></div>
-  </section>`;
-  const actionPanel = isCheck ? checkTools
-    : `<section class="comparison-residue-step"><h3>Passo 1: identificar resíduo</h3>${actionControls}</section>`;
-  const layers = `<section class="comparison-residue-layers"><header><h3>${isCheck ? "Áreas nesta página" : "Camadas / áreas"}</h3><output data-count>0</output></header>
-      <div data-layers></div></section>`;
-  panel.innerHTML = `<header class="comparison-residue-heading"><h2>${isCheck ? "Revisão do Auto-Cleaner Check" : "Catalogação de resíduos"}</h2>
-      <button class="btn comparison-residue-close" type="button" data-close aria-label="Fechar painel">${iconMarkup("close")}</button></header>
-    ${isCheck ? `${layers}${actionPanel}` : `${actionPanel}${layers}`}
-    ${isCheck ? "" : `<footer class="comparison-residue-step"><h3>Passo 2</h3>
-      <button class="btn comparison-residue-catalog" type="button" data-catalog disabled>Catalogar Resíduo</button>
-      <div class="comparison-residue-feedback"><p data-feedback role="status" aria-live="polite"></p>
-        <p data-source-status role="status" aria-live="polite" hidden></p>
-        <button class="btn comparison-residue-retry" type="button" data-retry hidden>Recarregar ocorrências</button></div></footer>`}`;
+  panel.innerHTML = residuePanelMarkup(isCheck);
   if (isCheck) {
     const info = document.createElement("span");
     info.className = "comparison-check-source-info";
@@ -69,7 +38,7 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
   const query = (selector) => panel.querySelector(selector);
   let currentPage = "", state = "idle", drag = null, hoveredId = null;
   const CHECK_TYPES = new Set(["residuo_balao_solido_branco", "balao_transparente", "residuo_degrade", "residuo_gradiente", "balao_estilizado", "outro"]);
-  const checkNames = {residuo_balao_solido_branco: "Branco sólido", balao_transparente: "Transparente", residuo_degrade: "Degradê", residuo_gradiente: "Gradiente", balao_estilizado: "Estilizado", outro: "Outro / não identificado"};
+  const checkNames = {residuo_balao_solido_branco: "Branco sólido", balao_transparente: "Transparente", residuo_degrade: "Degradê", residuo_gradiente: "Gradiente", balao_estilizado: "Artístico", outro: "Outro / não identificado"};
   const options = RESIDUE_TYPES.filter(([value]) => !isCheck || CHECK_TYPES.has(value))
     .map(([value, label]) => `<option value="${value}">${isCheck ? checkNames[value] : label}</option>`).join("");
   const catalogState = createResidueCatalogState(context, render, onPersistedCount, onDraftState);
@@ -88,33 +57,7 @@ export function createResidueCatalog({ workspace, slider, context, onOpenChange 
     slider.setInteractionMode(drawing ? "residue-selection" : "normal");
   }
   function syncStatus() {
-    const item = draft();
-    const status = residueCatalogStatus(item, catalogState);
-    query("[data-catalog]").disabled = !catalogState.canSaveChapter();
-    query("[data-retry]").hidden = item.loadState !== "error";
-    query("[data-draw]").disabled = state === "idle" || item.loadState !== "ready";
-    const feedback = query("[data-feedback]");
-    const sourceInfo = query("[data-source-status]");
-    if (isCheck) {
-      const quiet = status.feedback === "Ocorrências catalogadas."
-        || status.feedback === "Nenhuma ocorrência catalogada nesta página.";
-      feedback.textContent = quiet ? "" : status.feedback;
-      feedback.hidden = quiet;
-      // Reaproveita o status original (sem mudar a deteccao nem o salvamento).
-      sourceInfo.textContent = status.sourceStatus;
-      sourceInfo.hidden = true;
-      const info = query("[data-check-source-info]");
-      if (info) {
-        info.hidden = !status.sourceStatus;
-        info.title = status.sourceStatus;
-        info.setAttribute("aria-label", status.sourceStatus || "Status das fontes");
-      }
-    } else {
-      feedback.textContent = status.feedback;
-      feedback.hidden = false;
-      sourceInfo.textContent = status.sourceStatus;
-      sourceInfo.hidden = !status.sourceStatus;
-    }
+    syncResidueCatalogStatus({ query, item: draft(), catalogState, isCheck, state });
   }
   function setOpen(open) {
     workspace.classList.toggle("has-residue-panel", open);

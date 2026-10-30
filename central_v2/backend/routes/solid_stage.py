@@ -15,6 +15,7 @@ from central_v2.backend.orchestration.textoff_merged.solid_reexecution import re
 from central_v2.backend.orchestration.textoff_merged.stages import stage_chapter
 from central_v2.backend.routes.laboratorio_solidos import _sha
 from central_v2.backend.state.sorting import natural_sort_key
+from central_v2.backend.state.work_layout import textoff_root
 
 ROUTE = "/api/textoff/solidos"
 
@@ -31,7 +32,7 @@ def context(payload, output_root):
 def overview(query, output_root):
     try:
         manga, document = context(query, output_root)
-        check_root = manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/04_AUTO_CLEANER_CHECK"
+        check_root = textoff_root(manga) / "04_AUTO_CLEANER_CHECK"
         rows = []
         if check_root.is_dir():
             for folder in sorted(check_root.iterdir(),

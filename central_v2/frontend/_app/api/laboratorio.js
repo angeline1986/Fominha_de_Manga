@@ -114,7 +114,7 @@ export async function executeStylizedLaboratoryJob(payload, signal, onProgress) 
 
 export async function executeSmoothLaboratoryJob(payload, signal, onProgress) {
   const { job } = await post("/api/textoff/laboratorio/gradiente_suave/job", payload, signal);
-  if (!job?.id) throw new Error("O servidor não retornou o job do Suave.");
+  if (!job?.id) throw new Error("O servidor não retornou o job do Gradiente.");
   let current = job;
   while (true) {
     if (signal?.aborted) throw new DOMException("Cancelado", "AbortError");
@@ -123,11 +123,11 @@ export async function executeSmoothLaboratoryJob(payload, signal, onProgress) {
       invalidateCleanerOverview(payload.provider, payload.manga);
     }
     if (current.status === "failed") {
-      throw new Error(current.error || "Tratamento Suave não concluído.");
+      throw new Error(current.error || "Tratamento Gradiente não concluído.");
     }
     if (current.status === "completed") {
       const result = current.results?.[0];
-      if (!result?.image_url) throw new Error("Resultado Suave indisponível.");
+      if (!result?.image_url) throw new Error("Resultado Gradiente indisponível.");
       return result;
     }
     await new Promise((resolve, reject) => {

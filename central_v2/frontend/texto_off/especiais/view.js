@@ -5,9 +5,9 @@ import { confirmMessage, showMessage, showOperationSummary } from "/_shared/mess
 import { createJobProgress } from "/_shared/progress/progress.js";
 
 const specialPages = {
-  VI: { title: "Pincel & Retoques — Patch Degradê", description: "Seleção de regiões para reconstrução de fundos em degradê." },
+  VI: { title: "Pincel & Retoques — Degradê", description: "Seleção de regiões para reconstrução de fundos em degradê." },
   VII: { title: "Pincel & Retoques — Balão Artístico", description: "Tratamento pontual para balões ilustrados ou texturizados." },
-  VIII: { title: "Pincel & Retoques — Gradiente Suave", description: "Aplicação de suavização contínua de transição tonal." },
+  VIII: { title: "Pincel & Retoques — Gradiente", description: "Aplicação de suavização contínua de transição tonal." },
 };
 
 export function renderSpecial(container, level) {

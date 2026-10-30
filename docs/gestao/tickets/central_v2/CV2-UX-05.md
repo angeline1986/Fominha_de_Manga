@@ -1,7 +1,7 @@
 # CV2-UX-05 — Padronizar o nome Bubble Sommelier na tela de curadoria
 
 - **Prioridade:** P3
-- **Status:** TODO
+- **Status:** DONE (30/10/2026)
 - **Categoria:** Interface · Nomenclatura
 - **Escopo:** Central V2 — Bubble Sommelier
 - **Responsável:** A definir
@@ -11,9 +11,9 @@
 **Objetivo:** Usar a nomenclatura “Bubble Sommelier” de forma consistente na tela, alinhada ao nome já apresentado na navegação.
 
 **Critérios de Aceite:**
-- [ ] Trocar o título “Curadoria de Balões” por “Bubble Sommelier”.
-- [ ] Atualizar o botão “Executar Curadoria” para uma ação coerente com “Bubble Sommelier”.
-- [ ] Conferir os demais textos visíveis da tela e corrigir referências inconsistentes à feature.
-- [ ] Preservar navegação, comportamento e lógica de execução.
+- [x] Trocar o título “Curadoria de Balões” por “Bubble Sommelier”.
+- [x] Atualizar o botão para “Executar Bubble Sommelier”.
+- [x] Conferir os demais textos visíveis da tela e corrigir referências inconsistentes à feature.
+- [x] Preservar navegação, comportamento e lógica de execução.
 
 **Referência visual:** Captura anexada ao pedido, com setas apontando para o título e o botão.

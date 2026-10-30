@@ -3,6 +3,7 @@ from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from central_v2.backend.operational_log import emit
+from central_v2.backend.state.work_layout import images_root
 from central_v2.backend.orchestration.textoff_merged.solid_stage import rows_for
 from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, stage_chapter
 from central_v2.backend.orchestration.textoff_merged.artifact_paths import json_file
@@ -47,7 +48,7 @@ def validate_chapter(manga: Path, provider: str, chapter: str) -> dict:
                 "status": "INVALID", "reasons": ["INVALID_CHAPTER"]}
     root = Path(manga).resolve()
     pages = set()
-    merge_dir = v3.merge_output_dir(root / "IMG" / chapter)
+    merge_dir = v3.merge_output_dir(images_root(root) / chapter)
     try:
         pages.update(path.name for path in v3.merge_artifact_files(merge_dir))
     except (OSError, ValueError, TypeError):

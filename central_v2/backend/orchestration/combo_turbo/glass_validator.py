@@ -4,6 +4,7 @@ from pathlib import Path
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
+from central_v2.backend.state.work_layout import images_root
 from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check_manifest import _read_check_manifest, manifest_path
 from central_v2.backend.orchestration.textoff_merged.artifact_paths import artifact_file, json_file
 from central_v2.backend.orchestration.textoff_merged.consolidated import _valid_level2
@@ -119,7 +120,7 @@ def validate_glass_page(manga: Path, provider: str, chapter: str, page: str) -> 
                           manifest=valid_hash, reasons=reasons)
         protection_valid = True
     try:
-        merge_dir = v3.merge_output_dir(root / "IMG" / chapter)
+        merge_dir = v3.merge_output_dir(images_root(root) / chapter)
         if not merge_dir.resolve().is_relative_to(root):
             return result("GLASS", chapter, page, "INVALID", integrity=True,
                           manifest=valid_hash, reasons=["PATH_OUTSIDE_ROOT"])

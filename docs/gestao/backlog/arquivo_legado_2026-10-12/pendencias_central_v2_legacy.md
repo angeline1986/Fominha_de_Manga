@@ -299,6 +299,8 @@ Frentes resumidas na triagem especializada:
 
 ## P5 — Endereçamentos e layout de dados
 
+**Atualização em 30/10/2026:** trabalho retomado em [P5 no backlog ativo](../../tickets/central_v2/P5.md). As raízes físicas comuns da Central V2 agora ficam em `backend/state/work_layout.py`, preservando os destinos atuais. A separação de identificadores lógicos, aliases legados e valores persistidos continua pendente. O levantamento abaixo é histórico e não descreve integralmente o código atual.
+
 **Status:** ADIADO / REVALIDADO contra `0f8a7a76` em 04/10/2026.
 
 Autoridade específica: [`central_v2_conformidade_enderecamentos.md`](../../../central_v2_conformidade_enderecamentos.md). O levantamento original declara snapshot estático de 30/09/2026; cada achado foi reclassificado no HEAD atual. Há itens ainda aplicáveis, parcialmente resolvidos e alterados por implementação posterior; nenhum item de centralização de raízes/estágios foi considerado totalmente resolvido.

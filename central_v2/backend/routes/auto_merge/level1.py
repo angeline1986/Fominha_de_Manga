@@ -6,6 +6,7 @@ from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.auto_merge import level1_state
 from central_v2.backend.state.catalog import build_catalog
 from central_v2.backend.state.manga_state import build_structural_state, resolve_manga
+from central_v2.backend.state.work_layout import images_root
 from orquestracao.auto_merge.consulta import query_level1
 from central_v2.backend.jobs.manager import submit
 from central_v2.backend.state.manga_state import resolve_manga
@@ -21,7 +22,7 @@ def level1_response(query: dict, output_root: Path) -> RouteResponse:
         manga = resolve_manga(output_root, provider, name)
         if name not in build_catalog(output_root).get(provider, []):
             raise ValueError("Obra fora do catálogo.")
-        if not (manga / "IMG").resolve().is_relative_to(manga):
+        if not images_root(manga).resolve().is_relative_to(manga):
             raise ValueError("Diretório de imagens fora da obra.")
         context = build_structural_state(output_root, provider, name)
         rows = query_level1(manga, context["chapters"])

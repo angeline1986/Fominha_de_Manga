@@ -1,6 +1,7 @@
 import { getContext } from "/_app/state/context.js";
 import { startSpecialTreatments, waitForTextoffJob } from "/_app/api/textoff.js";
 import { confirmMessage, showMessage, showOperationSummary } from "/_shared/messages/messages.js";
+import { treatmentDisplayText } from "/_shared/treatment_names.js";
 
 function friendlyError(error, treatment) {
   const message = String(error?.message || "");
@@ -9,8 +10,8 @@ function friendlyError(error, treatment) {
     return "Nenhum componente elegível pôde ser tratado nas áreas selecionadas.";
   }
   const label = { degrade: "Degradê", estilizado: "Artístico",
-    gradiente_suave: "Suave" }[treatment] || treatment;
-  return message || `Não foi possível concluir o tratamento ${label}.`;
+    gradiente_suave: "Gradiente" }[treatment] || treatment;
+  return treatmentDisplayText(message || `Não foi possível concluir o tratamento ${label}.`);
 }
 
 export function createSpecialTreatmentExecution({ setBusy, reload, progress, treatment, title, retryTitle }) {

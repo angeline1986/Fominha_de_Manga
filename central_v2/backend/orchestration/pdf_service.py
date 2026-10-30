@@ -11,17 +11,18 @@ from PIL import Image, ImageOps
 
 from central_v2.backend.state.manga_state import IMAGE_EXTENSIONS
 from central_v2.backend.state.sorting import natural_sort_key
+from central_v2.backend.state.work_layout import images_root, merge_root, pdf_root
 from processamento.unificacao_imagens.image_stitcher import is_chapter_merged, merge_artifact_files
 
 
 def source_images(manga: Path, chapter: str, source: str) -> list[Path]:
-    image_root = manga / 'IMG' / chapter
+    image_root = images_root(manga) / chapter
     if not image_root.is_dir():
         raise ValueError(f'Cap. {chapter}: imagens originais indisponíveis.')
     if source == 'merged':
         if not is_chapter_merged(image_root):
             raise ValueError(f'Cap. {chapter}: MERGE oficial inválido ou ausente.')
-        folder = manga / 'FLUXO_SECUNDARIO' / '02_MERGE' / chapter
+        folder = merge_root(manga) / chapter
         paths = merge_artifact_files(folder)
     else:
         folder = image_root
@@ -35,7 +36,7 @@ def source_images(manga: Path, chapter: str, source: str) -> list[Path]:
 
 
 def generate(manga: Path, chapter: str, source: str, quality: int) -> dict:
-    dest_root = manga / ('PDF' if source == 'original' else 'FLUXO_SECUNDARIO/03_PDF_MERGE')
+    dest_root = pdf_root(manga, source)
     dest = dest_root / chapter / (chapter + '.pdf')
     if dest.exists():
         return {'chapter': chapter, 'status': 'skipped', 'message': 'PDF existente preservado.'}

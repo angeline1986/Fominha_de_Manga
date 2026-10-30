@@ -48,7 +48,7 @@ def _execute(payload, output_root, treatment, on_progress=None):
         if manifest.get("execution_status") != "succeeded":
             detail = manifest.get("error") or {}
             error = detail.get("error", "") if isinstance(detail, dict) else ""
-            label = "Artístico" if treatment == "estilizado" else "Suave"
+            label = "Artístico" if treatment == "estilizado" else "Gradiente"
             message = (f"Nenhum componente elegível para {label} intersecta as áreas selecionadas."
                        if "Nenhum componente" in error and "intersect" in error.lower() else
                        f"{label} não concluiu; consulte o manifesto experimental.")
@@ -102,7 +102,7 @@ def execute_stylized(payload, output_root):
 
 
 def start_smooth_job(payload, output_root):
-    """Suave: three observed checkpoints, without simulated worker progress."""
+    """Gradiente: three observed checkpoints, without simulated worker progress."""
     if not isinstance(payload, dict):
         return _json({"error": "Requisição inválida."}, 400)
 
@@ -126,7 +126,7 @@ def start_smooth_job(payload, output_root):
             return [{"status": "failed", "error": body.get("error", "Falha experimental.")}]
         update(str(payload.get("chapter", "")), {
             "completed": 3, "total": 3, "percent": 100,
-            "stage": "complete", "message": "Suave concluído e validado",
+            "stage": "complete", "message": "Gradiente concluído e validado",
             "countUnit": "etapa(s) verificadas",
         })
         return [{"status": "succeeded", **body}]

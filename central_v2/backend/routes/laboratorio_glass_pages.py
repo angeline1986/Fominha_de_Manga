@@ -1,5 +1,6 @@
 """Resolve the persisted Auto-Cleaner Glass (Básica) image stage."""
 from pathlib import Path
+from central_v2.backend.state.work_layout import textoff_root
 
 from central_v2.backend.orchestration.textoff_merged.stages import (
     LEVEL2, stage_chapter, stage_root,
@@ -20,7 +21,7 @@ def glass_chapter(manga, chapter):
 
 def glass_chapter_names(manga):
     work = Path(manga).resolve()
-    target = work / "FLUXO_SECUNDARIO/04_TEXTO_OFF/05_AUTO_CLEANER_TRANSPARENCIA/BASICA"
+    target = textoff_root(work) / "05_AUTO_CLEANER_TRANSPARENCIA/BASICA"
     roots = (stage_root(work, LEVEL2), target)
     names = {folder.name for root in roots if root.is_dir()
              for folder in root.iterdir() if folder.is_dir()

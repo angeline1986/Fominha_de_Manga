@@ -4,7 +4,7 @@
 
 Rotas: `textoff_special.py`, `special_treatments.py`, `auto_cleaner_check_special_treatments.py`; domínio: `central_v2/backend/orchestration/textoff_special/` e `textoff_merged/special_*`; UI: `frontend/texto_off/especiais/` e Laboratório. Workers resolvem a fonte aprovada, isolam execução, gravam artefatos, revisão e procedência. Alguns adapters importam módulos legados/compartilhados em `processamento/limpeza_baloes/`.
 
-Tratamentos conhecidos por mapeamento de `final_consolidated.py`: Degradê (`PINCEL_DEGRADE`), Artístico/Estilizado (`PINCEL_ARTISTICO`) e Gradiente Suave (`PINCEL_SUAVE`). Outros tratamentos possuem rotas e status próprios; a matriz fechada de todos os ids/algoritmos não está confirmada aqui.
+Tratamentos conhecidos por mapeamento de `final_consolidated.py`: Degradê (`PINCEL_DEGRADE`), Artístico (`PINCEL_ARTISTICO`) e Gradiente (`PINCEL_SUAVE`). Outros tratamentos possuem rotas e status próprios; a matriz fechada de todos os ids/algoritmos não está confirmada aqui.
 
 ## Entrada e saída
 

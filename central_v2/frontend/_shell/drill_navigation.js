@@ -1,5 +1,6 @@
 import { iconMarkup } from "/_shared/icons/icons.js";
 import { bindHoverPreview } from "/_shell/hover_preview.js";
+import { bindNavigationTextTooltips } from "/_shell/navigation_text_tooltip.js";
 import { selectMergeLevel } from "/_shell/merge_levels.js";
 import { groupMarkup, rootItem } from "/_shell/drill_navigation_markup.js";
 import { navigation } from "/_shell/navigation.js";
@@ -8,6 +9,7 @@ export function createDrillNavigation() {
   const element = document.createElement("div");
   element.className = "drill-navigation";
   const disposePreview = bindHoverPreview(element);
+  const disposeTooltips = bindNavigationTextTooltips(element);
 
   element.innerHTML = `
     <div class="drill-stage">
@@ -153,7 +155,7 @@ export function createDrillNavigation() {
     }
   });
 
-  return { element, dispose: disposePreview, closeSection };
+  return { element, dispose: () => { disposePreview(); disposeTooltips(); }, closeSection };
 }
 
 function sectionForAction(action) {

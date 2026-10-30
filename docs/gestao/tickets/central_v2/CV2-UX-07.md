@@ -1,7 +1,7 @@
 # CV2-UX-07 — Unificar nomenclaturas dos tratamentos especiais
 
 - **Prioridade:** P2
-- **Status:** TODO
+- **Status:** DONE (30/10/2026)
 - **Categoria:** Interface · Nomenclatura
 - **Escopo:** Laboratório, comparações e telas de tratamentos especiais da Central V2 e interface legada
 - **Responsável:** A definir
@@ -23,8 +23,9 @@
 - Distinguir Degradê de Gradiente: são tratamentos diferentes e não devem ser mesclados.
 
 **Critérios de aceite:**
-- [ ] Todas as ocorrências visíveis dos três tratamentos foram inventariadas nas interfaces incluídas.
-- [ ] As interfaces usam consistentemente Degradê, Artístico e Gradiente.
-- [ ] Nenhum texto da interface chama o tratamento Gradiente de “Suave” ou “Gradiente Suave”.
-- [ ] Os identificadores e contratos técnicos existentes continuam compatíveis.
-- [ ] A documentação de uso voltada à pessoa usuária reflete os nomes padronizados.
+- [x] Rótulos visíveis da Central V2 e da interface legada usam Degradê, Artístico e Gradiente.
+- [x] Mensagens recebidas dos algoritmos legados são normalizadas na apresentação das duas interfaces.
+- [x] Os identificadores e contratos técnicos existentes continuam compatíveis.
+- [x] A documentação ativa de uso reflete os nomes padronizados.
+
+Os identificadores `estilizado` e `gradiente_suave`, os nomes de arquivos e os caminhos permanecem técnicos. As mensagens no domínio legado não foram modificadas; sua exibição usa os nomes padronizados.

@@ -131,7 +131,7 @@ def run_pre_authorized_treatment(key: str, level: str, source: Path, target: Pat
 def _write_smooth_authorization(target: Path, metadata: dict) -> None:
     shape = cv2.imread(str(target / "gradiente_suave.png"))
     if shape is None:
-        raise RuntimeError("Resultado do Gradiente Suave ausente.")
+        raise RuntimeError("Resultado do Gradiente ausente.")
     mask = np.zeros(shape.shape[:2], dtype=np.uint8)
     for region in metadata["regions"]:
         x1, y1, x2, y2 = region["write_bbox_pixels"]

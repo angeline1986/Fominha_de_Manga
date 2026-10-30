@@ -5,6 +5,7 @@ from pathlib import Path
 
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.state.manga_state import resolve_manga
+from central_v2.backend.state.work_layout import merge_root, processing_stage_root, secondary_root
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 
@@ -31,15 +32,15 @@ def balanceamento_image_response(query: dict, output_root: Path) -> RouteRespons
 
 def _declared_target(manga: Path, chapter: str, filename: str, kind: str, proposal_id: str) -> Path | None:
     if kind == "merge":
-        folder = manga / "FLUXO_SECUNDARIO/02_MERGE" / chapter
+        folder = merge_root(manga) / chapter
         manifest = _read(folder / "merge-manifest.json")
         names = [row.get("file") for row in (manifest or {}).get("outputs", []) if isinstance(row, dict)]
         if filename not in names:
             return None
         base = folder.resolve()
     elif kind in {"editor", "proposal"}:
-        secondary = (manga / "FLUXO_SECUNDARIO").resolve()
-        status = _read(secondary / "01_MERGE_PROCESSAMENTO/BALANCE_STATUS" / chapter / "balance-status.json")
+        secondary = secondary_root(manga).resolve()
+        status = _read(processing_stage_root(manga, "BALANCE_STATUS") / chapter / "balance-status.json")
         if not status or (proposal_id and status.get("proposal_id") != proposal_id):
             return None
         key = "editor_manifest" if kind == "editor" else "proposal_manifest"

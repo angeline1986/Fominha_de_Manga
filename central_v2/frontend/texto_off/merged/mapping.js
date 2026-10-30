@@ -2,7 +2,7 @@ import { iconMarkup } from "/_shared/icons/icons.js";
 
 export const MAPPING_FILTERS = [
   ["all", "ALL"], ["map", "Mapear"], ["degrade", "Degradê"],
-  ["artistic", "Artístico"], ["soft", "Suave"],
+  ["artistic", "Artístico"], ["soft", "Gradiente"],
 ];
 
 export function matchesMapping(row, key) {

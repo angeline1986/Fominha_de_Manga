@@ -1,6 +1,7 @@
 """Resolve a Laboratory source to one official final page by manifest identity."""
 import json
 from pathlib import Path
+from central_v2.backend.state.work_layout import TEXT_OFF_RELATIVE
 
 from .stages import stage_root
 
@@ -46,7 +47,7 @@ def final_target(manga: Path, source_path: Path, source: dict) -> tuple[str, str
 
 def _source_chapter(manga: Path, path: Path, source: dict) -> str | None:
     parts = path.relative_to(manga).parts
-    prefix = ("FLUXO_SECUNDARIO", "04_TEXTO_OFF")
+    prefix = TEXT_OFF_RELATIVE.parts
     if parts[:2] != prefix:
         return None
     if (len(parts) == 6 and parts[2] == "04_AUTO_CLEANER_CHECK"

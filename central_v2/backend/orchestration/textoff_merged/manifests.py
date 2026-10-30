@@ -4,6 +4,7 @@ import json
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
+from central_v2.backend.state.work_layout import images_root, textoff_root
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .artifact_paths import artifact_file, json_file
@@ -47,7 +48,7 @@ def manifest_snapshot():
         _documents.reset(token)
 
 def _clean_manifest(manga: Path, chapter: str) -> dict:
-    path = manga / "FLUXO_SECUNDARIO" / "04_TEXTO_OFF" / "MERGED" / chapter / "clean-manifest.json"
+    path = textoff_root(manga) / "MERGED" / chapter / "clean-manifest.json"
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
         return value if isinstance(value, dict) else {}
@@ -113,7 +114,7 @@ def _stage_manifest_sha256(manga: Path, stage: str, chapter: str) -> str | None:
 
 
 def _manifest_matches_merge(manifest: dict, manga: Path, chapter: str) -> bool:
-    images = _listing_merge_artifacts(manga / "IMG" / chapter)
+    images = _listing_merge_artifacts(images_root(manga) / chapter)
     outputs = manifest.get("clean_artifacts")
     output_dir = stage_chapter(manga, LEVEL1, chapter)
     return bool(images) and isinstance(outputs, list) and len(outputs) == len(images) and all(

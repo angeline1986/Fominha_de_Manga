@@ -44,7 +44,7 @@ export function createComparisonLauncher(origin, step, mode = comparisonModeForS
     if (["degrade", "suave", "artistico", "mapear"].includes(mode)) {
       const back = document.createElement("button");
       back.type = "button"; back.className = "btn comparison-back";
-      const label = { degrade: "Degradê", suave: "Suave", artistico: "Artístico", mapear: "Mapear" }[mode];
+      const label = { degrade: "Degradê", suave: "Gradiente", artistico: "Artístico", mapear: "Mapear" }[mode];
       back.innerHTML = `${iconMarkup("back")} Voltar ao ${label}`;
       back.addEventListener("click", () => close());
       screen.element.querySelector(".comparison-page-heading").prepend(back);

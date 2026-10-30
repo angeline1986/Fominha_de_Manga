@@ -1,4 +1,4 @@
-"""Atomically publish validated Suave previews in their own stage."""
+"""Atomically publish validated Gradiente previews in their own stage."""
 from __future__ import annotations
 
 import json
@@ -26,16 +26,16 @@ def _validated_preview(run: dict, source: dict) -> tuple[Path, Path, int]:
             or not isinstance(treatment, dict)
             or treatment.get("algorithm") != treatment_for("gradiente_suave").algorithm
             or run.get("source", {}).get("sha256") != source["sha256"]):
-        raise ValueError(str(run.get("error") or "Prévia Suave não corresponde à entrada."))
+        raise ValueError(str(run.get("error") or "Prévia Gradiente não corresponde à entrada."))
     identifier = run.get("run_id")
     if not isinstance(identifier, str) or not identifier.isalnum():
-        raise ValueError("Identidade da prévia Suave inválida.")
+        raise ValueError("Identidade da prévia Gradiente inválida.")
     folder = run_from_manifest(run, "textoff_especiais_v2", legacy=STAGING_ROOT)
     result = contained_file(folder, run.get("result_file"))
     expected = (run.get("validation") or {}).get("result_sha256")
     changed = (run.get("validation") or {}).get("changed_pixels")
     if not isinstance(expected, str) or sha256(result) != expected:
-        raise ValueError("Resultado da prévia Suave não confere com a validação.")
+        raise ValueError("Resultado da prévia Gradiente não confere com a validação.")
     if type(changed) is not int or changed < 0:
         raise ValueError("Contagem de pixels alterados inválida.")
     report = contained_file(folder, "treatment/gradiente_suave_report.json")
@@ -47,7 +47,7 @@ def persist_smooth(manga: Path, provider: str, chapter: str, special_path: Path,
                    check_path: Path, check_hash: str) -> dict:
     target = stage_chapter(manga, STAGE, chapter, read_legacy=False).resolve()
     if not target.is_relative_to(manga.resolve()):
-        raise ValueError("Destino Suave fora da obra.")
+        raise ValueError("Destino Gradiente fora da obra.")
     target.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory(prefix=f".suave-{chapter}-", dir=target.parent) as work:
         staged = Path(work) / "stage"
@@ -67,7 +67,7 @@ def persist_smooth(manga: Path, provider: str, chapter: str, special_path: Path,
             saved_input.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(source["path"], saved_input)
             if sha256(saved_input) != source["sha256"]:
-                raise ValueError("Snapshot persistido da entrada Suave divergente.")
+                raise ValueError("Snapshot persistido da entrada Gradiente divergente.")
             output_ref = artifact_ref("clean", Path(page).stem + "_suave.png")
             report_ref = artifact_ref("json", Path(page).stem + "_gradiente_suave_report.json")
             output, saved_report = staged / output_ref, staged / report_ref
@@ -98,7 +98,7 @@ def _load_manifest(path, provider, manga, chapter):
                 or payload.get("treatment") != "gradiente_suave"
                 or payload.get("algorithm") != treatment_for("gradiente_suave").algorithm
                 or not isinstance(payload.get("pages"), dict)):
-            raise ValueError("Manifesto persistente Suave incompatível.")
+            raise ValueError("Manifesto persistente Gradiente incompatível.")
         return payload
     return {"schema": SCHEMA, "version": 1, "provider": provider,
             "manga": manga.name, "chapter": chapter,
@@ -130,7 +130,7 @@ def _assert_inputs(special_path, special_hash, check_path, check_hash, page_runs
     if sha256(special_path) != special_hash:
         raise ValueError("Manifesto Especial mudou durante o processamento.")
     if sha256(check_path) != check_hash:
-        raise ValueError("Check mudou durante o processamento Suave.")
+        raise ValueError("Check mudou durante o processamento Gradiente.")
     for item in page_runs:
         source = item["source"]
         if (sha256(Path(source["path"])) != source["sha256"]

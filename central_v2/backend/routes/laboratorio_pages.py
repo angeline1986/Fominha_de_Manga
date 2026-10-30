@@ -11,6 +11,7 @@ from central_v2.backend.state.sorting import natural_sort_key
 from central_v2.backend.routes.laboratorio_image_files import _images
 from central_v2.backend.routes.laboratorio_check_pages import other_pages
 from central_v2.backend.routes.laboratorio_stage_pages import stage_response
+from central_v2.backend.state.work_layout import images_root, merge_root
 
 ROUTE = "/api/textoff/laboratorio/pages"
 IMAGE_ROUTE = ROUTE + "/image"
@@ -30,8 +31,7 @@ def _directory(output_root, provider, manga_name, source="img"):
     manga = resolve_manga(output_root, provider, manga_name)
     if source not in {"img", "merge"}:
         raise ValueError("Origem inválida.")
-    relative = "IMG" if source == "img" else "FLUXO_SECUNDARIO/02_MERGE"
-    image_root = (manga / relative).resolve()
+    image_root = (images_root(manga) if source == "img" else merge_root(manga)).resolve()
     if not image_root.is_relative_to(manga.resolve()):
         raise ValueError("Diretório fora da obra.")
     return image_root

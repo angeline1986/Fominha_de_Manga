@@ -1,4 +1,4 @@
-"""Resolve hash-verified historical Suave pairs from PINCEL_SUAVE."""
+"""Resolve hash-verified historical Gradiente pairs from PINCEL_SUAVE."""
 from __future__ import annotations
 
 import hashlib
@@ -11,7 +11,7 @@ from central_v2.backend.orchestration.textoff_special.catalog import treatment_f
 
 from .artifact_paths import artifact_file, artifact_ref
 from .comparison import pair_version
-from .stages import LEVEL1, LEVEL2, stage_chapter
+from .stages import CONSOLIDATED, LEVEL1, LEVEL2, stage_chapter
 from .special_treatments_manifest import manifest_path as special_manifest_path
 
 STAGE = "PINCEL_SUAVE"
@@ -23,10 +23,10 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
     manga = Path(manga).resolve()
     folder = stage_chapter(manga, STAGE, chapter, read_legacy=False).resolve()
     if not chapter or Path(chapter).name != chapter or not folder.is_relative_to(manga):
-        raise ValueError("Capítulo Suave inválido.")
+        raise ValueError("Capítulo Gradiente inválido.")
     manifest = folder / artifact_ref("json", MANIFEST)
     if not manifest.resolve().is_relative_to(folder):
-        raise ValueError("Manifesto Suave fora do estágio.")
+        raise ValueError("Manifesto Gradiente fora do estágio.")
     manifest_hash = sha256(manifest)
     payload = json.loads(manifest.read_text(encoding="utf-8"))
     invalidated = _invalidated_runs(manga, chapter)
@@ -35,13 +35,13 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
             or payload.get("chapter") != chapter or payload.get("treatment") != "gradiente_suave"
             or payload.get("algorithm") != treatment_for("gradiente_suave").algorithm
             or not isinstance(payload.get("pages"), dict)):
-        raise ValueError("Manifesto persistente Suave inválido.")
+        raise ValueError("Manifesto persistente Gradiente inválido.")
     pairs = []
     for page, row in sorted(payload["pages"].items()):
         if (not isinstance(page, str) or not page or Path(page).name != page
                 or not isinstance(row, dict) or row.get("page") != page
                 or not _identity(row, provider, manga, chapter)):
-            raise ValueError("Página persistida Suave inválida.")
+            raise ValueError("Página persistida Gradiente inválida.")
         if row.get("status") not in {"processed", "no_change"}:
             continue
         before, input_hash = _historical_input(manga, chapter, page, row)
@@ -52,7 +52,7 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
         if (not isinstance(output_row, dict) or output_row.get("artifact") != expected_output
                 or after is None or not after.resolve().is_relative_to(folder / "clean")
                 or sha256(after) != output_row.get("sha256")):
-            raise ValueError(f"Output Suave divergente: {page}.")
+            raise ValueError(f"Output Gradiente divergente: {page}.")
         pairs.append({"name": page, "before": before, "after": after,
                       "input_sha256": input_hash, "output_sha256": output_row["sha256"],
                       "occurrence_ids": row.get("occurrence_ids", []), "rois": row.get("rois", []),
@@ -60,7 +60,7 @@ def review_pairs(manga: Path, provider: str, chapter: str) -> list[dict]:
                       "effect_active": row.get("run_id") not in invalidated,
                       "invalidated_by_restoration": invalidated.get(row.get("run_id"))})
     if sha256(manifest) != manifest_hash:
-        raise ValueError("Manifesto Suave mudou durante a leitura.")
+        raise ValueError("Manifesto Gradiente mudou durante a leitura.")
     return pairs
 
 
@@ -71,7 +71,7 @@ def _invalidated_runs(manga: Path, chapter: str) -> dict:
     manifest_hash = sha256(path)
     payload = json.loads(path.read_text(encoding="utf-8"))
     if sha256(path) != manifest_hash:
-        raise ValueError("Manifesto Especial mudou durante a consulta de autoria Suave.")
+        raise ValueError("Manifesto Especial mudou durante a consulta de autoria Gradiente.")
     return {row.get("run_id"): event.get("id")
             for event in payload.get("page_restoration_history", [])
             if isinstance(event, dict) for row in event.get("invalidated_runs", [])
@@ -86,7 +86,7 @@ def _identity(row, provider, manga, chapter):
 def _historical_input(manga, chapter, page, row):
     source, consolidated = row.get("input"), row.get("consolidated_manifest")
     if not isinstance(source, dict):
-        raise ValueError("Entrada histórica Suave ausente.")
+        raise ValueError("Entrada histórica Gradiente ausente.")
     snapshot = row.get("input_artifact") or {}
     reference = snapshot.get("artifact")
     if isinstance(reference, str):
@@ -97,20 +97,20 @@ def _historical_input(manga, chapter, page, row):
                 or relative.parts[0] != "input" or not before.is_relative_to(folder)
                 or not before.is_file() or snapshot.get("sha256") != source.get("sha256")
                 or sha256(before) != source.get("sha256")):
-            raise ValueError(f"Snapshot de entrada Suave divergente: {page}.")
+            raise ValueError(f"Snapshot de entrada Gradiente divergente: {page}.")
         return before, source["sha256"]
     if not isinstance(consolidated, dict):
-        raise ValueError("Manifesto Consolidado histórico Suave ausente.")
+        raise ValueError("Manifesto Consolidado histórico Gradiente ausente.")
     before = Path(source.get("path", "")).resolve()
     manifest_path = Path(consolidated.get("path", "")).resolve()
-    expected_manifest = (stage_chapter(manga, "TO_MERGED_CONSOLIDADO", chapter, read_legacy=False)
+    expected_manifest = (stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
                          / artifact_ref("json", "clean-manifest.json")).resolve()
     if (not before.is_relative_to(manga) or not before.is_file() or before.suffix.lower() != ".png"
             or not expected_manifest.is_relative_to(manga)
             or manifest_path != expected_manifest or not manifest_path.is_file()
             or sha256(manifest_path) != consolidated.get("sha256")
             or sha256(before) != source.get("sha256")):
-        raise ValueError(f"Input Consolidado Suave divergente: {page}.")
+        raise ValueError(f"Input Consolidado Gradiente divergente: {page}.")
     projection = json.loads(manifest_path.read_text(encoding="utf-8"))
     expected_ref = artifact_ref("clean", Path(page).stem + "_clean" + Path(page).suffix)
     matches = [item for item in projection.get("selections", [])
@@ -119,10 +119,10 @@ def _historical_input(manga, chapter, page, row):
             or matches[0].get("selected_from") != row.get("selected_from")
             or matches[0].get("sha256") != source["sha256"]
             or row.get("selected_from") not in {LEVEL1, LEVEL2}):
-        raise ValueError(f"Referência Consolidada Suave divergente: {page}.")
+        raise ValueError(f"Referência Consolidada Gradiente divergente: {page}.")
     selected = artifact_file(stage_chapter(manga, row["selected_from"], chapter), expected_ref, "clean")
     if selected is None or selected.resolve() != before:
-        raise ValueError(f"Imagem de entrada histórica Suave divergente: {page}.")
+        raise ValueError(f"Imagem de entrada histórica Gradiente divergente: {page}.")
     return before, source["sha256"]
 
 
@@ -136,7 +136,7 @@ def suave_comparison_response(query, output_root, *, image=False):
         chapter = _value(query, "chapter")
         pairs = review_pairs(resolve_manga(output_root, provider, name), provider, chapter)
         if not pairs:
-            raise ValueError("Nenhuma página Suave revisável.")
+            raise ValueError("Nenhuma página Gradiente revisável.")
         if not image:
             pages = [{"id": str(index), "name": pair["name"], "version": pair_version(pair),
                       "occurrence_ids": pair["occurrence_ids"], "rois": pair["rois"],
@@ -147,15 +147,15 @@ def suave_comparison_response(query, output_root, *, image=False):
             return RouteResponse(200, _json({"pages": pages, "experimental": False}))
         side, index, version = (_value(query, key) for key in ("side", "page", "version"))
         if side not in {"before", "after"} or not index.isdecimal():
-            raise ValueError("Imagem Suave inválida.")
+            raise ValueError("Imagem Gradiente inválida.")
         number = int(index)
         if number >= len(pairs) or version != pair_version(pairs[number]):
-            raise ValueError("Comparação Suave desatualizada.")
+            raise ValueError("Comparação Gradiente desatualizada.")
         path = pairs[number][side]
         content = path.read_bytes()
         expected = pairs[number]["input_sha256" if side == "before" else "output_sha256"]
         if hashlib.sha256(content).hexdigest() != expected:
-            raise ValueError("Imagem Suave mudou durante a leitura.")
+            raise ValueError("Imagem Gradiente mudou durante a leitura.")
         return RouteResponse(200, content, mimetypes.guess_type(path.name)[0] or "image/png")
     except (ValueError, TypeError, KeyError, OSError):
-        return RouteResponse(404, _json({"error": "Resultado Suave ausente ou com hash divergente."}))
+        return RouteResponse(404, _json({"error": "Resultado Gradiente ausente ou com hash divergente."}))

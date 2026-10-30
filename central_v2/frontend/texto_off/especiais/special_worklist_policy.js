@@ -3,7 +3,7 @@ import { artisticKey } from "/texto_off/especiais/artistico_model.js";
 export const WORKLISTS = {
   estilizado: { label: "Artístico", mode: "artistico", step: "artistico" },
   degrade: { label: "Degradê", mode: "degrade", step: "degrade" },
-  gradiente_suave: { label: "Suave", mode: "suave", step: "suave" },
+  gradiente_suave: { label: "Gradiente", mode: "suave", step: "suave" },
 };
 
 export function executableOccurrences(chapter, treatment) {

@@ -2,6 +2,8 @@
 
 **Escopo:** levantamento estático do backend da Central v2 e dos testes relacionados, em 30/09/2026. Este documento registra os pontos encontrados e a direção recomendada; não altera a implementação.
 
+**Reavaliação em 30/10/2026:** as raízes físicas comuns foram concentradas em [`work_layout.py`](../central_v2/backend/state/work_layout.py) e os consumidores diretos da Central V2 foram atualizados. Os exemplos de montagem direta abaixo são registros do levantamento original. A política de nomes lógicos, aliases legados, valores persistidos e migração de fixtures segue aberta em [P5](gestao/tickets/central_v2/P5.md). Nenhuma pasta ou dado existente foi movido nesta etapa.
+
 ## Conclusão
 
 Os endereçamentos estão **parcialmente centralizados**. O fluxo TextOff Merged já possui constantes para os diretórios dos níveis e uma função comum para resolver o caminho de um estágio. Porém, a raiz `FLUXO_SECUNDARIO/04_TEXTO_OFF`, alguns diretórios legados e várias pastas de outros fluxos continuam escritos diretamente nos módulos consumidores.

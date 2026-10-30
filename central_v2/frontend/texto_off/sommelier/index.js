@@ -4,69 +4,14 @@ import { renderBubbleSommelierReview } from "./review.js";
 import { createTable } from "/_shared/table/table.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls, createPageSizeControl } from "/_shared/pagination/pagination.js";
-import { iconMarkup } from "/_shared/icons/icons.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 import { showMessage, showOperationSummary } from "/_shared/messages/messages.js";
+import { sommelierMarkup } from "/texto_off/sommelier/markup.js";
+import { sommelierColumns } from "/texto_off/sommelier/table_columns.js";
+import { aggregateSommelierProgress, operationSummary, SOMMELIER_NAME } from "/texto_off/sommelier/progress_model.js";
+import { drawSommelierFilters, matchesSommelierRow } from "/texto_off/sommelier/filters.js";
 
-const FILTERS = [
-  ["all", "All"],
-  ["pending", "Do"],
-  ["analyzed", "Done"],
-  ["candidates", "Candidato"],
-];
-
-export function aggregateSommelierProgress(job, chapters, pagesByChapter) {
-  const jobProgress = job.progress || job;
-  const chapterIndex = chapters.indexOf(job.chapter);
-  const completedBefore = chapterIndex < 0
-    ? 0
-    : chapters.slice(0, chapterIndex).reduce((sum, chapter) => sum + (pagesByChapter.get(chapter) || 0), 0);
-  const chapterPages = pagesByChapter.get(job.chapter) || 0;
-  const completedInChapter = jobProgress.stage === "completed"
-    ? chapterPages
-    : Math.max(0, Math.min(chapterPages, Number(jobProgress.completed) || 0));
-  const total = [...pagesByChapter.values()].reduce((sum, count) => sum + count, 0);
-  const completed = Math.min(total, completedBefore + completedInChapter);
-  return {
-    busy: job.status !== "failed",
-    title: `Curadoria de Balões · ${job.status}`,
-    message: jobProgress.message || "Preparando Curadoria…",
-    percent: total ? Math.round(completed * 100 / total) : 0,
-    completed,
-    total,
-  };
-}
-
-function filterButton(label, count, active, onClick) {
-  const button = document.createElement("button");
-  button.type = "button";
-  button.className = "auto-merge-filter-button";
-  button.classList.toggle("active", active);
-  button.textContent = `${label} (${count})`;
-  button.setAttribute("aria-pressed", String(active));
-  button.addEventListener("click", onClick);
-  return button;
-}
-
-function operationSummary(results) {
-  return {
-    headline: `${results.length} capítulo(s) analisado(s)`,
-    breakdown: `${results.length} concluído(s)`,
-    items: results.map((item) => ({
-      chapter: item.chapter,
-      status: "Concluído",
-      count: `${Number(item.candidates || 0)} candidato(s)`,
-      warning: false,
-      details: [
-        { label: "Perfil", value: item.profile_id || "—" },
-        { label: "Páginas analisadas", value: String(Number(item.pages || 0)) },
-        { label: "Balões", value: String(Number(item.balloons || 0)) },
-        { label: "Coverage ≥ 0.75", value: String(Number(item.coverage_ge_075 || 0)) },
-        { label: "Candidatos", value: String(Number(item.candidates || 0)) },
-      ],
-    })),
-  };
-}
+export { aggregateSommelierProgress } from "/texto_off/sommelier/progress_model.js";
 
 export function render(container) {
   let disposed = false;
@@ -80,33 +25,7 @@ export function render(container) {
 
   const root = document.createElement("section");
   root.className = "auto-merge-page textoff-merged-page cleaner-overview sommelier-page";
-  root.innerHTML = `
-    <div data-list-view>
-    <header>
-      <h1 class="textoff-page-title-hint" data-tooltip="Pré-análise antes da limpeza"
-          tabindex="0" aria-description="Pré-análise antes da limpeza">Curadoria de Balões</h1>
-    </header>
-    <div class="auto-merge-toolbar">
-      <label class="auto-merge-search">
-        <span class="visually-hidden">Buscar capítulo</span>
-        <input type="search" data-query placeholder="Capítulo">
-      </label>
-      <div class="auto-merge-filters" role="group" aria-label="Filtrar curadoria"></div>
-      <label class="sommelier-profile">
-        <select data-profile aria-label="Perfil">
-          <option value="">Perfil</option>
-          <option value="poc_a_v1">poc_a_v1</option>
-          <option value="poc_b_v1">poc_b_v1</option>
-        </select>
-      </label>
-      <button class="auto-merge-execute sommelier-execute" type="button" data-execute
-              title="Selecione capítulos e um perfil">Executar Curadoria</button>
-    </div>
-    <p class="auto-merge-status" data-status role="status" aria-live="polite"></p>
-    <div class="auto-merge-results" data-results></div>
-    </div>
-    <div data-review-host hidden></div>
-  `;
+  root.innerHTML = sommelierMarkup();
   container.replaceChildren(root);
 
   const query = root.querySelector("[data-query]");
@@ -117,7 +36,7 @@ export function render(container) {
   const profile = root.querySelector("[data-profile]");
   const listView = root.querySelector("[data-list-view]");
   const reviewHost = root.querySelector("[data-review-host]");
-  const progress = createJobProgress("Curadoria de Balões", { countUnit: "páginas" });
+  const progress = createJobProgress(SOMMELIER_NAME, { countUnit: "páginas" });
   root.querySelector(".auto-merge-toolbar").after(progress.element);
   let closeReview;
   let executionBusy = false;
@@ -147,85 +66,20 @@ export function render(container) {
     execute.disabled = executionBusy || selected.size === 0 || profile.value === "";
   }
 
-  const matches = (row, key) => {
-    if (key === "all") return true;
-    if (key === "pending") return !row.sommelier?.analyzed;
-    if (key === "analyzed") return Boolean(row.sommelier?.analyzed);
-    if (key === "candidates") {
-      return Boolean(row.sommelier?.analyzed && row.sommelier.candidates > 0);
-    }
-    return false;
-  };
-
-  function drawFilters() {
-    filters.replaceChildren();
-    for (const [key, label] of FILTERS) {
-      const count = rows.filter((row) => matches(row, key)).length;
-      filters.append(filterButton(label, count, activeFilter === key, () => {
-        activeFilter = key;
-        pagination.reset();
-        draw();
-      }));
-    }
-  }
-
   function draw() {
-    drawFilters();
+    drawSommelierFilters(filters, rows, activeFilter, (key) => {
+      activeFilter = key;
+      pagination.reset();
+      draw();
+    });
     const term = query.value.trim().toLocaleLowerCase("pt-BR");
     const visible = rows.filter((row) =>
-      row.chapter.toLocaleLowerCase("pt-BR").includes(term) && matches(row, activeFilter));
+      row.chapter.toLocaleLowerCase("pt-BR").includes(term) && matchesSommelierRow(row, activeFilter));
     const page = pagination.select(visible);
 
-    const columns = [
-      { id: "select", header: () => {
-        const eligible = page.rows.filter((row) => row.merge_valid !== false);
-        const count = eligible.filter((row) => selected.has(row.chapter)).length;
-        const input = document.createElement("input");
-        input.type = "checkbox";
-        input.checked = eligible.length > 0 && count === eligible.length;
-        input.indeterminate = count > 0 && count < eligible.length;
-        input.disabled = executionBusy || eligible.length === 0;
-        input.setAttribute("aria-label", "Selecionar todos os capítulos desta página");
-        input.addEventListener("change", () => {
-          for (const row of eligible) {
-            if (input.checked) selected.add(row.chapter);
-            else selected.delete(row.chapter);
-          }
-          draw();
-        });
-        return input;
-      }, render: (row) => {
-        const input = document.createElement("input");
-        input.type = "checkbox";
-        input.checked = selected.has(row.chapter);
-        input.disabled = executionBusy || row.merge_valid === false;
-        input.setAttribute("aria-label", `Selecionar capítulo ${row.chapter}`);
-        input.addEventListener("change", () => {
-          if (input.checked) selected.add(row.chapter);
-          else selected.delete(row.chapter);
-          draw();
-        });
-        return input;
-      }},
-      { id: "chapter", label: "Capítulo", render: (row) => row.chapter },
-      { id: "merges", label: "MERGES", render: (row) => row.merge_valid ? row.merge_count : "—" },
-      { id: "balloons", label: "BALÕES", render: (row) => row.sommelier?.balloons ?? "—" },
-      { id: "candidates", label: "CANDIDATOS", render: (row) => row.sommelier?.candidates ?? "—" },
-      { id: "profile", label: "PERFIL", render: (row) => row.sommelier?.analyzed ? row.sommelier.profile_id : "—" },
-      { id: "review", label: "REVISAR", render: (row) => {
-        const button = document.createElement("button");
-        button.type = "button";
-        button.className = "btn sommelier-review";
-        button.innerHTML = iconMarkup("eye");
-        button.setAttribute("aria-label", "Visualizar capítulo");
-        button.disabled = !row.sommelier?.analyzed;
-        button.title = row.sommelier?.analyzed ? "Visualizar resultado da curadoria" : "Disponível após a análise do BubbleSommelier";
-        button.addEventListener("click", () => openReview(row.chapter));
-        return button;
-      }},
-    ];
+    const columns = sommelierColumns({ page, selected, executionBusy, draw, openReview });
 
-    results.replaceChildren(createTable(columns, page.rows, "Capítulos para Curadoria de Balões", {
+    results.replaceChildren(createTable(columns, page.rows, "Capítulos para Bubble Sommelier", {
       emptyMessage: rows.length ? "Nenhum capítulo corresponde ao filtro." : "",
     }));
     results.append(createPaginationControls(page, (delta) => {
@@ -247,24 +101,24 @@ export function render(container) {
     updateExecuteState();
     status.textContent = "";
     status.hidden = true;
-    progress.update({ busy: true, title: "Curadoria de Balões · queued",
+    progress.update({ busy: true, title: `${SOMMELIER_NAME} · queued`,
       message: "Na fila para execução…", percent: 0, completed: 0, total: totalPages });
     try {
       const { job } = await startBubbleSommelier(provider, manga, chapters, profile.value);
       const jobResults = await waitForTextoffJob(job, (current) => {
         progress.update(aggregateSommelierProgress(current, chapters, pagesByChapter));
       });
-      progress.update({ busy: true, title: "Curadoria de Balões · completed",
+      progress.update({ busy: true, title: `${SOMMELIER_NAME} · completed`,
         message: "Execução concluída; atualizando resultados…",
         percent: 100, completed: totalPages, total: totalPages });
       selected.clear();
       await load();
       await showOperationSummary({
-        title: "Resumo da Curadoria de Balões",
+        title: "Resumo do Bubble Sommelier",
         summary: operationSummary(jobResults),
       });
     } catch (error) {
-      await showMessage({ title: "Falha na Curadoria de Balões", message: error.message });
+      await showMessage({ title: "Falha no Bubble Sommelier", message: error.message });
     } finally {
       progress.update({ busy: false });
       executionBusy = false;

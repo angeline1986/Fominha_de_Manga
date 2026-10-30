@@ -37,7 +37,7 @@ function timelineMarkup(group, selectedValues, currentAction) {
 function timelineItemMarkup(item, isCurrent) {
   const tooltip = item.tooltip ?? "";
   const described = tooltip
-    ? ` title="${tooltip}" data-tooltip="${tooltip}" aria-description="${tooltip}" aria-label="${item.label} — ${tooltip}"`
+    ? ` data-tooltip="${tooltip}" aria-description="${tooltip}" aria-label="${item.label} — ${tooltip}"`
     : ` aria-label="${item.label}"`;
   return `<li class="cleaning-timeline-item">
     <span class="cleaning-timeline-number" aria-hidden="true">${item.number}</span>

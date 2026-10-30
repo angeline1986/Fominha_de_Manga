@@ -3,7 +3,7 @@ import { confirmMessage } from "/_shared/messages/messages.js";
 
 const TREATMENTS = ["degrade", "estilizado", "gradiente_suave", "solidos"];
 const LABELS = { degrade: "Degradê", estilizado: "Artístico",
-  gradiente_suave: "Suave", solidos: "Sólidos" };
+  gradiente_suave: "Gradiente", solidos: "Sólidos" };
 
 /** Select a completed card; the backend binds its result to one final-page version. */
 export function connectFinalReview(root, revealPanel = () => {}) {

@@ -13,10 +13,11 @@ from processamento.merge_manual.api import (
 from processamento.merge_manual.proposal import MANIFEST_NAME, proposal_dir
 from processamento.unificacao_imagens.auto_merge.documentos import read_document
 from central_v2.backend.state.manga_state import resolve_manga
+from central_v2.backend.state.work_layout import images_root, processing_stage_root
 
 
 def _review_row(manga: Path, chapter: str) -> dict:
-    directory = manga / "FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/MERGE_LEVEL5" / chapter
+    directory = processing_stage_root(manga, "MERGE_LEVEL5") / chapter
     path = directory / "merge-level5-manifest.json"
     record = read_document(path, manga)
     if record.status == "absent":
@@ -25,7 +26,7 @@ def _review_row(manga: Path, chapter: str) -> dict:
         detail = {"available": True, "valid": False, "error": record.error}
     else:
         data = record.data or {}
-        level4_path = manga / "FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/MERGE_LEVEL4" / chapter / "merge-level4-manifest.json"
+        level4_path = processing_stage_root(manga, "MERGE_LEVEL4") / chapter / "merge-level4-manifest.json"
         pending = data.get("residual_pending_segments")
         total = data.get("total_height")
         valid = (
@@ -57,7 +58,7 @@ def merge_manual_response(query: dict, output_root: Path = OUTPUT_ROOT) -> Route
         return RouteResponse(400, b'{"error":"provider e manga sao obrigatorios"}')
     try:
         manga = resolve_manga(output_root, provider, name)
-        root = manga / "IMG"
+        root = images_root(manga)
         chapters = [item for item in root.iterdir() if item.is_dir()] if root.is_dir() else []
         payload = get_merge_manual_state(
             manga, chapters,
@@ -79,7 +80,7 @@ def merge_manual_image_response(query: dict, output_root: Path = OUTPUT_ROOT) ->
         return RouteResponse(400, b'{"error":"parametros invalidos"}')
     try:
         manga = resolve_manga(output_root, provider, manga_name)
-        root = (manga / "IMG").resolve()
+        root = images_root(manga).resolve()
         directory = (root / chapter).resolve()
         target = (directory / filename).resolve()
         if directory.parent != root or not target.is_relative_to(directory) or not target.is_file():
@@ -98,7 +99,7 @@ def merge_manual_proposal_response(payload: object, output_root: Path = OUTPUT_R
     provider, name = str(payload.get("provider") or ""), str(payload.get("manga") or "")
     try:
         manga = resolve_manga(output_root, provider, name)
-        root = manga / "IMG"
+        root = images_root(manga)
         chapters = [item for item in root.iterdir() if item.is_dir()] if root.is_dir() else []
         result = generate_merge_manual_proposal_job(
             manga, chapters,
@@ -147,7 +148,7 @@ def merge_manual_apply_response(payload: object, output_root: Path = OUTPUT_ROOT
     provider, name = str(payload.get("provider") or ""), str(payload.get("manga") or "")
     try:
         manga = resolve_manga(output_root, provider, name)
-        root = manga / "IMG"
+        root = images_root(manga)
         chapters = [item for item in root.iterdir() if item.is_dir()] if root.is_dir() else []
         result = apply_merge_manual_proposal_job(
             manga, chapters,
