@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 
 from .artifact_paths import artifact_file, json_file
-from .stages import LEVEL1, stage_chapter
+from .stages import LEGACY_NAMES, LEVEL1, stage_chapter
 from .manifests import _manifest_matches_merge, _stage_manifest
 from .query import query_merged_level1
 from central_v2.backend.orchestration.textoff_special.artifacts import sha256
@@ -67,7 +67,7 @@ def execute_special_level(manga: Path, level: str, chapters: list[str], progress
                 source = artifact_file(folder, filename, "clean")
                 if source is None:
                     raise ValueError(f"Artefato Nível I ausente: {filename}")
-                payload = {"treatment": treatment, "level": "MERGED_NIVEL_I",
+                payload = {"treatment": treatment, "level": LEGACY_NAMES[LEVEL1],
                            "chapter": chapter, "filename": source.name,
                            "expected_sha256": sha256(source), "selections": selections}
                 if level in {"IV", "V"}:

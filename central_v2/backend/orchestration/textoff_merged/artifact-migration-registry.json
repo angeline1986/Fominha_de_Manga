@@ -228,7 +228,8 @@
       "display_name": "Transparência Normal",
       "legacy_path": null,
       "target_path": null,
-      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "storage_path": "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_especiais_v2/{run_id}",
+      "legacy_storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
       "classification": "TRANSIENT_PREVIEW",
       "writers": [
         "central_v2.backend.orchestration.textoff_merged.special_levels.execute_special_level",
@@ -254,7 +255,8 @@
       "display_name": "Transparência Legada",
       "legacy_path": null,
       "target_path": null,
-      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "storage_path": "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_especiais_v2/{run_id}",
+      "legacy_storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
       "classification": "TRANSIENT_PREVIEW",
       "writers": [
         "central_v2.backend.orchestration.textoff_merged.special_levels.execute_special_level",
@@ -280,7 +282,8 @@
       "display_name": "Pincel — Degradê",
       "legacy_path": null,
       "target_path": null,
-      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "storage_path": "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_especiais_v2/{run_id}",
+      "legacy_storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
       "classification": "TRANSIENT_PREVIEW",
       "writers": [
         "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special",
@@ -307,7 +310,8 @@
       "display_name": "Pincel — Artístico",
       "legacy_path": null,
       "target_path": null,
-      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "storage_path": "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_especiais_v2/{run_id}",
+      "legacy_storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
       "classification": "TRANSIENT_PREVIEW",
       "writers": [
         "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special",
@@ -334,7 +338,8 @@
       "display_name": "Pincel — Suave",
       "legacy_path": null,
       "target_path": null,
-      "storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
+      "storage_path": "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_especiais_v2/{run_id}",
+      "legacy_storage_path": "reports/experimentos/textoff_especiais_v2/{run_id}",
       "classification": "TRANSIENT_PREVIEW",
       "writers": [
         "central_v2.backend.orchestration.textoff_merged.manual_specials.run_manual_special",

@@ -4,7 +4,7 @@ from pathlib import Path
 from . import artifact_migration as migration
 
 
-def entry_for(stage: str) -> dict | None:
+def entry_for(stage: str, stage_id: str) -> dict | None:
     registry = migration._read_registry(migration.REGISTRY_PATH)
     if registry.get("migration_mode") != "single_write_target":
         return None
@@ -14,12 +14,14 @@ def entry_for(stage: str) -> dict | None:
             or registry.get("new_read_enabled") is not True):
         raise ValueError("Contrato de gravação única inválido")
     entry = next((item for item in registry["stages"]
-                  if item.get("legacy_path") == stage
+                  if item.get("stage_id") == stage_id
                   and item.get("classification") in {
                       "PERSISTENT_STAGE", "CONSOLIDATED_OUTPUT_INTERMEDIATE"
                   }), None)
-    if entry is not None and (entry.get("read_authority") != "target"
-                              or entry.get("dual_write") is not False):
+    if entry is None or entry.get("legacy_path") != stage:
+        raise ValueError(f"Estágio sem mapeamento válido: {stage_id}")
+    if (entry.get("read_authority") != "target"
+            or entry.get("dual_write") is not False):
         raise ValueError(f"Contrato de gravação única inválido: {stage}")
     return entry
 

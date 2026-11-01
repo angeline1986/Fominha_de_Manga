@@ -8,7 +8,7 @@ from central_v2.backend.orchestration.textoff_merged.auto_cleaner_check_manifest
 from central_v2.backend.orchestration.textoff_merged.final_consolidated import final_manifest_path, TREATMENT_ORIGINS
 from central_v2.backend.orchestration.textoff_merged.final_consolidated_manifest import read_manifest
 from central_v2.backend.orchestration.textoff_merged.manifests import _stage_manifest_sha256
-from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, provider_name, stage_chapter
+from central_v2.backend.orchestration.textoff_merged.stages import CONSOLIDATED, LEVEL1, provider_name, stage_chapter
 from .models import image_size, valid_page_id
 from .run_result_store import SCHEMA
 from .validation import validate_page
@@ -42,7 +42,7 @@ def validate_run(manga, run_root, chapter, result):
         pages[page] = _validate_page(manga, run_root, provider, chapter, item)
     if not pages:
         raise ValueError("Resultado Combo sem páginas para validar.")
-    logical = stage_chapter(manga, "TO_MERGED_CONSOLIDADO", chapter, read_legacy=False)
+    logical = stage_chapter(manga, CONSOLIDATED, chapter, read_legacy=False)
     final = stage_chapter(manga, "CONSOLIDADO_FINAL", chapter, read_legacy=False)
     logical_manifest = logical / "json" / "clean-manifest.json"
     final_manifest = final / "json" / "final-manifest.json"

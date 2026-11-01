@@ -7,7 +7,7 @@ from .cleaner import run_cleaner_v2
 from .artifact_migration import mirror_stage_chapter
 from .write_destination import planned_write_chapter
 from .level1_isolated_destination import isolated_level1_target
-from .stages import LEVEL1, stage_chapter
+from .stages import LEGACY_MERGED_OUTPUT, LEGACY_NAMES, LEVEL1, stage_chapter
 from .special_styled_transaction import transaction_lock
 
 def validate_selection(manga: Path, chapters: object) -> list[str]:
@@ -29,13 +29,13 @@ def validate_selection(manga: Path, chapters: object) -> list[str]:
 
 
 def execute_merged(manga: Path, chapters: list[str], progress, preflight=None,
-                   *, output_stage: str = "MERGED", include_legacy_level2: bool = True,
+                   *, output_stage: str = LEGACY_MERGED_OUTPUT, include_legacy_level2: bool = True,
                    diagnostics: bool = False, provider: str | None = None,
                    manga_name: str | None = None) -> list[dict]:
     """Run Cleaner V2 over official MERGEs into an explicitly named stage."""
-    if output_stage not in {"MERGED", LEVEL1, "MERGED_NIVEL_I"}:
+    if output_stage not in {LEGACY_MERGED_OUTPUT, LEVEL1, LEGACY_NAMES[LEVEL1]}:
         raise ValueError("Destino de Texto Off inválido.")
-    target_stage = LEVEL1 if output_stage != "MERGED" else "MERGED"
+    target_stage = LEVEL1 if output_stage != LEGACY_MERGED_OUTPUT else LEGACY_MERGED_OUTPUT
     validate_selection(manga, chapters)
     results = []
     for index, name in enumerate(chapters, 1):

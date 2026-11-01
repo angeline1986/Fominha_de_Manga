@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 from central_v2.backend.orchestration.textoff_merged.consolidated import rebuild_consolidated
 from central_v2.backend.orchestration.textoff_merged.level2_vision import ALGORITHM
-from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, LEVEL2
+from central_v2.backend.orchestration.textoff_merged.stages import CONSOLIDATED, LEVEL1, LEVEL2, stage_chapter
 from central_v2.backend.routes.router import dispatch_get
 
 
@@ -106,8 +106,7 @@ class CheckConsolidatedImageTests(unittest.TestCase):
                                     comparisonMode="level1"), b"level1-page-b.png")
 
     def test_check_does_not_fall_back_when_consolidated_is_stale(self):
-        manifest = (self.manga / "FLUXO_SECUNDARIO/04_TEXTO_OFF/"
-                    "TO_MERGED_CONSOLIDADO/1/json/clean-manifest.json")
+        manifest = stage_chapter(self.manga, CONSOLIDATED, "1", read_legacy=False) / "json/clean-manifest.json"
         payload = json.loads(manifest.read_text())
         payload["selections"][1]["sha256"] = "0" * 64
         manifest.write_text(json.dumps(payload))

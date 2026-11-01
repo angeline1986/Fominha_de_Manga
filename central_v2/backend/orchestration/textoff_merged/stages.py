@@ -11,7 +11,16 @@ LEVEL2 = "TO_MERGED_NIVEL_II"
 LEVEL3 = "TO_MERGED_NIVEL_III"
 CONSOLIDATED = "TO_MERGED_CONSOLIDADO"
 COMBO_TURBO = "COMBO_TURBO"
-_MAPPED = {LEVEL1, LEVEL2, LEVEL3, CONSOLIDATED, "BUBBLE_SOMMELIER"}
+LEGACY_MERGED_OUTPUT = "MERGED"  # Historical TextOff output, distinct from MERGE input.
+BUBBLE_SOMMELIER = "BUBBLE_SOMMELIER"
+MAPPED_STAGE_IDS = {
+    LEVEL1: "auto_cleaner",
+    LEVEL2: "auto_cleaner_transparencia_basica",
+    LEVEL3: "mapear",
+    CONSOLIDATED: "mapear_input_consolidado",
+    BUBBLE_SOMMELIER: "bubble_sommelier",
+}
+_MAPPED = frozenset(MAPPED_STAGE_IDS)
 
 LEGACY_NAMES = {
     LEVEL1: "MERGED_NIVEL_I",
@@ -19,6 +28,10 @@ LEGACY_NAMES = {
     LEVEL3: "MERGED_NIVEL_III",
 }
 ALIASES = {legacy: canonical for canonical, legacy in LEGACY_NAMES.items()}
+PERSISTED_SOURCE_VALUES = {
+    stage: frozenset((stage, LEGACY_NAMES[stage]))
+    for stage in (LEVEL1, LEVEL2, LEVEL3)
+}
 PINCEIS = {
     "PINCEL_DEGRADE": "06_PINCEL/DEGRADE",
     "PINCEL_ARTISTICO": "06_PINCEL/ARTISTICO",
@@ -68,7 +81,7 @@ def stage_path_snapshot():
 def stage_root(manga: Path, stage: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
     from .stage_single_write import entry_for, target_root
-    entry = entry_for(canonical) if canonical in _MAPPED else None
+    entry = entry_for(canonical, MAPPED_STAGE_IDS[canonical]) if canonical in _MAPPED else None
     if entry is not None:
         return target_root(manga, entry)
     if canonical == LEVEL1 and os.environ.get("CENTRAL_V2_LEVEL1_NUMBERED") == "1":
@@ -99,7 +112,7 @@ def stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = 
 def _resolve_stage_chapter(manga: Path, stage: str, chapter: str, *, read_legacy: bool = True) -> Path:
     canonical = ALIASES.get(stage, stage)
     from .stage_single_write import entry_for, read_chapter
-    entry = entry_for(canonical) if canonical in _MAPPED else None
+    entry = entry_for(canonical, MAPPED_STAGE_IDS[canonical]) if canonical in _MAPPED else None
     if entry is not None:
         if read_legacy:
             return read_chapter(manga, entry, chapter, LEGACY_NAMES.get(canonical))

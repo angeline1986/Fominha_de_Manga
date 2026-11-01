@@ -6,7 +6,7 @@ from .level2_legacy_validation import _source_from_clean, _valid_legacy_level2
 from .level2_result_validation import _valid_level2_page_results
 from .level2_vision import ALGORITHM as LEVEL2_ALGORITHM
 from .manifests import _stage_manifest, _stage_manifest_sha256
-from .stages import LEVEL1, LEVEL2, stage_chapter
+from .stages import LEVEL1, LEVEL2, PERSISTED_SOURCE_VALUES, stage_chapter
 
 
 def _valid_level2(manga, chapter, level1, level1_hash):
@@ -21,7 +21,7 @@ def _valid_level2_unchecked(manga, chapter, level1, level1_hash):
     level1_folder = stage_chapter(manga, LEVEL1, chapter)
     manifest = _stage_manifest(manga, LEVEL2, chapter)
     digest = _stage_manifest_sha256(manga, LEVEL2, chapter)
-    accepted_sources = {LEVEL1, "MERGED_NIVEL_I"}
+    accepted_sources = PERSISTED_SOURCE_VALUES[LEVEL1]
     names = manifest.get("clean_artifacts")
     changed_names = manifest.get("changed_artifacts", names)
     candidate_names = manifest.get("candidate_source_artifacts")

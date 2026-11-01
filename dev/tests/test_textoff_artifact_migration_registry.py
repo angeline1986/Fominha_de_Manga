@@ -3,6 +3,10 @@ import json
 from pathlib import Path
 import unittest
 
+from central_v2.backend.orchestration.textoff_merged.stages import (
+    LEGACY_NAMES, MAPPED_STAGE_IDS, PERSISTED_SOURCE_VALUES,
+)
+
 
 REGISTRY_PATH = (
     Path(__file__).resolve().parents[2]
@@ -58,6 +62,14 @@ class TextoffArtifactMigrationRegistryTests(unittest.TestCase):
                 self.assertTrue(stage["writers"])
                 self.assertTrue(stage["readers"])
 
+    def test_logical_names_and_persisted_aliases_match_registry(self):
+        for logical_name, stage_id in MAPPED_STAGE_IDS.items():
+            with self.subTest(stage=stage_id):
+                self.assertEqual(self.stages[stage_id]["legacy_path"], logical_name)
+                if logical_name in LEGACY_NAMES:
+                    self.assertEqual(PERSISTED_SOURCE_VALUES[logical_name],
+                                     {logical_name, LEGACY_NAMES[logical_name]})
+
     def test_consolidated_is_mapear_input_not_terminal_output(self):
         consolidated = self.stages["mapear_input_consolidado"]
         self.assertEqual(consolidated["relationships"]["owned_by_stage_id"], "mapear")
@@ -92,12 +104,14 @@ class TextoffArtifactMigrationRegistryTests(unittest.TestCase):
             "transparencia_normal", "transparencia_legada", "pincel_degrade",
             "pincel_artistico", "pincel_suave",
         }
-        expected_storage = "reports/experimentos/textoff_especiais_v2/{run_id}"
+        expected_storage = "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_especiais_v2/{run_id}"
+        legacy_storage = "reports/experimentos/textoff_especiais_v2/{run_id}"
         for stage_id in preview_ids:
             with self.subTest(stage=stage_id):
                 stage = self.stages[stage_id]
                 self.assertEqual(stage["classification"], "TRANSIENT_PREVIEW")
                 self.assertEqual(stage["storage_path"], expected_storage)
+                self.assertEqual(stage["legacy_storage_path"], legacy_storage)
                 self.assertIsNone(stage["target_path"])
                 self.assertEqual(stage["migration_status"], "retained_in_staging")
                 self.assertEqual(stage["read_authority"], "staging")

@@ -12,7 +12,7 @@ from .auto_cleaner_check_manifest import _read_check_manifest, manifest_path as 
 from .consolidated import consolidated_is_current
 from .consolidated_artifacts import consolidated_image
 from .special_treatments_manifest import SCHEMA as SPECIAL_SCHEMA, manifest_path as special_path
-from .stages import CONSOLIDATED, LEVEL1, LEVEL2, stage_chapter
+from .stages import CONSOLIDATED, LEGACY_NAMES, LEVEL1, LEVEL2, stage_chapter
 
 
 def detection_input(manga: Path, provider: str, chapter: str, page: str,
@@ -59,7 +59,7 @@ def detection_input(manga: Path, provider: str, chapter: str, page: str,
     image = consolidated_image(manga, chapter, Path(artifact).name)
     if image is None or sha256(image) != item.get("sha256"):
         raise ValueError("Imagem da revisão do Check sem SHA verificável.")
-    level = "MERGED_NIVEL_II" if stage == LEVEL2 else "MERGED_NIVEL_I"
+    level = LEGACY_NAMES[LEVEL2] if stage == LEVEL2 else LEGACY_NAMES[LEVEL1]
     resolved = resolve_input(manga, level, chapter, Path(artifact).name, item["sha256"])
     if Path(resolved["path"]).resolve() != image.resolve():
         raise ValueError("Origem da revisão do Check não corresponde ao estágio.")

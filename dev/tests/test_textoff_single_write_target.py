@@ -36,6 +36,16 @@ class SingleWriteTargetTests(unittest.TestCase):
             with self.assertRaises(ValueError):
                 planned_write_chapter(manga, "auto_cleaner", "1")
 
+    def test_mismatched_logical_stage_never_routes_to_wrong_target(self):
+        registry = json.loads(artifact_migration.REGISTRY_PATH.read_text())
+        entry = next(item for item in registry["stages"]
+                     if item["stage_id"] == "auto_cleaner")
+        entry["legacy_path"] = "TO_MERGED_NIVEL_II"
+        with tempfile.TemporaryDirectory() as root, \
+             patch.object(artifact_migration, "_read_registry", return_value=registry):
+            with self.assertRaisesRegex(ValueError, "mapeamento válido"):
+                stage_chapter(Path(root) / "obra", "TO_MERGED_NIVEL_I", "1")
+
     def test_numbered_write_and_legacy_only_read(self):
         with tempfile.TemporaryDirectory() as root:
             manga = Path(root) / "obra"

@@ -4,7 +4,7 @@ from pathlib import Path
 
 from .artifact_paths import artifact_file
 from .level2_vision import ALGORITHM as LEVEL2_ALGORITHM
-from .stages import LEVEL1
+from .stages import LEVEL1, PERSISTED_SOURCE_VALUES
 
 
 def _source_from_clean(reference):
@@ -28,7 +28,7 @@ def _valid_legacy_level2(folder, level1_folder, level1, level1_hash, manifest):
     changed = manifest.get("changed_artifacts", outputs)
     if (manifest.get("integrity_ok") is not True
             or manifest.get("algorithm") != LEVEL2_ALGORITHM
-            or manifest.get("source_stage") not in {LEVEL1, "MERGED_NIVEL_I"}
+            or manifest.get("source_stage") not in PERSISTED_SOURCE_VALUES[LEVEL1]
             or manifest.get("source_level1_manifest_sha256") != level1_hash
             or manifest.get("source_artifacts") != level1.get("source_artifacts")
             or not isinstance(candidates, list) or len(candidates) != len(set(candidates))

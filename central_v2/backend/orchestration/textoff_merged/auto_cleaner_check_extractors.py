@@ -10,7 +10,7 @@ from central_v2.backend.orchestration.bubble_sommelier.artifacts import report_p
 from .consolidated_artifacts import consolidated_image
 from .residue_occurrences import MANIFEST_NAME as RESIDUE_MANIFEST_NAME
 from .residue_occurrences import occurrences_for, read_manifest
-from .stages import LEVEL3, stage_chapter
+from .stages import BUBBLE_SOMMELIER, LEVEL3, stage_chapter
 from .auto_cleaner_check_geometry import (
     _finite, _mapear_box, _mapear_page_name, _positive_dimension, _source_id,
     _sommelier_box,
@@ -62,7 +62,7 @@ def _mapear_occurrences(manga: Path, chapter: str, pages: dict[str, dict]) -> li
                 continue
             detection = candidate.get("detection", index + 1)
             reference = {
-                "origin": "MAPEAR", "stage": "TO_MERGED_NIVEL_III",
+                "origin": "MAPEAR", "stage": LEVEL3,
                 "report": "json/styled-balloon-report.json", "page": source,
                 "detection": detection, "candidate_type": kind,
             }
@@ -103,7 +103,7 @@ def _sommelier_occurrences(manga: Path, chapter: str, pages: dict[str, dict]) ->
             if box is None or not isinstance(identity, str) or not identity:
                 continue
             reference = {
-                "origin": "SOMMELIER", "stage": "BUBBLE_SOMMELIER",
+                "origin": "SOMMELIER", "stage": BUBBLE_SOMMELIER,
                 "report": "report.json", "page": page_name,
                 "identity": identity, "bubble_index": bubble.get("bubble_index"),
                 "label": bubble.get("label"), "candidate": True,

@@ -2,7 +2,7 @@
 
 **Escopo:** levantamento estático do backend da Central v2 e dos testes relacionados, em 30/09/2026. Este documento registra os pontos encontrados e a direção recomendada; não altera a implementação.
 
-**Reavaliação em 30/10/2026:** as raízes físicas comuns foram concentradas em [`work_layout.py`](../central_v2/backend/state/work_layout.py) e os consumidores diretos da Central V2 foram atualizados. Os exemplos de montagem direta abaixo são registros do levantamento original. A política de nomes lógicos, aliases legados, valores persistidos e migração de fixtures segue aberta em [P5](gestao/tickets/central_v2/P5.md). Nenhuma pasta ou dado existente foi movido nesta etapa.
+**Reavaliação em 30/10/2026:** as raízes físicas comuns foram concentradas em [`work_layout.py`](../central_v2/backend/state/work_layout.py) e os consumidores diretos da Central V2 foram atualizados. O registro de migração agora distingue a área atual de retoques na obra da área global antiga; os estágios TextOff mapeados têm identificadores e aliases explícitos em `stages.py`. Os exemplos de montagem direta abaixo são registros do levantamento original. A consolidação das referências restantes, das fixtures e da política de renomeação segue aberta em [P5](gestao/tickets/central_v2/P5.md). Nenhuma pasta ou dado existente foi movido nesta etapa.
 
 ## Conclusão
 

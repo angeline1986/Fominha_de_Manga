@@ -5,7 +5,7 @@ from .query import query_merged_level2
 from .level3_styled import query_level3
 from .artifact_migration import registry_snapshot
 from .manifests import manifest_snapshot
-from .stages import stage_path_snapshot, stage_chapter
+from .stages import BUBBLE_SOMMELIER, LEGACY_NAMES, LEVEL1, stage_path_snapshot, stage_chapter
 from .auto_cleaner_check_manifest import manifest_path, SCHEMA as CHECK_SCHEMA
 from .cleaner_final_status import current_final_status
 from central_v2.backend.orchestration.bubble_sommelier.query import _sommelier_state
@@ -42,7 +42,7 @@ def _query_cleaner_overview(manga: Path) -> dict:
             "map": mapped.get(row["chapter"], False),
         }
         chapter = row["chapter"]
-        bubble = stage_chapter(manga, "BUBBLE_SOMMELIER", chapter) / "report.json"
+        bubble = stage_chapter(manga, BUBBLE_SOMMELIER, chapter) / "report.json"
         check = manifest_path(manga, chapter)
         solid = stage_chapter(manga, "05_AUTO_CLEANER_SOLIDOS", chapter,
                               read_legacy=False) / "solid-white-manifest.json"
@@ -84,7 +84,7 @@ def current_preview_records(manga: Path, staging: Path = STAGING_ROOT):
                 source = manifest.get("source", {})
                 if (manifest.get("execution_status") != "succeeded"
                         or source.get("manga") != str(manga.resolve())
-                        or source.get("level") != "MERGED_NIVEL_I"):
+                        or source.get("level") != LEGACY_NAMES[LEVEL1]):
                     continue
                 key = TREATMENTS.get(manifest.get("treatment"))
                 if manifest.get("merged_level") == "IV" and manifest.get("treatment") == "transparente":

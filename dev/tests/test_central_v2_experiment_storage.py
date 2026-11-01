@@ -59,6 +59,7 @@ class ExperimentStorageTests(TestCase):
              patch.object(execution, "run_worker", side_effect=worker):
             manifest = execution.preview(self.manga, payload, resolved_source=source)
         root = staging_root(self.manga, "textoff_especiais_v2")
+        self.assertEqual(root, self.manga / "FLUXO_SECUNDARIO/05_Lab_Retoques/textoff_especiais_v2")
         self.assertEqual(manifest["execution_status"], "succeeded")
         self.assertTrue((root / manifest["run_id"] / "manifest.json").is_file())
 

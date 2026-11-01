@@ -3,11 +3,13 @@ from pathlib import Path
 import math
 
 from central_v2.backend.orchestration.textoff_merged.artifact_paths import artifact_file, json_file
-from central_v2.backend.orchestration.textoff_merged.stages import LEVEL1, stage_chapter
+from central_v2.backend.orchestration.textoff_merged.stages import (
+    LEGACY_NAMES, LEVEL1, LEVEL2, PERSISTED_SOURCE_VALUES, stage_chapter,
+)
 from .artifacts import read_json, sha256
 
-LEVELS = {"MERGED_NIVEL_I": {"MERGE"},
-          "MERGED_NIVEL_II": {LEVEL1, "MERGED_NIVEL_I"}}
+LEVELS = {LEGACY_NAMES[LEVEL1]: {"MERGE"},
+          LEGACY_NAMES[LEVEL2]: PERSISTED_SOURCE_VALUES[LEVEL1]}
 
 
 def basename(value: object) -> str:
@@ -50,7 +52,7 @@ def resolve_input(manga: Path, level: str, chapter: str, filename: str,
     if source_hash != expected_sha256:
         raise ValueError("PROPOSTA_OBSOLETA: a imagem de entrada mudou.")
     predecessors = [{"path": str(manifest_path), "sha256": manifest_hash}]
-    if level == "MERGED_NIVEL_II":
+    if level == LEGACY_NAMES[LEVEL2]:
         parent = stage_chapter(manga, LEVEL1, chapter)
         parent_manifest = json_file(parent, "clean-manifest.json").resolve()
         if not parent_manifest.is_relative_to(manga):

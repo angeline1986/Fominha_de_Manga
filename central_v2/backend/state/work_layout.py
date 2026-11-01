@@ -7,6 +7,7 @@ MERGE_DIR = "02_MERGE"
 PROCESSING_DIR = "01_MERGE_PROCESSAMENTO"
 TEXT_OFF_DIR = "04_TEXTO_OFF"
 PDF_MERGED_DIR = "03_PDF_MERGE"
+LAB_RETOUCHES_DIR = "05_Lab_Retoques"
 AUTO_MERGE_STAGES = {
     1: "AUTO_MERGE", 2: "MERGE_LEVEL2", 3: "MERGE_LEVEL3",
     4: "MERGE_LEVEL4", 5: "MERGE_LEVEL5",
@@ -29,6 +30,10 @@ def merge_root(manga: Path) -> Path:
 
 def textoff_root(manga: Path) -> Path:
     return Path(manga) / TEXT_OFF_RELATIVE
+
+
+def retouches_root(manga: Path) -> Path:
+    return secondary_root(manga) / LAB_RETOUCHES_DIR
 
 
 def pdf_root(manga: Path, source: str) -> Path:

@@ -4,11 +4,11 @@ import json
 from contextlib import contextmanager
 from contextvars import ContextVar
 from pathlib import Path
-from central_v2.backend.state.work_layout import images_root, textoff_root
+from central_v2.backend.state.work_layout import images_root
 
 from processamento.unificacao_imagens import image_stitcher as v3
 from .artifact_paths import artifact_file, json_file
-from .stages import LEVEL1, stage_chapter
+from .stages import LEGACY_MERGED_OUTPUT, LEVEL1, stage_chapter
 
 _documents = ContextVar("textoff_manifest_documents", default=None)
 
@@ -48,7 +48,7 @@ def manifest_snapshot():
         _documents.reset(token)
 
 def _clean_manifest(manga: Path, chapter: str) -> dict:
-    path = textoff_root(manga) / "MERGED" / chapter / "clean-manifest.json"
+    path = stage_chapter(manga, LEGACY_MERGED_OUTPUT, chapter, read_legacy=False) / "clean-manifest.json"
     try:
         value = json.loads(path.read_text(encoding="utf-8"))
         return value if isinstance(value, dict) else {}
