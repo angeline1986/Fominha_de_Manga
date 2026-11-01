@@ -1,0 +1,229 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Protótipo · Validar Imagens · Central V2</title>
+  <style>
+    :root { font: 14px/1.45 Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: #193f54; background: #f4f9fc; }
+    * { box-sizing: border-box; }
+    body { margin: 0; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    button:disabled { cursor: not-allowed; opacity: .45; }
+    :focus-visible { outline: 3px solid #6ab7df; outline-offset: 2px; }
+    .app { display: grid; grid-template-columns: 258px minmax(0, 1fr); min-height: 100vh; }
+    .sidebar { padding: 22px 15px; border-right: 1px solid #d3e7f0; background: #eef6fb; }
+    .brand { display: flex; align-items: center; gap: 11px; padding: 4px 8px 23px; border-bottom: 1px solid #d3e7f0; }
+    .brand-icon { display: grid; place-items: center; width: 37px; height: 37px; border-radius: 10px; border: 1px solid #bcdaea; background: #fff; color: #1b6f98; font-size: 23px; }
+    .brand strong, .brand small { display: block; }
+    .brand strong { font-size: 15px; }
+    .brand small { color: #698698; font-size: 11px; }
+    .nav-caption { margin: 28px 10px 9px; color: #7290a2; font-size: 10px; font-weight: 850; letter-spacing: .13em; }
+    .nav-link { display: flex; align-items: center; gap: 9px; width: 100%; min-height: 40px; margin: 4px 0; padding: 9px 12px; border: 1px solid transparent; border-radius: 9px; background: transparent; color: #2b5269; text-align: left; font-weight: 700; }
+    .nav-link.active { border-color: #b7dceb; background: #fff; color: #0e6c93; }
+    .nav-link.muted { color: #8ba4b1; }
+    .nav-link span { display: grid; place-items: center; width: 20px; font-size: 17px; }
+    .side-note { margin-top: 38px; padding: 16px 10px; border-top: 1px solid #d3e7f0; color: #67879b; font-size: 11px; }
+    main { min-width: 0; }
+    .topbar { min-height: 67px; padding: 13px clamp(18px, 3vw, 45px); border-bottom: 1px solid #d8eaf2; background: #fff; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .topbar strong, .topbar small { display: block; }
+    .topbar strong { font-size: 15px; }
+    .topbar small { color: #718b9b; font-size: 11px; }
+    .top-actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .mobile-nav { display: none; }
+    .pill { display: inline-block; padding: 5px 10px; border: 1px solid #c9e3ee; border-radius: 999px; background: #f4fbff; color: #386d86; font-size: 11px; font-weight: 750; white-space: nowrap; }
+    .pill.demo { background: #fff4e1; border-color: #f2dfb6; color: #875e1a; }
+    .content { width: min(100%, 1570px); margin: auto; padding: 30px clamp(18px, 3vw, 45px) 70px; }
+    h1, h2, h3, p { margin-top: 0; }
+    h1 { color: #143e54; font-size: clamp(25px, 2.4vw, 34px); letter-spacing: -.035em; margin-bottom: 4px; }
+    h2 { color: #184961; font-size: 17px; letter-spacing: -.02em; }
+    .eyebrow { color: #19789e; font-size: 10px; font-weight: 850; letter-spacing: .16em; }
+    .subtitle { color: #688598; margin-bottom: 22px; }
+    .page-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 15px; }
+    .summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+    .metric { padding: 14px 16px; border: 1px solid #d4e7f0; border-radius: 10px; background: #fff; }
+    .metric span, .metric strong { display: block; }
+    .metric span { color: #6c8899; font-size: 11px; font-weight: 700; }
+    .metric strong { margin-top: 4px; color: #173e54; font-size: 23px; line-height: 1.2; }
+    .metric.warn strong { color: #a96717; }
+    .metric.good strong { color: #187a60; }
+    .panel { overflow: hidden; border: 1px solid #d4e7f0; border-radius: 12px; background: #fff; box-shadow: 0 3px 16px #1f5d7710; }
+    .toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 9px; padding: 14px; border-bottom: 1px solid #dceaf1; }
+    .spacer { flex: 1; }
+    .search { width: 150px; min-height: 36px; padding: 7px 10px; border: 1px solid #cde2eb; border-radius: 8px; color: #19455c; background: #fff; }
+    .segments { display: inline-flex; gap: 2px; padding: 3px; border: 1px solid #d2e7f0; border-radius: 9px; background: #eef7fb; }
+    .segments button { padding: 6px 9px; border: 0; border-radius: 6px; background: transparent; color: #5a7c90; font-size: 11px; font-weight: 750; }
+    .segments button.active { background: #fff; color: #0c6d95; box-shadow: 0 1px 3px #1d4c641f; }
+    .btn { min-height: 36px; padding: 7px 12px; border: 1px solid #c4e0ec; border-radius: 8px; background: #fff; color: #17698e; font-weight: 750; }
+    .btn:hover:not(:disabled) { background: #e9f7fd; }
+    .btn.primary { border-color: #1e7096; background: #226f95; color: #fff; }
+    .btn.primary:hover:not(:disabled) { background: #145b80; }
+    .btn.small { min-height: 29px; padding: 4px 9px; font-size: 11px; }
+    .btn.icon { display: inline-grid; place-items: center; width: 35px; height: 33px; padding: 0; }
+    .btn.icon svg { width: 17px; height: 17px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+    .tolerance { color: #628195; font-size: 11px; font-weight: 750; white-space: nowrap; }
+    .table-scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 12px; text-align: left; }
+    th { border-bottom: 1px solid #dceaf1; background: #f4f9fc; color: #748b9b; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: .05em; white-space: nowrap; }
+    td { border-bottom: 1px solid #e5eef3; color: #2d5368; }
+    tr:last-child td { border-bottom: 0; }
+    tr:hover td { background: #f8fcfe; }
+    td:last-child, th:last-child { text-align: center; }
+    .chapter { font-weight: 800; color: #164f69; }
+    .state { display: inline-block; padding: 4px 9px; border-radius: 999px; font-size: 10px; font-weight: 850; white-space: nowrap; }
+    .state.pending { background: #edf1f4; color: #687e8c; }
+    .state.review { background: #fff2db; color: #976016; }
+    .state.ok { background: #e2f3eb; color: #177b5d; }
+    .state.applied { background: #e4f3fb; color: #126e96; }
+    .pager { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-top: 1px solid #dceaf1; color: #6b8799; font-size: 11px; }
+    .pager > div { display: flex; align-items: center; gap: 8px; }
+    .message { padding: 12px 15px; margin-top: 14px; border: 1px solid #cde4f0; border-radius: 9px; background: #e9f7fd; color: #3b6579; font-size: 12px; }
+    .message.warn { border-color: #f0deb7; background: #fff8e8; color: #7a5a21; }
+    .message strong { color: #174d63; }
+    .viewer-bar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 14px; }
+    .viewer-title { flex: 1; min-width: 180px; }
+    .viewer-title strong, .viewer-title small { display: block; }
+    .viewer-title strong { color: #164b64; }
+    .viewer-title small { color: #7590a1; font-size: 11px; }
+    .viewer-controls { display: flex; align-items: center; gap: 6px; }
+    .viewer-controls span { min-width: 44px; text-align: center; color: #52768a; font-size: 11px; font-weight: 750; }
+    .compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; align-items: start; }
+    .image-card { overflow: hidden; border: 1px solid #cfe5f0; border-radius: 10px; background: #fff; }
+    .image-card header { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 46px; padding: 10px 13px; border-bottom: 1px solid #dcebf2; }
+    .image-card header strong { font-size: 12px; color: #1d5874; }
+    .image-card header span { color: #638496; font-size: 11px; white-space: nowrap; }
+    .image-stage { min-height: 355px; display: flex; align-items: flex-start; justify-content: center; padding: 20px; overflow: hidden; background-color: #f8fbfd; background-image: radial-gradient(#bce0f0 1px, transparent 1px); background-size: 18px 18px; }
+    .art { position: relative; flex: none; max-width: 100%; overflow: hidden; border: 1px solid #bdccd0; background: #f1dfd1; box-shadow: 0 4px 12px #123c4e2c; }
+    .art:before { content: ""; position: absolute; inset: 4% 6% 47%; border: 3px solid #354d5b; background: linear-gradient(155deg, #a5d8e7 12%, #ecf7f6 60%, #e8c2b2); }
+    .art:after { content: ""; position: absolute; inset: 56% 6% 4%; border: 3px solid #354d5b; background: linear-gradient(90deg, #4e7888, #c2dfdf 51%, #5a8c9a); }
+    .art-sun { position: absolute; z-index: 1; top: 10%; right: 17%; width: 16%; aspect-ratio: 1; border-radius: 50%; background: #fff5d8; box-shadow: 0 0 18px #fff; }
+    .art-hill { position: absolute; z-index: 1; top: 34%; left: 12%; width: 76%; height: 16%; background: #547e8a; clip-path: polygon(0 100%, 30% 20%, 50% 75%, 75% 0, 100% 100%); }
+    .art-bubble { position: absolute; z-index: 1; top: 64%; left: 14%; width: 48%; height: 13%; border: 3px solid #354d5b; border-radius: 50%; background: white; }
+    .art-label { position: absolute; z-index: 2; bottom: 8%; right: 12%; color: #fff; font-size: 9px; font-weight: 900; letter-spacing: .08em; }
+    .image-stage.tiny .art:before, .image-stage.tiny .art:after { border-width: 1px; }
+    .image-stage.tiny .art > div { display: none; }
+    .image-stage.enlarged .art { filter: blur(1.4px); }
+    .image-foot { padding: 9px 13px; border-top: 1px solid #dcebf2; color: #6e899a; font-size: 10px; }
+    .viewer-action { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 15px; margin-top: 14px; }
+    .viewer-action strong, .viewer-action small { display: block; }
+    .viewer-action small { color: #6d899a; margin-top: 2px; }
+    .viewer-action button { white-space: nowrap; }
+    .empty { padding: 35px 15px; color: #7290a0; text-align: center; }
+    dialog { width: min(430px, calc(100vw - 30px)); padding: 0; border: 1px solid #badbe9; border-radius: 12px; box-shadow: 0 20px 60px #12364850; }
+    dialog::backdrop { background: #123b5869; }
+    .dialog-body { padding: 21px; }
+    .dialog-body h2 { margin: 7px 0; }
+    .dialog-body p { color: #59798c; }
+    .dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 21px; }
+    #toast { position: fixed; right: 20px; bottom: 20px; z-index: 5; max-width: min(390px, calc(100vw - 40px)); padding: 11px 14px; border-radius: 9px; background: #174761; color: #fff; box-shadow: 0 8px 25px #123d5540; opacity: 0; transform: translateY(12px); pointer-events: none; transition: .2s; }
+    #toast.visible { opacity: 1; transform: translateY(0); }
+    @media (max-width: 950px) { .app { display: block; } .sidebar { display: none; } .mobile-nav { display: inline-flex; } }
+    @media (max-width: 700px) { .summary { grid-template-columns: repeat(2, minmax(0, 1fr)); } .compare { grid-template-columns: 1fr; } .image-stage { min-height: 280px; } .topbar { align-items: flex-start; } table { min-width: 690px; } }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar" aria-label="Navegação">
+      <div class="brand"><div class="brand-icon" aria-hidden="true">≡</div><div><strong>Fominha de Mangá</strong><small>Central de Processamento</small></div></div>
+      <div class="nav-caption">VISÃO GERAL</div>
+      <button class="nav-link" data-nav="summary"><span aria-hidden="true">◫</span>Resumo da Operação</button>
+      <button class="nav-link active" data-nav="list"><span aria-hidden="true">◇</span>Validar Imagens</button>
+      <div class="nav-caption">PROCESSAMENTO</div>
+      <button class="nav-link muted" disabled><span aria-hidden="true">⇄</span>Auto-Merge</button>
+      <p class="side-note">Protótipo local. Executar e Aplicar simulam o fluxo; nenhum arquivo da obra é alterado.</p>
+    </aside>
+    <main>
+      <div class="topbar"><div><strong>Fominha de Mangá · Central V2</strong><small>Visão Geral / Validar Imagens</small></div><div class="top-actions"><button class="btn small mobile-nav" data-nav="list">Validar Imagens</button><span class="pill">mangago · Salt Society (Yaoi)</span><span class="pill demo">SIMULAÇÃO</span></div></div>
+      <div id="screen" class="content"></div>
+    </main>
+  </div>
+  <dialog id="confirmDialog" aria-labelledby="dialogTitle"><div class="dialog-body"><span class="eyebrow">CONFIRMAÇÃO</span><h2 id="dialogTitle"></h2><p id="dialogText"></p><div class="dialog-actions"><button class="btn" id="dialogCancel">Cancelar</button><button class="btn primary" id="dialogConfirm">Aplicar</button></div></div></dialog>
+  <div id="toast" role="status" aria-live="polite"></div>
+  <script>
+    // Cenário demonstrativo baseado nas quatro divergências de Salt Society; não lê nem grava a obra.
+    const counts = [94,112,99,117,104,114,103,101,104,91,106,99,96,105,104,106,90,90,106,112,104,110,118,101,102,97,107,97,95,96,102,101];
+    const exceptions = {
+      3: { file: "page-099.png", width: 50, height: 41 },
+      8: { file: "page-101.png", width: 50, height: 41 },
+      13: { file: "page-096.png", width: 50, height: 41 },
+      32: { file: "page-101.png", width: 1500, height: 1226 },
+    };
+    const chapters = counts.map((images, index) => ({ number: index + 1, images }));
+    const state = { view: "list", filter: "all", query: "", page: 1, selected: new Set(chapters.map(x => x.number)), analyzed: new Set(), applied: new Set(), current: 3, tolerance: 3, zoom: 100, running: false };
+    const screen = document.getElementById("screen"), dialog = document.getElementById("confirmDialog");
+    let confirmedAction = null, toastTimer = null;
+    const eye = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.6-6 10-6 10 6 10 6-3.6 6-10 6S2 12 2 12Z"/><circle cx="12" cy="12" r="2.5"/></svg>';
+    function escapeHtml(value) { return String(value).replace(/[&<>"']/g, c => ({ "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;" })[c]); }
+    function chapterStatus(number) { return state.applied.has(number) ? "applied" : !state.analyzed.has(number) ? "pending" : exceptions[number] ? "review" : "ok"; }
+    function totals() { return chapters.reduce((result, chapter) => { result[chapterStatus(chapter.number)]++; return result; }, { pending: 0, review: 0, ok: 0, applied: 0 }); }
+    function notify(message) { const toast = document.getElementById("toast"); toast.textContent = message; toast.classList.add("visible"); clearTimeout(toastTimer); toastTimer = setTimeout(() => toast.classList.remove("visible"), 3500); }
+    function ask(title, message, action) { document.getElementById("dialogTitle").textContent = title; document.getElementById("dialogText").textContent = message; confirmedAction = action; dialog.showModal(); }
+    function go(view) { state.view = view; render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+    function heading(title, subtitle) { return `<div class="page-head"><div><span class="eyebrow">VISÃO GERAL · VALIDAR IMAGENS</span><h1>${title}</h1><p class="subtitle">${subtitle}</p></div><span class="pill demo">DADOS DEMONSTRATIVOS</span></div>`; }
+    function statusBadge(number) { const kind = chapterStatus(number), label = { pending: "Não executado", review: "Divergência", ok: "OK", applied: "Aplicado" }[kind]; return `<span class="state ${kind}">${label}</span>`; }
+    function listView() {
+      const total = totals();
+      const matches = chapters.filter(ch => (state.filter === "all" || chapterStatus(ch.number) === state.filter) && String(ch.number).includes(state.query.trim()));
+      const pageCount = Math.max(1, Math.ceil(matches.length / 8)); state.page = Math.min(state.page, pageCount);
+      const rows = matches.slice((state.page - 1) * 8, state.page * 8);
+      screen.innerHTML = heading("Validar Imagens", "Execute a análise de dimensões. Quando houver divergência, use o olhinho para conferir a solução proposta.") +
+        `<section class="panel"><div class="toolbar"><input id="search" class="search" type="search" value="${escapeHtml(state.query)}" placeholder="Cap." aria-label="Buscar capítulo"><div class="segments" role="group" aria-label="Filtrar capítulos">
+          ${[["all",`Todos (${chapters.length})`],["pending",`A fazer (${total.pending})`],["review",`Divergências (${total.review})`],["ok",`OK (${total.ok})`],["applied",`Aplicados (${total.applied})`]].map(([value,label]) => `<button data-filter="${value}" class="${state.filter === value ? "active" : ""}">${label}</button>`).join("")}
+        </div><span class="spacer"></span><span class="tolerance">Tolerância: ${state.tolerance}%</span><button class="btn primary" data-action="execute" ${!state.selected.size || state.running ? "disabled" : ""}>${state.running ? "Executando…" : "Executar"}</button></div>
+        <div class="table-scroll"><table><thead><tr><th><input id="selectVisible" type="checkbox" aria-label="Selecionar capítulos desta página"></th><th>Capítulo</th><th>Imagens</th><th>Largura dominante</th><th>Divergências</th><th>Status</th><th>Visualizar</th></tr></thead><tbody>
+          ${rows.map(ch => `<tr><td><input class="chapter-check" type="checkbox" value="${ch.number}" ${state.selected.has(ch.number) ? "checked" : ""} aria-label="Selecionar capítulo ${ch.number}"></td><td class="chapter">${ch.number}</td><td>${ch.images}</td><td>${state.analyzed.has(ch.number) ? "720 px" : "—"}</td><td>${chapterStatus(ch.number) === "review" ? 1 : state.analyzed.has(ch.number) ? 0 : "—"}</td><td>${statusBadge(ch.number)}</td><td>${chapterStatus(ch.number) === "review" ? `<button class="btn icon" data-eye="${ch.number}" title="Visualizar divergência do capítulo ${ch.number}" aria-label="Visualizar divergência do capítulo ${ch.number}">${eye}</button>` : "—"}</td></tr>`).join("") || `<tr><td colspan="7" class="empty">Nenhum capítulo neste filtro.</td></tr>`}
+        </tbody></table></div><div class="pager"><span>${matches.length ? (state.page - 1) * 8 + 1 : 0}–${Math.min(state.page * 8, matches.length)} de ${matches.length}</span><div><button class="btn small" data-page="prev" ${state.page === 1 ? "disabled" : ""}>‹</button><span>${state.page} / ${pageCount}</span><button class="btn small" data-page="next" ${state.page === pageCount ? "disabled" : ""}>›</button></div></div></section>
+        <div class="message"><strong>Protótipo:</strong> Executar simula a análise. O olhinho só aparece para capítulos analisados com divergência. Aplicar também é uma simulação.</div>`;
+      const visibleChecks = [...screen.querySelectorAll(".chapter-check")];
+      screen.querySelector("#selectVisible").checked = visibleChecks.length > 0 && visibleChecks.every(x => x.checked);
+    }
+    function sampleArt(tiny, enlarged) {
+      const width = Math.round((tiny ? 31 : 238) * state.zoom / 100), height = Math.round((tiny ? 25 : 302) * state.zoom / 100);
+      return `<div class="image-stage ${tiny ? "tiny" : ""} ${enlarged ? "enlarged" : ""}"><div class="art" style="width:${width}px;height:${height}px" aria-label="Arte ilustrativa da página"><div class="art-sun"></div><div class="art-hill"></div><div class="art-bubble"></div><div class="art-label">EXEMPLO</div></div></div>`;
+    }
+    function reviewable() { return Object.keys(exceptions).map(Number).filter(ch => chapterStatus(ch) === "review"); }
+    function viewerView() {
+      const number = state.current, item = exceptions[number], index = reviewable().indexOf(number);
+      if (!item || index < 0) { go("list"); return; }
+      const newHeight = Math.round(item.height * 720 / item.width), lowResolution = item.width < 300;
+      screen.innerHTML = heading("Visualizar divergência", `Cap. ${number} · ${item.file} · 1 de 1 divergência neste capítulo`) +
+        `<div class="viewer-bar"><button class="btn" data-action="back">← Voltar à tabela</button><div class="viewer-title"><strong>Capítulo ${number} · ${escapeHtml(item.file)}</strong><small>Original e solução proposta em paralelo</small></div><div class="viewer-controls"><button class="btn small" data-action="previous" ${index === 0 ? "disabled" : ""}>‹ Anterior</button><span>${index + 1} / ${reviewable().length}</span><button class="btn small" data-action="next" ${index === reviewable().length - 1 ? "disabled" : ""}>Próxima ›</button><button class="btn small" data-zoom="down" aria-label="Diminuir zoom">−</button><span>${state.zoom}%</span><button class="btn small" data-zoom="up" aria-label="Aumentar zoom">+</button></div></div>
+        <div class="compare"><article class="image-card"><header><strong>ORIGINAL</strong><span>${item.width} × ${item.height} px</span></header>${sampleArt(lowResolution, false)}<div class="image-foot">Dimensão atual · imagem ilustrativa</div></article><article class="image-card"><header><strong>SOLUÇÃO PROPOSTA</strong><span>720 × ${newHeight} px</span></header>${sampleArt(false, lowResolution)}<div class="image-foot">Redimensionamento proporcional · imagem ilustrativa</div></article></div>
+        ${lowResolution ? `<div class="message warn"><strong>Resolução muito baixa:</strong> ampliar ${item.width} px para 720 px corrige a largura, mas não recupera detalhes. Confira a página antes de aplicar.</div>` : `<div class="message"><strong>Proposta:</strong> reduzir proporcionalmente ${item.width} × ${item.height} px para 720 × ${newHeight} px.</div>`}
+        <div class="panel viewer-action"><div><strong>Aplicar solução proposta a ${escapeHtml(item.file)}</strong><small>Na V2, o original será preservado e a nova dimensão será verificada.</small></div><button class="btn primary" data-action="apply">Aplicar solução proposta</button></div>`;
+    }
+    function summaryView() { const total = totals(); screen.innerHTML = `<span class="eyebrow">VISÃO GERAL</span><h1>Resumo da Operação</h1><p class="subtitle">Prévia de navegação do protótipo.</p><div class="summary"><div class="metric"><span>Obra</span><strong style="font-size:16px">Salt Society</strong></div><div class="metric"><span>Capítulos</span><strong>32</strong></div><div class="metric warn"><span>Divergências</span><strong>${total.review}</strong></div><div class="metric good"><span>Aplicados</span><strong>${total.applied}</strong></div></div><button class="btn primary" data-action="back">Abrir Validar Imagens</button>`; }
+    function render() { document.querySelectorAll("[data-nav]").forEach(button => button.classList.toggle("active", button.dataset.nav === (state.view === "summary" ? "summary" : "list"))); if (state.view === "viewer") viewerView(); else if (state.view === "summary") summaryView(); else listView(); }
+    function executeSelected() { const selected = [...state.selected]; if (!selected.length) return; state.running = true; render(); setTimeout(() => { selected.forEach(ch => state.analyzed.add(ch)); state.selected.clear(); state.running = false; state.filter = selected.some(ch => exceptions[ch] && !state.applied.has(ch)) ? "review" : "all"; state.page = 1; render(); notify(`Análise simulada: ${selected.length} capítulo(s), ${selected.filter(ch => exceptions[ch] && !state.applied.has(ch)).length} divergência(s).`); }, 900); }
+    function navigateDivergence(direction) { const list = reviewable(), index = list.indexOf(state.current) + direction; if (list[index] !== undefined) { state.current = list[index]; state.zoom = 100; render(); } }
+    function applyProposed() { const number = state.current; state.applied.add(number); state.filter = "all"; state.page = Math.ceil(number / 8); go("list"); notify(`Cap. ${number}: solução aplicada na simulação.`); }
+    document.addEventListener("click", event => { const nav = event.target.closest("[data-nav]"); if (nav) go(nav.dataset.nav); });
+    screen.addEventListener("click", event => {
+      const button = event.target.closest("button"); if (!button) return;
+      if (button.dataset.filter) { state.filter = button.dataset.filter; state.page = 1; render(); return; }
+      if (button.dataset.page) { state.page += button.dataset.page === "next" ? 1 : -1; render(); return; }
+      if (button.dataset.eye) { state.current = Number(button.dataset.eye); state.zoom = 100; go("viewer"); return; }
+      if (button.dataset.zoom) { state.zoom = Math.max(60, Math.min(140, state.zoom + (button.dataset.zoom === "up" ? 10 : -10))); render(); return; }
+      switch (button.dataset.action) {
+        case "back": go("list"); break;
+        case "execute": executeSelected(); break;
+        case "previous": navigateDivergence(-1); break;
+        case "next": navigateDivergence(1); break;
+        case "apply": { const x = exceptions[state.current], height = Math.round(x.height * 720 / x.width); ask("Aplicar solução proposta?", `Cap. ${state.current} · ${x.file}: ${x.width} × ${x.height} px → 720 × ${height} px. Esta é apenas uma simulação; nenhum arquivo será alterado.`, applyProposed); break; }
+      }
+    });
+    screen.addEventListener("change", event => {
+      if (event.target.classList.contains("chapter-check")) { const chapter = Number(event.target.value); event.target.checked ? state.selected.add(chapter) : state.selected.delete(chapter); const visible = [...screen.querySelectorAll(".chapter-check")]; screen.querySelector("#selectVisible").checked = visible.every(x => x.checked); }
+      if (event.target.id === "selectVisible") { screen.querySelectorAll(".chapter-check").forEach(box => { box.checked = event.target.checked; const chapter = Number(box.value); event.target.checked ? state.selected.add(chapter) : state.selected.delete(chapter); }); }
+      const execute = screen.querySelector('[data-action="execute"]');
+      if (execute) execute.disabled = !state.selected.size || state.running;
+    });
+    screen.addEventListener("input", event => { if (event.target.id !== "search") return; const position = event.target.selectionStart; state.query = event.target.value; state.page = 1; render(); const search = screen.querySelector("#search"); search.focus(); search.setSelectionRange(position, position); });
+    document.getElementById("dialogCancel").addEventListener("click", () => dialog.close());
+    document.getElementById("dialogConfirm").addEventListener("click", () => { dialog.close(); const action = confirmedAction; confirmedAction = null; action?.(); });
+    render();
+  </script>
+</body>
+</html>

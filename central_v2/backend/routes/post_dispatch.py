@@ -19,9 +19,14 @@ from central_v2.backend.routes.balanceamento import balanceamento_job_response
 from central_v2.backend.routes.response import RouteResponse
 from central_v2.backend.routes.laboratorio_dispatch import dispatch_laboratorio_post
 from central_v2.backend.routes.combo_turbo import dispatch_post as dispatch_combo_turbo_post
+from central_v2.backend.routes.image_validation import analyze_response, apply_response
 
 
 def dispatch_post(path: str, payload: object, output_root: Path = OUTPUT_ROOT) -> RouteResponse | None:
+    if urlparse(path).path == "/api/images/validation/analyze":
+        return analyze_response(payload, output_root)
+    if urlparse(path).path == "/api/images/validation/apply":
+        return apply_response(payload, output_root)
     combo_response = dispatch_combo_turbo_post(path, payload, output_root)
     if combo_response is not None:
         return combo_response

@@ -45,6 +45,7 @@ from central_v2.backend.routes.special_treatments import (
 )
 from central_v2.backend.routes.laboratorio_dispatch import dispatch_laboratorio_get
 from central_v2.backend.routes.combo_turbo import dispatch_get as dispatch_combo_turbo_get
+from central_v2.backend.routes.image_validation import dispatch_get as image_validation_get
 
 
 def dispatch_get(
@@ -81,6 +82,9 @@ def dispatch_get(
             body=catalog_response(output_root),
         )
 
+    validation = image_validation_get(request.path, parse_qs(request.query), output_root)
+    if validation is not None:
+        return validation
     handled, response = dispatch_laboratorio_get(request, output_root)
     if handled:
         return response

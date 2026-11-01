@@ -119,6 +119,10 @@ export const routes = {
     context: "visao-geral",
     module: "/visao_geral/resumo_operacao.js",
   },
+  "validar-imagens": {
+    context: "visao-geral",
+    module: "/visao_geral/validar_imagens/index.js",
+  },
 };
 
 export function resolveRoute(action) {

@@ -1,0 +1,50 @@
+.image-validation { display: grid; gap: var(--space-md); min-width: 0; }
+.image-validation-viewer-heading span:first-child { color: var(--color-primary); font-size: var(--font-size-label); font-weight: var(--font-weight-label); letter-spacing: .11em; }
+.image-validation-heading h1 { margin: 0 0 4px; font-size: var(--font-size-title); line-height: 1.25; }
+.image-validation-panel { min-width: 0; overflow: hidden; border: 1px solid var(--color-border); border-radius: 12px; background: var(--color-surface); }
+.image-validation-toolbar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 14px; border-bottom: 1px solid var(--color-border); }
+.image-validation-toolbar input { width: 112px; min-height: var(--control-height); padding: 7px 10px; border: 1px solid var(--color-border-primary); border-radius: var(--radius-control); background: var(--color-surface); color: var(--color-text); }
+.image-validation-toolbar > .primary { min-height: 38px; margin-left: auto; border: 1px solid #366eb7; border-radius: 7px; background: var(--color-primary); color: var(--color-surface); white-space: nowrap; }
+.image-validation-toolbar > .primary:disabled { opacity: .55; }
+.image-validation-filters { display: flex; flex-wrap: wrap; gap: 3px; }
+.image-validation-filter { min-height: 32px; padding: 5px 9px; border: 1px solid transparent; border-radius: 7px; background: transparent; color: var(--color-text-muted); font-size: var(--font-size-small); cursor: pointer; }
+.image-validation-filter.active { border-color: var(--color-border-primary); background: var(--color-primary-soft); color: var(--color-primary-hover); font-weight: var(--font-weight-semibold); }
+.image-validation-status { padding: 12px 15px; }
+.image-validation-status[hidden] { display: none; }
+.image-validation-panel [data-results] { overflow-x: auto; }
+.image-validation-panel .data-table { min-width: 670px; }
+.image-validation-panel .data-table td:first-child,
+.image-validation-panel .data-table th:first-child { width: 42px; text-align: center; }
+.image-validation-panel .data-table td:last-child,
+.image-validation-panel .data-table th:last-child { width: 110px; text-align: center; white-space: nowrap; }
+.image-validation-panel .data-table input[type="checkbox"] { accent-color: var(--color-primary); }
+.image-validation-badge { display: inline-block; padding: 4px 9px; border-radius: 99px; font-size: var(--font-size-label); font-weight: var(--font-weight-semibold); white-space: nowrap; }
+.image-validation-badge.is-pending { background: #edf2f5; color: #607e8e; }
+.image-validation-badge.is-review { background: #fff1d9; color: var(--color-warning); }
+.image-validation-badge.is-attention { background: #fff1d9; color: var(--color-warning); }
+.image-validation-badge.is-ok { background: #e2f4eb; color: var(--color-success); }
+.image-validation-badge.is-applied { background: var(--color-primary-soft); color: var(--color-primary-hover); }
+.image-validation-eye { width: var(--control-height); padding: 0; }
+.image-validation-eye .ui-icon { width: var(--icon-size); height: var(--icon-size); }
+.image-validation-panel .job-progress { margin: 14px; }
+.image-validation-viewer-heading { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.image-validation-viewer-heading h1 { margin: 2px 0 0; }
+.image-validation-zoom { display: flex; align-items: center; gap: 7px; margin-left: auto; }
+.image-validation-zoom > span { min-width: 42px; text-align: center; font-size: var(--font-size-small); }
+.image-validation-divergence { overflow: hidden; border: 1px solid var(--color-border); border-radius: 10px; background: var(--color-surface); }
+.image-validation-divergence-title { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px; border-bottom: 1px solid var(--color-border); }
+.image-validation-divergence-title span { color: var(--color-warning); font-size: var(--font-size-small); }
+.image-validation-compare { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; padding: 12px; align-items: start; }
+.image-validation-card { min-width: 0; overflow: hidden; border: 1px solid var(--color-border-primary); border-radius: var(--radius-control); }
+.image-validation-card-head { display: flex; justify-content: space-between; gap: 8px; padding: 10px 12px; border-bottom: 1px solid var(--color-border); font-size: var(--font-size-small); }
+.image-validation-card-head span { color: var(--color-text-muted); white-space: nowrap; }
+.image-validation-stage { min-height: 300px; max-height: min(75vh, 900px); overflow: auto; background: var(--color-background); }
+.image-validation-stage img { display: block; width: 100%; height: auto; }
+.image-validation-warning { padding: 0 14px 12px; color: var(--color-warning) !important; font-size: var(--font-size-small); }
+.image-validation-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border-top: 1px solid var(--color-border); }
+.image-validation-actions span { color: var(--color-text-muted); font-size: var(--font-size-small); }
+@media (max-width: 720px) {
+  .image-validation-compare { grid-template-columns: 1fr; }
+  .image-validation-toolbar > .primary { margin-left: 0; }
+  .image-validation-stage { max-height: 65vh; }
+}
