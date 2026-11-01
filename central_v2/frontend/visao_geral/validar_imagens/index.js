@@ -57,7 +57,6 @@ export function render(container) {
           || !Array.isArray(result.chapters)) throw new Error("Dados de outra obra recebidos.");
       rows = result.chapters;
       list.update(rows);
-      if (changed) list.selectAll();
       if (openChapter) {
         const row = rows.find((item) => item.chapter === openChapter && item.status === "review");
         if (row?.images.length) viewer.update(row, context);
