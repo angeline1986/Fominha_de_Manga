@@ -20,6 +20,7 @@ export function render(container) {
   }
 
   function back() {
+    viewer.dispose();
     openChapter = null;
     container.replaceChildren(list.element);
   }
@@ -142,6 +143,7 @@ export function render(container) {
     revision += 1;
     request?.abort();
     unsubscribe();
+    viewer.dispose();
     list.dispose();
   };
 }
