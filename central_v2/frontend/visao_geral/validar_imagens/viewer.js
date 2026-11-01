@@ -6,14 +6,7 @@ export function createValidationViewer({ onBack, onApply }) {
   const element = document.createElement("section");
   element.className = "image-validation image-validation-viewer";
   let zoom = 100;
-  let zoomMode = "fit";
   let disposeFocus = null;
-
-  function imageWidth(image) {
-    return zoomMode === "native"
-      ? `${Math.round(Number(image.dataset.nativeWidth) * zoom / 100)}px`
-      : `${zoom}%`;
-  }
 
   function update(row, context) {
     const focused = element.classList.contains("is-focus-mode");
@@ -47,12 +40,11 @@ export function createValidationViewer({ onBack, onApply }) {
     controls.setAttribute("aria-label", "Controles de zoom");
     const zoomText = document.createElement("output");
     zoomText.textContent = `${zoom}%`;
-    function setZoom(value, mode = zoomMode) {
+    function setZoom(value) {
       zoom = Math.min(150, Math.max(50, value));
-      zoomMode = mode;
       zoomText.textContent = `${zoom}%`;
       element.querySelectorAll(".image-validation-stage img").forEach((img) => {
-        img.style.width = imageWidth(img);
+        img.style.width = `${zoom}%`;
       });
     }
     for (const [symbol, change, name] of [["−", -10, "Diminuir zoom"], ["+", 10, "Aumentar zoom"]]) {
@@ -65,13 +57,13 @@ export function createValidationViewer({ onBack, onApply }) {
       if (change < 0) controls.append(button, zoomText);
       else controls.append(button);
     }
-    const nativeZoom = document.createElement("button");
-    nativeZoom.className = "btn image-validation-zoom-reset";
-    nativeZoom.type = "button";
-    nativeZoom.textContent = "1:1";
-    nativeZoom.setAttribute("aria-label", "Visualizar em escala 1 para 1");
-    nativeZoom.addEventListener("click", () => setZoom(100, "native"));
-    controls.append(nativeZoom);
+    const resetZoom = document.createElement("button");
+    resetZoom.className = "btn image-validation-zoom-reset";
+    resetZoom.type = "button";
+    resetZoom.textContent = "1:1";
+    resetZoom.setAttribute("aria-label", "Restaurar escala de visualização em 100%");
+    resetZoom.addEventListener("click", () => setZoom(100));
+    controls.append(resetZoom);
     const toolbarControls = document.createElement("div");
     toolbarControls.className = "image-validation-viewer-controls";
     const focus = document.createElement("button");
@@ -117,8 +109,7 @@ export function createValidationViewer({ onBack, onApply }) {
         const imageElement = document.createElement("img");
         imageElement.alt = `${label.toLocaleLowerCase("pt-BR")} de ${image.file}`;
         imageElement.src = validationImageUrl(context.provider, context.manga, row.chapter, image.file, kind);
-        imageElement.dataset.nativeWidth = String(kind === "original" ? image.width : row.dominant_width);
-        imageElement.style.width = imageWidth(imageElement);
+        imageElement.style.width = `${zoom}%`;
         stage.append(imageElement);
         card.append(cardHead, stage);
         comparison.append(card);
