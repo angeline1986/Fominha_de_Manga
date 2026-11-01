@@ -17,6 +17,7 @@ from .consolidated import consolidated_is_current
 from .manifests import _manifest_matches_merge, _stage_manifest
 from .stages import CONSOLIDATED, LEVEL1, LEVEL3, stage_chapter
 from .styled_balloon_detector import ALGORITHM
+from .level3_source import pre_glass_mapear_current
 
 
 def query_level3(manga: Path, merge_rows: dict | None = None) -> dict:
@@ -60,9 +61,13 @@ def _chapter_row(manga: Path, chapter: str, merge_rows: dict) -> dict:
     except (OSError, ValueError, TypeError):
         manifest = {}
     observe_shadow_read(manga, "mapear", chapter, debug_only=True)
+    source_current = (
+        manifest.get("source_consolidated_manifest_sha256") ==
+        _file_sha256(stage_chapter(manga, CONSOLIDATED, chapter) / "json/clean-manifest.json")
+        or pre_glass_mapear_current(manga, chapter, manifest)
+    ) if consolidated_ready else False
     current = (ready and consolidated_ready and manifest.get("algorithm") == ALGORITHM
-               and manifest.get("source_consolidated_manifest_sha256") ==
-               _file_sha256(stage_chapter(manga, CONSOLIDATED, chapter) / "json/clean-manifest.json")
+               and source_current
                and manifest.get("integrity_ok") is True
                and manifest.get("source_merge_manifest_sha256") ==
                _file_sha256(v3.merge_manifest_path(images_root(manga) / chapter))
@@ -74,7 +79,7 @@ def _chapter_row(manga: Path, chapter: str, merge_rows: dict) -> dict:
         "merge_count": int(merge.get("merge_count") or 0),
         "cleaned": current, "selectable": ready and not current,
         "level3_status": "processed" if current else "pending" if ready else "missing_level1",
-        "pages_analyzed": int(manifest.get("pages_analyzed") or 0) if current else 0,
+        "pages_analyzed": int(manifest.get("images_analyzed") or 0) if current else 0,
         "candidate_count": int(manifest.get("candidate_count") or 0) if current else 0,
         "candidate_pages": candidate_pages,
     }

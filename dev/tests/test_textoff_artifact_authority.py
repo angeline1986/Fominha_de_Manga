@@ -97,6 +97,10 @@ class ArtifactAuthorityTests(unittest.TestCase):
             manifest = {**selection, "sha256": hashlib.sha256(content).hexdigest()}
             folder = self.chapter_dir("mapear_input_consolidado", side) / "json/clean-manifest.json"
             self.write_json(folder, {"selections": [manifest]})
+        self.write_json(self.chapter_dir("mapear", "target") / "json/clean-manifest.json", {
+            "source_artifacts": [filename],
+            "source_artifact_sha256": [hashlib.sha256(b"target-image").hexdigest()],
+        })
         with patch.object(merged_routes, "_context", return_value=("p", "title")), \
              patch.object(merged_routes, "resolve_manga", return_value=self.manga), \
              patch.object(merged_routes, "query_level3", return_value={"chapters": [{

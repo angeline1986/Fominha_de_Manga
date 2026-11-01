@@ -6,6 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 from central_v2.backend.routes.router import dispatch_get, dispatch_post
+from central_v2.backend.orchestration.textoff_merged.stages import LEVEL3, stage_chapter
 
 
 class CentralV2TextoffMergedRouteTests(unittest.TestCase):
@@ -56,6 +57,11 @@ class CentralV2TextoffMergedRouteTests(unittest.TestCase):
                 "artifact": "clean/page-001-001_clean.png", "source": "page-001-001.png",
                 "selected_from": "TO_MERGED_NIVEL_I", "sha256": hashlib.sha256(b"merge-image").hexdigest(),
             }]}), encoding="utf-8")
+            mapear = stage_chapter(output / "ridi/obra", LEVEL3, "3") / "json/clean-manifest.json"
+            mapear.parent.mkdir(parents=True, exist_ok=True)
+            mapear.write_text(json.dumps({"source_artifacts": [image.name],
+                                          "source_artifact_sha256": [hashlib.sha256(b"merge-image").hexdigest()]}),
+                              encoding="utf-8")
             row = {"chapter": "3", "cleaned": True,
                    "candidate_pages": [{"source": image.name, "candidates": [{
                        "bbox": [1, 2, 3, 4], "candidate_type": "irregular_outline"}]}]}
