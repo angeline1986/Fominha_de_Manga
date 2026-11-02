@@ -5,7 +5,7 @@ import { browserModules } from './modules.mjs';
 const savedItem = { id: 'persisted-id', numero: 3, tipo: 'texto_residual', observacao: null,
   box_normalized: { left: .1, top: .2, width: .3, height: .2 }, box_pixels: { x: 10, y: 20, width: 30, height: 20 } };
 
-async function setup({ get = [], postError = null, onPersistedCount = () => {} } = {}) {
+async function setup({ get = [], postError = null, onPersistedCount = () => {}, scope } = {}) {
   const calls = []; let getIndex = 0;
   const fetch = async (url, options = {}) => {
     calls.push({ url, options });
@@ -21,7 +21,7 @@ async function setup({ get = [], postError = null, onPersistedCount = () => {} }
   };
   const load = browserModules({ fetch, AbortController });
   const { createResidueCatalogState } = await load('/texto_off/comparison/residue_catalog_state.js');
-  const state = createResidueCatalogState({ provider: 'ridi', manga: 'obra', chapter: '12', step: '1' }, () => {}, onPersistedCount);
+  const state = createResidueCatalogState({ provider: 'ridi', manga: 'obra', chapter: '12', step: '1', scope }, () => {}, onPersistedCount);
   return { state, calls };
 }
 
@@ -46,6 +46,27 @@ test('catalog page GET restores persisted boxes and revisiting does not append d
   assert.equal(env.state.current().occurrences.length, 1);
   assert.equal(env.calls.filter((call) => call.options.method !== 'POST').length, 2);
   assert.match(env.calls[0].url, /step=1/);
+});
+
+test('Check salva Outro sem descrição e mantém a nota antiga se houver', async () => {
+  const env = await setup({ scope: 'check', get: [{ occurrences: [], decision_persisted: false }] });
+  await env.state.setPage('page-A.png');
+  env.state.add({ left: .1, top: .2, width: .3, height: .2 }, 'other-id');
+  env.state.setType('other-id', 'outro');
+  assert.equal(env.state.canSaveChapter(), true);
+  assert.equal((await env.state.saveChapter()).ok, true);
+  const post = env.calls.find((call) => call.options.method === 'POST');
+  assert.equal(JSON.parse(post.options.body).pages[0].occurrences[0].note, null);
+
+  const old = { ...savedItem, tipo: 'outro', observacao: 'marca antiga' };
+  const reopened = await setup({ scope: 'check', get: [{
+    occurrences: [old], decision_persisted: true,
+  }] });
+  await reopened.state.setPage('page-A.png');
+  reopened.state.add({ left: .5, top: .5, width: .2, height: .2 }, 'new-id');
+  assert.equal((await reopened.state.saveChapter()).ok, true);
+  const savedAgain = reopened.calls.find((call) => call.options.method === 'POST');
+  assert.equal(JSON.parse(savedAgain.options.body).pages[0].occurrences[0].note, 'marca antiga');
 });
 
 test('catalog state posts canonical normalized boxes and marks successful edits persisted', async () => {

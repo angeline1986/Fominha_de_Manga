@@ -96,10 +96,6 @@
   justify-self: center;
   border-radius: 50%;
 }
-.comparison-residue-panel.is-check .comparison-residue-row input[data-note] {
-  grid-column: 1 / -1;
-}
-
 /* CHECK MINIMALISTA V2 - patch local */
 /* Cartao compacto: numero, select sempre aparente e excluir. */
 .comparison-residue-panel.is-check .comparison-residue-row {
@@ -181,12 +177,6 @@
   grid-row: 1;
   align-self: center;
   justify-self: center;
-}
-.comparison-residue-panel.is-check .comparison-residue-row > input[data-note] {
-  grid-column: 2 / -1;
-  grid-row: 2;
-  margin: 0;
-  width: 100%;
 }
 /* Permite mostrar o tooltip sem cortar o cartao. */
 .comparison-residue-panel.is-check .comparison-residue-layers > div[data-layers] {

@@ -22,7 +22,8 @@ TYPE_LABELS = {
 
 
 def validate_occurrences(raw, natural_width: int, natural_height: int,
-                         *, allow_unclassified: bool = False) -> list[dict]:
+                         *, allow_unclassified: bool = False,
+                         require_other_note: bool = True) -> list[dict]:
     if not isinstance(raw, list):
         raise ValueError("A lista de ocorrências é inválida.")
     if natural_width <= 0 or natural_height <= 0:
@@ -77,9 +78,11 @@ def validate_occurrences(raw, natural_width: int, natural_height: int,
             raise ValueError("A área selecionada ultrapassa os limites da imagem.")
         note = item.get("note")
         if kind == "outro":
-            if not isinstance(note, str) or not note.strip():
+            if note is not None and not isinstance(note, str):
+                raise ValueError("Descrição do defeito inválida.")
+            note = note.strip() if note else None
+            if require_other_note and not note:
                 raise ValueError("Descreva o defeito classificado como Outro.")
-            note = note.strip()
         else:
             note = None
         normalized = {

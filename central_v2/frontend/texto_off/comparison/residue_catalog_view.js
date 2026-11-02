@@ -76,7 +76,7 @@ export function renderResidueOccurrences(overlay, layers, occurrences, options, 
     }
     row.querySelector("select").value = item.type;
 
-    if (item.type === "outro") appendNote(row, item, number);
+    if (!check && item.type === "outro") appendNote(row, item, number);
     rows.push(row);
   });
   layers.replaceChildren(...rows);

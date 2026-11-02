@@ -194,5 +194,5 @@ function isValidOccurrence(item, isCheck = false) {
   return (knownType || sourceUnclassified) && values.every(Number.isFinite)
     && box.left >= 0 && box.top >= 0 && box.width > 0 && box.height > 0
     && box.left + box.width <= 1 && box.top + box.height <= 1
-    && (item.type !== "outro" || Boolean(item.note?.trim()));
+    && (item.type !== "outro" || isCheck || Boolean(item.note?.trim()));
 }

@@ -89,7 +89,7 @@ def _check_batch_post_response(payload: dict, output_root: Path) -> RouteRespons
         with Image.open(pair_by_name[page]["after"]) as image:
             occurrences = validate_occurrences(
                 item.get("occurrences"), image.width, image.height,
-                allow_unclassified=True,
+                allow_unclassified=True, require_other_note=False,
             )
         validated.append((page, [dict(row, page=page) for row in occurrences]))
     try:

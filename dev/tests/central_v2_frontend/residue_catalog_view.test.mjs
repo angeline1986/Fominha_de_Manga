@@ -88,3 +88,17 @@ test('Check boxes, numbers and bullets use the exact classification palette afte
   assert.match(css, /border: 2px solid var\(--check-box-color/);
   assert.match(css, /\.comparison-residue-box \.comparison-residue-number \{[^}]*var\(--check-box-color/);
 });
+
+test('Outro no Check mostra apenas o select; catálogo comum mantém a descrição', async () => {
+  const load = browserModules({ document: { createElement: () => new Element() } }, {
+    '/_shared/icons/icons.js': 'export function iconMarkup() { return ""; }',
+  });
+  const { renderResidueOccurrences } = await load('/texto_off/comparison/residue_catalog_view.js');
+  const area = { id: 'other', type: 'outro', note: 'descrição antiga',
+    box: { left: .1, top: .1, width: .2, height: .2 } };
+  const overlay = new Element(), layers = new Element();
+  renderResidueOccurrences(overlay, layers, [area], '', { check: true });
+  assert.equal(layers.children[0].children.length, 0);
+  renderResidueOccurrences(overlay, layers, [area], '', { check: false });
+  assert.equal(layers.children[0].children[0].dataset.note, 'other');
+});
