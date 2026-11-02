@@ -105,7 +105,7 @@ test('chapter reexecution and occurrence review target supported scopes', async 
   dispose();
 });
 
-test('Suave preview crops the real page by ROI and search finds occurrences', async () => {
+test('Suave preview crops the real page by ROI and search filters only chapters', async () => {
   const { load, tables, images, body, data } = setup({ mockReview: true });
   const { render } = await load('/texto_off/especiais/level8.js');
   const container = new Element(), dispose = render(container); await tick();
@@ -118,7 +118,9 @@ test('Suave preview crops the real page by ROI and search finds occurrences', as
   const query = container.children[0].nodes['[data-query]'];
   query.value = data.gradiente_suave.chapters[0].occurrences[1].id;
   query.events.input();
-  assert.equal(shown(tables, 'occurrence')[0].item.id, query.value);
+  assert.equal(shown(tables, 'occurrence').length, 0);
+  query.value = '1'; query.events.input();
+  assert.equal(shown(tables, 'occurrence').length, 2);
   dispose();
 });
 

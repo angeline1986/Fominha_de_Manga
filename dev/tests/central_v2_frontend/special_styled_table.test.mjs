@@ -81,15 +81,19 @@ test('Artístico paginates chapters with the shared controls', async () => {
   dispose();
 });
 
-test('Artístico finds the displayed balloon label and resets the chapter page', async () => {
+test('Artístico searches only chapters with the compact table field', async () => {
   const { load, data, tables } = setup({ mockReview: true });
   data.estilizado.chapters[0].occurrences = [occurrence('A'), occurrence('B')];
   const { render } = await load('/texto_off/especiais/level7.js');
   const container = new Element(), dispose = render(container); await tick();
+  assert.match(container.children[0].markup, /placeholder="Cap\."/);
   const query = container.children[0].nodes['[data-query]'];
   query.value = 'Balão 02'; query.events.input();
-  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'occurrence').length, 1);
-  assert.equal(tables.at(-1).rows.find((row) => row.type === 'occurrence').item.id, 'B');
+  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'occurrence').length, 0);
+  query.value = 'art.png'; query.events.input();
+  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'occurrence').length, 0);
+  query.value = '2'; query.events.input();
+  assert.equal(tables.at(-1).rows.filter((row) => row.type === 'occurrence').length, 2);
   dispose();
 });
 

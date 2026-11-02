@@ -55,7 +55,8 @@ export function setup({ mockReview = false } = {}) {
     constructor() { this.naturalWidth = 100; this.naturalHeight = 100; images.push(this); }
     set src(value) { this.url = value; }
   }
-  const load = browserModules({ document: { createElement: (tag) => new Element(tag),
+  const load = browserModules({ document: { addEventListener() {},
+      createElement: (tag) => new Element(tag),
       createTextNode: (text) => Object.assign(new Element('text'), { textContent: text }), body },
     window: { addEventListener() {}, removeEventListener() {} },
     innerWidth: 1200, innerHeight: 800, Image: ImageMock,

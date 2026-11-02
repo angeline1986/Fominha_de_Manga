@@ -5,15 +5,12 @@ export const artisticDone = (item) => ["processed", "no_change"].includes(item.s
 
 export function artisticGroups(chapters, query, filter) {
   const term = query.trim().toLocaleLowerCase("pt-BR");
-  return chapters.map((chapter) => {
+  return chapters.filter((chapter) => String(chapter.chapter)
+    .toLocaleLowerCase("pt-BR").includes(term)).map((chapter) => {
     const pages = chapter.pages.map((name) => {
       const all = (chapter.occurrences || []).filter((item) => item.page === name);
-      const occurrences = all
-        .filter((item) => filter === "all" || (filter === "completed"
-          ? artisticDone(item) : !artisticDone(item)))
-        .filter((item) => !term || `${chapter.chapter} ${name} ${item.id} balão ${String(
-          all.findIndex((entry) => entry.id === item.id) + 1).padStart(2, "0")}`
-          .toLocaleLowerCase("pt-BR").includes(term));
+      const occurrences = all.filter((item) => filter === "all" || (filter === "completed"
+        ? artisticDone(item) : !artisticDone(item)));
       return { name, occurrences };
     }).filter((page) => page.occurrences.length);
     return { chapter, pages, occurrences: pages.flatMap((page) => page.occurrences) };

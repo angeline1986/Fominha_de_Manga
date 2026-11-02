@@ -1,6 +1,5 @@
 /* Consistência visual validada em navegador para as tabelas da Central V2. */
 .auto-merge-page:not(.artistico-page):not(.textoff-special-manual) .auto-merge-search,
-.artistico-page .artistico-search,
 .manual-merge-page .manual-merge-toolbar > label {
   flex: 0 1 240px;
   width: 240px;
@@ -59,7 +58,6 @@
 
 @media (max-width: 700px) {
   .auto-merge-page:not(.artistico-page):not(.textoff-special-manual) .auto-merge-search,
-  .artistico-page .artistico-search,
   .manual-merge-page .manual-merge-toolbar > label {
     flex: 1 1 100%; width: auto; min-width: 0; max-width: none;
   }

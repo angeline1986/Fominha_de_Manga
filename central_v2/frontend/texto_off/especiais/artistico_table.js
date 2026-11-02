@@ -20,8 +20,8 @@ export function renderSpecialWorklist(container, treatment = "estilizado") {
   root.className = "auto-merge-page artistico-page";
   root.innerHTML = `<header class="artistico-heading"><h1 class="table-heading-tooltip" data-tooltip="Gerencie os tratamentos por capítulo, página e ocorrência" tabindex="0" aria-description="Gerencie os tratamentos por capítulo, página e ocorrência">Pincel & Retoques <span>/ ${config.label}</span></h1></header>
     <div class="artistico-panel"><div class="artistico-toolbar">
-      <label class="artistico-search"><span class="visually-hidden">Buscar capítulo, página ou ocorrência</span>
-        <input type="search" data-query placeholder="Buscar capítulo, página ou ocorrência..."></label>
+      <label class="artistico-search"><span class="visually-hidden">Buscar capítulo</span>
+        <input type="search" data-query placeholder="Cap."></label>
       <div class="artistico-filters" data-filters role="group" aria-label="Filtrar por situação"></div>
       <button class="btn artistico-execute" type="button" data-execute disabled>Executar
         <span class="artistico-execute-count" data-count hidden></span></button></div>
