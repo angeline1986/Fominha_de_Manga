@@ -52,9 +52,9 @@ def start(payload, output_root, assisted=False):
                                             on_progress=checkpoints(False))
         else:
             response = execute(payload, output_root, on_progress=checkpoints(True))
-            if response.status == 422:
-                failure = _parse(response)
-                run_id = failure.get("run_id")
+            if response.status in (200, 422):
+                initial = _parse(response)
+                run_id = initial.get("run_id")
                 if run_id:
                     proposal = authorization_candidates({**payload, "run_id": run_id}, output_root)
                     if proposal.status == 200:
@@ -69,7 +69,7 @@ def start(payload, output_root, assisted=False):
                                 "component_ids": [row["id"] for row in rows]}
                             response = confirm_authorization(
                                 authorized, output_root, on_progress=checkpoints(False))
-                        # No eligible candidate: return original failure.
+                        # No eligible candidate: keep the initial result.
                     elif proposal.status != 422:
                         response = proposal
         body = _parse(response)

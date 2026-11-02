@@ -96,12 +96,14 @@ def authorization_candidates(payload, output_root=None):
         folder, manga = folder_for_request(payload, output_root, 'textoff_laboratorio', STAGING)
         manifest, request = read_json(folder / 'manifest.json'), read_json(folder / 'request.json')
         error = manifest.get('error')
+        failed_without_authorized = (manifest.get('execution_status') == 'failed'
+                and isinstance(error, dict) and error.get('error')
+                == 'Nenhum componente autorizado intersecta as seleções.')
         if (manifest.get('run_id') != run_id or request.get('run_id') != run_id
                 or request.get('treatment') != 'degrade'
                 or not belongs_to_manga(request, manga)
-                or manifest.get('execution_status') != 'failed'
-                or not isinstance(error, dict) or error.get('error')
-                != 'Nenhum componente autorizado intersecta as seleções.'):
+                or (manifest.get('execution_status') != 'succeeded'
+                    and not failed_without_authorized)):
             raise ValueError('Execução não oferece autorização assistida.')
         source = request['source']
         if sha256(Path(source['path'])) != source['sha256']:

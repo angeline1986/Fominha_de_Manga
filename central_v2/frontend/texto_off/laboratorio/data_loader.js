@@ -17,7 +17,7 @@ export function connectLaboratorio(root) {
     ));
     if (!provider || !manga) { send({}); return; }
     const query = new URLSearchParams({ provider, manga, source });
-    if (source === "merge") query.set("check_other", "1");
+    if (source === "merge") query.set("check_marked", "1");
     try {
       const response = await fetch(`/api/textoff/laboratorio/pages?${query}`, {
         signal: controller.signal, cache: "no-store",

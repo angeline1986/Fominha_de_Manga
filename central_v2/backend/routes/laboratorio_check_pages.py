@@ -9,6 +9,11 @@ from central_v2.backend.orchestration.textoff_merged.stages import stage_root
 from central_v2.backend.state.manga_state import IMAGE_EXTENSIONS
 from central_v2.backend.state.sorting import natural_sort_key
 
+REVIEW_TYPES = frozenset({
+    "outro", "residuo_degrade", "balao_estilizado",
+    "residuo_gradiente", "residuo_balao_solido_branco",
+})
+
 
 def _saved(manga, provider, chapter):
     path = manifest_path(manga, chapter)
@@ -18,18 +23,18 @@ def _saved(manga, provider, chapter):
     return _read_check_manifest(path, document)
 
 
-def _other_names(manifest):
+def _marked_names(manifest):
     return {row["page"] for row in manifest["approved_occurrences"]
-            if row.get("tipo") == "outro" and isinstance(row.get("page"), str)
+            if row.get("tipo") in REVIEW_TYPES and isinstance(row.get("page"), str)
             and row["page"] not in {".", ".."}
             and Path(row["page"]).name == row["page"]
             and "\\" not in row["page"]
             and Path(row["page"]).suffix.lower() in IMAGE_EXTENSIONS}
 
 
-def other_pages(manga, provider, chapter):
+def marked_pages(manga, provider, chapter):
     manifest = _saved(manga, provider, chapter)
-    return _other_names(manifest) if manifest is not None else set()
+    return _marked_names(manifest) if manifest is not None else set()
 
 
 def check_chapter_names(manga):
@@ -47,7 +52,7 @@ def check_pages(manga, provider, chapter):
     manifest = _saved(manga, provider, chapter)
     if manifest is None:
         return {}
-    names = _other_names(manifest)
+    names = _marked_names(manifest)
     snapshots = manifest.get("image_snapshot")
     if snapshots is None:
         from central_v2.backend.orchestration.textoff_merged.comparison import comparison_pairs

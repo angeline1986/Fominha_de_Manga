@@ -22,7 +22,7 @@ export function createLaboratorioView(container) {
     <div class="lab-title">LABORATÓRIO</div>
     <div class="lab-columns">
       <aside class="lab-panel lab-pages">
-        <div class="lab-panel-head"><div class="lab-source-toggle" role="group" aria-label="Origem das imagens"><button type="button" data-lab-source="img" aria-pressed="false">IMG</button><button type="button" data-lab-source="merge" aria-pressed="false">MERGE</button><button type="button" data-lab-source="glass" class="is-active" aria-pressed="true" title="Auto-Cleaner Glass · Básica">GLASS</button><button type="button" data-lab-source="check" aria-pressed="false" title="Auto-Cleaner Check · Outro">CHECK</button></div></div>
+        <div class="lab-panel-head"><div class="lab-source-toggle" role="group" aria-label="Origem das imagens"><button type="button" data-lab-source="img" aria-pressed="false">IMG</button><button type="button" data-lab-source="merge" aria-pressed="false">MERGE</button><button type="button" data-lab-source="glass" class="is-active" aria-pressed="true" title="Auto-Cleaner Glass · Básica">GLASS</button><button type="button" data-lab-source="check" aria-pressed="false" title="Auto-Cleaner Check · Áreas marcadas">CHECK</button></div></div>
         <div class="lab-pages-body">
           <div class="lab-page-selectors">
             <select class="lab-select-chapter" data-lab-chapter aria-label="Selecionar capítulo"><option value="">Cap.</option></select>

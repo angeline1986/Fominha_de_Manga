@@ -26,14 +26,14 @@ test('Laboratório inicia no Glass e alterna as quatro origens', async () => {
   root.dispatchEvent({ type: 'laboratorio:source', detail: { source: 'merge' } });
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(new URL(urls[1], 'http://localhost').searchParams.get('source'), 'merge');
-  assert.equal(new URL(urls[1], 'http://localhost').searchParams.get('check_other'), '1');
+  assert.equal(new URL(urls[1], 'http://localhost').searchParams.get('check_marked'), '1');
   root.dispatchEvent({ type: 'laboratorio:source', detail: { source: 'img' } });
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(new URL(urls[2], 'http://localhost').searchParams.get('source'), 'img');
-  assert.equal(new URL(urls[2], 'http://localhost').searchParams.has('check_other'), false);
+  assert.equal(new URL(urls[2], 'http://localhost').searchParams.has('check_marked'), false);
   root.dispatchEvent({ type: 'laboratorio:source', detail: { source: 'check' } });
   await new Promise((resolve) => setTimeout(resolve, 0));
   assert.equal(new URL(urls[3], 'http://localhost').searchParams.get('source'), 'check');
-  assert.equal(new URL(urls[3], 'http://localhost').searchParams.has('check_other'), false);
+  assert.equal(new URL(urls[3], 'http://localhost').searchParams.has('check_marked'), false);
   disconnect();
 });

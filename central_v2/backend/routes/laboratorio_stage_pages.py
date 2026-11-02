@@ -4,7 +4,7 @@ import mimetypes
 from urllib.parse import urlencode
 
 from central_v2.backend.routes.laboratorio_check_pages import (
-    check_chapter_names, check_pages, other_pages,
+    check_chapter_names, check_pages, marked_pages,
 )
 from central_v2.backend.routes.laboratorio_glass_pages import (
     check_page_for_glass, glass_chapter, glass_chapter_names,
@@ -24,7 +24,7 @@ def _stage_pages(manga, provider, source, chapter):
     if source == "check":
         return check_pages(manga, provider, chapter)
     folder = glass_chapter(manga, chapter)
-    marked = other_pages(manga, provider, chapter)
+    marked = marked_pages(manga, provider, chapter)
     return {path.name: path for path in _images(folder)
             if check_page_for_glass(path.name) in marked}
 

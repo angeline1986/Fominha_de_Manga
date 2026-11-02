@@ -9,7 +9,7 @@ from central_v2.backend.state.catalog import build_catalog
 from central_v2.backend.state.manga_state import resolve_manga, IMAGE_EXTENSIONS
 from central_v2.backend.state.sorting import natural_sort_key
 from central_v2.backend.routes.laboratorio_image_files import _images
-from central_v2.backend.routes.laboratorio_check_pages import other_pages
+from central_v2.backend.routes.laboratorio_check_pages import marked_pages
 from central_v2.backend.routes.laboratorio_stage_pages import stage_response
 from central_v2.backend.state.work_layout import images_root, merge_root
 
@@ -73,16 +73,18 @@ def response(query, output_root, *, image=False):
                 mimetypes.guess_type(target.name)[0] or "image/png")
 
         chapters = {}
-        check_only = _arg(query, "check_other") == "1" and _arg(query, "source") == "merge"
-        manga = resolve_manga(output_root, provider, name) if check_only else None
+        check_marked = (_arg(query, "source") == "merge" and (
+            _arg(query, "check_marked") == "1" or _arg(query, "check_other") == "1"
+        ))
+        manga = resolve_manga(output_root, provider, name) if check_marked else None
         for folder in sorted(image_root.iterdir(), key=lambda p: natural_sort_key(p.name)):
             if not folder.is_dir() or not folder.resolve().is_relative_to(image_root):
                 continue
             files = _images(folder)
             if not files:
                 continue
-            if check_only:
-                marked = other_pages(manga, provider, folder.name)
+            if check_marked:
+                marked = marked_pages(manga, provider, folder.name)
                 files = [page for page in files if page.name in marked]
             chapters[folder.name] = [{
                 "name": page.name,

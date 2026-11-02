@@ -14,7 +14,7 @@ from central_v2.backend.orchestration.textoff_merged.stages import LEVEL2, stage
 
 
 class LaboratorioPagesTests(unittest.TestCase):
-    def test_check_lists_only_saved_other_with_verified_review_image(self):
+    def test_check_lists_only_saved_marked_pages_with_verified_review_image(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             manga = output / "ridi" / "obra"
@@ -52,7 +52,7 @@ class LaboratorioPagesTests(unittest.TestCase):
         self.assertEqual(resolved[1].name, "page-002.png")
         self.assertEqual(changed.status, 404)
 
-    def test_glass_lists_only_check_other_with_existing_clean_output(self):
+    def test_glass_lists_only_check_marked_pages_with_existing_clean_output(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             manga = output / "ridi" / "obra"
@@ -79,7 +79,7 @@ class LaboratorioPagesTests(unittest.TestCase):
         self.assertEqual(image.body, b"page-002_clean.png")
         self.assertEqual(resolved[1].name, "page-002_clean.png")
 
-    def test_merge_listing_contains_only_pages_saved_as_other_in_check(self):
+    def test_merge_listing_contains_only_pages_marked_in_check(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             manga = output / "ridi" / "obra"
