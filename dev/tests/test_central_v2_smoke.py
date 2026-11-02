@@ -10,6 +10,23 @@ from central_v2.backend.server import Handler, ThreadingHTTPServer
 
 
 class CentralV2SmokeTests(unittest.TestCase):
+    def test_stylesheet_is_served_without_browser_cache(self):
+        server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+        thread = threading.Thread(target=server.serve_forever, daemon=True)
+        try:
+            thread.start()
+            host, port = server.server_address
+            with urllib.request.urlopen(
+                f"http://{host}:{port}/_shell/shell.css", timeout=5,
+            ) as response:
+                self.assertEqual(response.status, 200)
+                self.assertEqual(response.headers.get("Cache-Control"), "no-store")
+                self.assertIn(b".app-body", response.read())
+        finally:
+            server.shutdown()
+            server.server_close()
+            thread.join(timeout=5)
+
     def test_catalog_over_real_http_handler(self):
         payload = {
             "comix": ["Obra Teste"],

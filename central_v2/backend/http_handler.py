@@ -22,7 +22,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(response.status)
         self.send_header("Content-Type", response.content_type)
         self.send_header("Content-Length", str(len(response.body)))
-        if self.path.startswith("/api/") or self.path == "/health":
+        if (self.path.startswith("/api/") or self.path == "/health"
+                or self.path.split("?", 1)[0] in {"/", "/index.html"}
+                or self.path.split("?", 1)[0].endswith((".css", ".js"))):
             self.send_header("Cache-Control", "no-store")
         self.end_headers()
         try:

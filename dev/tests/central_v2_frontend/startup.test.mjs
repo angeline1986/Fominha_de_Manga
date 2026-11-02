@@ -20,7 +20,7 @@ async function start(loadContext, fastTimeout = false) {
   };
   const load = browserModules({
     console: { error() {} },
-    document: { querySelector: () => root }, AbortController,
+    document: { querySelector: () => root, querySelectorAll: () => [] }, AbortController,
     setTimeout: (callback, delay) => setTimeout(callback,
       delay === 500 || (fastTimeout && delay === 12000) ? 0 : delay),
     clearTimeout,

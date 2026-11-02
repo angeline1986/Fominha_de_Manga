@@ -2,6 +2,7 @@ import { initializeContext } from "/_app/context/context_controller.js";
 import { disposePage, navigate } from "/_app/router/router.js";
 import { mountShell } from "/_shell/shell.js";
 import { showMessage } from "/_shared/messages/messages.js";
+import { ensureStylesheets } from "/_app/startup_styles.js";
 
 const root = document.querySelector("#app");
 const STARTUP_TIMEOUT_MS = 12000;
@@ -20,7 +21,7 @@ function showStartupError(error) {
   root.innerHTML = `<main class="startup-screen" role="alert">
     <div class="startup-card">
       <h1>Não foi possível abrir a Central</h1>
-      <p>Falha ao carregar os dados iniciais. Tente novamente.</p>
+      <p>Falha ao carregar a interface. Tente novamente.</p>
       <p class="startup-detail"></p>
       <button class="btn" type="button" data-startup-retry>Tentar novamente</button>
     </div>
@@ -46,6 +47,13 @@ async function loadContextOnce() {
 
 async function bootstrap() {
   showLoading();
+  try {
+    await ensureStylesheets();
+  } catch (error) {
+    console.error("Falha ao carregar os estilos da Central V2.", error);
+    showStartupError(error);
+    return;
+  }
   try {
     await loadContextOnce();
   } catch {
