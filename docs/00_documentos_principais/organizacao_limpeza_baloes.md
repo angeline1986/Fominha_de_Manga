@@ -5,6 +5,8 @@
 **Commit solicitado como referência para BL-13:** `cef3cd4227012f3ef9410587103eda6a8448e870`\
 **Estado:** Lotes 1, 2, 3 e 4 executados conforme autorizacao. Dois HTMLs permanecem nos caminhos originais para revisao; nenhum arquivo foi excluido, convertido ou consolidado.
 
+**Localização atual (03/11/2026):** este inventário e os demais documentos de referência foram reunidos em `docs/00_documentos_principais/`. Os caminhos nas tabelas abaixo registram o inventário e a migração de outubro; não representam necessariamente a localização atual de cada documento.
+
 ## Resultado inicial
 
 O baseline reproduzivel no Git e de **124 arquivos rastreados sob `docs/`** na revisao observada. O numero 131 da versao anterior nao pode ser reproduzido: nao existe manifest salvo que identifique os sete itens adicionais daquela contagem, portanto foi erro de contagem e nao uma segunda base de migracao. No working tree atual ha **152 arquivos de documentacao nao ignorados** sob `docs/`: 124 rastreados e 28 nao rastreados, estes ultimos explicitamente inventariados no mapa como preexistentes. Ha ainda seis `.DS_Store` ignorados pelo Git, que nao sao documentos e ficam fora da migracao. O mapa CSV inclui os 152 caminhos atuais; os 124 rastreados formam o inventario versionado original.

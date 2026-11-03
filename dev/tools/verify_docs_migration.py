@@ -16,7 +16,7 @@ from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[2]
 DOCS = ROOT / "docs"
-PLAN = DOCS / "organizacao_limpeza_baloes.md"
+PLAN = DOCS / "00_documentos_principais/organizacao_limpeza_baloes.md"
 MAP = ROOT / "dev/tools/docs_migration_map.csv"
 BASELINE = ROOT / "dev/tools/docs_migration_before.json"
 ALLOWED_CHANGES = ROOT / "dev/tools/docs_migration_allowed_changes.json"

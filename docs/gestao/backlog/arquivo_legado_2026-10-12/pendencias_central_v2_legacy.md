@@ -303,7 +303,7 @@ Frentes resumidas na triagem especializada:
 
 **Status:** ADIADO / REVALIDADO contra `0f8a7a76` em 04/10/2026.
 
-Autoridade específica: [`central_v2_conformidade_enderecamentos.md`](../../../central_v2_conformidade_enderecamentos.md). O levantamento original declara snapshot estático de 30/09/2026; cada achado foi reclassificado no HEAD atual. Há itens ainda aplicáveis, parcialmente resolvidos e alterados por implementação posterior; nenhum item de centralização de raízes/estágios foi considerado totalmente resolvido.
+Autoridade específica: [`central_v2_conformidade_enderecamentos.md`](../../../00_documentos_principais/central_v2_conformidade_enderecamentos.md). O levantamento original declara snapshot estático de 30/09/2026; cada achado foi reclassificado no HEAD atual. Há itens ainda aplicáveis, parcialmente resolvidos e alterados por implementação posterior; nenhum item de centralização de raízes/estágios foi considerado totalmente resolvido.
 
 Pontos resumidos para retomada:
 

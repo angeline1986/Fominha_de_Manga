@@ -2,6 +2,10 @@
 
 Este índice separa a aplicação legada (Central V1), a Central V2 e os módulos de domínio que ambas ainda compartilham. A implementação no código é a fonte de verdade; notas datadas e evidências históricas servem para explicar decisões e resultados, mas não substituem a leitura do código atual.
 
+## Documentos principais
+
+Os mapas, fluxos e auditorias mais consultados estão reunidos em [Documentos principais](00_documentos_principais/README.md).
+
 ## Limpeza de Balões
 
 - [Arquitetura e limites de versão](arquitetura/limpeza_baloes_v1_v2.md)
@@ -10,7 +14,7 @@ Este índice separa a aplicação legada (Central V1), a Central V2 e os módulo
 - [Módulos compartilhados](arquitetura/modulos_compartilhados_limpeza_baloes.md)
 - [Reconstrução e equivalência](reconstrucao/README.md)
 - [Pendências técnicas da reconstrução](reconstrucao/pendencias_tecnicas.md)
-- [Inventário e plano de migração documental](organizacao_limpeza_baloes.md)
+- [Inventário e plano de migração documental](00_documentos_principais/organizacao_limpeza_baloes.md)
 
 ## Outras áreas
 

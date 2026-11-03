@@ -72,11 +72,11 @@ Merge final
 
 Cada etapa trabalha sobre artefatos derivados. O conteúdo original deve permanecer preservado.
 
-O fluxo detalhado de Auto-Merge e Merge Manual também está disponível em [HTML](docs/fluxo_auto_merge_merge_manual.html).
+O fluxo detalhado de Auto-Merge e Merge Manual também está disponível em [HTML](docs/00_documentos_principais/fluxo_auto_merge_merge_manual.html).
 
 ## Documentação técnica
 
-O [índice de documentação](docs/README.md) separa a Central V1, a Central V2 e os módulos compartilhados. A documentação de [Limpeza de Balões](docs/central_v2/limpeza_baloes/README.md) inclui o fluxo V2, contratos de persistência e o manual de reconstrução.
+O [índice de documentação](docs/README.md) separa a Central V1, a Central V2 e os módulos compartilhados. Os [documentos principais](docs/00_documentos_principais/README.md) reúnem os mapas, fluxos e auditorias mais consultados. A documentação de [Limpeza de Balões](docs/central_v2/limpeza_baloes/README.md) inclui o fluxo V2, contratos de persistência e o manual de reconstrução.
 
 ## Visão Geral
 
@@ -357,7 +357,7 @@ Mantém a tela anterior e a execução completa existente em `FLUXO_SECUNDARIO/0
 
 O manifesto registra a configuração OCR aplicada pelo perfil. No perfil atual do Cleaner V2, `detect_box` e `auto` são configurados, mas Tesseract está desligado; o Panel Cleaner acaba usando MangaOCR em japonês. Isso não fornece OCR coreano ou chinês. A classificação por cor/textura também é uma heurística conservadora: cobertura universal de estilos transparentes ainda requer mais amostras e validação.
 
-Detalhes de arquitetura, métricas, regras de autorização, campos de observabilidade e limitações estão em [TextOff Merged e preservação de balões transparentes](docs/textoff_merged_transparencia.html). As dependências do motor ficam descritas em [Cleaner V2](processamento/limpeza_baloes/cleaner_v2/README.md).
+Detalhes de arquitetura, métricas, regras de autorização, campos de observabilidade e limitações estão em [TextOff Merged e preservação de balões transparentes](docs/00_documentos_principais/textoff_merged_transparencia.html). As dependências do motor ficam descritas em [Cleaner V2](processamento/limpeza_baloes/cleaner_v2/README.md).
 
 ### Comparar resultados
 

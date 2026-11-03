@@ -6,6 +6,8 @@
 
 **HEAD observado:** `cbc7d4b8`
 
+> **Registro histórico, não estado atual.** Esta auditoria descreve o código e os arquivos observados em 18/10/2026. Em 03/11/2026, o [registro de migração](../../central_v2/backend/orchestration/textoff_merged/artifact-migration-registry.json) já usa `single_write_target`, `read_authority=target` e `dual_write_enabled=false`; portanto as conclusões abaixo sobre gravação dupla e autoridade legada não valem para o código atual. Consulte [TextOff Merged e transparência](textoff_merged_transparencia.html) para o fluxo operacional e [P5](../gestao/tickets/central_v2/P5.md) para pendências de nomes e caminhos.
+
 **Escopo:** levantamento estático do código, manifests, testes e comparação somente leitura dos espelhos em `FominhaData/output/comix/Gazing at you`.
 
 **Resultado:** auditoria documental; nenhum código, imagem ou manifesto operacional foi alterado. Nenhum tratamento foi executado.

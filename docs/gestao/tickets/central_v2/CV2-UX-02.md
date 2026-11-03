@@ -23,4 +23,4 @@
 - Respeitar o limite de 200 linhas físicas por arquivo de código.
 - Não fazer commit ou push sem autorização.
 
-**Links de Referência:** `docs/central_v2_menus.html` (contrato: atualizar o estado da obra selecionada); `central_v2/frontend/_shell/shell.js` (botão atual); `interface_web/app.js` (referência de `refreshStatus()` no fluxo anterior).
+**Links de Referência:** `docs/00_documentos_principais/central_v2_menus.html` (contrato: atualizar o estado da obra selecionada); `central_v2/frontend/_shell/shell.js` (botão atual); `interface_web/app.js` (referência de `refreshStatus()` no fluxo anterior).

@@ -20,9 +20,9 @@
   <header>
     <div class="eyebrow">Central de Processamento · V2</div>
     <h1>Inventário de menus e telas</h1>
-    <p class="lede">Nomes atuais, hierarquia de navegação e responsabilidade de cada página. Este documento registra a interface existente para apoiar uma futura revisão terminológica; não propõe nomes novos.</p>
+    <p class="lede">Nomes, hierarquia de navegação e responsabilidade das páginas conforme <code>navigation.js</code> e <code>routes.js</code>, conferidos em 03/11/2026.</p>
     <nav aria-label="Índice do documento">
-      <a href="#estrutura">Estrutura global</a><a href="#arvore">Árvore do menu</a><a href="#visao-geral">Visão Geral</a><a href="#processamento">Processamento</a><a href="#balanceamento">Balanceamento</a><a href="#pdf">Gerar PDF</a><a href="#textoff">Texto Off</a><a href="#exportacao">Exportar Arquivos</a><a href="#rotulos">Rótulos de tela</a>
+      <a href="#estrutura">Estrutura global</a><a href="#arvore">Árvore do menu</a><a href="#visao-geral">Visão Geral</a><a href="#processamento">Processamento</a><a href="#balanceamento">Balanceamento</a><a href="#pdf">Gerar PDF</a><a href="#textoff">Limpeza de Balões</a><a href="#exportacao">Exportar Arquivos</a><a href="#rotulos">Rótulos de tela</a>
     </nav>
   </header>
 
@@ -66,33 +66,29 @@
 │   └── ORIGEM DE GERAÇÃO
 │       ├── Imagens Originais
 │       └── Imagens Mescladas
-├── Texto Off
-│   ├── MERGED · Merged [I–V]
-│   │   ├── I   → Texto Off — Merged Nível I
-│   │   ├── II  → Texto Off — Merged Nível II
-│   │   ├── III → Texto Off — Merged Nível III
-│   │   ├── IV  → Texto Off — Merged Nível IV: Transparência normal
-│   │   └── V   → Texto Off — Merged Nível V: Transparência Legado
-│   ├── ESPECIAIS · Especiais [VI–VIII]
-│   │   ├── VI   → Degradê
-│   │   ├── VII  → Artístico
-│   │   └── VIII → Gradiente
-│   ├── OUTROS RESULTADOS
-│   │   └── Legado
-│   └── RESULTADOS &amp; LIMPEZA
-│       ├── Comparar Resultados
-│       └── Casos Especiais
+├── Limpeza de Balões
+│   ├── FLUXO DE LIMPEZA
+│   │   ├── 01 Auto-Cleaner
+│   │   ├── 02 Mapear
+│   │   ├── 03 Bubble Sommelier
+│   │   ├── 04 Auto-Cleaner Check
+│   │   ├── 05 Auto-Cleaner: Sólidos
+│   │   └── 06 Auto-Cleaner: Glass [Básica, Normal, Legada]
+│   ├── Laboratório
+│   ├── PINCEL &amp; RETOQUES DE ARTE [Degradê, Artístico, Gradiente]
+│   └── AUDITORIA DE QUALIDADE
+│       └── Antes &amp; Depois
 └── Exportar Arquivos
     └── EXECUÇÃO
         ├── Simular e Exportar
-        └── Destino Local</code></pre>
+        └── Obras para Download</code></pre>
   </section>
 
   <section class="card" id="visao-geral">
     <h2>Menu: Visão Geral</h2>
     <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
       <tr><td>Navegação</td><td>Resumo da Operação</td><td>Resumo da Operação</td><td>Mostra o resumo do processamento da obra selecionada. É a ação padrão ao abrir o menu.</td></tr>
-      <tr><td>Validação</td><td>Validar Imagens</td><td><span class="tag missing">Sem rota registrada</span></td><td>O item aparece na navegação, mas não há ação correspondente em <code>routes.js</code>.</td></tr>
+      <tr><td>Validação</td><td>Validar Imagens</td><td>Validar Imagens</td><td>Analisa dimensões por capítulo, mostra divergências em comparação visual e permite aplicar a correção proposta por imagem.</td></tr>
     </tbody></table></div>
   </section>
 
@@ -108,7 +104,7 @@
     </tbody></table></div>
     <h3>Grupo: Merge Manual</h3>
     <div class="table-wrap"><table><thead><tr><th>Item/subitem</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
-      <tr><td>Validar Faixa</td><td>Merge Manual</td><td>Lista capítulos e permite definir faixas de páginas para revisão e composição manual.</td></tr>
+      <tr><td>Validar Faixa</td><td>Merge Manual</td><td>Lista capítulos com pasta em IMG e manifesto do Nível V; distingue pendentes, resolvidos e bloqueados antes de definir faixas.</td></tr>
       <tr><td>Novos Merges</td><td>Novos Cortes / Merge Manual · Cap. N</td><td>Edita faixas selecionadas, posiciona cortes e gera uma proposta de composição.</td></tr>
       <tr><td>Resultado da proposta (fluxo interno)</td><td>Resultado · Cap. N</td><td>Apresenta a proposta e permite aplicá-la ao MERGE oficial após validação.</td></tr>
     </tbody></table></div>
@@ -125,40 +121,40 @@
   <section class="card" id="pdf">
     <h2>Menu: Gerar PDF</h2>
     <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
-      <tr><td>Origem de Geração</td><td>Imagens Originais</td><td><span class="tag missing">Sem rota registrada</span></td><td>Opção de origem de geração; não há ação de página em <code>routes.js</code>.</td></tr>
-      <tr><td>Origem de Geração</td><td>Imagens Mescladas</td><td><span class="tag missing">Sem rota registrada</span></td><td>Opção de origem de geração; não há ação de página em <code>routes.js</code>.</td></tr>
+      <tr><td>Origem de Geração</td><td>Imagens Originais</td><td>Gerar PDF — Originais</td><td>Gera PDFs a partir das imagens originais.</td></tr>
+      <tr><td>Origem de Geração</td><td>Imagens Mescladas</td><td>Gerar PDF — Mescladas</td><td>Gera PDFs a partir das imagens mescladas.</td></tr>
     </tbody></table></div>
   </section>
 
   <section class="card" id="textoff">
-    <h2>Menu: Texto Off</h2>
-    <h3>Grupo: Merged</h3>
+    <h2>Menu: Limpeza de Balões</h2>
+    <h3>Grupo: Fluxo de Limpeza</h3>
     <div class="table-wrap"><table><thead><tr><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
-      <tr><td>I</td><td>Texto Off — Merged Nível I</td><td>Executa Cleaner V2 sobre os MERGEs oficiais e identifica/protege balões transparentes. Ação padrão do menu.</td></tr>
-      <tr><td>II</td><td>Texto Off — Merged Nível II</td><td>Consulta candidatas transparentes do Nível I e trata somente as páginas elegíveis.</td></tr>
-      <tr><td>III</td><td>Texto Off — Merged Nível III</td><td>Analisa imagens limpas consolidadas e apresenta candidatos a balões estilizados, gradientes e contornos irregulares para revisão; não aplica patches.</td></tr>
-      <tr><td>IV</td><td>Texto Off — Merged Nível IV: Transparência normal</td><td>Executa a variante normal de tratamento transparente sobre imagens elegíveis do Nível I.</td></tr>
-      <tr><td>V</td><td>Texto Off — Merged Nível V: Transparência Legado</td><td>Executa a variante de transparência baseada no comportamento legado, isolada do resultado oficial.</td></tr>
+      <tr><td>01 · Auto-Cleaner</td><td>Auto-Cleaner — Passo 1</td><td>Limpeza inicial dos MERGEs oficiais; ação padrão do menu.</td></tr>
+      <tr><td>02 · Mapear</td><td>Mapear</td><td>Analisa as imagens para localizar balões especiais, sem aplicar patches.</td></tr>
+      <tr><td>03 · Bubble Sommelier</td><td>Bubble Sommelier</td><td>Apresenta candidatos para curadoria de balões.</td></tr>
+      <tr><td>04 · Auto-Cleaner Check</td><td>Auto-Cleaner Check</td><td>Permite revisar e aprovar as áreas identificadas.</td></tr>
+      <tr><td>05 · Auto-Cleaner: Sólidos</td><td>Auto-Cleaner: Sólidos</td><td>Limpa áreas brancas aprovadas no Check.</td></tr>
+      <tr><td>06 · Auto-Cleaner: Glass</td><td>Básica / Normal / Legada</td><td>Oferece três variantes de tratamento de transparência; Básica é a seleção inicial.</td></tr>
     </tbody></table></div>
-    <h3>Grupo: Especiais</h3>
+    <h3>Laboratório e Pincel &amp; Retoques de Arte</h3>
     <div class="table-wrap"><table><thead><tr><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
-      <tr><td>VI</td><td>Texto Off — Especiais Nível VI: Degradê</td><td>Seleciona regiões de uma página para o tratamento Degradê. O menu mostra imagens de exemplo no hover.</td></tr>
-      <tr><td>VII</td><td>Texto Off — Especiais Nível VII: Artístico</td><td>Seleciona regiões para o Artístico, com exemplos no menu.</td></tr>
-      <tr><td>VIII</td><td>Texto Off — Especiais Nível VIII: Gradiente</td><td>Seleciona regiões para o tratamento Gradiente, com exemplos no menu.</td></tr>
+      <tr><td>Laboratório</td><td>Laboratório</td><td>Compara tratamentos independentes e permite aplicar um resultado selecionado ao Consolidado Final.</td></tr>
+      <tr><td>Degradê</td><td>Pincel &amp; Retoques / Degradê</td><td>Seleciona regiões para o tratamento Degradê.</td></tr>
+      <tr><td>Artístico</td><td>Pincel &amp; Retoques / Artístico</td><td>Seleciona regiões para o tratamento Artístico.</td></tr>
+      <tr><td>Gradiente</td><td>Pincel &amp; Retoques / Gradiente</td><td>Seleciona regiões para o tratamento Gradiente.</td></tr>
     </tbody></table></div>
-    <h3>Outros grupos</h3>
+    <h3>Grupo: Auditoria de Qualidade</h3>
     <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
-      <tr><td>Outros Resultados</td><td>Legado</td><td>Texto Off — Legado</td><td>Mantém acessível o fluxo anterior de Texto Off.</td></tr>
-      <tr><td>Resultados &amp; Limpeza</td><td>Comparar Resultados</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado sem ação de página em <code>routes.js</code>.</td></tr>
-      <tr><td>Resultados &amp; Limpeza</td><td>Casos Especiais</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado sem ação de página em <code>routes.js</code>.</td></tr>
+      <tr><td>Auditoria de Qualidade</td><td>Antes &amp; Depois</td><td>Antes &amp; Depois</td><td>Compara a imagem original e os resultados disponíveis por página.</td></tr>
     </tbody></table></div>
   </section>
 
   <section class="card" id="exportacao">
     <h2>Menu: Exportar Arquivos</h2>
     <div class="table-wrap"><table><thead><tr><th>Grupo</th><th>Item</th><th>Página atual</th><th>Responsabilidade</th></tr></thead><tbody>
-      <tr><td>Execução</td><td>Simular e Exportar</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado para simulação/exportação, mas sem ação em <code>routes.js</code>.</td></tr>
-      <tr><td>Execução</td><td>Destino Local</td><td><span class="tag missing">Sem rota registrada</span></td><td>Item configurado para destino local, mas sem ação em <code>routes.js</code>.</td></tr>
+      <tr><td>Execução</td><td>Simular e Exportar</td><td>Simular e Exportar</td><td>Consulta e executa a exportação da obra.</td></tr>
+      <tr><td>Execução</td><td>Obras para Download</td><td>Obras para Download</td><td>Lista as obras salvas para download.</td></tr>
     </tbody></table></div>
   </section>
 
@@ -170,12 +166,12 @@
       <tr><td>Ações</td><td>Executar Nível…, Selecionar todos, Limpar seleção</td><td>Iniciam processamento e controlam a seleção.</td></tr>
       <tr><td>Resumo de execução</td><td>Resumo do Texto Off — …, Concluído, Sem alteração — revisar, Requer atenção</td><td>Resume o resultado do job e suas ocorrências.</td></tr>
       <tr><td>Revisão Nível III</td><td>Ver candidatos</td><td>Abre a inspeção visual de candidatos em uma página.</td></tr>
-      <tr><td>Especiais VI–VIII</td><td>Capítulo, Página, Regiões selecionadas, Limpar regiões, Aplicar tratamento</td><td>Seleciona as entradas e áreas para prévia do tratamento.</td></tr>
+      <tr><td>Pincel &amp; Retoques</td><td>Capítulo, Página, Regiões selecionadas, Limpar regiões, Aplicar tratamento</td><td>Seleciona as entradas e áreas para prévia do tratamento.</td></tr>
     </tbody></table></div>
   </section>
 
-  <section class="card"><h2>Como ler o inventário</h2><p>Os nomes marcados como <span class="tag missing">Sem rota registrada</span> estão visíveis na configuração do menu, mas não resolvem para uma página na tabela de rotas atual. O inventário não presume comportamento ausente nem sugere nomenclatura substituta.</p></section>
-  <footer>Fonte: configuração de navegação e rotas da Central V2. Documento de inventário para apoiar revisão futura dos nomes.</footer>
+  <section class="card"><h2>Como ler o inventário</h2><p>Esta é a navegação visível na configuração da Central V2. Algumas rotas internas, como o resultado de proposta do Merge Manual e o fluxo legado de Texto Off, existem em <code>routes.js</code> sem aparecer como itens deste menu.</p></section>
+  <footer>Fonte: <code>central_v2/frontend/_shell/navigation.js</code> e <code>central_v2/frontend/_app/router/routes.js</code>. Conferido em 03/11/2026.</footer>
 </main>
 </body>
 </html>

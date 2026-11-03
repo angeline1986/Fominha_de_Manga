@@ -25,7 +25,7 @@
     <div class="eyebrow">Documentação integrada · Central V2 e referências V1</div>
     <h1>TextOff Merged: fluxo de limpeza e balões transparentes</h1>
     <p class="lede">Este documento reúne o percurso desde as imagens MERGE até a publicação consolidada, explicando o papel do Cleaner, do Check, do Auto-Cleaner Glass, do Sommelier, de Sólidos, dos tratamentos e do Laboratório. As etapas são independentes quando indicado; a interface não executa automaticamente todo o fluxo.</p>
-    <p class="small"><strong>Fonte de verdade:</strong> código e manifests vigentes. A documentação histórica registra experimentos e decisões passadas, sem substituir os contratos atuais. Revisão documental: 24/10/2026.</p>
+    <p class="small"><strong>Fonte de verdade:</strong> código e manifests vigentes. A documentação histórica registra experimentos e decisões passadas, sem substituir os contratos atuais. Layout de estágios e navegação conferidos em 03/11/2026; medições e testes datados abaixo mantêm suas datas originais.</p>
   </header>
 
   <nav aria-label="Navegação desta página">
@@ -145,21 +145,21 @@ Prévia válida do Laboratório ──> comparação e confirmação ──> pá
     <h2>Pastas, manifests e autoridade</h2>
     <p>As pastas ficam usualmente sob <code>FLUXO_SECUNDARIO/04_TEXTO_OFF/</code>; <code>02_MERGE</code> fica fora dela. O layout organizado separa imagens em <code>clean/</code>, máscaras em <code>mask/</code> e manifests/relatórios em <code>json/</code>. Referências relativas, contexto e hashes ligam uma etapa às suas fontes.</p>
     <div class="table-wrap"><table>
-      <thead><tr><th>Etapa</th><th>Caminho principal / espelho declarado</th><th>Artefato ou contrato</th></tr></thead>
+      <thead><tr><th>Etapa</th><th>Destino atual / leitura legada</th><th>Artefato ou contrato</th></tr></thead>
       <tbody>
-        <tr><td>Auto-Cleaner I</td><td><code>TO_MERGED_NIVEL_I</code> / <code>01_AUTO_CLEANER</code></td><td><code>clean-manifest.json</code>, <code>level1-balloon-report.json</code>, imagens e máscaras.</td></tr>
-        <tr><td>Auto-Cleaner Glass</td><td><code>TO_MERGED_NIVEL_II</code> / <code>05_AUTO_CLEANER_TRANSPARENCIA/BASICA</code></td><td>Relatório Nível II com origem MERGE, Nível I, máscaras, proteção e, para Reset, contrato <code>check_reset_v1</code> e registro <code>reset_base_source</code>.</td></tr>
+        <tr><td>Auto-Cleaner I</td><td><code>01_AUTO_CLEANER</code> / <code>TO_MERGED_NIVEL_I</code></td><td><code>clean-manifest.json</code>, <code>level1-balloon-report.json</code>, imagens e máscaras.</td></tr>
+        <tr><td>Auto-Cleaner Glass</td><td><code>05_AUTO_CLEANER_TRANSPARENCIA/BASICA</code> / <code>TO_MERGED_NIVEL_II</code></td><td>Relatório Nível II com origem MERGE, Nível I, máscaras, proteção e, para Reset, contrato <code>check_reset_v1</code> e registro <code>reset_base_source</code>.</td></tr>
         <tr><td>Check / Reset</td><td><code>04_AUTO_CLEANER_CHECK/&lt;capítulo&gt;</code></td><td><code>auto-cleaner-check-manifest.json</code>, decisões aprovadas, snapshots de revisão e <code>reset_merge/&lt;página&gt;</code> com manifesto de Reset.</td></tr>
-        <tr><td>Mapear / Nível III</td><td><code>TO_MERGED_NIVEL_III</code> / <code>02_MAPEAR</code></td><td>Relatórios de análise; não são imagem limpa.</td></tr>
-        <tr><td>Consolidado I/II</td><td><code>TO_MERGED_CONSOLIDADO</code> / <code>02_MAPEAR/INPUT_CONSOLIDADO</code></td><td><code>json/clean-manifest.json</code>, seleção e SHA por página.</td></tr>
-        <tr><td>Sommelier</td><td><code>BUBBLE_SOMMELIER</code> / <code>03_BUBBLE_SOMMELIER</code></td><td>Relatório, revisão e recortes.</td></tr>
+        <tr><td>Mapear / Nível III</td><td><code>02_MAPEAR</code> / <code>TO_MERGED_NIVEL_III</code></td><td>Relatórios de análise; não são imagem limpa.</td></tr>
+        <tr><td>Consolidado I/II</td><td><code>02_MAPEAR/INPUT_CONSOLIDADO</code> / <code>TO_MERGED_CONSOLIDADO</code></td><td><code>json/clean-manifest.json</code>, seleção e SHA por página.</td></tr>
+        <tr><td>Sommelier</td><td><code>03_BUBBLE_SOMMELIER</code> / <code>BUBBLE_SOMMELIER</code></td><td>Relatório, revisão e recortes.</td></tr>
         <tr><td>Sólidos</td><td><code>05_AUTO_CLEANER_SOLIDOS</code></td><td><code>solid-white-manifest.json</code>, <code>preview_only: true</code>.</td></tr>
         <tr><td>Tratamentos especiais</td><td>Estágio próprio por tratamento, incluindo <code>06_PINCEL</code></td><td>Execução/proposta, revisão e promoção separadas.</td></tr>
         <tr><td>Laboratório</td><td>Artefatos da execução experimental; após aplicação, snapshot em <code>07_CONSOLIDADO_FINAL/&lt;capítulo&gt;/laboratorio/&lt;run_id&gt;/&lt;página&gt;</code>.</td><td>Pedido e manifesto da execução validam tratamento, identidade, dimensões e SHA-256 antes da comparação/publicação.</td></tr>
         <tr><td>Consolidado Final</td><td><code>07_CONSOLIDADO_FINAL</code></td><td><code>json/final-manifest.json</code>, SHA por página e histórico; versão substituída em <code>history/&lt;sha256&gt;/&lt;página&gt;</code> no capítulo.</td></tr>
       </tbody>
     </table></div>
-    <p class="callout warning"><strong>Migração de artefatos:</strong> o registry consultado declara dual-write, autoridade de leitura legada e pares ainda não validados. Os caminhos novos são espelhos onde declarados; não renomear ou remover pastas sem verificar leitores, manifests e o registry vigente.</p>
+    <p class="callout warning"><strong>Migração de artefatos (03/11/2026):</strong> o registry usa <code>single_write_target</code>, <code>read_authority=target</code> e <code>dual_write_enabled=false</code>. Os cinco estágios mapeados gravam somente no destino novo; a leitura ainda pode recorrer ao legado quando o capítulo não existir no destino. Os registros de validação do registry continuam <code>validated=false</code>. Não remover dados legados sem verificar os capítulos, manifests e leitores envolvidos.</p>
     <p class="small">A leitura organizada também mantém compatibilidade com artefatos antigos diretamente na pasta do capítulo, conforme o resolvedor. A referência declarada pelo manifest continua sendo necessária para validar origem e atualidade.</p>
   </section>
 
@@ -193,7 +193,7 @@ Prévia válida do Laboratório ──> comparação e confirmação ──> pá
     <p>Quando o explorador escolhe uma imagem de outra etapa, a comparação localiza o nome da página nos manifestos do Consolidado Final. Se o nome aparece em vários capítulos, o capítulo do caminho verificado da origem Check ou Glass precisa corresponder ao manifesto; sem essa prova, a aplicação é bloqueada. Pastas físicas como <code>clean</code> e <code>images</code> não viram capítulos oficiais. O histórico reconhece as estruturas do Glass e do Auto-Cleaner Check.</p>
     <p>Ao selecionar novamente uma imagem usada no Laboratório, a Central V2 pode recuperar as últimas prévias concluídas do Artístico e do Sólidos sem recalcular. A recuperação exige a mesma origem e confere os hashes e artefatos disponíveis antes de apresentar <strong>Resultado recuperado</strong> nos cartões.</p>
     <p>O Sólidos também pode propor uma prévia gerada a partir de um arquivo <code>clean</code>: o destino oficial é identificado pelo caminho de origem verificado e pelo manifesto final. Para prévias anteriores sem caminho gravado, a busca confere o SHA-256 da origem e recusa capítulos ambíguos. A prévia real de <code>page-076-082_clean.png</code> foi resolvida em leitura para <code>5/page-076-082.png</code>; nenhuma imagem final foi publicada nessa verificação.</p>
-    <p class="small">Verificação: 30 testes focados de backend e 12 de frontend passaram. Propostas de Artístico e Gradiente para <code>page-050-057.png</code> (Cap. 1) foram aceitas e os quatro endpoints de imagem retornaram PNGs em leitura. A conferência visual da comparação, aplicação e restauração em uma obra real ainda está pendente após reiniciar a Central V2; essa verificação não publicou uma imagem final.</p>
+    <p class="small"><strong>Registro de 24/10/2026:</strong> 30 testes focados de backend e 12 de frontend passaram. Propostas de Artístico e Gradiente para <code>page-050-057.png</code> (Cap. 1) foram aceitas e os quatro endpoints de imagem retornaram PNGs em leitura. A conferência visual da comparação, aplicação e restauração em uma obra real estava pendente nessa verificação; o registro não publicou uma imagem final.</p>
   </section>
 
   <section class="grid">
@@ -262,29 +262,29 @@ Prévia válida do Laboratório ──> comparação e confirmação ──> pá
       <article>
         <h3>Fluxo atual V2</h3>
         <ul>
-          <li><a href="central_v2/limpeza_baloes/README.md">Índice de Limpeza de Balões V2</a></li>
-          <li><a href="central_v2/limpeza_baloes/fluxo_completo.md">Fluxo completo</a></li>
-          <li><a href="central_v2/limpeza_baloes/contratos_e_persistencia.md">Contratos e persistência</a></li>
-          <li><a href="central_v2/limpeza_baloes/laboratorio.md">Laboratório</a></li>
-          <li><a href="backlog/central_v2_laboratorio_aplicar_final.html">Aplicar resultado do Laboratório no Consolidado Final: implementação e validação</a></li>
-          <li><a href="central_v2/limpeza_baloes/etapas/cleaner_v2.md">Cleaner V2</a></li>
-          <li><a href="central_v2/limpeza_baloes/etapas/auto_cleaner_check.md">Auto-Cleaner Check</a></li>
-          <li><a href="central_v2/limpeza_baloes/etapas/bubble_sommelier.md">Bubble Sommelier</a></li>
-          <li><a href="central_v2/limpeza_baloes/etapas/solidos.md">Sólidos</a> · <a href="central_v2/limpeza_baloes/solidos/README.md">índice detalhado</a> · <a href="central_v2/limpeza_baloes/solidos/01_Solidos_Parametros_Contrato_Tecnico.md">parâmetros/contrato</a> · <a href="central_v2/limpeza_baloes/solidos/02_UI_Comparacao_Curadoria_Selecao.md">UI e curadoria</a> · <a href="central_v2/limpeza_baloes/solidos/03_Runbook_Incidentes_Evidencias.md">runbook</a></li>
-          <li><a href="central_v2/limpeza_baloes/etapas/tratamentos_especiais.md">Tratamentos especiais</a></li>
-          <li><a href="central_v2/limpeza_baloes/etapas/consolidacao.md">Consolidação e restauração</a></li>
-          <li><a href="central_v2/limpeza_baloes/correcao_assistida/analise_correcao_assistida_e_tratamentos_especiais.md">Correção Assistida e tratamentos</a></li>
+          <li><a href="../central_v2/limpeza_baloes/README.md">Índice de Limpeza de Balões V2</a></li>
+          <li><a href="../central_v2/limpeza_baloes/fluxo_completo.md">Fluxo completo</a></li>
+          <li><a href="../central_v2/limpeza_baloes/contratos_e_persistencia.md">Contratos e persistência</a></li>
+          <li><a href="../central_v2/limpeza_baloes/laboratorio.md">Laboratório</a></li>
+          <li><a href="../backlog/central_v2_laboratorio_aplicar_final.html">Aplicar resultado do Laboratório no Consolidado Final: implementação e validação</a></li>
+          <li><a href="../central_v2/limpeza_baloes/etapas/cleaner_v2.md">Cleaner V2</a></li>
+          <li><a href="../central_v2/limpeza_baloes/etapas/auto_cleaner_check.md">Auto-Cleaner Check</a></li>
+          <li><a href="../central_v2/limpeza_baloes/etapas/bubble_sommelier.md">Bubble Sommelier</a></li>
+          <li><a href="../central_v2/limpeza_baloes/etapas/solidos.md">Sólidos</a> · <a href="../central_v2/limpeza_baloes/solidos/README.md">índice detalhado</a> · <a href="../central_v2/limpeza_baloes/solidos/01_Solidos_Parametros_Contrato_Tecnico.md">parâmetros/contrato</a> · <a href="../central_v2/limpeza_baloes/solidos/02_UI_Comparacao_Curadoria_Selecao.md">UI e curadoria</a> · <a href="../central_v2/limpeza_baloes/solidos/03_Runbook_Incidentes_Evidencias.md">runbook</a></li>
+          <li><a href="../central_v2/limpeza_baloes/etapas/tratamentos_especiais.md">Tratamentos especiais</a></li>
+          <li><a href="../central_v2/limpeza_baloes/etapas/consolidacao.md">Consolidação e restauração</a></li>
+          <li><a href="../central_v2/limpeza_baloes/correcao_assistida/analise_correcao_assistida_e_tratamentos_especiais.md">Correção Assistida e tratamentos</a></li>
         </ul>
       </article>
       <article>
         <h3>V1, arquitetura e reconstrução</h3>
         <ul>
-          <li><a href="central_v1/limpeza_baloes/visao_geral.md">Visão geral V1</a> · <a href="central_v1/limpeza_baloes/pipeline.md">Pipeline V1</a> · <a href="central_v1/limpeza_baloes/algoritmos_e_parametros.md">Algoritmos V1</a></li>
-          <li><a href="arquitetura/limpeza_baloes_v1_v2.md">Fronteiras V1/V2</a> · <a href="arquitetura/modulos_compartilhados_limpeza_baloes.md">Módulos compartilhados</a></li>
-          <li><a href="reconstrucao/README.md">Índice de reconstrução</a> · <a href="reconstrucao/central_v1.md">Manual V1</a> · <a href="reconstrucao/central_v2.md">Manual V2</a></li>
-          <li><a href="reconstrucao/componentes_compartilhados.md">Componentes compartilhados</a> · <a href="reconstrucao/pendencias_tecnicas.md">Pendências técnicas</a></li>
-          <li><a href="arquitetura/catalogo_fluxos_criticos.md">Catálogo de fluxos críticos</a> · <a href="arquitetura/04a_mapa_metro_fluxos_manifestos.md">Mapa de fluxos/manifests</a> · <a href="arquitetura/04b_mapa_metro_auditoria_proveniencia.md">Auditoria de proveniência</a></li>
-          <li><a href="arquitetura/mapa_componentes_e_dependencias.md">Mapa de componentes</a> · <a href="arquitetura/estado_atual_e_inventario_estrutural.md">Inventário estrutural</a> · <a href="README.md">Índice geral da documentação</a></li>
+          <li><a href="../central_v1/limpeza_baloes/visao_geral.md">Visão geral V1</a> · <a href="../central_v1/limpeza_baloes/pipeline.md">Pipeline V1</a> · <a href="../central_v1/limpeza_baloes/algoritmos_e_parametros.md">Algoritmos V1</a></li>
+          <li><a href="../arquitetura/limpeza_baloes_v1_v2.md">Fronteiras V1/V2</a> · <a href="../arquitetura/modulos_compartilhados_limpeza_baloes.md">Módulos compartilhados</a></li>
+          <li><a href="../reconstrucao/README.md">Índice de reconstrução</a> · <a href="../reconstrucao/central_v1.md">Manual V1</a> · <a href="../reconstrucao/central_v2.md">Manual V2</a></li>
+          <li><a href="../reconstrucao/componentes_compartilhados.md">Componentes compartilhados</a> · <a href="../reconstrucao/pendencias_tecnicas.md">Pendências técnicas</a></li>
+          <li><a href="../arquitetura/catalogo_fluxos_criticos.md">Catálogo de fluxos críticos</a> · <a href="../arquitetura/04a_mapa_metro_fluxos_manifestos.md">Mapa de fluxos/manifests</a> · <a href="../arquitetura/04b_mapa_metro_auditoria_proveniencia.md">Auditoria de proveniência</a></li>
+          <li><a href="../arquitetura/mapa_componentes_e_dependencias.md">Mapa de componentes</a> · <a href="../arquitetura/estado_atual_e_inventario_estrutural.md">Inventário estrutural</a> · <a href="../README.md">Índice geral da documentação</a></li>
           <li><a href="auditoria_migracao_definitiva_pastas_textoff.md">Auditoria de migração de pastas</a> · <a href="organizacao_limpeza_baloes.md">Organização documental</a></li>
         </ul>
       </article>
@@ -292,16 +292,16 @@ Prévia válida do Laboratório ──> comparação e confirmação ──> pá
     <details>
       <summary>Registros históricos relacionados</summary>
       <ul>
-        <li><a href="historico/limpeza_baloes/merged/niveis_iii_a_v.md">Níveis III a V e fluxo Merged</a></li>
-        <li><a href="historico/limpeza_baloes/merged/consolidacao_nivel_iii_e_reducao_armazenamento_2026-09-30.md">Consolidação Nível III e armazenamento</a></li>
-        <li><a href="historico/limpeza_baloes/investigacao_cleaner_v1_v2_parcial_2026-10-09.md">Investigação parcial do Cleaner V1/V2</a> · <a href="historico/documentacao_legada/investigacao_cleaner_v1_v2_parcial_2026-10-09.md">cópia no arquivo legado</a></li>
-        <li><a href="historico/limpeza_baloes/especiais/inventario_e_contrato_v2.md">Inventário e contrato inicial de especiais</a></li>
-        <li><a href="historico/limpeza_baloes/especiais/executor_e_comparacao_v2.md">Executor e comparação V2</a></li>
-        <li><a href="historico/limpeza_baloes/especiais/continuidade_2026-09-29.md">Continuidade de especiais</a></li>
-        <li><a href="historico/limpeza_baloes/especiais/comparacao_transparencia_candy_ch1_ch3.md">Comparação de transparência — Candy</a></li>
-        <li><a href="historico/limpeza_baloes/especiais/diagnostico_v1_v2_gazing_2026-10-09.md">Diagnóstico V1/V2 — Gazing</a></li>
-        <li><a href="historico/limpeza_baloes/especiais/ensaio_restauracao_082_2026-10-09.md">Ensaio de restauração 082</a> · <a href="historico/limpeza_baloes/especiais/finalizacao_restauracao_082_2026-10-09.md">finalização da restauração</a></li>
-        <li><a href="historico/limpeza_baloes/especiais/correcao_entrada_artistico_082_2026-10-09.md">Correção de entrada Artístico 082</a></li>
+        <li><a href="../historico/limpeza_baloes/merged/niveis_iii_a_v.md">Níveis III a V e fluxo Merged</a></li>
+        <li><a href="../historico/limpeza_baloes/merged/consolidacao_nivel_iii_e_reducao_armazenamento_2026-09-30.md">Consolidação Nível III e armazenamento</a></li>
+        <li><a href="../historico/limpeza_baloes/investigacao_cleaner_v1_v2_parcial_2026-10-09.md">Investigação parcial do Cleaner V1/V2</a> · <a href="../historico/documentacao_legada/investigacao_cleaner_v1_v2_parcial_2026-10-09.md">cópia no arquivo legado</a></li>
+        <li><a href="../historico/limpeza_baloes/especiais/inventario_e_contrato_v2.md">Inventário e contrato inicial de especiais</a></li>
+        <li><a href="../historico/limpeza_baloes/especiais/executor_e_comparacao_v2.md">Executor e comparação V2</a></li>
+        <li><a href="../historico/limpeza_baloes/especiais/continuidade_2026-09-29.md">Continuidade de especiais</a></li>
+        <li><a href="../historico/limpeza_baloes/especiais/comparacao_transparencia_candy_ch1_ch3.md">Comparação de transparência — Candy</a></li>
+        <li><a href="../historico/limpeza_baloes/especiais/diagnostico_v1_v2_gazing_2026-10-09.md">Diagnóstico V1/V2 — Gazing</a></li>
+        <li><a href="../historico/limpeza_baloes/especiais/ensaio_restauracao_082_2026-10-09.md">Ensaio de restauração 082</a> · <a href="../historico/limpeza_baloes/especiais/finalizacao_restauracao_082_2026-10-09.md">finalização da restauração</a></li>
+        <li><a href="../historico/limpeza_baloes/especiais/correcao_entrada_artistico_082_2026-10-09.md">Correção de entrada Artístico 082</a></li>
       </ul>
     </details>
   </section>

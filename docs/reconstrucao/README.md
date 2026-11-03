@@ -26,7 +26,7 @@ O codigo foi auditado no checkout `cef3cd42`. Antes de reconstruir, confirme o c
 - [Contratos V2](../central_v2/limpeza_baloes/contratos_e_persistencia.md)
 - [Cleaner V2](../central_v2/limpeza_baloes/etapas/cleaner_v2.md)
 - [Modulos compartilhados](../arquitetura/modulos_compartilhados_limpeza_baloes.md)
-- [Plano de migracao documental](../organizacao_limpeza_baloes.md)
+- [Plano de migracao documental](../00_documentos_principais/organizacao_limpeza_baloes.md)
 
 ## Regra de uso
 
