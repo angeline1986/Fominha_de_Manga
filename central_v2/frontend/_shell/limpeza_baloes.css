@@ -1,4 +1,5 @@
 @import url("/texto_off/comparison/check_sidebar.css");
+/* Acima de 200 linhas: implemente novas regras em outro arquivo; não amplie este. */
 /* Laboratorio: botao compacto, sem seta e sem sombra. */
 .drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"],
 .drill-navigation.is-limpeza-baloes .drill-item[data-action="laboratorio"]:hover,

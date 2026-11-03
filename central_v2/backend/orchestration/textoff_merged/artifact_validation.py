@@ -5,6 +5,7 @@ deliberately variable files. No current TextOff artifact has that exception,
 so this validator emits only MATCH, MISMATCH, missing-side states, or
 NOT_APPLICABLE for registry stages outside dual-write scope.
 """
+# Acima de 200 linhas: implemente novas funções em outro módulo; não amplie este.
 from __future__ import annotations
 
 import hashlib

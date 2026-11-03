@@ -1,3 +1,4 @@
+/* Acima de 200 linhas: implemente novas regras em outro arquivo; não amplie este. */
 /* Check keeps its review controls while matching Mapear's compact candidate cards. */
 .comparison-residue-panel.is-check .comparison-residue-layers > div[data-layers] {
   display: grid;

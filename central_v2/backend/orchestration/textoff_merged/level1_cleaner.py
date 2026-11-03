@@ -1,4 +1,5 @@
 """Execute the isolated Merged Level I stage without the legacy refinement."""
+# Acima de 200 linhas: implemente novas funções em outro módulo; não amplie este.
 from __future__ import annotations
 
 import hashlib

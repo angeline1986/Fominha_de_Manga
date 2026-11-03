@@ -1,3 +1,4 @@
+// Acima de 200 linhas: implemente novas funções em outro módulo; não amplie este.
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { createJobProgress } from "/_shared/progress/progress.js";
 
