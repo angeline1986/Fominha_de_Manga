@@ -174,6 +174,48 @@ def state_from_review_row(review_row: dict[str, Any]) -> dict[str, Any]:
         return {"eligible": False, "status": "outside_review", "source": None, "error": None, "pending_segments": []}
 
     level5 = review_row.get("merge_level5_detail") or {}
+    applied = review_row.get("merge_manual_applied_range")
+
+    def with_applied_range(status: str, source: str, pending: list[dict[str, Any]], error: str | None = None) -> dict[str, Any]:
+        result = {
+            "eligible": True,
+            "status": status,
+            "source": source,
+            "error": error,
+            "pending_segments": pending,
+            "manual_range_applied": False,
+            "applied_range": None,
+        }
+        if not isinstance(applied, dict):
+            return result
+        try:
+            start, end = int(applied["global_start"]), int(applied["global_end"])
+        except (KeyError, TypeError, ValueError):
+            return result
+        if start < 0 or end <= start:
+            return result
+
+        remaining: list[dict[str, Any]] = []
+        for segment in pending:
+            try:
+                seg_start, seg_end = _segment_bounds(segment)
+            except ValueError:
+                remaining.append(segment)
+                continue
+            if end <= seg_start or start >= seg_end:
+                remaining.append(segment)
+                continue
+            if seg_start < start:
+                remaining.append({**segment, "global_start": seg_start, "global_end": start})
+            if end < seg_end:
+                remaining.append({**segment, "global_start": end, "global_end": seg_end})
+
+        result["pending_segments"] = remaining
+        result["status"] = "pending" if remaining else "resolved"
+        result["manual_range_applied"] = True
+        result["applied_range"] = {"global_start": start, "global_end": end}
+        return result
+
     if bool(level5.get("available")):
         if not bool(level5.get("valid")):
             return {
@@ -184,25 +226,13 @@ def state_from_review_row(review_row: dict[str, Any]) -> dict[str, Any]:
                 "pending_segments": [],
             }
         pending = list(level5.get("review_pending_segments") or [])
-        return {
-            "eligible": True,
-            "status": "pending" if pending else "resolved",
-            "source": "level5",
-            "error": None,
-            "pending_segments": pending,
-        }
+        return with_applied_range("pending" if pending else "resolved", "level5", pending)
 
     level4 = review_row.get("merge_level4_detail") or {}
     algorithm = str(level4.get("algorithm") or "")
     if algorithm == "merge_level4_global_structural_safe_v1" and bool(level4.get("valid")):
         pending = list(level4.get("review_pending_segments") or level4.get("residual_pending_segments") or [])
-        return {
-            "eligible": True,
-            "status": "pending" if pending else "resolved",
-            "source": "legacy_level4",
-            "error": None,
-            "pending_segments": pending,
-        }
+        return with_applied_range("pending" if pending else "resolved", "legacy_level4", pending)
 
     return {
         "eligible": True,

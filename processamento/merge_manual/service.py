@@ -41,6 +41,8 @@ def build_read_state(
             "status": current["status"],
             "authoritative_source": current["source"],
             "error": current["error"],
+            "manual_range_applied": current.get("manual_range_applied", False),
+            "applied_range": current.get("applied_range"),
             "review_proposal_exists": _review_manifest_path(manga, chapter_dir.name).is_file(),
             "pending_blocks": [],
             "pending_pages": 0,

@@ -44,6 +44,45 @@ class CentralV2MergeManualTests(unittest.TestCase):
         self.assertEqual((block["global_start"], block["global_end"]), (20, 80))
         self.assertEqual(block["pages"][0]["file"], "page-001.png")
 
+    def test_state_marks_applied_manual_range_and_removes_it_from_pending(self):
+        proposal_id = "manual-test"
+        proposal_dir = self.manga / "FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/MERGE_MANUAL_PROPOSALS/6" / proposal_id
+        proposal_dir.mkdir(parents=True)
+        (proposal_dir / "merge-manual-manifest.json").write_text(json.dumps({
+            "proposal_id": proposal_id,
+            "chapter": "6",
+            "status": "EFETIVADO",
+        }), encoding="utf-8")
+        official = self.manga / "FLUXO_SECUNDARIO/02_MERGE/6"
+        official.mkdir(parents=True)
+        Image.new("RGB", (12, 80), "white").save(official / "page-001.png")
+        (official / "merge-manifest.json").write_text(json.dumps({
+            "merged_images": 1,
+            "source_total_height": 80,
+            "outputs": [{
+                "file": "page-001.png",
+                "global_start": 0,
+                "global_end": 80,
+                "width": 12,
+                "height": 80,
+            }],
+            "composition": {
+                "manual_proposal_id": proposal_id,
+                "manual_range": [20, 80],
+            },
+        }), encoding="utf-8")
+
+        response = dispatch_get("/api/merge-manual?provider=comix&manga=Synthetic", self.root)
+        payload = json.loads(response.body)
+        row = payload["chapters"][0]
+        self.assertEqual(response.status, 200)
+        self.assertEqual(row["status"], "resolved")
+        self.assertTrue(row["manual_range_applied"])
+        self.assertEqual(row["pending_pages"], 0)
+        self.assertEqual(row["pending_blocks"], [])
+        self.assertEqual(payload["summary"]["pending"], 0)
+        self.assertEqual(payload["summary"]["resolved"], 1)
+
     def test_preview_endpoint_serves_only_image_in_selected_chapter(self):
         response = dispatch_get(
             "/api/merge-manual/image?provider=comix&manga=Synthetic&chapter=6&file=page-001.png",

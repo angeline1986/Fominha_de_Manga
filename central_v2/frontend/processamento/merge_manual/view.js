@@ -54,7 +54,7 @@ export function createMergeManualView() {
       const tr = body.insertRow();
       tr.className = sessions.has(row.chapter) ? "is-selected" : "";
       tr.tabIndex = 0;
-      tr.innerHTML = `<td><button type="button" class="manual-merge-row-button"></button></td><td></td><td></td><td><span class="manual-merge-badge ${row.status}">${statusLabel(row.status)}</span></td><td></td>`;
+      tr.innerHTML = `<td><button type="button" class="manual-merge-row-button"></button></td><td></td><td></td><td><span class="manual-merge-badge ${row.manual_range_applied ? "applied" : row.status}">${statusLabel(row)}</span></td><td></td>`;
       tr.cells[0].firstElementChild.textContent = `Cap. ${row.chapter}`;
       tr.cells[1].textContent = row.status === "pending" ? `${row.pending_pages} página(s)`
         : row.status === "resolved" ? "Sem residual" : row.error || "Estado inválido";
@@ -140,6 +140,7 @@ export function createMergeManualView() {
   };
 }
 
-function statusLabel(status) {
-  return status === "pending" ? "Pendente" : status === "resolved" ? "Resolvido" : "Revisar";
+function statusLabel(row) {
+  if (row.manual_range_applied) return "Faixa aplicada";
+  return row.status === "pending" ? "Pendente" : row.status === "resolved" ? "Resolvido" : "Revisar";
 }

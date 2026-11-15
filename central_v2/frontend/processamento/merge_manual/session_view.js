@@ -8,7 +8,10 @@ export function renderMergeManualSession({ row, session, provider, manga, onTogg
   section.dataset.chapter = row.chapter;
   if (!session.expanded) section.classList.add("is-collapsed");
   if (row.status !== "pending") {
-    section.innerHTML = `<div class="manual-merge-config-heading"><div class="manual-merge-title"><h2>Capítulo ${escapeHtml(row.chapter)}</h2><p>${row.status === "resolved" ? "Não há páginas residuais para configurar." : escapeHtml(row.error || "Este capítulo precisa de revisão.")}</p></div><button type="button" class="manual-merge-collapse" aria-expanded="${session.expanded}" aria-label="${session.expanded ? "Minimizar" : "Expandir"} sessão">${iconMarkup(session.expanded ? "collapse" : "expand")}</button></div>`;
+    const explanation = row.manual_range_applied
+      ? "Faixa aplicada à composição oficial; não restam páginas residuais para configurar."
+      : row.status === "resolved" ? "Não há páginas residuais para configurar." : row.error || "Este capítulo precisa de revisão.";
+    section.innerHTML = `<div class="manual-merge-config-heading"><div class="manual-merge-title"><h2>Capítulo ${escapeHtml(row.chapter)}</h2><p>${escapeHtml(explanation)}</p></div><button type="button" class="manual-merge-collapse" aria-expanded="${session.expanded}" aria-label="${session.expanded ? "Minimizar" : "Expandir"} sessão">${iconMarkup(session.expanded ? "collapse" : "expand")}</button></div>`;
     section.querySelector("button").addEventListener("click", onToggle);
     return section;
   }

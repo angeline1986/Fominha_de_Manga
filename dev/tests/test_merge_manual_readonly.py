@@ -53,6 +53,24 @@ class MergeManualReadonlyTests(unittest.TestCase):
         self.assertEqual(current["source"], "level5")
         self.assertEqual(len(current["pending_segments"]), 1)
 
+    def test_applied_range_removes_only_the_applied_part_from_residual(self):
+        current = state_from_review_row({
+            "needs_review": True,
+            "merge_state": "pendente_review",
+            "merge_level5_detail": {
+                "available": True,
+                "valid": True,
+                "review_pending_segments": [{"global_start": 100, "global_end": 300}],
+            },
+            "merge_manual_applied_range": {"global_start": 150, "global_end": 250},
+        })
+        self.assertEqual(current["status"], "pending")
+        self.assertTrue(current["manual_range_applied"])
+        self.assertEqual(current["pending_segments"], [
+            {"global_start": 100, "global_end": 150},
+            {"global_start": 250, "global_end": 300},
+        ])
+
     def test_outside_review_is_not_listed(self):
         tmp, manga, chapter = self.make_chapter()
         self.addCleanup(tmp.cleanup)
