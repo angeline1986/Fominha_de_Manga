@@ -14,13 +14,10 @@ export function createBalanceValidationView({ onOpenEditor, onRevalidate, onZoom
   element.querySelector("[data-canvas]").replaceWith(canvas.element);
   element.append(canvas.focusDock);
   const disposeFocus = bindFocusMode(element, { button: canvas.focusButton });
-  const chapterSelect = list.element.querySelector("[data-chapter]");
   let state = { chapters: [] };
   let selectedChapter = null;
   let selectedMerges = new Set();
   let zoom = 60;
-  chapterSelect.addEventListener("change", onChapterChange);
-
   function chapter() { return (state.chapters || []).find((row) => String(row.chapter) === String(selectedChapter)) || null; }
 
   function draw() {
@@ -29,8 +26,6 @@ export function createBalanceValidationView({ onOpenEditor, onRevalidate, onZoom
       selectedChapter = rows.length ? String(rows[0].chapter) : null;
       selectedMerges = defaultSelection(rows[0]);
     }
-    chapterSelect.innerHTML = `<option value="">Selecione</option>${rows.map((row) => `<option value="${escapeHtml(row.chapter)}" ${String(row.chapter) === String(selectedChapter) ? "selected" : ""}>Cap. ${escapeHtml(row.chapter)}</option>`).join("")}`;
-    chapterSelect.disabled = !rows.length;
     const current = chapter();
     element.querySelector("[data-status]").textContent = state.status === "loading" ? `Lendo merges de ${state.manga}…` : state.status === "error" ? state.error : state.status === "idle" ? "Selecione provider e obra para consultar o Balanceamento." : "";
     list.update({ ...state, chapter: current }, selectedMerges);
@@ -45,11 +40,10 @@ export function createBalanceValidationView({ onOpenEditor, onRevalidate, onZoom
 
   function onEvent(action, value) {
     if (action === "refresh") onRevalidate();
+    if (action === "chapter") selectChapter(value);
     if (action === "selection") { selectedMerges = new Set(value); draw(); }
     if (action === "submit") onOpenEditor({ chapter: selectedChapter, merges: value });
   }
-
-  function onChapterChange() { selectChapter(chapterSelect.value); }
 
   function update(next) {
     const contextChanged = state.provider !== next.provider || state.manga !== next.manga;
@@ -61,7 +55,7 @@ export function createBalanceValidationView({ onOpenEditor, onRevalidate, onZoom
   draw();
   return {
     element, update,
-    dispose() { chapterSelect.removeEventListener("change", onChapterChange); list.dispose(); canvas.dispose(); disposeFocus(); },
+    dispose() { list.dispose(); canvas.dispose(); disposeFocus(); },
   };
 }
 
@@ -74,5 +68,3 @@ export function defaultSelection(chapter) {
   const end = Math.min(merges.length, index + (issue ? 2 : 2));
   return new Set(merges.slice(start, end).map((item) => item.file));
 }
-
-function escapeHtml(value) { return String(value ?? "").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[char]); }

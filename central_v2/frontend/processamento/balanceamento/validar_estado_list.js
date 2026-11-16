@@ -1,20 +1,24 @@
 import { balanceamentoImageUrl } from "/_app/api/balanceamento.js";
 import { createPagination } from "/_shared/pagination/model.js";
 import { createPaginationControls } from "/_shared/pagination/pagination.js";
+import { paginationConfig } from "/_shared/pagination/config.js";
+import { createChapterPicker } from "/processamento/balanceamento/chapter_picker.js";
 
 export function createBalanceMergeList({ onEvent }) {
   const element = document.createElement("aside");
   element.className = "balance-validation-sidebar";
-  element.innerHTML = `<div class="balance-sidebar-heading"><div class="balance-sidebar-title"><h2>Merges</h2><label class="balance-chapter-picker"><span class="visually-hidden">Capítulo</span><select data-chapter aria-label="Selecionar capítulo"></select></label></div><button class="btn balance-refresh-button" type="button" data-refresh aria-label="Atualizar" title="Atualizar"><img src="/_shared/icons/arrow-rotate-right-solid-full.svg" alt="" aria-hidden="true"></button></div>
+  element.innerHTML = `<div class="balance-sidebar-heading"><div class="balance-sidebar-title"><h2>Merges</h2><div data-chapter-picker></div></div><button class="btn balance-refresh-button" type="button" data-refresh aria-label="Atualizar" title="Atualizar"><img src="/_shared/icons/arrow-rotate-right-solid-full.svg" alt="" aria-hidden="true"></button></div>
     <div class="balance-list-controls"><div data-filters></div><div data-view-mode aria-label="Modo de distribuição"><button type="button" data-mode="bars" aria-label="Exibir barras" aria-pressed="true"><img src="/_shared/icons/chart-simple-solid-full.svg" alt="" aria-hidden="true"></button><button type="button" data-mode="pixels" aria-label="Exibir pixels" aria-pressed="false">px</button></div></div>
     <div class="balance-list-heading"><label><input type="checkbox" data-select-all aria-label="Selecionar todos os merges">Marcar todos</label></div>
     <div class="balance-merge-list" data-list></div><div data-pagination></div>
     <footer class="balance-list-footer"><button class="btn primary" type="button" data-submit disabled><span class="balance-submit-count" data-count>0</span>Avançar para Cortes&nbsp;→</button></footer>
     <div class="balance-hover-preview" role="tooltip" hidden><img alt=""></div>`;
   const list = element.querySelector("[data-list]");
+  const chapterPicker = createChapterPicker((value) => onEvent("chapter", value));
+  element.querySelector("[data-chapter-picker]").replaceWith(chapterPicker.element);
   const preview = element.querySelector(".balance-hover-preview");
   document.body.append(preview);
-  const pagination = createPagination(9);
+  const pagination = createPagination(paginationConfig.balanceMergesPageSize);
   let state = {};
   let selected = new Set();
   let mode = "bars";
@@ -30,7 +34,7 @@ export function createBalanceMergeList({ onEvent }) {
     const visible = merges.filter((item) => filter === "all" || deviations.has(item.file));
     const page = pagination.select(visible);
     const maxHeight = Math.max(1, ...merges.map((item) => Number(item.height) || 0));
-    element.querySelector("[data-chapter]").value = state.chapter ? String(state.chapter.chapter) : "";
+    chapterPicker.update(state.chapters || [], state.chapter?.chapter);
     element.querySelector("[data-filters]").innerHTML = `<button type="button" data-filter="all" aria-pressed="${filter === "all"}">Todos (${merges.length})</button><button type="button" data-filter="deviations" aria-pressed="${filter === "deviations"}">Desvios (${deviations.size})</button>`;
     element.querySelectorAll("[data-mode]").forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.mode === mode)));
     list.replaceChildren();
@@ -104,7 +108,7 @@ export function createBalanceMergeList({ onEvent }) {
   return {
     element,
     update(next, nextSelected) { state = next; selected = new Set(nextSelected || []); draw(); },
-    dispose() { element.removeEventListener("click", onClick); element.removeEventListener("change", onChange); list.removeEventListener("pointerover", onPointerOver); list.removeEventListener("pointerout", onPointerOut); preview.remove(); },
+    dispose() { element.removeEventListener("click", onClick); element.removeEventListener("change", onChange); list.removeEventListener("pointerover", onPointerOver); list.removeEventListener("pointerout", onPointerOut); chapterPicker.dispose(); preview.remove(); },
   };
 }
 

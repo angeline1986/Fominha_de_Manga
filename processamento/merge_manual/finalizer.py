@@ -495,6 +495,7 @@ def apply_final_composition(
                     "already_applied": True,
                     "proposal_id": proposal_id,
                     "chapter": chapter,
+                    "source_range": proposal.get("source_block"),
                     "merged_images": int(official_payload.get("merged_images") or 0),
                     "message": "Esta proposta já foi aplicada anteriormente.",
                 }
@@ -506,6 +507,7 @@ def apply_final_composition(
         if proposal_id in prior_ids:
             return {"ok": True, "status": "FAIXA_SELECIONADA", "already_selected": True,
                     "proposal_id": proposal_id, "chapter": chapter,
+                    "source_range": proposal.get("source_block"),
                     "message": "Esta faixa já foi selecionada para a composição final."}
 
         current, _selected = _validate_current_review(chapter_dir, review_row, proposal)
@@ -530,7 +532,8 @@ def apply_final_composition(
         if remaining:
             write_selected_ids(manga, chapter, [*prior_ids, proposal_id])
             return {"ok": True, "status": "FAIXA_SELECIONADA", "proposal_id": proposal_id,
-                    "chapter": chapter, "remaining_intervals": remaining,
+                    "chapter": chapter, "source_range": proposal.get("source_block"),
+                    "remaining_intervals": remaining,
                     "message": "Faixa confirmada. Continue com a próxima faixa pendente; a composição será publicada ao concluir todas."}
 
         source_spans, total_height, width = _source_geometry(chapter_dir, v3)
@@ -622,6 +625,8 @@ def apply_final_composition(
                 "already_applied": False,
                 "proposal_id": proposal_id,
                 "chapter": chapter,
+                "source_range": proposal.get("source_block"),
+                "selected_range_count": len(ranges),
                 "merged_images": len(official_manifest["outputs"]),
                 "output_dir": str(official_dir),
                 "message": "Composição final aplicada e validada.",

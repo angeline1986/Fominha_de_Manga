@@ -15,6 +15,9 @@ from processamento.unificacao_imagens.auto_merge.documentos import read_document
 from central_v2.backend.state.manga_state import resolve_manga
 from central_v2.backend.state.work_layout import images_root, processing_stage_root
 from central_v2.backend.routes.merge_manual_applied import applied_manual_ranges
+from central_v2.backend.routes.merge_manual_logging import (
+    log_apply_failed, log_apply_finished, log_apply_started,
+)
 
 
 def _review_row(manga: Path, chapter: str) -> dict:
@@ -155,6 +158,8 @@ def merge_manual_apply_response(payload: object, output_root: Path = OUTPUT_ROOT
     if not isinstance(payload, dict):
         return RouteResponse(400, b'{"error":"payload invalido"}')
     provider, name = str(payload.get("provider") or ""), str(payload.get("manga") or "")
+    chapter, proposal_id = str(payload.get("chapter") or ""), str(payload.get("proposal_id") or "")
+    fields, started = log_apply_started(chapter, proposal_id)
     try:
         manga = resolve_manga(output_root, provider, name)
         root = images_root(manga)
@@ -164,8 +169,13 @@ def merge_manual_apply_response(payload: object, output_root: Path = OUTPUT_ROOT
             review_state_loader=lambda chapter: _chapter_review_row(manga, chapter.name),
             payload=payload,
         )
+        log_apply_finished(result, fields, started)
         body = json.dumps(result, ensure_ascii=False, separators=(",", ":")).encode()
         return RouteResponse(200, body)
     except (OSError, ValueError) as exc:
+        log_apply_failed(exc, fields, started)
         body = json.dumps({"error": str(exc)}, ensure_ascii=False).encode()
         return RouteResponse(400, body)
+    except Exception as exc:
+        log_apply_failed(exc, fields, started, unexpected=True)
+        raise
