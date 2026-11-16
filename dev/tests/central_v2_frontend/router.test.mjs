@@ -49,6 +49,7 @@ test('unknown routes preserve the active page and its subscription', async () =>
 test('manual merge proposal result resolves to its dedicated page', async () => {
   const { routes } = await setup();
   assert.equal(routes['merge-manual-result'].module, '/processamento/merge_manual/resultado_proposta.js');
+  assert.equal(routes['merge-manual-saved'].module, '/processamento/merge_manual/propostas_salvas.js');
 });
 
 test('balanceamento navigation resolves to independent validation and cut editor pages', async () => {

@@ -94,6 +94,30 @@ def latest_proposal(manga,chapter):
         if data.get("status") in {"PROPOSTA_GERADA","EFETIVADO"}: return data
     return None
 
+def list_saved_proposals(manga):
+    manga_root=Path(manga).resolve()
+    root=(manga_root/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/PROPOSALS_DIRNAME).resolve()
+    saved=[]
+    if not root.is_relative_to(manga_root) or not root.is_dir(): return saved
+    for chapter_dir in root.iterdir():
+        if not chapter_dir.is_dir() or chapter_dir.resolve().parent!=root: continue
+        for folder in chapter_dir.iterdir():
+            if not folder.is_dir() or folder.resolve().parent!=chapter_dir.resolve(): continue
+            try:
+                data=json.loads((folder/MANIFEST_NAME).read_text(encoding="utf-8"))
+                if (not isinstance(data,dict) or data.get("chapter")!=chapter_dir.name
+                    or data.get("proposal_id")!=folder.name
+                    or data.get("status") not in {"PROPOSTA_GERADA","EFETIVADO"}): continue
+                block=data.get("source_block") or {}
+                outputs=data.get("outputs")
+                if not isinstance(block,dict) or not isinstance(outputs,list) or not outputs: continue
+                saved.append({"chapter":chapter_dir.name,"proposal_id":folder.name,
+                    "status":data["status"],"created_at":data.get("created_at"),
+                    "start":block.get("start"),"end":block.get("end"),
+                    "outputs":len(outputs),"proposal":data})
+            except (OSError,ValueError,TypeError): continue
+    return sorted(saved,key=lambda item:str(item.get("created_at") or ""),reverse=True)
+
 def proposal_dir(manga,chapter,proposal_id):
     root=_proposal_root(manga,chapter).resolve();target=(root/str(proposal_id)).resolve()
     if not target.is_relative_to(root): raise ValueError("proposal_id inválido.")

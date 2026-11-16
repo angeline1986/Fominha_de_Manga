@@ -27,6 +27,7 @@ from central_v2.backend.routes.merge_manual import (
     merge_manual_proposal_image_response,
     merge_manual_response,
 )
+from central_v2.backend.routes.merge_manual_proposals import response as merge_manual_proposals_response
 from central_v2.backend.routes.static import static_response
 from central_v2.backend.routes.textoff_merged_router import dispatch_textoff_merged_get
 from central_v2.backend.routes.balanceamento import balanceamento_response
@@ -95,6 +96,9 @@ def dispatch_get(
 
     if request.path == "/api/merge-manual":
         return merge_manual_response(parse_qs(request.query), output_root)
+
+    if request.path == "/api/merge-manual/proposals":
+        return merge_manual_proposals_response(parse_qs(request.query), output_root)
 
     if request.path == "/api/balanceamento":
         return balanceamento_response(parse_qs(request.query), output_root)

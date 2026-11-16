@@ -96,6 +96,23 @@ class CentralV2MergeManualTests(unittest.TestCase):
         )
         self.assertEqual(denied.status, 404)
 
+    def test_saved_proposals_lists_generated_and_applied_without_mutating_them(self):
+        proposals = self.manga / "FLUXO_SECUNDARIO/01_MERGE_PROCESSAMENTO/MERGE_MANUAL_PROPOSALS/6"
+        for proposal_id, status in (("pending-1", "PROPOSTA_GERADA"), ("applied-1", "EFETIVADO")):
+            folder = proposals / proposal_id
+            folder.mkdir(parents=True)
+            (folder / "merge-manual-manifest.json").write_text(json.dumps({
+                "proposal_id": proposal_id, "chapter": "6", "status": status,
+                "source_block": {"start": "page-001.png", "end": "page-001.png"},
+                "outputs": [{"file": "block-001.png"}],
+            }), encoding="utf-8")
+        before = {path: path.read_bytes() for path in proposals.glob("*/merge-manual-manifest.json")}
+        response = dispatch_get("/api/merge-manual/proposals?provider=comix&manga=Synthetic", self.root)
+        payload = json.loads(response.body)
+        self.assertEqual(response.status, 200)
+        self.assertCountEqual([item["status"] for item in payload["proposals"]], ["PROPOSTA_GERADA", "EFETIVADO"])
+        self.assertEqual(before, {path: path.read_bytes() for path in before})
+
     def test_proposal_endpoint_uses_selected_range_and_persists_cut_manifest(self):
         response = dispatch_post("/api/merge-manual/proposal", {
             "provider": "comix", "manga": "Synthetic", "chapter": "6",

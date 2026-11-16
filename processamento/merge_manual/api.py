@@ -24,7 +24,7 @@ def get_merge_manual_state(
     )
 
 
-from .proposal import generate_proposal, latest_proposal
+from .proposal import generate_proposal, latest_proposal, list_saved_proposals
 
 def generate_merge_manual_proposal_job(manga: Path, chapter_dirs: Iterable[Path], *, review_state_loader: Callable[[Path], dict[str, Any]], payload: dict[str, Any]) -> dict[str, Any]:
     chapter=str(payload.get("chapter") or "")
@@ -34,6 +34,9 @@ def generate_merge_manual_proposal_job(manga: Path, chapter_dirs: Iterable[Path]
 
 def get_latest_merge_manual_proposal(manga: Path, chapter: str) -> dict[str, Any]:
     return {"ok":True,"proposal":latest_proposal(manga,str(chapter))}
+
+def get_saved_merge_manual_proposals(manga: Path) -> dict[str, Any]:
+    return {"ok":True,"proposals":list_saved_proposals(manga)}
 
 
 from .finalizer import apply_final_composition

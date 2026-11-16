@@ -6,6 +6,14 @@ export async function fetchMergeManual(provider, manga, signal) {
   return payload;
 }
 
+export async function fetchSavedMergeManualProposals(provider, manga, signal) {
+  const query = new URLSearchParams({ provider, manga });
+  const response = await fetch(`/api/merge-manual/proposals?${query}`, { signal });
+  const payload = await response.json();
+  if (!response.ok) throw new Error(payload.error || `Falha HTTP ${response.status}`);
+  return payload.proposals || [];
+}
+
 export function mergeManualImageUrl(provider, manga, chapter, file) {
   const query = new URLSearchParams({ provider, manga, chapter, file });
   return `/api/merge-manual/image?${query}`;

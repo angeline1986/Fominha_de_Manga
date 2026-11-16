@@ -1,0 +1,25 @@
+.saved-manual-proposals {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
+  background: var(--color-surface);
+}
+
+.saved-manual-proposals > p { margin: 18px; color: var(--color-text-muted); }
+.saved-proposal-table-wrap { overflow-x: auto; }
+.saved-proposal-table-wrap th:last-child,
+.saved-proposal-table-wrap td:last-child { width: 190px; text-align: right; }
+.saved-proposal-table-wrap .btn { white-space: nowrap; }
+.saved-proposal-status {
+  display: inline-flex;
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: var(--font-size-small);
+  font-weight: var(--font-weight-semibold);
+}
+.saved-proposal-status.pending { background: #fff3db; color: var(--color-warning); }
+.saved-proposal-status.applied { background: #e4f5ee; color: #187a58; }
+
+@media (max-width: 720px) {
+  .saved-proposal-table-wrap table { min-width: 720px; }
+}

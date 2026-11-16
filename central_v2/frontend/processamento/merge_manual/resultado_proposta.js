@@ -41,7 +41,7 @@ export function render(container) {
   let zoom = 100;
   grid.style.setProperty("--result-count", proposal.outputs.length);
   const disposeFocusMode = bindFocusMode(page, { button: page.querySelector("[data-focus-toggle]") });
-  page.querySelector("[data-back]").addEventListener("click", () => navigate(container, "novos-merges"));
+  page.querySelector("[data-back]").addEventListener("click", () => navigate(container, selection.returnTo || "novos-merges"));
   page.querySelectorAll("[data-zoom]").forEach((button) => button.addEventListener("click", () => {
     zoom = Math.max(30, Math.min(200, zoom + (button.dataset.zoom === "+" ? 10 : -10)));
     setZoom();

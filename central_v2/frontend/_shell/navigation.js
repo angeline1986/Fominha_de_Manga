@@ -43,6 +43,7 @@ export const navigation = [
         items: [
           { id: "validar-faixa", label: "Validar Faixa" },
           { id: "novos-merges", label: "Novos Merges" },
+          { id: "merge-manual-saved", label: "Propostas Salvas" },
         ],
       },
     ],
