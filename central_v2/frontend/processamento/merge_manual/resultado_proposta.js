@@ -23,13 +23,13 @@ export function render(container) {
       <div class="manual-result-tools">
         <div class="zoom-control"><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><output data-zoom-value>100%</output><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><button type="button" class="zoom-control-reset" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div>
         <button type="button" class="manual-cut-toolbar-button" data-focus-toggle aria-label="Modo Foco" aria-pressed="false">${iconMarkup("focus-exit")} Foco</button>
-        <button type="button" class="manual-result-apply" data-apply>Aplicar composição final</button>
+        <button type="button" class="manual-result-apply" data-apply>Efetivar faixa</button>
       </div>
     </header>
     <aside class="focus-mode-dock focus-mode-compact" data-focus-dock aria-label="Controles do resultado em foco">
       <button type="button" data-focus-exit aria-label="Sair do Modo Foco" title="Sair do Modo Foco"><span>×</span></button>
       <span data-focus-divider></span><div class="focus-mode-zoom"><button type="button" data-zoom="+" aria-label="Aumentar zoom">+</button><output data-zoom-value-dock>100%</output><button type="button" data-zoom="-" aria-label="Diminuir zoom">−</button><button type="button" data-reset aria-label="Visualizar em escala 1 para 1">1:1</button></div>
-      <span data-focus-divider></span><button type="button" class="focus-mode-primary" data-apply aria-label="Aplicar composição final" title="Aplicar composição final">✓</button>
+      <span data-focus-divider></span><button type="button" class="focus-mode-primary" data-apply aria-label="Efetivar faixa" title="Efetivar faixa">✓</button>
     </aside>
     <p class="manual-result-status" data-status role="status" aria-live="polite"></p>
     ${compositionMarkup(selection, proposal)}
@@ -49,17 +49,17 @@ export function render(container) {
   page.querySelectorAll("[data-reset]").forEach((button) => button.addEventListener("click", () => { zoom = 100; setZoom(); }));
   page.querySelectorAll("[data-apply]").forEach((button) => button.addEventListener("click", async (event) => {
     const confirmed = await confirmMessage({
-      title: "Aplicar composição final",
-      message: "Os novos merges substituirão a composição oficial deste capítulo em 02_MERGE. Deseja continuar?",
-      confirmText: "Aplicar",
+      title: "Efetivar faixa",
+      message: `A faixa ${proposal.source_block.start} → ${proposal.source_block.end} será confirmada. Quando todas as faixas estiverem confirmadas, a composição será publicada em 02_MERGE. Deseja continuar?`,
+      confirmText: "Efetivar",
     });
     if (!confirmed) return;
     page.querySelectorAll("[data-apply]").forEach((item) => { item.disabled = true; });
-    status.textContent = "Validando e aplicando composição final…";
+    status.textContent = "Validando a faixa e atualizando pendências…";
     try {
       const result = await applyMergeManualProposal({ provider: selection.provider, manga: selection.manga, chapter: selection.chapter, proposal_id: proposal.proposal_id });
       status.textContent = "";
-      await showMessage({ title: "Composição aplicada", message: result.message || "A composição final foi aplicada e validada em 02_MERGE." });
+      await showMessage({ title: result.status === "FAIXA_SELECIONADA" ? "Faixa confirmada" : "Composição aplicada", message: result.message });
     } catch (error) {
       status.textContent = "";
       page.querySelectorAll("[data-apply]").forEach((item) => { item.disabled = false; });

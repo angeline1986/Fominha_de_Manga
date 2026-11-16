@@ -71,6 +71,20 @@ class MergeManualReadonlyTests(unittest.TestCase):
             {"global_start": 250, "global_end": 300},
         ])
 
+    def test_multiple_applied_ranges_resolve_the_residual(self):
+        current = state_from_review_row({
+            "needs_review": True, "merge_state": "pendente_review",
+            "merge_level5_detail": {"available": True, "valid": True,
+                                    "review_pending_segments": [{"global_start": 100, "global_end": 300}]},
+            "merge_manual_applied_ranges": [
+                {"global_start": 100, "global_end": 180},
+                {"global_start": 180, "global_end": 300},
+            ],
+        })
+        self.assertEqual(current["status"], "resolved")
+        self.assertEqual(current["pending_segments"], [])
+        self.assertEqual(len(current["applied_ranges"]), 2)
+
     def test_outside_review_is_not_listed(self):
         tmp, manga, chapter = self.make_chapter()
         self.addCleanup(tmp.cleanup)

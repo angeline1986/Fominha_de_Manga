@@ -34,6 +34,17 @@ class MergeManualApplyFinalTests(unittest.TestCase):
         self.assertEqual([(x["global_start"], x["global_end"]) for x in pieces],
                          [(0,100),(100,150),(150,200),(200,300)])
 
+    def test_multiple_selected_ranges_preserve_automatic_piece_between_them(self):
+        pieces = _build_candidate(
+            automatic=[self.piece(0, 100), self.piece(150, 200), self.piece(250, 300)],
+            manual=[self.piece(100, 150, "manual"), self.piece(200, 250, "manual")],
+            selected_start=100, selected_end=250,
+            selected_ranges=[(100, 150), (200, 250)],
+            pending=[(100, 150), (200, 250)], total_height=300,
+        )
+        self.assertEqual([(item["global_start"], item["global_end"]) for item in pieces],
+                         [(0, 100), (100, 150), (150, 200), (200, 250), (250, 300)])
+
     def test_gap_aborts(self):
         with self.assertRaisesRegex(ValueError, "GAP"):
             _build_candidate(

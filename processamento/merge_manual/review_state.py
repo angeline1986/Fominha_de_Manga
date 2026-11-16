@@ -174,7 +174,9 @@ def state_from_review_row(review_row: dict[str, Any]) -> dict[str, Any]:
         return {"eligible": False, "status": "outside_review", "source": None, "error": None, "pending_segments": []}
 
     level5 = review_row.get("merge_level5_detail") or {}
-    applied = review_row.get("merge_manual_applied_range")
+    applied = review_row.get("merge_manual_applied_ranges")
+    if applied is None and isinstance(review_row.get("merge_manual_applied_range"), dict):
+        applied = [review_row["merge_manual_applied_range"]]
 
     def with_applied_range(status: str, source: str, pending: list[dict[str, Any]], error: str | None = None) -> dict[str, Any]:
         result = {
@@ -185,35 +187,44 @@ def state_from_review_row(review_row: dict[str, Any]) -> dict[str, Any]:
             "pending_segments": pending,
             "manual_range_applied": False,
             "applied_range": None,
+            "applied_ranges": [],
         }
-        if not isinstance(applied, dict):
+        if not isinstance(applied, list) or not applied:
             return result
-        try:
-            start, end = int(applied["global_start"]), int(applied["global_end"])
-        except (KeyError, TypeError, ValueError):
-            return result
-        if start < 0 or end <= start:
-            return result
-
-        remaining: list[dict[str, Any]] = []
-        for segment in pending:
+        ranges = []
+        for item in applied:
             try:
-                seg_start, seg_end = _segment_bounds(segment)
-            except ValueError:
-                remaining.append(segment)
-                continue
-            if end <= seg_start or start >= seg_end:
-                remaining.append(segment)
-                continue
-            if seg_start < start:
-                remaining.append({**segment, "global_start": seg_start, "global_end": start})
-            if end < seg_end:
-                remaining.append({**segment, "global_start": end, "global_end": seg_end})
+                start, end = int(item["global_start"]), int(item["global_end"])
+            except (KeyError, TypeError, ValueError):
+                return result
+            if start < 0 or end <= start:
+                return result
+            ranges.append({"global_start": start, "global_end": end})
+
+        remaining = pending
+        for item in ranges:
+            start, end = item["global_start"], item["global_end"]
+            updated: list[dict[str, Any]] = []
+            for segment in remaining:
+                try:
+                    seg_start, seg_end = _segment_bounds(segment)
+                except ValueError:
+                    updated.append(segment)
+                    continue
+                if end <= seg_start or start >= seg_end:
+                    updated.append(segment)
+                    continue
+                if seg_start < start:
+                    updated.append({**segment, "global_start": seg_start, "global_end": start})
+                if end < seg_end:
+                    updated.append({**segment, "global_start": end, "global_end": seg_end})
+            remaining = updated
 
         result["pending_segments"] = remaining
         result["status"] = "pending" if remaining else "resolved"
         result["manual_range_applied"] = True
-        result["applied_range"] = {"global_start": start, "global_end": end}
+        result["applied_range"] = ranges[0] if len(ranges) == 1 else None
+        result["applied_ranges"] = ranges
         return result
 
     if bool(level5.get("available")):

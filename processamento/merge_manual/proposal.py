@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from PIL import Image
 from .review_state import build_pending_blocks, state_from_review_row, validate_page_range
+from .selected_ranges import read_selected_ids
 
 PROPOSALS_DIRNAME="MERGE_MANUAL_PROPOSALS"
 MANIFEST_NAME="merge-manual-manifest.json"
@@ -94,6 +95,14 @@ def latest_proposal(manga,chapter):
         if data.get("status") in {"PROPOSTA_GERADA","EFETIVADO"}: return data
     return None
 
+def _saved_bounds(item):
+    try:
+        block=item["proposal"]["source_block"]
+        start,end=int(block["global_start"]),int(block["global_end"])
+        return (start,end) if end>start else None
+    except (KeyError,TypeError,ValueError):
+        return None
+
 def list_saved_proposals(manga):
     manga_root=Path(manga).resolve()
     root=(manga_root/"FLUXO_SECUNDARIO"/"01_MERGE_PROCESSAMENTO"/PROPOSALS_DIRNAME).resolve()
@@ -101,6 +110,7 @@ def list_saved_proposals(manga):
     if not root.is_relative_to(manga_root) or not root.is_dir(): return saved
     for chapter_dir in root.iterdir():
         if not chapter_dir.is_dir() or chapter_dir.resolve().parent!=root: continue
+        chapter_saved=[]
         for folder in chapter_dir.iterdir():
             if not folder.is_dir() or folder.resolve().parent!=chapter_dir.resolve(): continue
             try:
@@ -111,11 +121,20 @@ def list_saved_proposals(manga):
                 block=data.get("source_block") or {}
                 outputs=data.get("outputs")
                 if not isinstance(block,dict) or not isinstance(outputs,list) or not outputs: continue
-                saved.append({"chapter":chapter_dir.name,"proposal_id":folder.name,
+                chapter_saved.append({"chapter":chapter_dir.name,"proposal_id":folder.name,
                     "status":data["status"],"created_at":data.get("created_at"),
                     "start":block.get("start"),"end":block.get("end"),
                     "outputs":len(outputs),"proposal":data})
             except (OSError,ValueError,TypeError): continue
+        selected_ids=set(read_selected_ids(manga_root,chapter_dir.name))
+        chosen=[item for item in chapter_saved if item["proposal_id"] in selected_ids or item["status"]=="EFETIVADO"]
+        chosen_ranges=[bounds for item in chosen if (bounds:=_saved_bounds(item))]
+        for item in chapter_saved:
+            bounds=_saved_bounds(item)
+            if item["status"]=="EFETIVADO": pass
+            elif item["proposal_id"] in selected_ids: item["status"]="FAIXA_SELECIONADA"
+            elif bounds and any(min(bounds[1],b)>max(bounds[0],a) for a,b in chosen_ranges): item["status"]="ALTERNATIVA_SUBSTITUIDA"
+        saved.extend(chapter_saved)
     return sorted(saved,key=lambda item:str(item.get("created_at") or ""),reverse=True)
 
 def proposal_dir(manga,chapter,proposal_id):

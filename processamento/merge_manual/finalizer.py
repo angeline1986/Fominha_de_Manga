@@ -13,6 +13,7 @@ from typing import Any
 from PIL import Image, UnidentifiedImageError
 
 from .proposal import MANIFEST_NAME, _fp, _hash, _selection, proposal_dir
+from .selected_ranges import read_selected_ids, remaining_intervals, write_selected_ids
 
 
 _LOCKS_GUARD = threading.Lock()
@@ -258,13 +259,12 @@ def _build_candidate(
     selected_end: int,
     pending: list[tuple[int, int]],
     total_height: int,
+    selected_ranges: list[tuple[int, int]] | None = None,
 ) -> list[dict[str, Any]]:
     # A promoção final só é permitida quando a proposta resolve todo o residual
     # autoritativo ainda pendente. Não mascara pendências fora da faixa manual.
-    outside = [
-        (a, b) for a, b in pending
-        if a < selected_start or b > selected_end
-    ]
+    ranges = selected_ranges if selected_ranges is not None else [(selected_start, selected_end)]
+    outside = remaining_intervals(pending, ranges)
     if outside:
         raise ValueError(
             "Ainda existem resíduos pendentes fora da faixa desta proposta. "
@@ -276,7 +276,7 @@ def _build_candidate(
 
     for piece in automatic:
         a, b = int(piece["global_start"]), int(piece["global_end"])
-        if _overlap(a, b, selected_start, selected_end):
+        if any(_overlap(a, b, start, end) for start, end in ranges):
             continue
         key = (a, b)
         if key in seen:
@@ -286,7 +286,7 @@ def _build_candidate(
 
     for piece in manual:
         a, b = int(piece["global_start"]), int(piece["global_end"])
-        if a < selected_start or b > selected_end:
+        if not any(start <= a and b <= end for start, end in ranges):
             raise ValueError("Bloco manual saiu da faixa residual declarada.")
         key = (a, b)
         if key in seen:
@@ -410,6 +410,12 @@ def _write_candidate(
         },
         "composition": {
             "manual_proposal_id": proposal_manifest["proposal_id"],
+            "manual_proposal_ids": proposal_manifest.get("selected_proposal_ids", [proposal_manifest["proposal_id"]]),
+            "manual_ranges": proposal_manifest.get("selected_ranges") or [{
+                "proposal_id": proposal_manifest["proposal_id"],
+                "global_start": int((proposal_manifest.get("source_block") or {})["global_start"]),
+                "global_end": int((proposal_manifest.get("source_block") or {})["global_end"]),
+            }],
             "manual_range": [
                 int((proposal_manifest.get("source_block") or {})["global_start"]),
                 int((proposal_manifest.get("source_block") or {})["global_end"]),
@@ -477,8 +483,10 @@ def apply_final_composition(
             except ValueError:
                 official_payload = {}
             if (
-                str((official_payload.get("composition") or {}).get("manual_proposal_id") or "")
-                == str(proposal_id)
+                str(proposal_id) in (
+                    (official_payload.get("composition") or {}).get("manual_proposal_ids")
+                    or [str((official_payload.get("composition") or {}).get("manual_proposal_id") or "")]
+                )
                 and v3.is_chapter_merged(chapter_dir)
             ):
                 return {
@@ -494,21 +502,46 @@ def apply_final_composition(
         if proposal.get("status") != "PROPOSTA_GERADA":
             raise ValueError(f"Status da proposta não permite efetivação: {proposal.get('status')}.")
 
-        current, selected = _validate_current_review(chapter_dir, review_row, proposal)
+        prior_ids = read_selected_ids(manga, chapter)
+        if proposal_id in prior_ids:
+            return {"ok": True, "status": "FAIXA_SELECIONADA", "already_selected": True,
+                    "proposal_id": proposal_id, "chapter": chapter,
+                    "message": "Esta faixa já foi selecionada para a composição final."}
+
+        current, _selected = _validate_current_review(chapter_dir, review_row, proposal)
         _validate_sources(chapter_dir, proposal)
+
+        selected_manifests = []
+        for previous_id in prior_ids:
+            previous_path = proposal_dir(manga, chapter, previous_id) / MANIFEST_NAME
+            previous = _read_json(previous_path)
+            if previous.get("proposal_id") != previous_id or previous.get("chapter") != chapter or previous.get("status") != "PROPOSTA_GERADA":
+                raise ValueError("Uma faixa anteriormente selecionada está inválida.")
+            _validate_current_review(chapter_dir, review_row, previous)
+            _validate_sources(chapter_dir, previous)
+            selected_manifests.append((previous_path, previous))
+        selected_manifests.append((manifest_path, proposal))
+        ranges = [(int(item["source_block"]["global_start"]), int(item["source_block"]["global_end"]))
+                  for _, item in selected_manifests]
+        if any(_overlap(*ranges[i], *ranges[j]) for i in range(len(ranges)) for j in range(i + 1, len(ranges))):
+            raise ValueError("Esta faixa se sobrepõe a uma faixa já selecionada.")
+
+        remaining = remaining_intervals(_pending_intervals(current), ranges)
+        if remaining:
+            write_selected_ids(manga, chapter, [*prior_ids, proposal_id])
+            return {"ok": True, "status": "FAIXA_SELECIONADA", "proposal_id": proposal_id,
+                    "chapter": chapter, "remaining_intervals": remaining,
+                    "message": "Faixa confirmada. Continue com a próxima faixa pendente; a composição será publicada ao concluir todas."}
 
         source_spans, total_height, width = _source_geometry(chapter_dir, v3)
         if total_height <= 0 or width <= 0:
             raise ValueError("Geometria fonte inválida.")
 
-        source_block = proposal.get("source_block") or {}
-        selected_start = int(source_block["global_start"])
-        selected_end = int(source_block["global_end"])
-        if selected_end <= selected_start:
-            raise ValueError("Faixa manual inválida.")
+        selected_start = min(start for start, _ in ranges)
+        selected_end = max(end for _, end in ranges)
 
         automatic = _automatic_pieces(manga, chapter)
-        manual = _proposal_pieces(manga, chapter, proposal)
+        manual = [piece for _, item in selected_manifests for piece in _proposal_pieces(manga, chapter, item)]
         pieces = _build_candidate(
             automatic=automatic,
             manual=manual,
@@ -516,7 +549,14 @@ def apply_final_composition(
             selected_end=selected_end,
             pending=_pending_intervals(current),
             total_height=total_height,
+            selected_ranges=ranges,
         )
+        composition_proposal = {**proposal, "source_block": {"global_start": selected_start, "global_end": selected_end},
+                                "selected_proposal_ids": [*prior_ids, proposal_id],
+                                "selected_ranges": [{"proposal_id": item["proposal_id"],
+                                                     "global_start": int(item["source_block"]["global_start"]),
+                                                     "global_end": int(item["source_block"]["global_end"])}
+                                                    for _, item in selected_manifests]}
 
         parent = official_dir.parent
         parent.mkdir(parents=True, exist_ok=True)
@@ -530,7 +570,7 @@ def apply_final_composition(
 
         status_path = _merge_status_path(manga, chapter)
         status_original = status_path.read_bytes() if status_path.is_file() else None
-        proposal_original = manifest_path.read_bytes()
+        proposal_originals = [(path, path.read_bytes()) for path, _ in selected_manifests]
         had_official = official_dir.exists()
         promoted = False
 
@@ -542,7 +582,7 @@ def apply_final_composition(
                 total_height=total_height,
                 width=width,
                 chapter_dir=chapter_dir,
-                proposal_manifest=proposal,
+                proposal_manifest=composition_proposal,
                 v3=v3,
             )
 
@@ -560,20 +600,18 @@ def apply_final_composition(
             if status_path.parent.is_dir() and not any(status_path.parent.iterdir()):
                 status_path.parent.rmdir()
 
-            updated = dict(proposal)
-            updated["status"] = "EFETIVADO"
-            updated["applied_at"] = datetime.now(timezone.utc).isoformat()
-            updated["official_merge"] = {
-                "output_dir": str(official_dir),
-                "manifest": "merge-manifest.json",
-                "merged_images": len(official_manifest["outputs"]),
-                "algorithm": official_manifest["algorithm"],
-            }
-            updated.setdefault("safety", {})["official_merge_modified"] = True
-            manifest_path.write_text(
-                json.dumps(updated, ensure_ascii=False, indent=2) + "\n",
-                encoding="utf-8",
-            )
+            for path, item in selected_manifests:
+                updated = dict(item)
+                updated["status"] = "EFETIVADO"
+                updated["applied_at"] = datetime.now(timezone.utc).isoformat()
+                updated["official_merge"] = {
+                    "output_dir": str(official_dir),
+                    "manifest": "merge-manifest.json",
+                    "merged_images": len(official_manifest["outputs"]),
+                    "algorithm": official_manifest["algorithm"],
+                }
+                updated["safety"] = {**updated.get("safety", {}), "official_merge_modified": True}
+                path.write_text(json.dumps(updated, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
             if backup.exists():
                 shutil.rmtree(backup)
@@ -592,7 +630,8 @@ def apply_final_composition(
         except Exception:
             # Rollback integral do MERGE, estado de Review e manifesto da proposta.
             try:
-                manifest_path.write_bytes(proposal_original)
+                for path, original in proposal_originals:
+                    path.write_bytes(original)
             except Exception:
                 pass
             try:

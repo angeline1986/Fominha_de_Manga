@@ -14,6 +14,7 @@ from processamento.merge_manual.proposal import MANIFEST_NAME, proposal_dir
 from processamento.unificacao_imagens.auto_merge.documentos import read_document
 from central_v2.backend.state.manga_state import resolve_manga
 from central_v2.backend.state.work_layout import images_root, processing_stage_root
+from central_v2.backend.routes.merge_manual_applied import applied_manual_ranges
 
 
 def _review_row(manga: Path, chapter: str) -> dict:
@@ -51,45 +52,11 @@ def _review_row(manga: Path, chapter: str) -> dict:
     return {"needs_review": True, "merge_state": "pendente_review", "merge_level5_detail": detail}
 
 
-def _applied_manual_range(manga: Path, chapter: str) -> dict | None:
-    """Lê a faixa manual que está registrada na composição oficial atual."""
-    official_path = manga / "FLUXO_SECUNDARIO" / "02_MERGE" / chapter / "merge-manifest.json"
-    try:
-        official = json.loads(official_path.read_text(encoding="utf-8"))
-        if not isinstance(official, dict):
-            return None
-        composition = official.get("composition") or {}
-        if not isinstance(composition, dict):
-            return None
-        proposal_id = str(composition.get("manual_proposal_id") or "")
-        bounds = composition.get("manual_range")
-        if not proposal_id or not isinstance(bounds, list) or len(bounds) != 2:
-            return None
-        start, end = int(bounds[0]), int(bounds[1])
-        proposal_path = (
-            manga / "FLUXO_SECUNDARIO" / "01_MERGE_PROCESSAMENTO"
-            / "MERGE_MANUAL_PROPOSALS" / chapter / proposal_id / MANIFEST_NAME
-        )
-        proposal = json.loads(proposal_path.read_text(encoding="utf-8"))
-        if (
-            not isinstance(proposal, dict)
-            or proposal.get("proposal_id") != proposal_id
-            or proposal.get("chapter") != chapter
-            or proposal.get("status") != "EFETIVADO"
-            or start < 0
-            or end <= start
-        ):
-            return None
-        return {"global_start": start, "global_end": end, "proposal_id": proposal_id}
-    except (AttributeError, OSError, ValueError, TypeError, json.JSONDecodeError):
-        return None
-
-
 def _chapter_review_row(manga: Path, chapter: str) -> dict:
     row = _review_row(manga, chapter)
-    applied = _applied_manual_range(manga, chapter)
+    applied = applied_manual_ranges(manga, chapter)
     if applied:
-        row["merge_manual_applied_range"] = applied
+        row["merge_manual_applied_ranges"] = applied
     return row
 
 

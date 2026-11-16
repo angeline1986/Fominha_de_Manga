@@ -4,6 +4,7 @@ from pathlib import Path
 from typing import Any, Callable, Iterable
 
 from .review_state import build_pending_blocks, natural_key, state_from_review_row
+from .selected_ranges import active_selected_ranges, remaining_intervals
 
 
 def _review_manifest_path(manga: Path, chapter: str) -> Path:
@@ -42,7 +43,9 @@ def build_read_state(
             "authoritative_source": current["source"],
             "error": current["error"],
             "manual_range_applied": current.get("manual_range_applied", False),
+            "manual_range_confirmed": False,
             "applied_range": current.get("applied_range"),
+            "applied_ranges": current.get("applied_ranges", []),
             "review_proposal_exists": _review_manifest_path(manga, chapter_dir.name).is_file(),
             "pending_blocks": [],
             "pending_pages": 0,
@@ -51,7 +54,18 @@ def build_read_state(
 
         if current["status"] == "pending":
             try:
-                blocks = build_pending_blocks(chapter_dir, current["pending_segments"])
+                selected = active_selected_ranges(manga, chapter_dir.name)
+                row["manual_range_confirmed"] = bool(selected)
+                row["confirmed_ranges"] = selected
+                pending = [(int(item["global_start"]), int(item["global_end"]))
+                           for item in current["pending_segments"]]
+                chosen = [(item["global_start"], item["global_end"]) for item in selected]
+                remaining = remaining_intervals(pending, chosen)
+                if not remaining:
+                    raise ValueError("Todas as faixas foram confirmadas, mas a composição oficial ainda não foi publicada.")
+                blocks = build_pending_blocks(chapter_dir, [
+                    {"global_start": start, "global_end": end} for start, end in remaining
+                ])
                 row["pending_blocks"] = blocks
                 row["blocks_count"] = len(blocks)
                 row["pending_pages"] = len(

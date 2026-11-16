@@ -1,11 +1,12 @@
 import { getContext, subscribeContext } from "/_app/state/context.js";
 import { fetchSavedMergeManualProposals, mergeManualImageUrl, applyMergeManualProposal } from "/_app/api/merge_manual.js";
 import { escapeHtml } from "/_shared/dom/sanitize.js";
-import { iconMarkup } from "/_shared/icons/icons.js";
 import { confirmMessage, showMessage } from "/_shared/messages/messages.js";
 import { createSavedPagePagination } from "/processamento/merge_manual/propostas_salvas_paginacao.js";
 import { bindSavedProposalViewer } from "/processamento/merge_manual/propostas_salvas_visualizador.js";
 import { savedProposalImagesMarkup, savedProposalReviewMarkup } from "/processamento/merge_manual/propostas_salvas_revisao.js";
+import { savedProposalTableMarkup } from "/processamento/merge_manual/propostas_salvas_tabela.js";
+import { isPending, pagesFor, pendingForChapter as pendingProposalsForChapter } from "/processamento/merge_manual/propostas_salvas_model.js";
 
 export function render(container) {
   const page = document.createElement("section");
@@ -51,16 +52,7 @@ export function render(container) {
   function renderCurrent() { mode === "table" ? renderTable() : renderReview(); }
   function renderTable() {
     disposeViewer(); focusActive = false;
-    const groups = groupByChapter(proposals);
-    const rows = [...groups].map(([id, items]) => {
-      const pending = items.filter(isPending).length, applied = items.length - pending;
-      const latest = items[0]?.created_at ? new Date(items[0].created_at).toLocaleString("pt-BR") : "—";
-      return `<tr><td>Cap. ${escapeHtml(id)}</td><td>${pending}</td><td>${applied || "—"}</td><td>${escapeHtml(latest)}</td>
-        <td><button type="button" class="btn saved-proposal-open" data-open-chapter="${escapeHtml(id)}" aria-label="Ver páginas pendentes do capítulo ${escapeHtml(id)}" ${pending ? "" : "disabled"}>${iconMarkup("eye")}</button></td></tr>`;
-    }).join("");
-    page.innerHTML = `<h1>Propostas Salvas</h1><p class="saved-proposal-subtitle">Consulte e efetive propostas pendentes por capítulo.</p>
-      <div class="saved-proposal-table-wrap"><table class="data-table"><thead><tr><th>Capítulo</th><th>Pendentes</th><th>Efetivadas</th><th>Última atualização</th><th>Ação</th></tr></thead>
-      <tbody>${rows || "<tr><td colspan=\"5\">Nenhuma proposta salva para esta obra.</td></tr>"}</tbody></table></div>`;
+    page.innerHTML = savedProposalTableMarkup(proposals);
   }
 
   function renderReview() {
@@ -147,15 +139,16 @@ export function render(container) {
     applying = true;
     page.querySelector("[data-apply]").disabled = true;
     try {
-      const confirmed = await confirmMessage({ title: "Efetivar proposta", message: "A proposta selecionada substituirá a composição oficial deste capítulo em 02_MERGE. Deseja continuar?", confirmText: "Efetivar" });
+      const confirmed = await confirmMessage({ title: "Efetivar faixa", message: `A faixa ${item.start} → ${item.end} será confirmada e sairá das pendências. Quando todas as faixas estiverem confirmadas, a composição será validada e publicada em 02_MERGE. Deseja continuar?`, confirmText: "Efetivar" });
       if (!confirmed) return;
       const context = getContext();
       if (context.provider !== target.provider || context.manga !== target.manga || chapter !== target.chapter || selectedId !== target.proposalId) return;
       const result = await applyMergeManualProposal({ provider: target.provider, manga: target.manga, chapter: target.chapter, proposal_id: target.proposalId });
-      await showMessage({ title: "Proposta efetivada", message: result.message || "A composição final foi aplicada e validada em 02_MERGE." });
-      mode = "table"; panelOpen = false;
+      await showMessage({ title: result.status === "FAIXA_SELECIONADA" ? "Faixa confirmada" : "Composição efetivada", message: result.message });
+      if (result.status === "FAIXA_SELECIONADA") { selectedId = ""; currentPage = ""; previewed = false; pagePagination.reset(); }
+      else { mode = "table"; panelOpen = false; }
       await load();
-    } catch (error) { await showMessage({ title: "Falha ao efetivar proposta", message: error.message }); }
+    } catch (error) { await showMessage({ title: "Falha ao efetivar faixa", message: error.message }); }
     finally { applying = false; const button = page.querySelector("[data-apply]"); if (button) button.disabled = !selectedId; }
   }
 
@@ -185,8 +178,5 @@ export function render(container) {
     disposeViewer();
   };
 
-  function groupByChapter(items) { return Map.groupBy ? Map.groupBy(items, (item) => item.chapter) : items.reduce((map, item) => map.set(item.chapter, [...(map.get(item.chapter) || []), item]), new Map()); }
-  function isPending(item) { return item.status === "PROPOSTA_GERADA"; }
-  function pendingForChapter(id) { return proposals.filter((item) => item.chapter === id && isPending(item)); }
-  function pagesFor(items) { return [...new Set(items.flatMap((item) => (item.proposal?.source_files || []).map((source) => source.name)))].sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true })); }
+  function pendingForChapter(id) { return pendingProposalsForChapter(proposals, id); }
 }

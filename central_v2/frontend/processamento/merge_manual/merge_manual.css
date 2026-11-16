@@ -155,6 +155,7 @@
 .manual-merge-badge.pending { background: #FFF3DB; color: var(--color-warning); }
 .manual-merge-badge.blocked { background: #FDECEC; color: #9D3030; }
 .manual-merge-badge.applied { background: #E4F5EE; color: #187A58; }
+.manual-merge-badge.confirmed { background: var(--color-primary-soft); color: var(--color-primary-hover); }
 
 .manual-merge-config { padding: var(--space-lg); }
 .manual-merge-config[hidden] { display: none; }
