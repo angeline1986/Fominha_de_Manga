@@ -31,7 +31,7 @@ export function createBalanceCutsView(handlers) {
   focusButton.setAttribute("aria-label", "Modo Foco");
   focusButton.setAttribute("aria-pressed", "false");
   focusButton.innerHTML = `${iconMarkup("focus-exit")} Foco`;
-  let state = { selection: null, draft: null, zoom: 50, resultZoom: 100, activeCut: 0, cuts: [], rulerColors: [...defaultRulerColors], highlightOdd: true, busy: false };
+  let state = { selection: null, draft: null, zoom: 30, resultZoom: 30, activeCut: 0, cuts: [], rulerColors: [...defaultRulerColors], highlightOdd: true, busy: false };
   let colorPopover;
   let disposeFocusMode = () => {};
   element.addEventListener("click", onClick);
